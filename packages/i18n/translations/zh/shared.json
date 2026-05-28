@@ -35,8 +35,10 @@
       "lifetime": {
         "description": "一次购买，终身使用。",
         "features": {
-          "extendSupport": "延伸支持",
-          "noRecurringCosts": "无循环费用"
+          "containProFeatures": "包含 Pro 所有功能",
+          "lifetimeUpdates": "终身更新，永久可用",
+          "noRecurringCosts": "一次付费，无二次收费",
+          "extendSupport": "专属支持"
         },
         "title": "终身版"
       },
