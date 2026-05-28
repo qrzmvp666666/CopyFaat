@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { logger } from "@repo/logs";
 
 import { config } from "../config";
 import type { SendEmailHandler } from "../types";
@@ -15,7 +16,7 @@ export const send: SendEmailHandler = async ({
 	html,
 	text,
 }) => {
-	await resend.emails.send({
+	const { error } = await resend.emails.send({
 		from: from ?? config.mailFrom,
 		to: [to],
 		cc,
@@ -25,4 +26,10 @@ export const send: SendEmailHandler = async ({
 		html,
 		text,
 	});
+
+	if (error) {
+		throw error;
+	}
+
+	logger.log(`Sent email to ${to} with Resend: ${subject}`);
 };
