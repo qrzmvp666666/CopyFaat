@@ -24,10 +24,11 @@
         "title": "Enterprise"
       },
       "free": {
-        "description": "Start for free",
+        "description": "Limited offer for the first 200 users: after registration, scan the QR code and contact support to claim a Pro membership redemption code",
         "features": {
-          "anotherFeature": "Another amazing feature",
-          "limitedSupport": "Limited support"
+          "freeAccess": "0 USD free access",
+          "proCode": "Limited-time Pro membership redemption code",
+          "qqSupport": "QQ live support: 1934416232"
         },
         "title": "Free"
       },
@@ -40,11 +41,14 @@
         "title": "Lifetime"
       },
       "pro": {
-        "description": "Best for teams",
+        "description": "For crypto traders who need real-time market data, KOL signals, and dedicated support",
         "features": {
-          "anotherFeature": "Another amazing feature",
-          "fiveMembers": "Up to 5 members",
-          "fullSupport": "Full support"
+          "adFree": "Ad-free experience",
+          "marketQuotes": "Real-time crypto market quotes",
+          "kolKlineTracking": "Aggregated KOL K-line tracking",
+          "kolSignals": "Real-time KOL signal pushes",
+          "dedicatedSupport": "Dedicated support",
+          "communityNotifications": "Exclusive community notifications"
         },
         "title": "Pro"
       }

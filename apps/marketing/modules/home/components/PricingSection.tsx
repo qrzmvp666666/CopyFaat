@@ -14,7 +14,7 @@ import {
 	CreditCardIcon,
 	StarIcon,
 } from "lucide-react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 function WechatPayIcon({ className }: { className?: string }) {
@@ -48,8 +48,56 @@ function AlipayIcon({ className }: { className?: string }) {
 	);
 }
 
+const MARKETING_PLAN_COPY = {
+	zh: {
+		free: {
+			title: "免费",
+			description: "前200名用户限时领取：注册成功后，扫码联系客服即可领取 Pro 会员兑换码",
+			features: ["0 USD 免费体验", "限时 Pro 会员兑换码", "QQ 在线咨询：1934416232"],
+		},
+		pro: {
+			title: "Pro",
+			description: "适合需要实时行情、KOL 信号和专属支持的加密交易用户",
+			features: [
+				"无广告体验",
+				"币圈实时市场报价",
+				"KOL 聚合 K线跟踪",
+				"KOL 实时信号推送",
+				"专属客服支持",
+				"专属社区通知",
+			],
+		},
+	},
+	en: {
+		free: {
+			title: "Free",
+			description:
+				"Limited offer for the first 200 users: after registration, scan the QR code and contact support to claim a Pro membership redemption code",
+			features: [
+				"0 USD free access",
+				"Limited-time Pro membership redemption code",
+				"QQ live support: 1934416232",
+			],
+		},
+		pro: {
+			title: "Pro",
+			description:
+				"For crypto traders who need real-time market data, KOL signals, and dedicated support",
+			features: [
+				"Ad-free experience",
+				"Real-time crypto market quotes",
+				"Aggregated KOL K-line tracking",
+				"Real-time KOL signal pushes",
+				"Dedicated support",
+				"Exclusive community notifications",
+			],
+		},
+	},
+} as const;
+
 export function PricingSection() {
 	const t = useTranslations();
+	const locale = useLocale();
 	const format = useFormatter();
 	const [interval, setBillingInterval] = useState<"month" | "year">("month");
 	const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
@@ -59,6 +107,8 @@ export function PricingSection() {
 		[],
 	);
 	const isChinesePayment = paymentMethod === "wechat_person" || paymentMethod === "alipay_person";
+	const marketingPlanCopy =
+		MARKETING_PLAN_COPY[locale as keyof typeof MARKETING_PLAN_COPY] ?? MARKETING_PLAN_COPY.en;
 
 	const plans = useMemo(() => {
 		const result: Array<{
@@ -74,13 +124,12 @@ export function PricingSection() {
 		}> = [];
 
 		if (!paymentsConfig.requireActiveSubscription) {
+			const freeCopy = marketingPlanCopy.free;
 			result.push({
 				id: "free",
-				title: t("pricing.products.free.title") ?? "",
-				description: t("pricing.products.free.description") ?? "",
-				features: Object.values(
-					(t.raw("pricing.products.free.features") as Record<string, string>) ?? {},
-				),
+				title: freeCopy.title,
+				description: freeCopy.description,
+				features: [...freeCopy.features],
 				cta: t("pricing.getStarted") ?? "",
 				to: saasUrl ? `${saasUrl}/signup` : "#",
 			});
@@ -98,6 +147,8 @@ export function PricingSection() {
 				continue;
 			}
 
+			const copy = planId === "pro" ? marketingPlanCopy.pro : undefined;
+
 			// Point directly to /choose-plan on the saas app with planId+interval.
 			// The saas app redirects to /login if not authenticated, preserving the query params.
 			const planUrl = saasUrl
@@ -106,11 +157,13 @@ export function PricingSection() {
 
 			result.push({
 				id: planId,
-				title: t(`pricing.products.${planId}.title`) ?? "",
-				description: t(`pricing.products.${planId}.description`) ?? "",
-				features: Object.values(
-					(t.raw(`pricing.products.${planId}.features`) as Record<string, string>) ?? {},
-				),
+				title: copy?.title ?? (t(`pricing.products.${planId}.title`) ?? ""),
+				description: copy?.description ?? (t(`pricing.products.${planId}.description`) ?? ""),
+				features:
+					(copy?.features ? [...copy.features] : undefined) ??
+					Object.values(
+						(t.raw(`pricing.products.${planId}.features`) as Record<string, string>) ?? {},
+					),
 				cta: isEnterprise
 					? (t("pricing.contactSales") ?? "")
 					: (t("pricing.getStarted") ?? ""),
@@ -122,7 +175,7 @@ export function PricingSection() {
 		}
 
 		return result;
-	}, [t, saasUrl, interval, paymentMethod, isChinesePayment]);
+	}, [t, saasUrl, interval, paymentMethod, isChinesePayment, marketingPlanCopy]);
 
 	const hasSubscriptions =
 		!isChinesePayment &&

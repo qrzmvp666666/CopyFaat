@@ -24,12 +24,13 @@
         "title": "企业版"
       },
       "free": {
-        "description": "免费开始使用",
+        "description": "前200名用户限时领取：注册成功后，扫码联系客服即可领取 Pro 会员兑换码",
         "features": {
-          "anotherFeature": "另一个惊人功能",
-          "limitedSupport": "有限支持"
+          "freeAccess": "0 USD 免费体验",
+          "proCode": "限时 Pro 会员兑换码",
+          "qqSupport": "QQ 在线咨询：1934416232"
         },
-        "title": "免费版"
+        "title": "免费"
       },
       "lifetime": {
         "description": "一次购买，终身使用。",
@@ -40,13 +41,16 @@
         "title": "终身版"
       },
       "pro": {
-        "description": "适合团队使用",
+        "description": "适合需要实时行情、KOL 信号和专属支持的加密交易用户",
         "features": {
-          "anotherFeature": "另一个惊人功能",
-          "fiveMembers": "最多 5 名成员",
-          "fullSupport": "全面支持"
+          "adFree": "无广告体验",
+          "marketQuotes": "币圈实时市场报价",
+          "kolKlineTracking": "KOL 聚合 K线跟踪",
+          "kolSignals": "KOL 实时信号推送",
+          "dedicatedSupport": "专属客服支持",
+          "communityNotifications": "专属社区通知"
         },
-        "title": "专业版"
+        "title": "Pro"
       }
     },
     "purchase": "购买",
