@@ -10,7 +10,6 @@ import heroImageDark from "../../../public/images/hero-image-dark.png";
 import heroImage from "../../../public/images/hero-image.png";
 import { AVATAR_PHOTO_IDS, TESTIMONIAL_KEYS } from "../lib/testimonials";
 import { BorderBeam } from "./BorderBeam";
-import { HeroTabs } from "./HeroTabs";
 import { TypewriterTitle } from "./TypewriterTitle";
 
 export function HeroSection() {
@@ -35,6 +34,11 @@ export function HeroSection() {
 
 	return (
 		<div className="relative max-w-full overflow-x-hidden bg-linear-to-t from-background via-primary/5 to-background">
+			<div className="pointer-events-none absolute inset-0 overflow-hidden">
+				<div className="absolute inset-0 bg-[linear-gradient(to_bottom,color-mix(in_srgb,var(--foreground)_8%,transparent)_1px,transparent_1px)] bg-size-[100%_112px]" />
+				<div className="absolute inset-[-10%] bg-[repeating-linear-gradient(102deg,transparent_0,transparent_186px,color-mix(in_srgb,var(--foreground)_9%,transparent)_187px,transparent_188px)]" />
+				<div className="absolute inset-0 bg-radial-[ellipse_at_center,transparent_0%,color-mix(in_srgb,var(--background)_18%,transparent)_62%,var(--background)_100%]" />
+			</div>
 			<div className="py-8 md:py-16 relative z-20 container text-center">
 				<div className="mb-4 flex justify-center">
 					<div className="px-3 py-1 font-normal text-sm flex flex-wrap items-center justify-center rounded-full bg-muted p-px text-foreground">
@@ -96,11 +100,7 @@ export function HeroSection() {
 					</div>
 				</div>
 
-				<div className="mt-8 lg:mt-10 max-w-6xl mx-auto">
-					<HeroTabs />
-				</div>
-
-				<div className="mt-4 p-2 mx-auto rounded-4xl border border-primary/10 bg-primary/5 max-w-6xl relative overflow-hidden">
+				<div className="mt-8 lg:mt-10 p-2 mx-auto rounded-4xl border border-primary/10 bg-primary/5 max-w-6xl relative overflow-hidden">
 				<BorderBeam size={250} duration={10} colorFrom="#ffaa40" colorTo="#9c40ff" />
 					<Image
 						src={heroImage}
