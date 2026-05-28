@@ -181,43 +181,43 @@
       "readDocs": "Read Docs"
     },
     "testimonials": {
-      "title": "What users say",
-      "subtitle": "Hear from real users who have shipped with us",
+      "title": "KOLArena User Reviews",
+      "subtitle": "KOLArena has helped thousands of crypto enthusiasts and quantitative traders build stable, profitable strategies",
       "items": {
         "andy": {
-          "quote": "The speed of Next.js + convenient payment ecosystem + out-of-the-box AI capabilities + constant feature iterations made this the closest thing to WordPress in the AI era.",
-          "name": "Andy",
-          "role": "Product Director, Public Company",
+          "quote": "I finally stopped paying a fortune to join endless private groups. On KOLArena, I can see signal calls from leading KOLs directly. This is a lifeline for anyone following trade signals.",
+          "name": "Alex",
+          "role": "Experienced crypto retail trader",
           "initials": "An"
         },
         "blank": {
-          "quote": "It shortened the journey from idea to product. Its plugin architecture enables rapid feature expansion, and the configuration-based approach minimizes code changes — perfect for launching SaaS products quickly.",
-          "name": "blank",
-          "role": "Author of AITDK",
+          "quote": "This platform completely cured my decision paralysis. The win rates and profit rankings of different KOLs are clear at a glance, so I no longer buy randomly.",
+          "name": "Sarah",
+          "role": "Full-time trader",
           "initials": "bl"
         },
         "corey": {
-          "quote": "The best template for Vibe Coding. The AI-friendly architecture lets you launch a product MVP with just a few rounds of AI conversation, turning ideas into reality.",
-          "name": "Corey",
-          "role": "Independent Developer",
+          "quote": "The best part is being able to backtest KOL signal indicators myself. Screenshots used to feel unreliable, but now I can verify everything with historical data.",
+          "name": "Michael",
+          "role": "Quant enthusiast",
           "initials": "Co"
         },
         "gefei": {
-          "quote": "Congrats on V2! Many friends in my community have launched their sites using it and gained traffic and revenue. Building a SaaS from scratch could take months; this saves time so you can focus on growth.",
-          "name": "Gefei",
-          "role": "Overseas Community Founder",
+          "quote": "I used to pay for several creators' memberships and lost more than I made. With this transparent dashboard, you can tell who is really performing in seconds.",
+          "name": "David",
+          "role": "Independent investor",
           "initials": "GF"
         },
         "james": {
-          "quote": "It helped me transition from product manager to full-stack developer. I've built several international websites with it, and they keep generating steady income.",
-          "name": "James",
-          "role": "Product Manager",
+          "quote": "As a beginner who does not want to code, the visual trend dashboard saves so much effort. I can follow the highest win-rate setups directly, and my win rate improved last month.",
+          "name": "Emily",
+          "role": "Crypto beginner",
           "initials": "Ja"
         },
         "justDoIt": {
-          "quote": "I recently built a website with it in under 30 minutes. The whole journey went smoothly — I didn't expect it to come together so fast!",
-          "name": "JustDoIt",
-          "role": "Tech Manager",
+          "quote": "The signal response speed and accuracy here are even faster than some VIP groups I joined. Millisecond-level pushes often help me catch ideal entries during sharp moves.",
+          "name": "Kevin",
+          "role": "Algorithmic trading developer",
           "initials": "JD"
         }
       }

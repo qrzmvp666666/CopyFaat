@@ -21,11 +21,11 @@ role: t(`home.testimonials.items.${key}.role`),
 return (
 <section className="py-8 lg:py-12">
 <div className="container">
-<div className="mb-6 text-center">
-<h2 className="font-semibold text-2xl text-foreground md:text-3xl">
+<div className="mb-6 max-w-3xl mx-auto text-center">
+<h2 className="font-medium text-2xl md:text-3xl lg:text-4xl xl:text-5xl leading-tight text-foreground">
 {t("home.testimonials.title")}
 </h2>
-<p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground md:text-base">
+<p className="mt-2 text-sm sm:text-lg text-foreground/60">
 {t("home.testimonials.subtitle")}
 </p>
 </div>
