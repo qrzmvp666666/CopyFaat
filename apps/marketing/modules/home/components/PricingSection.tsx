@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { config } from "@config";
 import { LocaleLink } from "@i18n/routing";
 import { config as paymentsConfig } from "@repo/payments/config";
@@ -320,6 +321,34 @@ export function PricingSection() {
 											<h3 className="my-0 font-semibold text-2xl">
 												{plan.title}
 											</h3>
+											{isFree && (
+												<strong
+													className="font-medium text-2xl lg:text-3xl block mt-2"
+													data-test="price-table-plan-price"
+												>
+													0 USDT
+												</strong>
+											)}
+											{price && (
+												<strong
+													className="font-medium text-2xl lg:text-3xl block mt-2"
+													data-test="price-table-plan-price"
+												>
+													{price.amount} USDT
+													{price.type === "subscription" && (
+														<span className="font-normal text-xs opacity-60">
+															/
+															{price.interval === "year"
+																? t("pricing.year", {
+																		count: 1,
+																	})
+																: t("pricing.month", {
+																		count: 1,
+																	})}
+														</span>
+													)}
+												</strong>
+											)}
 											{plan.description && (
 												<div className="prose mt-2 text-sm text-foreground/60">
 													{plan.description}
@@ -349,74 +378,50 @@ export function PricingSection() {
 														})}
 													</div>
 												)}
-										</div>
 
-										<div>
-											{isFree && (
-												<strong
-													className="font-medium text-2xl lg:text-3xl block"
-													data-test="price-table-plan-price"
-												>
-													{format.number(0, {
-														style: "currency",
-														currency: "USD",
-													})}
-												</strong>
-											)}
-
-											{price && (
-												<strong
-													className="font-medium text-2xl lg:text-3xl block"
-													data-test="price-table-plan-price"
-												>
-													{format.number(price.amount, {
-														style: "currency",
-														currency: price.currency,
-													})}
-													{price.type === "subscription" && (
-														<span className="font-normal text-xs opacity-60">
-															/
-															{price.interval === "year"
-																? t("pricing.year", {
-																		count: 1,
-																	})
-																: t("pricing.month", {
-																		count: 1,
-																	})}
-														</span>
-													)}
-												</strong>
-											)}
-
-											{plan.to.startsWith("/") ? (
-												<Button
-													className="mt-4 w-full"
-													variant={
-														plan.recommended ? "primary" : "secondary"
-													}
-													asChild
-												>
-													<LocaleLink href={plan.to}>
-														{plan.cta}
-														<ArrowRightIcon className="ml-2 size-4" />
-													</LocaleLink>
-												</Button>
-											) : (
-												<Button
-													className="mt-4 w-full"
-													variant={
-														plan.recommended ? "primary" : "secondary"
-													}
-													asChild
-												>
-													<a href={plan.to}>
-														{plan.cta}
-														<ArrowRightIcon className="ml-2 size-4" />
-													</a>
-												</Button>
-											)}
-										</div>
+										{isFree && (
+											<div className="mt-4 flex justify-start">
+												<Image
+													src="/images/qq-qrcode.png"
+													alt="QQ 二维码"
+													width={140}
+													height={140}
+													className="rounded-lg"
+												/>
+											</div>
+										)}
 									</div>
+
+									<div>
+										{plan.to.startsWith("/") ? (
+											<Button
+												className="mt-4 w-full"
+												variant={
+													plan.recommended ? "primary" : "secondary"
+												}
+												asChild
+											>
+												<LocaleLink href={plan.to}>
+													{plan.cta}
+													<ArrowRightIcon className="ml-2 size-4" />
+												</LocaleLink>
+											</Button>
+										) : (
+											<Button
+												className="mt-4 w-full"
+												variant={
+													plan.recommended ? "primary" : "secondary"
+												}
+												asChild
+											>
+												<a href={plan.to}>
+													{plan.cta}
+													<ArrowRightIcon className="ml-2 size-4" />
+												</a>
+											</Button>
+										)}
+									</div>
+								</div>
 								</div>
 							);
 						})}
