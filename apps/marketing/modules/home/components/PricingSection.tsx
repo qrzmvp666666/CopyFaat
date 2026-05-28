@@ -67,6 +67,18 @@ const MARKETING_PLAN_COPY = {
 				"专属社区通知",
 			],
 		},
+		lifetime: {
+			title: "终身版",
+			description: "一次购买，终身使用。包含所有 Pro 功能，无任何二次收费。",
+			features: [
+				"包含 Pro 所有功能",
+				"终身更新，永久可用",
+				"一次付费，无二次收费",
+				"专属客服支持",
+				"专属社区通知",
+				"专属支持",
+			],
+		},
 	},
 	en: {
 		free: {
@@ -90,6 +102,18 @@ const MARKETING_PLAN_COPY = {
 				"Real-time KOL signal pushes",
 				"Dedicated support",
 				"Exclusive community notifications",
+			],
+		},
+		lifetime: {
+			title: "Lifetime",
+			description: "Buy once, use forever. Includes all Pro features with no recurring charges.",
+			features: [
+				"All Pro features included",
+				"Lifetime updates, always accessible",
+				"One-time payment, no hidden fees",
+				"Dedicated customer support",
+				"Exclusive community notifications",
+				"Dedicated support",
 			],
 		},
 	},
@@ -147,7 +171,7 @@ export function PricingSection() {
 				continue;
 			}
 
-			const copy = planId === "pro" ? marketingPlanCopy.pro : undefined;
+			const copy = planId === "pro" ? marketingPlanCopy.pro : planId === "lifetime" ? marketingPlanCopy.lifetime : undefined;
 
 			// Point directly to /choose-plan on the saas app with planId+interval.
 			// The saas app redirects to /login if not authenticated, preserving the query params.

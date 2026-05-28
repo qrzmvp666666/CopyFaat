@@ -6,16 +6,16 @@ import { TestimonialsSection } from "@home/components/TestimonialsSection";
 import { setRequestLocale } from "next-intl/server";
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
-const { locale } = await params;
-setRequestLocale(locale);
+	const { locale } = await params;
+	setRequestLocale(locale);
 
-return (
-<>
-<HeroSection />
-<PricingSection />
-<TestimonialsSection />
-<FaqSection />
-<EarlyAccessSection />
-</>
-);
+	return (
+		<>
+			<HeroSection />
+			<PricingSection />
+			<TestimonialsSection />
+			<FaqSection />
+			<EarlyAccessSection />
+		</>
+	);
 }
