@@ -114,7 +114,7 @@ export function Footer() {
 
 			{/* Built with + controls */}
 			<div className="py-2 container flex items-center justify-between">
-				<div className="flex items-center gap-4">
+				<div className="gap-4 flex items-center">
 					<a
 						href="https://supastarter.dev"
 						className="gap-2 px-4 py-2 text-sm inline-flex items-center rounded-full border bg-background text-foreground transition-colors hover:bg-muted"
@@ -123,9 +123,7 @@ export function Footer() {
 					>
 						{t("common.footer.builtWith")}
 					</a>
-					<span className="text-xs text-muted-foreground">
-						QQ: 1934416232
-					</span>
+					<span className="text-xs text-muted-foreground">QQ: 1934416232</span>
 				</div>
 				<div className="gap-3 flex items-center">
 					<ColorModeToggle />
