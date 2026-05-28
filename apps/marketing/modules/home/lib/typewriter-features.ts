@@ -12,7 +12,7 @@ export const TYPEWRITER_DATA: Record<string, LocaleFeatures> = {
 zh: {
 prefix: "",
 features: [
-{ title: "实时捕获最新 KOL 交易信号", subtitle: "KOLArena 是一个透明公正的加密货币交易信号聚合平台，实时捕获 KOL 实时数据和历史业绩展示，开箱即用。" },
+{ title: "实时最新 KOL 交易信号", subtitle: "KOLArena 是一个透明公正的加密货币交易信号聚合平台，实时捕获 KOL 实时数据和历史业绩展示，开箱即用。" },
 ],
 },
 en: {
