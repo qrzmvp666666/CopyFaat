@@ -23,6 +23,12 @@ export function TypewriterTitle() {
 	const subtitle = features[featureIndex]?.subtitle ?? "";
 
 	useEffect(() => {
+		if (features.length <= 1) {
+			setDisplayed(target);
+			setSubtitleVisible(true);
+			return;
+		}
+
 		if (!isDeleting && displayed === target) {
 			const pause = setTimeout(() => setIsDeleting(true), PAUSE_AFTER_TYPE);
 			return () => clearTimeout(pause);
@@ -49,7 +55,7 @@ export function TypewriterTitle() {
 
 	return (
 		<>
-			<span className="block">{prefix}</span>
+			{prefix && <span className="block">{prefix}</span>}
 			<span className="block text-primary">
 				{displayed}
 				<span className="inline-block w-[2px] h-[0.85em] ml-0.5 align-middle bg-primary animate-pulse" />
@@ -62,4 +68,3 @@ export function TypewriterTitle() {
 		</>
 	);
 }
-

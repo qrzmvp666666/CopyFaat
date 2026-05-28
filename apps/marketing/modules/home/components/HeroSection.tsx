@@ -3,7 +3,7 @@
 import { config } from "@config";
 import { Button } from "@repo/ui/components/button";
 import { ArrowRightIcon, StarIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 
 import heroImageDark from "../../../public/images/hero-image-dark.png";
@@ -15,6 +15,23 @@ import { TypewriterTitle } from "./TypewriterTitle";
 
 export function HeroSection() {
 	const t = useTranslations();
+	const locale = useLocale();
+	const isZh = locale === "zh";
+	const heroCopy = isZh
+		? {
+				new: "🎇 新年快乐",
+				badge: "2026 特价优惠",
+				getStarted: "免费开始",
+				documentation: "阅读文档",
+				socialProof: "999+ 用户使用 KOLArena 构建策略",
+			}
+		: {
+				new: "🎇 Happy New Year",
+				badge: "2026 Special Offer",
+				getStarted: "Start Free",
+				documentation: "Read Docs",
+				socialProof: "999+ users build strategies with KOLArena",
+			};
 
 	return (
 		<div className="relative max-w-full overflow-x-hidden bg-linear-to-t from-background via-primary/5 to-background">
@@ -22,10 +39,10 @@ export function HeroSection() {
 				<div className="mb-4 flex justify-center">
 					<div className="px-3 py-1 font-normal text-sm flex flex-wrap items-center justify-center rounded-full bg-muted p-px text-foreground">
 						<span className="gap-2 font-semibold flex items-center rounded-full">
-							{t("home.hero.new")}
+							{heroCopy.new}
 						</span>
 						<span className="ml-1 font-medium block">
-							{t("home.hero.featureBadge")}
+							{heroCopy.badge}
 						</span>
 					</div>
 				</div>
@@ -37,13 +54,13 @@ export function HeroSection() {
 							<div className="mt-4 gap-2 flex items-center justify-center">
 					<Button size="lg" variant="primary" asChild>
 						<a href={config.saasUrl}>
-							{t("home.hero.getStarted")}
+							{heroCopy.getStarted}
 							<ArrowRightIcon className="ml-2 size-4" />
 						</a>
 					</Button>
 					{config.docsUrl && (
 						<Button variant="ghost" size="lg" asChild>
-							<a href={config.docsUrl}>{t("home.hero.documentation")}</a>
+							<a href={config.docsUrl}>{heroCopy.documentation}</a>
 						</Button>
 					)}
 				</div>
@@ -74,7 +91,7 @@ export function HeroSection() {
 							))}
 						</div>
 						<p className="mt-0.5 text-xs text-muted-foreground">
-							{t("home.hero.socialProof")}
+							{heroCopy.socialProof}
 						</p>
 					</div>
 				</div>

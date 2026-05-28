@@ -10,29 +10,15 @@ features: FeatureItem[];
 
 export const TYPEWRITER_DATA: Record<string, LocaleFeatures> = {
 zh: {
-prefix: "一小时内构建您的",
+prefix: "",
 features: [
-{ title: "革命性 SaaS", subtitle: "内置多租户、认证、支付、存储一站式解决，帮您节省数周开发时间，快速验证您的产品。" },
-{ title: "认证鉴权系统", subtitle: "集成 Google、GitHub、Apple 等 OAuth 登录，支持 Magic Link、Passkey 及企业级 SSO，开箱即用。" },
-{ title: "多租户应用", subtitle: "内置组织管理与成员权限体系，轻松构建支持多团队协作的 SaaS 产品。" },
-{ title: "数据库服务", subtitle: "基于 Supabase / PostgreSQL，支持 Drizzle ORM，类型安全查询，自动迁移管理。" },
-{ title: "在线支付功能", subtitle: "无缝集成 Stripe、Lemon Squeezy，支持订阅计划、一次性付款与 Webhook 自动处理。" },
-{ title: "对象存储服务", subtitle: "对接 S3、Cloudflare R2、Supabase Storage，文件上传、管理与权限控制一体化。" },
-{ title: "博客与文档", subtitle: "内置 MDX 博客与文档站点，支持内容集合、SEO 优化与多语言，内容即代码。" },
-{ title: "数据分析平台", subtitle: "集成 PostHog、Google Analytics、Plausible 等主流分析服务，深入了解用户行为与转化漏斗。" },
+{ title: "实时捕获最新 KOL 交易信号", subtitle: "KOLArena 是一个透明公正的加密货币交易信号聚合平台，实时捕获 KOL 实时数据和历史业绩展示，开箱即用。" },
 ],
 },
 en: {
-prefix: "Build Your SaaS within an Hour",
+prefix: "",
 features: [
-{ title: "Revolutionary SaaS", subtitle: "All-in-one: multi-tenancy, auth, payments & storage built-in. Ship your product weeks faster." },
-{ title: "Authentication System", subtitle: "Google, GitHub & Apple OAuth, Magic Link, Passkeys and enterprise SSO — all ready out of the box." },
-{ title: "Multi-tenant App", subtitle: "Built-in organization management and member roles to power multi-team SaaS products effortlessly." },
-{ title: "Database Service", subtitle: "Supabase / PostgreSQL with Drizzle ORM for type-safe queries and automatic migration management." },
-{ title: "Online Payments", subtitle: "Stripe & Lemon Squeezy integration with subscription plans, one-time payments and automatic webhooks." },
-{ title: "Object Storage", subtitle: "S3, Cloudflare R2 and Supabase Storage for unified file upload, management and access control." },
-{ title: "Blog & Docs", subtitle: "MDX-powered blog and documentation site with content collections, SEO optimization and i18n support." },
-{ title: "Analytics Platform", subtitle: "PostHog, Google Analytics and Plausible integrations to understand user behavior and conversion funnels." },
+{ title: "Capture the latest KOL trading signals in real time", subtitle: "KOLArena is a transparent crypto trading signal aggregation platform that captures real-time KOL data and displays historical performance, ready to use out of the box." },
 ],
 },
 de: {

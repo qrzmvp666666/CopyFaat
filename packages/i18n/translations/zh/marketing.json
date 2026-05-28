@@ -26,8 +26,8 @@
     "title": "文档"
   },
   "faq": {
-    "description": "有任何疑问？我们为您解答。",
-    "title": "常见问题",
+    "description": "有任何问题，请通过 QQ 联系我们：",
+    "title": "常见问题解答",
     "items": {
       "refundPolicy": {
         "question": "退款政策是什么？",
@@ -68,10 +68,32 @@
       "customization": {
         "question": "有哪些自定义功能？",
         "answer": "所有代码完全开放，您可以自由修改主题、UI 组件、业务逻辑，以及集成任意第三方服务。"
+      },
+      "dataSource": {
+        "question": "KOLArena 的数据来源是哪里？",
+        "answer": "KOLArena 会聚合公开市场行情、链上数据以及 KOL 公开发布的交易观点，并通过统一的指标体系进行整理、回测和展示。"
+      },
+      "beginnerFriendly": {
+        "question": "普通小白用户适合使用你们的平台吗？",
+        "answer": "适合。平台提供可视化榜单、信号追踪和回测结果，新手可以先从胜率、收益、回撤等关键指标判断 KOL 表现。"
+      },
+      "backtestMetrics": {
+        "question": "平台提供哪些回测指标？",
+        "answer": "平台会展示胜率、累计收益、最大回撤、信号频率、盈亏比等核心指标，帮助用户更直观地评估策略质量。"
+      },
+      "planDifference": {
+        "question": "免费版与专业版套餐有什么区别？",
+        "answer": "免费版适合体验基础功能；专业版会提供更完整的实时行情、KOL 聚合 K线跟踪、实时信号推送和专属客服支持。"
+      },
+      "lifetimePlan": {
+        "question": "平台有提供终身买断套餐吗？",
+        "answer": "有。终身版适合长期使用的用户，一次购买即可长期获得对应权益，无需每月续费。"
       }
     },
     "contactEmailLabel": "有任何问题，可以给我们发邮件：",
-    "contactDiscordLabel": "或者通过以下方式联系我们："
+    "contactDiscordLabel": "或者通过以下方式联系我们：",
+    "contactQqLabel": "有任何问题，请通过 QQ 联系我们：",
+    "contactQq": "QQ号：1934416232"
   },
   "home": {
     "hero": {

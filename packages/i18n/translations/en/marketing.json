@@ -26,8 +26,8 @@
     "title": "Documentation"
   },
   "faq": {
-    "description": "Do you have any questions? We have got you covered.",
-    "title": "Frequently asked questions",
+    "description": "Have a question? Contact us via QQ:",
+    "title": "Frequently Asked Questions",
     "items": {
       "refundPolicy": {
         "question": "What is the refund policy?",
@@ -68,10 +68,32 @@
       "customization": {
         "question": "What customization options are available?",
         "answer": "All code is fully open. You can freely modify themes, UI components, business logic, and integrate any third-party services."
+      },
+      "dataSource": {
+        "question": "Where does KOLArena's data come from?",
+        "answer": "KOLArena aggregates public market data, on-chain data, and trading views publicly posted by KOLs, then organizes and backtests them through a unified metric system."
+      },
+      "beginnerFriendly": {
+        "question": "Is your platform suitable for beginners?",
+        "answer": "Yes. The platform provides visual rankings, signal tracking, and backtest results, so beginners can start with key metrics such as win rate, returns, and drawdown."
+      },
+      "backtestMetrics": {
+        "question": "What backtest metrics does the platform provide?",
+        "answer": "The platform shows core metrics such as win rate, cumulative return, maximum drawdown, signal frequency, and profit-loss ratio to help users evaluate strategy quality."
+      },
+      "planDifference": {
+        "question": "What is the difference between the Free and Pro plans?",
+        "answer": "The Free plan is for trying the basic experience. Pro includes more complete real-time market data, aggregated KOL K-line tracking, real-time signal pushes, and dedicated support."
+      },
+      "lifetimePlan": {
+        "question": "Does the platform offer a lifetime plan?",
+        "answer": "Yes. The Lifetime plan is designed for long-term users. Pay once and keep the corresponding benefits without monthly renewal."
       }
     },
     "contactEmailLabel": "Have a question? Email us at:",
-    "contactDiscordLabel": "Or reach us on:"
+    "contactDiscordLabel": "Or reach us on:",
+    "contactQqLabel": "Have a question? Contact us via QQ:",
+    "contactQq": "QQ: 1934416232"
   },
   "home": {
     "hero": {
