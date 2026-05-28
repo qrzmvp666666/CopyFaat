@@ -3,7 +3,6 @@ import { LocaleLink } from "@i18n/routing";
 import { Logo } from "@repo/ui";
 import { ColorModeToggle } from "@shared/components/ColorModeToggle";
 import { LocaleSwitch } from "@shared/components/LocaleSwitch";
-import { MailIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
 
@@ -14,7 +13,7 @@ export function Footer() {
 	return (
 		<footer className="text-sm border-t bg-background text-muted-foreground">
 			{/* Main grid */}
-			<div className="py-12 container">
+			<div className="pt-10 pb-6 container">
 				<div className="gap-8 lg:grid-cols-[2fr_1fr_1fr_1fr] grid grid-cols-1">
 					{/* Brand */}
 					<div>
@@ -114,15 +113,20 @@ export function Footer() {
 			</div>
 
 			{/* Built with + controls */}
-			<div className="py-4 container flex items-center justify-between">
-				<a
-					href="https://supastarter.dev"
-					className="gap-2 px-4 py-2 text-sm inline-flex items-center rounded-full border bg-background text-foreground transition-colors hover:bg-muted"
-					target="_blank"
-					rel="noopener noreferrer"
-				>
-					{t("common.footer.builtWith")}
-				</a>
+			<div className="py-2 container flex items-center justify-between">
+				<div className="flex items-center gap-4">
+					<a
+						href="https://supastarter.dev"
+						className="gap-2 px-4 py-2 text-sm inline-flex items-center rounded-full border bg-background text-foreground transition-colors hover:bg-muted"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						{t("common.footer.builtWith")}
+					</a>
+					<span className="text-xs text-muted-foreground">
+						QQ: 1934416232
+					</span>
+				</div>
 				<div className="gap-3 flex items-center">
 					<ColorModeToggle />
 					<Suspense>
@@ -157,7 +161,7 @@ export function Footer() {
 						>
 							{t("common.footer.termsAndConditions")}
 						</LocaleLink>
-						<div className="gap-3 ml-2 flex items-center">
+						{/* <div className="gap-3 ml-2 flex items-center">
 							<a
 								href="https://twitter.com"
 								className="transition-colors hover:text-foreground"
@@ -197,7 +201,7 @@ export function Footer() {
 							>
 								<MailIcon className="size-4" />
 							</a>
-						</div>
+						</div> */}
 					</div>
 				</div>
 			</div>
