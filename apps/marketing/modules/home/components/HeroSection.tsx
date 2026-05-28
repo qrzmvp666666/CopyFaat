@@ -21,14 +21,14 @@ export function HeroSection() {
 				new: "🎇 新年快乐",
 				badge: "2026 特价优惠",
 				getStarted: "免费开始",
-				documentation: "阅读文档",
+				documentation: "查看引导",
 				socialProof: "999+ 用户使用 KOLArena 构建策略",
 			}
 		: {
 				new: "🎇 Happy New Year",
 				badge: "2026 Special Offer",
 				getStarted: "Start Free",
-				documentation: "Read Docs",
+				documentation: "View Guide",
 				socialProof: "999+ users build strategies with KOLArena",
 			};
 
@@ -62,11 +62,9 @@ export function HeroSection() {
 							<ArrowRightIcon className="ml-2 size-4" />
 						</a>
 					</Button>
-					{config.docsUrl && (
-						<Button variant="ghost" size="lg" asChild>
-							<a href={config.docsUrl}>{heroCopy.documentation}</a>
-						</Button>
-					)}
+					<Button variant="ghost" size="lg" asChild>
+						<a href="#hero-image-area">{heroCopy.documentation}</a>
+					</Button>
 				</div>
 
 				{/* Social proof */}
@@ -100,7 +98,7 @@ export function HeroSection() {
 					</div>
 				</div>
 
-				<div className="mt-8 lg:mt-10 p-2 mx-auto rounded-4xl border border-primary/10 bg-primary/5 max-w-6xl relative overflow-hidden">
+				<div id="hero-image-area" className="mt-8 lg:mt-10 p-2 mx-auto rounded-4xl border border-primary/10 bg-primary/5 max-w-6xl relative overflow-hidden scroll-mt-28">
 				<BorderBeam size={250} duration={10} colorFrom="#ffaa40" colorTo="#9c40ff" />
 					<Image
 						src={heroImage}

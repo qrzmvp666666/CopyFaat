@@ -177,13 +177,7 @@ export function PricingSection() {
 		return result;
 	}, [t, saasUrl, interval, paymentMethod, isChinesePayment, marketingPlanCopy]);
 
-	const hasSubscriptions =
-		!isChinesePayment &&
-		Object.values(paymentsConfig.plans).some((plan) =>
-			"prices" in plan
-				? (plan as PaidPlan).prices.some((price) => price.type === "subscription")
-				: false,
-		);
+	const hasSubscriptions = false;
 
 	return (
 		<section id="pricing" className="scroll-mt-16 py-12 lg:py-16 border-y">
