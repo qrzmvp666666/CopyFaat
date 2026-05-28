@@ -12,13 +12,13 @@ export const TYPEWRITER_DATA: Record<string, LocaleFeatures> = {
 zh: {
 prefix: "",
 features: [
-{ title: "实时最新 KOL 交易信号", subtitle: "KOLArena 是一个透明公正的加密货币交易信号聚合平台，实时捕获 KOL 实时数据和历史业绩展示，开箱即用。" },
+{ title: "实时最新 KOL 交易信号", subtitle: "一站追踪 KOL 信号、市场数据与历史表现。" },
 ],
 },
 en: {
 prefix: "",
 features: [
-{ title: "Capture the latest KOL trading signals in real time", subtitle: "KOLArena is a transparent crypto trading signal aggregation platform that captures real-time KOL data and displays historical performance, ready to use out of the box." },
+{ title: "Real-time KOL trading signals", subtitle: "Track KOL signals, market data, and historical performance in one place." },
 ],
 },
 de: {
