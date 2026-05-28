@@ -35,11 +35,11 @@ export function Footer() {
 									{t("common.footer.features")}
 								</a>
 							</li>
-							<li>
+							{/* <li>
 								<LocaleLink href="/blog" className="transition-colors hover:text-foreground">
 									{t("common.footer.blog")}
 								</LocaleLink>
-							</li>
+							</li> */}
 							<li>
 								<a href="/#pricing" className="transition-colors hover:text-foreground">
 									{t("common.footer.pricing")}
@@ -54,7 +54,7 @@ export function Footer() {
 							{t("common.footer.resourcesTitle")}
 						</h3>
 						<ul className="space-y-3">
-							{config.docsUrl && (
+							{/* {config.docsUrl && (
 								<li>
 									<a href={config.docsUrl} className="transition-colors hover:text-foreground">
 										{t("common.footer.docs")}
@@ -68,7 +68,7 @@ export function Footer() {
 								>
 									{t("common.footer.changelog")}
 								</LocaleLink>
-							</li>
+							</li> */}
 							<li>
 								<LocaleLink href="/contact" className="transition-colors hover:text-foreground">
 									{t("common.footer.contact")}

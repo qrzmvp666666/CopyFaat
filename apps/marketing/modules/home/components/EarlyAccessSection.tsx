@@ -1,5 +1,6 @@
 import { config } from "@config";
 import { Button } from "@repo/ui/components/button";
+import { ArrowRightIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export function EarlyAccessSection() {
@@ -20,7 +21,10 @@ export function EarlyAccessSection() {
 					<div className="mt-6 gap-2 flex items-center justify-center">
 						{config.saasUrl && (
 							<Button size="lg" variant="primary" asChild>
-								<a href={config.saasUrl}>{t("home.earlyAccess.getStarted")}</a>
+								<a href={config.saasUrl}>
+									{t("home.earlyAccess.getStarted")}
+									<ArrowRightIcon className="ml-2 size-4" />
+								</a>
 							</Button>
 						)}
 						{config.docsUrl && (
