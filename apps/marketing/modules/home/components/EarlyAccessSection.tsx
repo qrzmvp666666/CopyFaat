@@ -1,6 +1,5 @@
 import { config } from "@config";
 import { Button } from "@repo/ui/components/button";
-import { ArrowRightIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export function EarlyAccessSection() {
@@ -22,14 +21,13 @@ return (
 {config.saasUrl && (
 <Button size="lg" variant="primary" asChild>
 <a href={config.saasUrl}>
-{t("home.hero.getStarted")}
-<ArrowRightIcon className="ml-2 size-4" />
+{t("home.earlyAccess.getStarted")}
 </a>
 </Button>
 )}
 {config.docsUrl && (
 <Button variant="ghost" size="lg" asChild>
-<a href={config.docsUrl}>{t("home.hero.documentation")}</a>
+<a href={config.docsUrl}>{t("home.earlyAccess.readDocs")}</a>
 </Button>
 )}
 </div>
