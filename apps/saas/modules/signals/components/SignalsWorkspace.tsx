@@ -1,11 +1,19 @@
 "use client";
 
 import { Button, cn } from "@repo/ui";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@repo/ui/components/dropdown-menu";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
 	BellIcon,
 	ChartCandlestickIcon,
 	CheckCircle2Icon,
+	CheckIcon,
+	ChevronDownIcon,
 	Clock3Icon,
 	Maximize2Icon,
 	RadioIcon,
@@ -24,10 +32,14 @@ import { TradingViewSignalChart } from "./TradingViewSignalChart";
 const SUPPORTED_TIMEFRAMES = ["15m", "1h", "4h", "1d"] as const;
 const SIGNAL_DIRECTIONS = ["all", "long", "short"] as const;
 const SIGNAL_STATUSES = ["active", "history"] as const;
+const TIME_RANGES = ["all", "24h", "3d", "7d", "30d"] as const;
+const ENTRY_STATUSES = ["all", "pending", "entered"] as const;
 
 type Timeframe = (typeof SUPPORTED_TIMEFRAMES)[number];
 type SignalDirection = (typeof SIGNAL_DIRECTIONS)[number];
 type SignalStatus = (typeof SIGNAL_STATUSES)[number];
+type TimeRange = (typeof TIME_RANGES)[number];
+type EntryStatus = (typeof ENTRY_STATUSES)[number];
 
 interface Instrument {
 	symbol: string;
@@ -119,7 +131,7 @@ const SOURCES: Source[] = [
 		handle: "@SignalLab",
 		initials: "所",
 		accent: "bg-sky-500",
-		avatar: "https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGI_400x400.jpg",
+		avatar: "https://i.pravatar.cc/80?img=11",
 	},
 	{
 		id: "feiyang",
@@ -127,7 +139,7 @@ const SOURCES: Source[] = [
 		handle: "@Momentum",
 		initials: "飞",
 		accent: "bg-emerald-500",
-		avatar: "https://pbs.twimg.com/profile_images/1648376978935726081/L0LwFYFX_400x400.jpg",
+		avatar: "https://i.pravatar.cc/80?img=33",
 	},
 	{
 		id: "shanzhiwang",
@@ -135,7 +147,7 @@ const SOURCES: Source[] = [
 		handle: "@AltScout",
 		initials: "山",
 		accent: "bg-amber-500",
-		avatar: "https://pbs.twimg.com/profile_images/1649812903669559296/LiWO2WP9_400x400.jpg",
+		avatar: "https://i.pravatar.cc/80?img=47",
 	},
 	{
 		id: "wangbot",
@@ -143,7 +155,7 @@ const SOURCES: Source[] = [
 		handle: "@Quant",
 		initials: "WG",
 		accent: "bg-stone-500",
-		avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=wgbot&backgroundColor=374151",
+		avatar: "https://i.pravatar.cc/80?img=64",
 	},
 ];
 
@@ -154,7 +166,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "xinsuo",
 		sourceName: "所长",
 		avatarLabel: "所",
-		avatarUrl: "https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGI_400x400.jpg",
+		avatarUrl: "https://i.pravatar.cc/80?img=11",
 		direction: "long",
 		status: "active",
 		entry: 69_700,
@@ -171,7 +183,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "feiyang",
 		sourceName: "飞扬",
 		avatarLabel: "飞",
-		avatarUrl: "https://pbs.twimg.com/profile_images/1648376978935726081/L0LwFYFX_400x400.jpg",
+		avatarUrl: "https://i.pravatar.cc/80?img=33",
 		direction: "long",
 		status: "active",
 		entry: 69_500,
@@ -188,7 +200,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "shanzhiwang",
 		sourceName: "山寨之王",
 		avatarLabel: "山",
-		avatarUrl: "https://pbs.twimg.com/profile_images/1649812903669559296/LiWO2WP9_400x400.jpg",
+		avatarUrl: "https://i.pravatar.cc/80?img=47",
 		direction: "long",
 		status: "history",
 		entry: 68_324,
@@ -206,7 +218,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "xinsuo",
 		sourceName: "所长",
 		avatarLabel: "所",
-		avatarUrl: "https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGI_400x400.jpg",
+		avatarUrl: "https://i.pravatar.cc/80?img=11",
 		direction: "short",
 		status: "history",
 		entry: 73_350,
@@ -224,7 +236,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "xinsuo",
 		sourceName: "所长",
 		avatarLabel: "所",
-		avatarUrl: "https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGI_400x400.jpg",
+		avatarUrl: "https://i.pravatar.cc/80?img=11",
 		direction: "long",
 		status: "active",
 		entry: 2_876,
@@ -241,7 +253,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "wangbot",
 		sourceName: "WG Bot",
 		avatarLabel: "WG",
-		avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=wgbot&backgroundColor=374151",
+		avatarUrl: "https://i.pravatar.cc/80?img=64",
 		direction: "short",
 		status: "history",
 		entry: 2_945,
@@ -259,7 +271,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "feiyang",
 		sourceName: "飞扬",
 		avatarLabel: "飞",
-		avatarUrl: "https://pbs.twimg.com/profile_images/1648376978935726081/L0LwFYFX_400x400.jpg",
+		avatarUrl: "https://i.pravatar.cc/80?img=33",
 		direction: "long",
 		status: "active",
 		entry: 87.5,
@@ -276,7 +288,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "shanzhiwang",
 		sourceName: "山寨之王",
 		avatarLabel: "山",
-		avatarUrl: "https://pbs.twimg.com/profile_images/1649812903669559296/LiWO2WP9_400x400.jpg",
+		avatarUrl: "https://i.pravatar.cc/80?img=47",
 		direction: "short",
 		status: "history",
 		entry: 91.8,
@@ -334,6 +346,8 @@ export function SignalsWorkspace() {
 	const [selectedSource, setSelectedSource] = useState("all");
 	const [selectedDirection, setSelectedDirection] = useState<SignalDirection>("all");
 	const [selectedStatus, setSelectedStatus] = useState<SignalStatus>("active");
+	const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("30d");
+	const [selectedEntryStatus, setSelectedEntryStatus] = useState<EntryStatus>("all");
 	const [activeSignalId, setActiveSignalId] = useState<string | null>("btc-1");
 
 	const candles = useMemo(
@@ -518,7 +532,7 @@ export function SignalsWorkspace() {
 				</aside>
 
 				<main className="min-w-0 flex flex-col bg-[#141414]">
-					<section className="px-4 py-3 border-b bg-[#141414]">
+					<section className="px-3 py-3 border-b bg-[#141414]">
 						<div className="gap-3 flex flex-col">
 							<div className="gap-2 flex flex-wrap items-center">
 								<button
@@ -615,6 +629,96 @@ export function SignalsWorkspace() {
 									))}
 								</div>
 
+								{/* 时间范围下拉 */}
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<button
+											type="button"
+											className="gap-1.5 px-2.5 py-1.5 text-xs font-medium flex items-center rounded-md border bg-[#141414] text-muted-foreground hover:text-white transition-colors"
+										>
+											{selectedTimeRange === "all"
+												? "信号时间"
+												: selectedTimeRange === "24h"
+													? "24小时内"
+													: selectedTimeRange === "3d"
+														? "3天内"
+														: selectedTimeRange === "7d"
+															? "7天内"
+															: "30天内"}
+											<ChevronDownIcon className="size-3" />
+										</button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										align="start"
+										className="min-w-[120px] bg-[#1a1a1a] border-white/10 text-white"
+									>
+										{TIME_RANGES.map((range) => (
+											<DropdownMenuItem
+												key={range}
+												className="gap-2 text-xs cursor-pointer"
+												onClick={() => setSelectedTimeRange(range)}
+											>
+												<CheckIcon
+													className={cn(
+														"size-3.5",
+														selectedTimeRange === range ? "opacity-100" : "opacity-0",
+													)}
+												/>
+												{range === "all"
+													? "信号时间"
+													: range === "24h"
+														? "24小时内"
+														: range === "3d"
+															? "3天内"
+															: range === "7d"
+																? "7天内"
+																: "30天内"}
+											</DropdownMenuItem>
+										))}
+									</DropdownMenuContent>
+								</DropdownMenu>
+
+								{/* 入场状态下拉 */}
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<button
+											type="button"
+											className="gap-1.5 px-2.5 py-1.5 text-xs font-medium flex items-center rounded-md border bg-[#141414] text-muted-foreground hover:text-white transition-colors"
+										>
+											{selectedEntryStatus === "all"
+												? "入场状态"
+												: selectedEntryStatus === "pending"
+													? "待入场"
+													: "已入场"}
+											<ChevronDownIcon className="size-3" />
+										</button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										align="start"
+										className="min-w-[110px] bg-[#1a1a1a] border-white/10 text-white"
+									>
+										{ENTRY_STATUSES.map((es) => (
+											<DropdownMenuItem
+												key={es}
+												className="gap-2 text-xs cursor-pointer"
+												onClick={() => setSelectedEntryStatus(es)}
+											>
+												<CheckIcon
+													className={cn(
+														"size-3.5",
+														selectedEntryStatus === es ? "opacity-100" : "opacity-0",
+													)}
+												/>
+												{es === "all"
+													? "入场状态"
+													: es === "pending"
+														? "待入场"
+														: "已入场"}
+											</DropdownMenuItem>
+										))}
+									</DropdownMenuContent>
+								</DropdownMenu>
+
 								<Button
 									size="icon"
 									variant="ghost"
@@ -705,7 +809,7 @@ export function SignalsWorkspace() {
 							>
 								<span>{t(`status.${status}`)}</span>
 								{statusCounts[status] > 0 && (
-									<span className="ml-1 text-[10px] opacity-70">{statusCounts[status]}</span>
+									<span className="ml-1.5 text-xs font-semibold opacity-60">{statusCounts[status]}</span>
 								)}
 							</button>
 						))}

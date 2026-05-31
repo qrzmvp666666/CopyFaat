@@ -36,6 +36,7 @@ interface SignalChartCandle extends CandlestickData<UTCTimestamp> {}
 
 export interface SignalChartSignal {
 	avatarLabel: string;
+	avatarUrl: string;
 	direction: "long" | "short";
 	entry: number;
 	id: string;
@@ -383,11 +384,21 @@ export function TradingViewSignalChart({
 						>
 							<span
 								className={cn(
-									"size-7 font-bold text-white flex items-center justify-center rounded-full text-[11px]",
-									signal.direction === "long" ? "bg-emerald-500" : "bg-rose-500",
+									"size-7 flex shrink-0 items-center justify-center rounded-full overflow-hidden",
+									!signal.avatarUrl && (signal.direction === "long" ? "bg-emerald-500" : "bg-rose-500"),
 								)}
 							>
-								{signal.avatarLabel}
+								{signal.avatarUrl ? (
+									<img
+										alt={signal.sourceName}
+										className="size-7 object-cover"
+										src={signal.avatarUrl}
+									/>
+								) : (
+									<span className="font-bold text-white text-[11px]">
+										{signal.avatarLabel}
+									</span>
+								)}
 							</span>
 							<span className="whitespace-nowrap">{signal.sourceName}</span>
 							{isActive && (
