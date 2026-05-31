@@ -157,6 +157,38 @@ const SOURCES: Source[] = [
 		accent: "bg-stone-500",
 		avatar: "https://i.pravatar.cc/80?img=64",
 	},
+	{
+		id: "chengg",
+		name: "陈哥",
+		handle: "@ChenTrade",
+		initials: "陈",
+		accent: "bg-blue-500",
+		avatar: "https://i.pravatar.cc/80?img=52",
+	},
+	{
+		id: "bidaoge",
+		name: "必到哥",
+		handle: "@MustArrive",
+		initials: "必",
+		accent: "bg-purple-500",
+		avatar: "https://i.pravatar.cc/80?img=57",
+	},
+	{
+		id: "shuqin",
+		name: "舒琴",
+		handle: "@ShuQin",
+		initials: "舒",
+		accent: "bg-pink-500",
+		avatar: "https://i.pravatar.cc/80?img=25",
+	},
+	{
+		id: "fengg",
+		name: "峰哥",
+		handle: "@FengSignal",
+		initials: "峰",
+		accent: "bg-teal-500",
+		avatar: "https://i.pravatar.cc/80?img=68",
+	},
 ];
 
 const SIGNALS: TradeSignal[] = [
@@ -300,6 +332,125 @@ const SIGNALS: TradeSignal[] = [
 		y: 35,
 		outcome: "TP1",
 	},
+	{
+		id: "btc-5",
+		symbol: "BTCUSDT",
+		sourceId: "chengg",
+		sourceName: "陈哥",
+		avatarLabel: "陈",
+		avatarUrl: "https://i.pravatar.cc/80?img=52",
+		direction: "short",
+		status: "active",
+		entry: 71_200,
+		takeProfit: 68_500,
+		stopLoss: 72_300,
+		submittedAt: "03/26 09:15",
+		confidence: 1.95,
+		x: 60,
+		y: 44,
+	},
+	{
+		id: "btc-6",
+		symbol: "BTCUSDT",
+		sourceId: "bidaoge",
+		sourceName: "必到哥",
+		avatarLabel: "必",
+		avatarUrl: "https://i.pravatar.cc/80?img=57",
+		direction: "long",
+		status: "active",
+		entry: 68_900,
+		takeProfit: 72_400,
+		stopLoss: 67_600,
+		submittedAt: "03/26 11:30",
+		confidence: 2.48,
+		x: 92,
+		y: 70,
+	},
+	{
+		id: "btc-7",
+		symbol: "BTCUSDT",
+		sourceId: "shuqin",
+		sourceName: "舒琴",
+		avatarLabel: "舒",
+		avatarUrl: "https://i.pravatar.cc/80?img=25",
+		direction: "long",
+		status: "active",
+		entry: 69_100,
+		takeProfit: 73_000,
+		stopLoss: 68_200,
+		submittedAt: "03/26 13:45",
+		confidence: 1.62,
+		x: 96,
+		y: 66,
+	},
+	{
+		id: "eth-3",
+		symbol: "ETHUSDT",
+		sourceId: "fengg",
+		sourceName: "峰哥",
+		avatarLabel: "峰",
+		avatarUrl: "https://i.pravatar.cc/80?img=68",
+		direction: "long",
+		status: "active",
+		entry: 2_830,
+		takeProfit: 3_100,
+		stopLoss: 2_740,
+		submittedAt: "03/26 10:20",
+		confidence: 2.12,
+		x: 83,
+		y: 55,
+	},
+	{
+		id: "eth-4",
+		symbol: "ETHUSDT",
+		sourceId: "bidaoge",
+		sourceName: "必到哥",
+		avatarLabel: "必",
+		avatarUrl: "https://i.pravatar.cc/80?img=57",
+		direction: "short",
+		status: "active",
+		entry: 2_960,
+		takeProfit: 2_750,
+		stopLoss: 3_060,
+		submittedAt: "03/25 20:55",
+		confidence: 1.38,
+		x: 68,
+		y: 38,
+	},
+	{
+		id: "sol-3",
+		symbol: "SOLUSDT",
+		sourceId: "chengg",
+		sourceName: "陈哥",
+		avatarLabel: "陈",
+		avatarUrl: "https://i.pravatar.cc/80?img=52",
+		direction: "long",
+		status: "active",
+		entry: 85.6,
+		takeProfit: 92.8,
+		stopLoss: 82.4,
+		submittedAt: "03/26 08:30",
+		confidence: 1.88,
+		x: 65,
+		y: 58,
+	},
+	{
+		id: "sol-4",
+		symbol: "SOLUSDT",
+		sourceId: "wangbot",
+		sourceName: "WG Bot",
+		avatarLabel: "WG",
+		avatarUrl: "https://i.pravatar.cc/80?img=64",
+		direction: "short",
+		status: "active",
+		entry: 90.2,
+		takeProfit: 84.5,
+		stopLoss: 93.1,
+		submittedAt: "03/26 14:10",
+		confidence: 1.55,
+		x: 88,
+		y: 40,
+	},
 ];
 
 const MARKET_SEED: Record<string, number> = {
@@ -386,6 +537,19 @@ export function SignalsWorkspace() {
 	);
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
+
+	// 图表只展示有效信号（不含历史）
+	const chartSignals = useMemo(
+		() =>
+			SIGNALS.filter(
+				(signal) =>
+					signal.symbol === selectedSymbol &&
+					signal.status === "active" &&
+					(selectedSource === "all" || signal.sourceId === selectedSource) &&
+					(selectedDirection === "all" || signal.direction === selectedDirection),
+			),
+		[selectedDirection, selectedSource, selectedSymbol],
+	);
 	const selectedInstrument =
 		INSTRUMENTS.find((instrument) => instrument.symbol === selectedSymbol) ?? INSTRUMENTS[0];
 	function formatPrice(value: number, fractionDigits = selectedSymbol === "SOLUSDT" ? 2 : 0) {
@@ -611,113 +775,97 @@ export function SignalsWorkspace() {
 									))}
 								</div>
 
-								<div className="gap-1 p-1 flex items-center rounded-md border bg-[#141414]">
-									{SUPPORTED_TIMEFRAMES.map((timeframe) => (
-										<button
-											key={timeframe}
-											type="button"
-											onClick={() => setSelectedTimeframe(timeframe)}
-											className={cn(
-												"px-3 py-1.5 text-xs font-semibold rounded-sm transition-colors",
-												selectedTimeframe === timeframe
-													? "bg-foreground text-background"
-													: "text-muted-foreground hover:bg-white/8 hover:text-foreground",
-											)}
-										>
-											{timeframe}
-										</button>
-									))}
-								</div>
-
 								{/* 时间范围下拉 */}
 								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<button
-											type="button"
-											className="gap-1.5 px-2.5 py-1.5 text-xs font-medium flex items-center rounded-md border bg-[#141414] text-muted-foreground hover:text-white transition-colors"
-										>
-											{selectedTimeRange === "all"
-												? "信号时间"
-												: selectedTimeRange === "24h"
-													? "24小时内"
-													: selectedTimeRange === "3d"
-														? "3天内"
-														: selectedTimeRange === "7d"
-															? "7天内"
-															: "30天内"}
-											<ChevronDownIcon className="size-3" />
-										</button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent
-										align="start"
-										className="min-w-[120px] bg-[#1a1a1a] border-white/10 text-white"
-									>
-										{TIME_RANGES.map((range) => (
-											<DropdownMenuItem
-												key={range}
-												className="gap-2 text-xs cursor-pointer"
-												onClick={() => setSelectedTimeRange(range)}
-											>
-												<CheckIcon
-													className={cn(
-														"size-3.5",
-														selectedTimeRange === range ? "opacity-100" : "opacity-0",
-													)}
-												/>
-												{range === "all"
-													? "信号时间"
-													: range === "24h"
-														? "24小时内"
-														: range === "3d"
-															? "3天内"
-															: range === "7d"
-																? "7天内"
-																: "30天内"}
-											</DropdownMenuItem>
-										))}
-									</DropdownMenuContent>
+								<DropdownMenuTrigger asChild>
+								<button
+								type="button"
+								className="gap-1.5 px-2.5 py-1.5 text-xs font-medium flex items-center rounded-md border bg-[#141414] text-muted-foreground hover:text-white transition-colors"
+								>
+								{selectedTimeRange === "all"
+								? "信号时间"
+								: selectedTimeRange === "24h"
+								? "24小时内"
+								: selectedTimeRange === "3d"
+								? "3天内"
+								: selectedTimeRange === "7d"
+								? "7天内"
+								: "30天内"}
+								<ChevronDownIcon className="size-3" />
+								</button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent
+								align="start"
+								className="min-w-[120px] bg-[#1a1a1a] border-white/10 text-white"
+								>
+								{TIME_RANGES.map((range) => (
+								<DropdownMenuItem
+								key={range}
+								className="gap-2 text-xs cursor-pointer"
+								onClick={() => setSelectedTimeRange(range)}
+								>
+								<CheckIcon
+								className={cn(
+								"size-3.5",
+								selectedTimeRange === range ? "opacity-100" : "opacity-0",
+								)}
+								/>
+								{range === "all"
+								? "信号时间"
+								: range === "24h"
+								? "24小时内"
+								: range === "3d"
+								? "3天内"
+								: range === "7d"
+								? "7天内"
+								: "30天内"}
+								</DropdownMenuItem>
+								))}
+								</DropdownMenuContent>
 								</DropdownMenu>
-
+		
 								{/* 入场状态下拉 */}
 								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<button
-											type="button"
-											className="gap-1.5 px-2.5 py-1.5 text-xs font-medium flex items-center rounded-md border bg-[#141414] text-muted-foreground hover:text-white transition-colors"
-										>
-											{selectedEntryStatus === "all"
-												? "入场状态"
-												: selectedEntryStatus === "pending"
-													? "待入场"
-													: "已入场"}
-											<ChevronDownIcon className="size-3" />
-										</button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent
-										align="start"
-										className="min-w-[110px] bg-[#1a1a1a] border-white/10 text-white"
-									>
-										{ENTRY_STATUSES.map((es) => (
-											<DropdownMenuItem
-												key={es}
-												className="gap-2 text-xs cursor-pointer"
-												onClick={() => setSelectedEntryStatus(es)}
-											>
-												<CheckIcon
-													className={cn(
-														"size-3.5",
-														selectedEntryStatus === es ? "opacity-100" : "opacity-0",
-													)}
-												/>
-												{es === "all"
-													? "入场状态"
-													: es === "pending"
-														? "待入场"
-														: "已入场"}
-											</DropdownMenuItem>
-										))}
-									</DropdownMenuContent>
+								<DropdownMenuTrigger asChild>
+								<button
+								type="button"
+								className="gap-1.5 px-2.5 py-1.5 text-xs font-medium flex items-center rounded-md border bg-[#141414] text-muted-foreground hover:text-white transition-colors"
+								>
+								{selectedEntryStatus === "all"
+								? "入场状态"
+								: selectedEntryStatus === "pending"
+								? "待入场"
+								: "已入场"}
+								<ChevronDownIcon className="size-3" />
+								</button>
+								</DropdownMenuTrigger>
+								<DropdownMenuContent
+								align="start"
+								className="min-w-[110px] bg-[#1a1a1a] border-white/10 text-white"
+								>
+								{ENTRY_STATUSES.map((es) => (
+								<DropdownMenuItem
+								key={es}
+								className="gap-2 text-xs cursor-pointer"
+								onClick={() => setSelectedEntryStatus(es)}
+								>
+								<CheckIcon
+								className={cn(
+								"size-3.5",
+								selectedEntryStatus === es ? "opacity-100" : "opacity-0",
+								)}
+								/>
+								{es === "all"
+								? "入场状态"
+								: es === "pending"
+								? "待入场"
+								: "已入场"}
+								</DropdownMenuItem>
+								))}
+								</DropdownMenuContent>
 								</DropdownMenu>
+		
+		
 
 								<Button
 									size="icon"
@@ -739,16 +887,30 @@ export function SignalsWorkspace() {
 
 					<section className="min-h-0 flex flex-1 flex-col">
 						<div className="px-4 py-3 flex items-center justify-between border-b bg-[#141414]">
-							<div className="gap-2 flex items-center">
+							<div className="gap-3 flex items-center">
 								<ChartCandlestickIcon className="size-4 text-muted-foreground" />
 								<span className="font-mono text-sm font-semibold">
 									{selectedSymbol}
 								</span>
-								<span className="text-sm text-muted-foreground">
-									{selectedTimeframe}
-								</span>
+								<div className="gap-0.5 p-0.5 flex items-center rounded-md border bg-[#141414]">
+									{SUPPORTED_TIMEFRAMES.map((timeframe) => (
+										<button
+											key={timeframe}
+											type="button"
+											onClick={() => setSelectedTimeframe(timeframe)}
+											className={cn(
+												"px-2.5 py-1 text-xs font-semibold rounded-sm transition-colors",
+												selectedTimeframe === timeframe
+													? "bg-foreground text-background"
+													: "text-muted-foreground hover:bg-white/8 hover:text-foreground",
+											)}
+										>
+											{timeframe}
+										</button>
+									))}
+								</div>
 							</div>
-							<div className="gap-1 flex items-center">
+							<div className="gap-2 flex items-center">
 								<Button size="icon" variant="ghost" aria-label={t("actions.alert")}>
 									<BellIcon className="size-4" />
 								</Button>
@@ -775,7 +937,7 @@ export function SignalsWorkspace() {
 								}}
 								locale={locale}
 								onSelectSignal={focusSignal}
-								signals={filteredSignals}
+								signals={chartSignals}
 								symbol={selectedSymbol}
 								timeframe={selectedTimeframe}
 							/>
