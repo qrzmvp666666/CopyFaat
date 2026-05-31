@@ -588,13 +588,13 @@ export function SignalsWorkspace() {
 							type="button"
 							onClick={() => selectSymbol(instrument.symbol)}
 							className={cn(
-								"gap-2 px-3 py-1.5 text-sm flex shrink-0 items-center rounded-md border text-left transition-colors hover:bg-white/8",
+								"gap-2 px-3 py-1.5 text-sm hover:bg-white/8 flex shrink-0 items-center rounded-md border text-left transition-colors",
 								selectedSymbol === instrument.symbol
-									? "border-foreground/20 bg-white/8"
+									? "bg-white/8 border-foreground/20"
 									: "border-transparent bg-transparent",
 							)}
 						>
-							<span className="size-5 flex shrink-0 items-center justify-center rounded-full overflow-hidden bg-black">
+							<span className="size-5 bg-black flex shrink-0 items-center justify-center overflow-hidden rounded-full">
 								<img
 									alt={instrument.base}
 									className="size-6 object-contain"
@@ -624,7 +624,7 @@ export function SignalsWorkspace() {
 			</header>
 
 			<div className="gap-0 lg:h-[calc(100vh-121px)] xl:grid-cols-[minmax(700px,1fr)_328px] grid min-h-[760px] grid-cols-1">
-				<aside className="xl:border-r xl:border-b-0 border-b bg-[#141414] hidden">
+				<aside className="xl:border-r xl:border-b-0 hidden border-b bg-[#141414]">
 					<div className="px-4 py-4 flex items-center justify-between border-b">
 						<div>
 							<p className="text-xs text-muted-foreground">{t("market.eyebrow")}</p>
@@ -703,10 +703,10 @@ export function SignalsWorkspace() {
 									type="button"
 									onClick={() => setSelectedSource("all")}
 									className={cn(
-										"px-2.5 py-1 text-xs font-medium rounded-md border transition-colors",
+										"px-2.5 py-1.5 text-xs font-medium min-w-[52px] rounded-md border text-center transition-colors",
 										selectedSource === "all"
 											? "border-foreground/20 bg-foreground text-background"
-											: "bg-[#141414] hover:bg-white/8",
+											: "hover:bg-white/8 bg-[#141414]",
 									)}
 								>
 									{t("filters.allSources")}
@@ -720,17 +720,18 @@ export function SignalsWorkspace() {
 											"gap-1.5 px-2 py-1 text-xs flex items-center rounded-md border transition-colors",
 											selectedSource === source.id
 												? "border-foreground/20 bg-foreground text-background"
-												: "bg-[#141414] hover:bg-white/8",
+												: "hover:bg-white/8 bg-[#141414]",
 										)}
 									>
-										<span className="size-5 flex shrink-0 items-center justify-center rounded-full overflow-hidden">
+										<span className="size-5 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
 											<img
 												alt={source.name}
 												className="size-5 object-cover"
 												onError={(e) => {
 													const target = e.currentTarget;
 													target.style.display = "none";
-													const next = target.nextElementSibling as HTMLElement | null;
+													const next =
+														target.nextElementSibling as HTMLElement | null;
 													if (next) next.style.display = "flex";
 												}}
 												src={source.avatar}
@@ -751,121 +752,121 @@ export function SignalsWorkspace() {
 							</div>
 
 							<div className="gap-2 flex flex-wrap items-center">
-								<div className="gap-1 p-1 flex items-center rounded-md border bg-[#141414]">
-									{SIGNAL_DIRECTIONS.map((direction) => (
-										<button
-											key={direction}
-											type="button"
-											onClick={() => setSelectedDirection(direction)}
-											className={cn(
-												"gap-1 px-3 py-1.5 text-xs font-semibold flex items-center rounded-sm transition-colors",
-												selectedDirection === direction
-													? "bg-foreground text-background"
-													: "text-muted-foreground hover:bg-white/8 hover:text-foreground",
-											)}
-										>
-											{direction === "long" && (
-												<TrendingUpIcon className="size-3.5" />
-											)}
-											{direction === "short" && (
-												<TrendingDownIcon className="size-3.5" />
-											)}
-											{t(`direction.${direction}`)}
-										</button>
-									))}
-								</div>
+								{SIGNAL_DIRECTIONS.map((direction) => (
+									<button
+										key={direction}
+										type="button"
+										onClick={() => setSelectedDirection(direction)}
+										className={cn(
+											"gap-1 min-w-[52px] px-2.5 py-1.5 text-xs font-semibold flex items-center justify-center rounded-md border transition-colors",
+											selectedDirection === direction
+												? "border-foreground/20 bg-foreground text-background"
+												: "bg-[#141414] border-transparent hover:bg-white/8 text-muted-foreground hover:text-foreground",
+										)}
+									>
+										{direction === "long" && (
+											<TrendingUpIcon className="size-3.5" />
+										)}
+										{direction === "short" && (
+											<TrendingDownIcon className="size-3.5" />
+										)}
+										{t(`direction.${direction}`)}
+									</button>
+								))}
 
 								{/* 时间范围下拉 */}
 								<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-								<button
-								type="button"
-								className="gap-1.5 px-2.5 py-1.5 text-xs font-medium flex items-center rounded-md border bg-[#141414] text-muted-foreground hover:text-white transition-colors"
-								>
-								{selectedTimeRange === "all"
-								? "信号时间"
-								: selectedTimeRange === "24h"
-								? "24小时内"
-								: selectedTimeRange === "3d"
-								? "3天内"
-								: selectedTimeRange === "7d"
-								? "7天内"
-								: "30天内"}
-								<ChevronDownIcon className="size-3" />
-								</button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent
-								align="start"
-								className="min-w-[120px] bg-[#1a1a1a] border-white/10 text-white"
-								>
-								{TIME_RANGES.map((range) => (
-								<DropdownMenuItem
-								key={range}
-								className="gap-2 text-xs cursor-pointer"
-								onClick={() => setSelectedTimeRange(range)}
-								>
-								<CheckIcon
-								className={cn(
-								"size-3.5",
-								selectedTimeRange === range ? "opacity-100" : "opacity-0",
-								)}
-								/>
-								{range === "all"
-								? "信号时间"
-								: range === "24h"
-								? "24小时内"
-								: range === "3d"
-								? "3天内"
-								: range === "7d"
-								? "7天内"
-								: "30天内"}
-								</DropdownMenuItem>
-								))}
-								</DropdownMenuContent>
+									<DropdownMenuTrigger asChild>
+										<button
+											type="button"
+											className="gap-1.5 px-2.5 py-1.5 text-xs font-medium hover:text-white flex items-center rounded-md border bg-[#141414] text-muted-foreground transition-colors"
+										>
+											{selectedTimeRange === "all"
+												? "信号时间"
+												: selectedTimeRange === "24h"
+													? "24小时内"
+													: selectedTimeRange === "3d"
+														? "3天内"
+														: selectedTimeRange === "7d"
+															? "7天内"
+															: "30天内"}
+											<ChevronDownIcon className="size-3" />
+										</button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										align="start"
+										className="border-white/10 text-white min-w-[120px] bg-[#1a1a1a]"
+									>
+										{TIME_RANGES.map((range) => (
+											<DropdownMenuItem
+												key={range}
+												className="gap-2 text-xs cursor-pointer"
+												onClick={() => setSelectedTimeRange(range)}
+											>
+												<CheckIcon
+													className={cn(
+														"size-3.5",
+														selectedTimeRange === range
+															? "opacity-100"
+															: "opacity-0",
+													)}
+												/>
+												{range === "all"
+													? "信号时间"
+													: range === "24h"
+														? "24小时内"
+														: range === "3d"
+															? "3天内"
+															: range === "7d"
+																? "7天内"
+																: "30天内"}
+											</DropdownMenuItem>
+										))}
+									</DropdownMenuContent>
 								</DropdownMenu>
-		
+
 								{/* 入场状态下拉 */}
 								<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-								<button
-								type="button"
-								className="gap-1.5 px-2.5 py-1.5 text-xs font-medium flex items-center rounded-md border bg-[#141414] text-muted-foreground hover:text-white transition-colors"
-								>
-								{selectedEntryStatus === "all"
-								? "入场状态"
-								: selectedEntryStatus === "pending"
-								? "待入场"
-								: "已入场"}
-								<ChevronDownIcon className="size-3" />
-								</button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent
-								align="start"
-								className="min-w-[110px] bg-[#1a1a1a] border-white/10 text-white"
-								>
-								{ENTRY_STATUSES.map((es) => (
-								<DropdownMenuItem
-								key={es}
-								className="gap-2 text-xs cursor-pointer"
-								onClick={() => setSelectedEntryStatus(es)}
-								>
-								<CheckIcon
-								className={cn(
-								"size-3.5",
-								selectedEntryStatus === es ? "opacity-100" : "opacity-0",
-								)}
-								/>
-								{es === "all"
-								? "入场状态"
-								: es === "pending"
-								? "待入场"
-								: "已入场"}
-								</DropdownMenuItem>
-								))}
-								</DropdownMenuContent>
+									<DropdownMenuTrigger asChild>
+										<button
+											type="button"
+											className="gap-1.5 px-2.5 py-1.5 text-xs font-medium hover:text-white flex items-center rounded-md border bg-[#141414] text-muted-foreground transition-colors"
+										>
+											{selectedEntryStatus === "all"
+												? "入场状态"
+												: selectedEntryStatus === "pending"
+													? "待入场"
+													: "已入场"}
+											<ChevronDownIcon className="size-3" />
+										</button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										align="start"
+										className="border-white/10 text-white min-w-[110px] bg-[#1a1a1a]"
+									>
+										{ENTRY_STATUSES.map((es) => (
+											<DropdownMenuItem
+												key={es}
+												className="gap-2 text-xs cursor-pointer"
+												onClick={() => setSelectedEntryStatus(es)}
+											>
+												<CheckIcon
+													className={cn(
+														"size-3.5",
+														selectedEntryStatus === es
+															? "opacity-100"
+															: "opacity-0",
+													)}
+												/>
+												{es === "all"
+													? "入场状态"
+													: es === "pending"
+														? "待入场"
+														: "已入场"}
+											</DropdownMenuItem>
+										))}
+									</DropdownMenuContent>
 								</DropdownMenu>
-		
-		
 
 								<Button
 									size="icon"
@@ -904,7 +905,7 @@ export function SignalsWorkspace() {
 												"px-2.5 py-1 text-xs font-semibold rounded-sm transition-colors",
 												selectedTimeframe === timeframe
 													? "bg-foreground text-background"
-													: "text-muted-foreground hover:bg-white/8 hover:text-foreground",
+													: "hover:bg-white/8 text-muted-foreground hover:text-foreground",
 											)}
 										>
 											{timeframe}
@@ -966,12 +967,14 @@ export function SignalsWorkspace() {
 									"px-4 py-3 text-xs font-medium border-b-2 transition-colors",
 									selectedStatus === status
 										? "border-white text-white bg-[#222222]"
-										: "border-transparent text-muted-foreground hover:text-white bg-transparent",
+										: "hover:text-white border-transparent bg-transparent text-muted-foreground",
 								)}
 							>
 								<span>{t(`status.${status}`)}</span>
 								{statusCounts[status] > 0 && (
-									<span className="ml-1.5 text-xs font-semibold opacity-60">{statusCounts[status]}</span>
+									<span className="ml-1.5 text-xs font-semibold opacity-60">
+										{statusCounts[status]}
+									</span>
 								)}
 							</button>
 						))}
@@ -985,21 +988,22 @@ export function SignalsWorkspace() {
 									type="button"
 									onClick={() => focusSignal(signal)}
 									className={cn(
-										"p-3 w-full rounded-xl border border-white/5 bg-[#141414] text-left transition-colors hover:bg-white/5",
+										"p-3 border-white/5 hover:bg-white/5 w-full rounded-xl border bg-[#141414] text-left transition-colors",
 										signal.id === activeSignal?.id &&
 											"border-white/10 bg-white/5",
 									)}
 								>
 									<div className="mb-3 gap-3 flex items-center justify-between">
 										<div className="min-w-0 gap-2 flex items-center">
-											<span className="size-8 flex shrink-0 items-center justify-center rounded-full overflow-hidden">
+											<span className="size-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
 												<img
 													alt={signal.sourceName}
 													className="size-8 object-cover"
 													onError={(e) => {
 														const target = e.currentTarget;
 														target.style.display = "none";
-														const next = target.nextElementSibling as HTMLElement | null;
+														const next =
+															target.nextElementSibling as HTMLElement | null;
 														if (next) next.style.display = "flex";
 													}}
 													src={signal.avatarUrl}
