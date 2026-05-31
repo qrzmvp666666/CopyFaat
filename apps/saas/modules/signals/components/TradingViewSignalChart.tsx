@@ -58,7 +58,7 @@ interface MarkerPosition {
 	top: number;
 }
 
-const CHART_BACKGROUND = "#151515";
+const CHART_BACKGROUND = "#141414";
 const CHART_GRID = "rgba(255, 255, 255, 0.10)";
 const CHART_TEXT = "#d7d7df";
 const UP_COLOR = "#13c8bd";
@@ -356,7 +356,7 @@ export function TradingViewSignalChart({
 	]);
 
 	return (
-		<div className={cn("relative min-h-[560px] overflow-hidden bg-[#151515]", className)}>
+		<div className={cn("relative min-h-[560px] overflow-hidden bg-[#141414]", className)}>
 			<div className="left-6 top-5 gap-3 pointer-events-none absolute z-20 flex items-baseline">
 				<span className="text-xl font-semibold tracking-normal text-white">{symbol}</span>
 				<span className="text-lg font-semibold text-white/55">{timeframe}</span>
@@ -374,7 +374,7 @@ export function TradingViewSignalChart({
 							type="button"
 							onClick={() => onSelectSignal(signal)}
 							className={cn(
-								"gap-2 py-1 pl-1 pr-2 text-xs font-semibold text-white shadow-lg pointer-events-auto absolute flex -translate-x-1/2 -translate-y-1/2 items-center rounded-full border bg-[#101010]/95 transition-all",
+								"gap-2 py-1 pl-1 pr-2 text-xs font-semibold text-white shadow-lg pointer-events-auto absolute flex -translate-x-1/2 -translate-y-1/2 items-center rounded-full border bg-[#141414]/95 transition-all",
 								isActive
 									? "border-emerald-400 shadow-[0_0_0_8px_rgba(34,229,141,0.16)]"
 									: "border-white/15 hover:border-white/35",

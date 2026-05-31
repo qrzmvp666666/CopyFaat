@@ -1,6 +1,7 @@
 "use client";
 
 import { Button, cn } from "@repo/ui";
+import type { UTCTimestamp } from "lightweight-charts";
 import {
 	BellIcon,
 	ChartCandlestickIcon,
@@ -14,9 +15,9 @@ import {
 	TrendingDownIcon,
 	TrendingUpIcon,
 } from "lucide-react";
-import type { UTCTimestamp } from "lightweight-charts";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
+
 import type { SignalChartSignal } from "./TradingViewSignalChart";
 import { TradingViewSignalChart } from "./TradingViewSignalChart";
 
@@ -361,8 +362,8 @@ export function SignalsWorkspace() {
 	}
 
 	return (
-		<div className="min-h-full bg-background text-foreground">
-			<header className="px-4 py-2 backdrop-blur border-b bg-card/80">
+		<div className="min-h-full bg-[#141414] text-foreground">
+			<header className="px-4 py-2 backdrop-blur border-b bg-[#141414]/80">
 				<div className="min-w-0 gap-3 no-scrollbar flex items-center overflow-x-auto">
 					<div className="gap-2 pr-3 text-sm font-semibold flex shrink-0 items-center">
 						<RadioIcon className="size-4 text-emerald-500" />
@@ -374,9 +375,9 @@ export function SignalsWorkspace() {
 							type="button"
 							onClick={() => selectSymbol(instrument.symbol)}
 							className={cn(
-								"gap-2 px-3 py-1.5 text-sm flex shrink-0 items-center rounded-md border text-left transition-colors hover:bg-accent/70",
+								"gap-2 px-3 py-1.5 text-sm flex shrink-0 items-center rounded-md border text-left transition-colors hover:bg-white/8",
 								selectedSymbol === instrument.symbol
-									? "border-foreground/20 bg-accent"
+									? "border-foreground/20 bg-white/8"
 									: "border-transparent bg-transparent",
 							)}
 						>
@@ -410,8 +411,8 @@ export function SignalsWorkspace() {
 				</div>
 			</header>
 
-			<div className="gap-0 lg:h-[calc(100vh-121px)] xl:grid-cols-[248px_minmax(700px,1fr)_328px] grid min-h-[760px] grid-cols-1">
-				<aside className="xl:border-r xl:border-b-0 border-b bg-card">
+			<div className="gap-0 lg:h-[calc(100vh-121px)] xl:grid-cols-[minmax(700px,1fr)_328px] grid min-h-[760px] grid-cols-1">
+				<aside className="xl:border-r xl:border-b-0 border-b bg-[#1c1c1c] hidden">
 					<div className="px-4 py-4 flex items-center justify-between border-b">
 						<div>
 							<p className="text-xs text-muted-foreground">{t("market.eyebrow")}</p>
@@ -431,7 +432,7 @@ export function SignalsWorkspace() {
 									key={instrument.symbol}
 									className={cn(
 										"group gap-3 px-4 py-4 flex items-center transition-colors",
-										isSelected ? "bg-accent/70" : "hover:bg-accent/40",
+										isSelected ? "bg-white/8" : "hover:bg-white/5",
 									)}
 								>
 									<button
@@ -482,8 +483,8 @@ export function SignalsWorkspace() {
 					</div>
 				</aside>
 
-				<main className="min-w-0 flex flex-col bg-background">
-					<section className="px-4 py-3 border-b bg-card">
+				<main className="min-w-0 flex flex-col bg-[#141414]">
+					<section className="px-4 py-3 border-b bg-[#1c1c1c]">
 						<div className="gap-3 flex flex-col">
 							<div className="gap-2 flex flex-wrap items-center">
 								<button
@@ -493,7 +494,7 @@ export function SignalsWorkspace() {
 										"px-3 py-1.5 text-sm font-medium rounded-full border transition-colors",
 										selectedSource === "all"
 											? "border-foreground/20 bg-foreground text-background"
-											: "bg-background hover:bg-accent",
+											: "bg-[#141414] hover:bg-white/8",
 									)}
 								>
 									{t("filters.allSources")}
@@ -507,7 +508,7 @@ export function SignalsWorkspace() {
 											"gap-2 px-2.5 py-1.5 text-sm flex items-center rounded-full border transition-colors",
 											selectedSource === source.id
 												? "border-foreground/20 bg-foreground text-background"
-												: "bg-background hover:bg-accent",
+												: "bg-[#141414] hover:bg-white/8",
 										)}
 									>
 										<span
@@ -524,25 +525,7 @@ export function SignalsWorkspace() {
 							</div>
 
 							<div className="gap-2 flex flex-wrap items-center">
-								<div className="gap-1 p-1 flex items-center rounded-md border bg-background">
-									{INSTRUMENTS.map((instrument) => (
-										<button
-											key={instrument.symbol}
-											type="button"
-											onClick={() => selectSymbol(instrument.symbol)}
-											className={cn(
-												"px-3 py-1.5 text-xs font-semibold rounded-sm transition-colors",
-												selectedSymbol === instrument.symbol
-													? "bg-foreground text-background"
-													: "text-muted-foreground hover:bg-accent hover:text-foreground",
-											)}
-										>
-											{instrument.symbol}
-										</button>
-									))}
-								</div>
-
-								<div className="gap-1 p-1 flex items-center rounded-md border bg-background">
+								<div className="gap-1 p-1 flex items-center rounded-md border bg-[#1e1e1e]">
 									{SIGNAL_DIRECTIONS.map((direction) => (
 										<button
 											key={direction}
@@ -552,7 +535,7 @@ export function SignalsWorkspace() {
 												"gap-1 px-3 py-1.5 text-xs font-semibold flex items-center rounded-sm transition-colors",
 												selectedDirection === direction
 													? "bg-foreground text-background"
-													: "text-muted-foreground hover:bg-accent hover:text-foreground",
+													: "text-muted-foreground hover:bg-white/8 hover:text-foreground",
 											)}
 										>
 											{direction === "long" && (
@@ -566,7 +549,7 @@ export function SignalsWorkspace() {
 									))}
 								</div>
 
-								<div className="gap-1 p-1 flex items-center rounded-md border bg-background">
+								<div className="gap-1 p-1 flex items-center rounded-md border bg-[#141414]">
 									{SUPPORTED_TIMEFRAMES.map((timeframe) => (
 										<button
 											key={timeframe}
@@ -576,7 +559,7 @@ export function SignalsWorkspace() {
 												"px-3 py-1.5 text-xs font-semibold rounded-sm transition-colors",
 												selectedTimeframe === timeframe
 													? "bg-foreground text-background"
-													: "text-muted-foreground hover:bg-accent hover:text-foreground",
+													: "text-muted-foreground hover:bg-white/8 hover:text-foreground",
 											)}
 										>
 											{timeframe}
@@ -603,7 +586,7 @@ export function SignalsWorkspace() {
 					</section>
 
 					<section className="min-h-0 flex flex-1 flex-col">
-						<div className="px-4 py-3 flex items-center justify-between border-b bg-card">
+						<div className="px-4 py-3 flex items-center justify-between border-b bg-[#1c1c1c]">
 							<div className="gap-2 flex items-center">
 								<ChartCandlestickIcon className="size-4 text-muted-foreground" />
 								<span className="font-mono text-sm font-semibold">
@@ -628,27 +611,27 @@ export function SignalsWorkspace() {
 						</div>
 
 						<div className="min-h-0 flex-1">
-						<TradingViewSignalChart
-							activeSignal={activeSignal}
-							candles={candles}
-							className="h-full"
-							formatPrice={formatPrice}
-							labels={{
-								entry: t("chart.entry"),
-								stopLoss: t("chart.stopLoss"),
-								takeProfit: t("chart.takeProfit"),
-							}}
-							locale={locale}
-							onSelectSignal={focusSignal}
-							signals={filteredSignals}
-							symbol={selectedSymbol}
-							timeframe={selectedTimeframe}
-						/>
-					</div>
-				</section>
+							<TradingViewSignalChart
+								activeSignal={activeSignal}
+								candles={candles}
+								className="h-full"
+								formatPrice={formatPrice}
+								labels={{
+									entry: t("chart.entry"),
+									stopLoss: t("chart.stopLoss"),
+									takeProfit: t("chart.takeProfit"),
+								}}
+								locale={locale}
+								onSelectSignal={focusSignal}
+								signals={filteredSignals}
+								symbol={selectedSymbol}
+								timeframe={selectedTimeframe}
+							/>
+						</div>
+					</section>
 				</main>
 
-				<aside className="xl:border-t-0 xl:border-l border-t bg-card">
+				<aside className="xl:border-t-0 xl:border-l border-t bg-[#1c1c1c]">
 					<div className="grid grid-cols-2 border-b">
 						{SIGNAL_STATUSES.map((status) => (
 							<button
@@ -684,7 +667,7 @@ export function SignalsWorkspace() {
 							</p>
 							<h2 className="font-semibold">{t("signalsPanel.title")}</h2>
 						</div>
-						<span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-accent">
+						<span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-white/8">
 							{filteredSignals.length}
 						</span>
 					</div>
@@ -697,7 +680,7 @@ export function SignalsWorkspace() {
 									type="button"
 									onClick={() => focusSignal(signal)}
 									className={cn(
-										"p-3 w-full rounded-md border bg-background text-left transition-colors hover:bg-accent/50",
+										"p-3 w-full rounded-md border bg-[#141414] text-left transition-colors hover:bg-white/6",
 										signal.id === activeSignal?.id &&
 											"border-emerald-500/60 bg-emerald-500/5",
 									)}
@@ -759,7 +742,7 @@ export function SignalsWorkspace() {
 										/>
 									</div>
 
-									<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-card">
+									<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-[#1c1c1c]">
 										<span className="gap-1 flex items-center text-muted-foreground">
 											{signal.status === "active" ? (
 												<CheckCircle2Icon className="size-3.5 text-emerald-500" />
