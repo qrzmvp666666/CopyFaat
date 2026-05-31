@@ -77,6 +77,7 @@
 			"navigationTitle": "Menu",
 			"openNavigation": "Open navigation",
 			"organizationSettings": "Organization settings",
+			"signals": "K-line Signals",
 			"start": "Start"
 		},
 		"userMenu": {
@@ -590,6 +591,52 @@
 	"start": {
 		"subtitle": "See the latest stats of your awesome business.",
 		"welcome": "Welcome {name}!"
+	},
+	"signals": {
+		"actions": {
+			"alert": "Create alert",
+			"expand": "Expand chart",
+			"filters": "Filters",
+			"refresh": "Refresh"
+		},
+		"chart": {
+			"entry": "Entry",
+			"stopLoss": "Stop",
+			"takeProfit": "Take profit"
+		},
+		"direction": {
+			"all": "Direction",
+			"long": "Long",
+			"short": "Short"
+		},
+		"filters": {
+			"allSources": "All KOLs"
+		},
+		"market": {
+			"eyebrow": "Market",
+			"search": "Search markets",
+			"title": "Markets"
+		},
+		"signalsPanel": {
+			"closed": "Closed",
+			"emptyDescription": "Try another KOL, direction, or status filter.",
+			"emptyTitle": "No matching signals",
+			"entered": "Entered",
+			"entry": "Entry",
+			"expectedRr": "Expected R/R",
+			"eyebrow": "Signals",
+			"stopLoss": "Stop",
+			"submittedAt": "Submitted",
+			"takeProfit": "Take profit",
+			"title": "Signal feed"
+		},
+		"status": {
+			"active": "Active signals",
+			"history": "History"
+		},
+		"ticker": {
+			"live": "Live market"
+		}
 	},
 	"common": {
 		"confirmation": {

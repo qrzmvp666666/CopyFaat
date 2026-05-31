@@ -48,6 +48,7 @@
 		"hono": "catalog:",
 		"input-otp": "catalog:",
 		"js-cookie": "catalog:",
+		"lightweight-charts": "^5.2.0",
 		"lucide-react": "catalog:",
 		"next": "^16.2.1",
 		"next-intl": "catalog:",

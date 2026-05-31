@@ -111,6 +111,7 @@ Path aliases are configured per app. Shared package aliases apply across the mon
 | `@admin/*`         | `apps/saas/modules/admin/*`         |
 | `@ai/*`            | `apps/saas/modules/ai/*`            |
 | `@onboarding/*`    | `apps/saas/modules/onboarding/*`    |
+| `@signals/*`       | `apps/saas/modules/signals/*`       |
 | `@shared/*`        | `apps/saas/modules/shared/*`        |
 | `@i18n/*`          | `apps/saas/modules/i18n/*`          |
 

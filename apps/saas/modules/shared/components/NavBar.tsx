@@ -1,10 +1,10 @@
 "use client";
 
 import { useSession } from "@auth/hooks/use-session";
+import { config } from "@config";
 import { useActiveOrganization } from "@organizations/hooks/use-active-organization";
 import { config as authConfig } from "@repo/auth/config";
 import { config as paymentsConfig } from "@repo/payments/config";
-import { config } from "@config";
 import {
 	Button,
 	cn,
@@ -30,6 +30,7 @@ import { NotificationCenter } from "@shared/components/NotificationCenter";
 import { UserMenu } from "@shared/components/UserMenu";
 import {
 	BotMessageSquareIcon,
+	ChartCandlestickIcon,
 	ChevronRightIcon,
 	HomeIcon,
 	MenuIcon,
@@ -353,8 +354,14 @@ export function NavBar() {
 							icon: BotMessageSquareIcon,
 							isActive: pathname.startsWith("/chatbot"),
 						},
-				  ]
+					]
 				: []),
+			{
+				label: t("app.menu.signals"),
+				href: `${basePath}/signals`,
+				icon: ChartCandlestickIcon,
+				isActive: pathname === `${basePath}/signals`,
+			},
 			...(organizationSubItems
 				? [
 						{

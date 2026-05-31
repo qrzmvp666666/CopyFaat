@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@repo/ui";
+import { usePathname } from "next/navigation";
 import type { PropsWithChildren } from "react";
 
 import { SidebarProvider, useSidebar } from "../lib/sidebar-context";
@@ -8,6 +9,8 @@ import { NavBar } from "./NavBar";
 
 function AppContent({ children }: PropsWithChildren) {
 	const { isCollapsed } = useSidebar();
+	const pathname = usePathname();
+	const isSignalsWorkspace = pathname === "/signals" || pathname.endsWith("/signals");
 
 	return (
 		<div className="md:h-screen md:overflow-hidden bg-background">
@@ -18,8 +21,13 @@ function AppContent({ children }: PropsWithChildren) {
 					"md:ml-[80px]": isCollapsed,
 				})}
 			>
-				<main className="md:border md:rounded-2xl md:overflow-y-auto py-6 h-full w-full border-t bg-card">
-					<div className="container">{children}</div>
+				<main
+					className={cn(
+						"md:border md:rounded-2xl md:overflow-y-auto h-full w-full border-t bg-card",
+						isSignalsWorkspace ? "p-0 overflow-hidden" : "py-6",
+					)}
+				>
+					<div className={cn(!isSignalsWorkspace && "container")}>{children}</div>
 				</main>
 			</div>
 		</div>

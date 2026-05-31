@@ -77,6 +77,7 @@
 			"navigationTitle": "菜单",
 			"openNavigation": "打开导航",
 			"organizationSettings": "组织设置",
+			"signals": "聚合K线",
 			"start": "首页"
 		},
 		"userMenu": {
@@ -590,6 +591,52 @@
 	"start": {
 		"subtitle": "查看您业务的最新数据。",
 		"welcome": "欢迎，{name}！"
+	},
+	"signals": {
+		"actions": {
+			"alert": "创建提醒",
+			"expand": "放大图表",
+			"filters": "筛选",
+			"refresh": "刷新"
+		},
+		"chart": {
+			"entry": "入场价",
+			"stopLoss": "止损价",
+			"takeProfit": "止盈价"
+		},
+		"direction": {
+			"all": "方向",
+			"long": "做多",
+			"short": "做空"
+		},
+		"filters": {
+			"allSources": "全部KOL"
+		},
+		"market": {
+			"eyebrow": "Market",
+			"search": "搜索市场",
+			"title": "市场"
+		},
+		"signalsPanel": {
+			"closed": "已结束",
+			"emptyDescription": "换一个 KOL、方向或状态筛选看看。",
+			"emptyTitle": "暂无匹配信号",
+			"entered": "已入场",
+			"entry": "入场价",
+			"expectedRr": "预计盈亏比",
+			"eyebrow": "Signals",
+			"stopLoss": "止损价",
+			"submittedAt": "委托时间",
+			"takeProfit": "止盈价",
+			"title": "信号列表"
+		},
+		"status": {
+			"active": "有效信号",
+			"history": "历史信号"
+		},
+		"ticker": {
+			"live": "实时行情"
+		}
 	},
 	"common": {
 		"confirmation": {

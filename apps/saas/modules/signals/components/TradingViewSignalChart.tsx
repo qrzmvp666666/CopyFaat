@@ -1,0 +1,411 @@
+"use client";
+
+import { cn } from "@repo/ui";
+import {
+	CandlestickSeries,
+	ColorType,
+	CrosshairMode,
+	LineStyle,
+	createChart,
+} from "lightweight-charts";
+import type {
+	CandlestickData,
+	IChartApi,
+	IPriceLine,
+	ISeriesApi,
+	Time,
+	UTCTimestamp,
+} from "lightweight-charts";
+import type { CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+interface TradingViewSignalChartProps {
+	activeSignal: SignalChartSignal | null;
+	candles: SignalChartCandle[];
+	className?: string;
+	formatPrice: (value: number, fractionDigits?: number) => string;
+	labels: PriceLineLabels;
+	locale: string;
+	onSelectSignal: (signal: SignalChartSignal) => void;
+	signals: SignalChartSignal[];
+	symbol: string;
+	timeframe: string;
+}
+
+interface SignalChartCandle extends CandlestickData<UTCTimestamp> {}
+
+export interface SignalChartSignal {
+	avatarLabel: string;
+	direction: "long" | "short";
+	entry: number;
+	id: string;
+	sourceName: string;
+	stopLoss: number;
+	symbol: string;
+	takeProfit: number;
+	x: number;
+}
+
+interface PriceLineLabels {
+	entry: string;
+	stopLoss: string;
+	takeProfit: string;
+}
+
+interface MarkerPosition {
+	left: number;
+	signal: SignalChartSignal;
+	top: number;
+}
+
+const CHART_BACKGROUND = "#151515";
+const CHART_GRID = "rgba(255, 255, 255, 0.10)";
+const CHART_TEXT = "#d7d7df";
+const UP_COLOR = "#13c8bd";
+const DOWN_COLOR = "#ff4d57";
+const PROFIT_COLOR = "#22e58d";
+const RISK_COLOR = "#ff4d68";
+const ENTRY_COLOR = "#f59e0b";
+
+function getSignalCandleIndex(signal: SignalChartSignal, candlesLength: number) {
+	return Math.min(
+		candlesLength - 1,
+		Math.max(0, Math.round((signal.x / 100) * (candlesLength - 1))),
+	);
+}
+
+function getPricePrecision(symbol: string) {
+	return symbol === "SOLUSDT" ? 2 : 0;
+}
+
+function getMinMove(symbol: string) {
+	return symbol === "SOLUSDT" ? 0.01 : 1;
+}
+
+function getProfitPrice(signal: SignalChartSignal) {
+	return signal.direction === "long" ? signal.takeProfit : signal.stopLoss;
+}
+
+function getRiskPrice(signal: SignalChartSignal) {
+	return signal.direction === "long" ? signal.stopLoss : signal.takeProfit;
+}
+
+export function TradingViewSignalChart({
+	activeSignal,
+	candles,
+	className,
+	formatPrice,
+	labels,
+	locale,
+	onSelectSignal,
+	signals,
+	symbol,
+	timeframe,
+}: TradingViewSignalChartProps) {
+	const containerRef = useRef<HTMLDivElement | null>(null);
+	const chartRef = useRef<IChartApi | null>(null);
+	const seriesRef = useRef<ISeriesApi<"Candlestick", Time> | null>(null);
+	const priceLinesRef = useRef<IPriceLine[]>([]);
+	const latestSignalsRef = useRef(signals);
+	const latestCandlesRef = useRef(candles);
+	const [markerPositions, setMarkerPositions] = useState<MarkerPosition[]>([]);
+	const pricePrecision = getPricePrecision(symbol);
+
+	const chartData = useMemo(
+		() =>
+			candles.map((candle) => ({
+				close: candle.close,
+				high: candle.high,
+				low: candle.low,
+				open: candle.open,
+				time: candle.time,
+			})),
+		[candles],
+	);
+
+	const updateMarkerPositions = useCallback(() => {
+		const chart = chartRef.current;
+		const series = seriesRef.current;
+
+		if (!chart || !series) {
+			return;
+		}
+
+		const nextPositions = latestSignalsRef.current.flatMap((signal) => {
+			const candle =
+				latestCandlesRef.current[
+					getSignalCandleIndex(signal, latestCandlesRef.current.length)
+				];
+
+			if (!candle) {
+				return [];
+			}
+
+			const left = chart.timeScale().timeToCoordinate(candle.time);
+			const top = series.priceToCoordinate(signal.entry);
+
+			if (left === null || top === null) {
+				return [];
+			}
+
+			return [{ left, signal, top }];
+		});
+
+		setMarkerPositions(nextPositions);
+	}, []);
+
+	useEffect(() => {
+		latestSignalsRef.current = signals;
+		latestCandlesRef.current = candles;
+		window.requestAnimationFrame(updateMarkerPositions);
+	}, [candles, signals, updateMarkerPositions]);
+
+	useEffect(() => {
+		const container = containerRef.current;
+
+		if (!container) {
+			return;
+		}
+
+		const chart = createChart(container, {
+			autoSize: true,
+			crosshair: {
+				mode: CrosshairMode.Normal,
+			},
+			grid: {
+				horzLines: {
+					color: CHART_GRID,
+				},
+				vertLines: {
+					color: CHART_GRID,
+				},
+			},
+			layout: {
+				attributionLogo: true,
+				background: {
+					color: CHART_BACKGROUND,
+					type: ColorType.Solid,
+				},
+				fontFamily:
+					"var(--font-sans), Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+				fontSize: 13,
+				textColor: CHART_TEXT,
+			},
+			localization: {
+				locale,
+				priceFormatter: (price: number) => formatPrice(price, pricePrecision),
+			},
+			rightPriceScale: {
+				borderColor: "rgba(255, 255, 255, 0.12)",
+				scaleMargins: {
+					bottom: 0.08,
+					top: 0.08,
+				},
+				visible: true,
+			},
+			timeScale: {
+				barSpacing: 7,
+				borderColor: "rgba(255, 255, 255, 0.12)",
+				rightOffset: 12,
+				secondsVisible: false,
+				timeVisible: true,
+			},
+		});
+
+		const series = chart.addSeries(CandlestickSeries, {
+			borderVisible: false,
+			downColor: DOWN_COLOR,
+			priceFormat: {
+				minMove: getMinMove(symbol),
+				precision: pricePrecision,
+				type: "price",
+			},
+			priceLineColor: DOWN_COLOR,
+			priceLineStyle: LineStyle.Dotted,
+			priceLineWidth: 1,
+			upColor: UP_COLOR,
+			wickDownColor: DOWN_COLOR,
+			wickUpColor: UP_COLOR,
+		});
+
+		chartRef.current = chart;
+		seriesRef.current = series;
+
+		const resizeObserver = new ResizeObserver(() => {
+			window.requestAnimationFrame(updateMarkerPositions);
+		});
+		resizeObserver.observe(container);
+
+		const handleRangeChange = () => updateMarkerPositions();
+		chart.timeScale().subscribeVisibleLogicalRangeChange(handleRangeChange);
+
+		return () => {
+			chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleRangeChange);
+			resizeObserver.disconnect();
+			chart.remove();
+			chartRef.current = null;
+			seriesRef.current = null;
+			priceLinesRef.current = [];
+		};
+	}, [formatPrice, locale, pricePrecision, symbol, updateMarkerPositions]);
+
+	useEffect(() => {
+		const chart = chartRef.current;
+		const series = seriesRef.current;
+
+		if (!chart || !series) {
+			return;
+		}
+
+		chart.applyOptions({
+			localization: {
+				locale,
+				priceFormatter: (price: number) => formatPrice(price, pricePrecision),
+			},
+			timeScale: {
+				barSpacing: 7,
+				rightOffset: 12,
+			},
+		});
+		series.applyOptions({
+			priceFormat: {
+				minMove: getMinMove(symbol),
+				precision: pricePrecision,
+				type: "price",
+			},
+		});
+		series.setData(chartData);
+
+		const from = Math.max(0, chartData.length - 110);
+		chart.timeScale().setVisibleLogicalRange({
+			from,
+			to: chartData.length + 8,
+		});
+
+		window.requestAnimationFrame(updateMarkerPositions);
+	}, [chartData, formatPrice, locale, pricePrecision, symbol, updateMarkerPositions]);
+
+	useEffect(() => {
+		const chart = chartRef.current;
+		const series = seriesRef.current;
+
+		if (!chart || !series) {
+			return;
+		}
+
+		for (const line of priceLinesRef.current) {
+			series.removePriceLine(line);
+		}
+
+		priceLinesRef.current = [];
+
+		if (activeSignal) {
+			priceLinesRef.current = [
+				series.createPriceLine({
+					axisLabelColor: ENTRY_COLOR,
+					axisLabelTextColor: "#111111",
+					axisLabelVisible: true,
+					color: ENTRY_COLOR,
+					lineStyle: LineStyle.Dotted,
+					lineVisible: true,
+					lineWidth: 1,
+					price: activeSignal.entry,
+					title: `${labels.entry} ${formatPrice(activeSignal.entry, pricePrecision)}`,
+				}),
+				series.createPriceLine({
+					axisLabelColor: PROFIT_COLOR,
+					axisLabelTextColor: "#111111",
+					axisLabelVisible: true,
+					color: PROFIT_COLOR,
+					lineStyle: LineStyle.Dotted,
+					lineVisible: true,
+					lineWidth: 1,
+					price: getProfitPrice(activeSignal),
+					title: `${labels.takeProfit} ${formatPrice(getProfitPrice(activeSignal), pricePrecision)}`,
+				}),
+				series.createPriceLine({
+					axisLabelColor: RISK_COLOR,
+					axisLabelTextColor: "#ffffff",
+					axisLabelVisible: true,
+					color: RISK_COLOR,
+					lineStyle: LineStyle.Dotted,
+					lineVisible: true,
+					lineWidth: 1,
+					price: getRiskPrice(activeSignal),
+					title: `${labels.stopLoss} ${formatPrice(getRiskPrice(activeSignal), pricePrecision)}`,
+				}),
+			];
+
+			const index = getSignalCandleIndex(activeSignal, candles.length);
+			chart.timeScale().setVisibleLogicalRange({
+				from: Math.max(0, index - 72),
+				to: Math.min(candles.length + 10, index + 26),
+			});
+		}
+
+		window.requestAnimationFrame(updateMarkerPositions);
+	}, [
+		activeSignal,
+		candles.length,
+		formatPrice,
+		labels.entry,
+		labels.stopLoss,
+		labels.takeProfit,
+		pricePrecision,
+		updateMarkerPositions,
+	]);
+
+	return (
+		<div className={cn("relative min-h-[560px] overflow-hidden bg-[#151515]", className)}>
+			<div className="left-6 top-5 gap-3 pointer-events-none absolute z-20 flex items-baseline">
+				<span className="text-xl font-semibold tracking-normal text-white">{symbol}</span>
+				<span className="text-lg font-semibold text-white/55">{timeframe}</span>
+			</div>
+
+			<div ref={containerRef} className="h-full min-h-[560px] w-full" />
+
+			<div className="inset-0 pointer-events-none absolute z-30">
+				{markerPositions.map(({ left, signal, top }) => {
+					const isActive = signal.id === activeSignal?.id;
+
+					return (
+						<button
+							key={signal.id}
+							type="button"
+							onClick={() => onSelectSignal(signal)}
+							className={cn(
+								"gap-2 py-1 pl-1 pr-2 text-xs font-semibold text-white shadow-lg pointer-events-auto absolute flex -translate-x-1/2 -translate-y-1/2 items-center rounded-full border bg-[#101010]/95 transition-all",
+								isActive
+									? "border-emerald-400 shadow-[0_0_0_8px_rgba(34,229,141,0.16)]"
+									: "border-white/15 hover:border-white/35",
+							)}
+							style={{ left, top } satisfies CSSProperties}
+						>
+							<span
+								className={cn(
+									"size-7 font-bold text-white flex items-center justify-center rounded-full text-[11px]",
+									signal.direction === "long" ? "bg-emerald-500" : "bg-rose-500",
+								)}
+							>
+								{signal.avatarLabel}
+							</span>
+							<span className="whitespace-nowrap">{signal.sourceName}</span>
+							{isActive && (
+								<span
+									className={cn(
+										"ml-0.5 rounded px-1.5 py-0.5 font-bold text-white text-[10px] whitespace-nowrap",
+										signal.direction === "long"
+											? "bg-emerald-500"
+											: "bg-rose-500",
+									)}
+								>
+									{labels.entry} {formatPrice(signal.entry, pricePrecision)}
+								</span>
+							)}
+						</button>
+					);
+				})}
+			</div>
+		</div>
+	);
+}
