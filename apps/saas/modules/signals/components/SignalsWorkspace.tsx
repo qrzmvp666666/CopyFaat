@@ -135,7 +135,7 @@ const SOURCES: Source[] = [
 		handle: "@AltScout",
 		initials: "山",
 		accent: "bg-amber-500",
-		avatar: "https://pbs.twimg.com/profile_images/1706963shotgun/1706963_400x400.jpg",
+		avatar: "https://pbs.twimg.com/profile_images/1649812903669559296/LiWO2WP9_400x400.jpg",
 	},
 	{
 		id: "wangbot",
@@ -188,7 +188,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "shanzhiwang",
 		sourceName: "山寨之王",
 		avatarLabel: "山",
-		avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=shanzhiwang&backgroundColor=f59e0b",
+		avatarUrl: "https://pbs.twimg.com/profile_images/1649812903669559296/LiWO2WP9_400x400.jpg",
 		direction: "long",
 		status: "history",
 		entry: 68_324,
@@ -276,7 +276,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "shanzhiwang",
 		sourceName: "山寨之王",
 		avatarLabel: "山",
-		avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=shanzhiwang&backgroundColor=f59e0b",
+		avatarUrl: "https://pbs.twimg.com/profile_images/1649812903669559296/LiWO2WP9_400x400.jpg",
 		direction: "short",
 		status: "history",
 		entry: 91.8,
@@ -352,6 +352,23 @@ export function SignalsWorkspace() {
 				);
 			}),
 		[selectedDirection, selectedSource, selectedStatus, selectedSymbol],
+	);
+
+	const statusCounts = useMemo(
+		() =>
+			Object.fromEntries(
+				SIGNAL_STATUSES.map((status) => [
+					status,
+					SIGNALS.filter(
+						(signal) =>
+							signal.symbol === selectedSymbol &&
+							signal.status === status &&
+							(selectedSource === "all" || signal.sourceId === selectedSource) &&
+							(selectedDirection === "all" || signal.direction === selectedDirection),
+					).length,
+				]),
+			) as Record<SignalStatus, number>,
+		[selectedDirection, selectedSource, selectedSymbol],
 	);
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
@@ -680,27 +697,18 @@ export function SignalsWorkspace() {
 									setActiveSignalId(nextSignal?.id ?? null);
 								}}
 								className={cn(
-									"px-3 py-4 text-sm font-semibold border-b-2 transition-colors",
+									"px-4 py-3 text-xs font-medium border-b-2 transition-colors",
 									selectedStatus === status
-										? "border-foreground text-foreground"
-										: "border-transparent text-muted-foreground hover:text-foreground",
+										? "border-white text-white bg-[#222222]"
+										: "border-transparent text-muted-foreground hover:text-white bg-transparent",
 								)}
 							>
-								{t(`status.${status}`)}
+								<span>{t(`status.${status}`)}</span>
+								{statusCounts[status] > 0 && (
+									<span className="ml-1 text-[10px] opacity-70">{statusCounts[status]}</span>
+								)}
 							</button>
 						))}
-					</div>
-
-					<div className="px-4 py-3 flex items-center justify-between border-b">
-						<div>
-							<p className="text-xs text-muted-foreground">
-								{t("signalsPanel.eyebrow")}
-							</p>
-							<h2 className="font-semibold">{t("signalsPanel.title")}</h2>
-						</div>
-						<span className="px-2.5 py-1 text-xs font-semibold rounded-full bg-white/8">
-							{filteredSignals.length}
-						</span>
 					</div>
 
 					<div className="space-y-3 p-3 max-h-[680px] overflow-y-auto">
