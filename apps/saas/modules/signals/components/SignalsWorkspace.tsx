@@ -892,6 +892,8 @@ export function SignalsWorkspace() {
 								<span className="font-mono text-sm font-semibold">
 									{selectedSymbol}
 								</span>
+							</div>
+							<div className="gap-2 flex items-center">
 								<div className="gap-0.5 p-0.5 flex items-center rounded-md border bg-[#141414]">
 									{SUPPORTED_TIMEFRAMES.map((timeframe) => (
 										<button
@@ -909,8 +911,6 @@ export function SignalsWorkspace() {
 										</button>
 									))}
 								</div>
-							</div>
-							<div className="gap-2 flex items-center">
 								<Button size="icon" variant="ghost" aria-label={t("actions.alert")}>
 									<BellIcon className="size-4" />
 								</Button>
