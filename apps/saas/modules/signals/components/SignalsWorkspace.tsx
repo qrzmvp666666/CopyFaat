@@ -36,6 +36,7 @@ interface Instrument {
 	change: number;
 	volume: string;
 	accent: string;
+	logo: string;
 }
 
 interface Source {
@@ -44,6 +45,7 @@ interface Source {
 	handle: string;
 	initials: string;
 	accent: string;
+	avatar: string;
 }
 
 interface Candle {
@@ -60,6 +62,7 @@ interface TradeSignal {
 	sourceId: string;
 	sourceName: string;
 	avatarLabel: string;
+	avatarUrl: string;
 	direction: Exclude<SignalDirection, "all">;
 	status: SignalStatus;
 	entry: number;
@@ -87,6 +90,7 @@ const INSTRUMENTS: Instrument[] = [
 		change: -3.39,
 		volume: "2.8B",
 		accent: "bg-amber-500",
+		logo: "https://assets.coingecko.com/coins/images/1/thumb/bitcoin.png",
 	},
 	{
 		symbol: "ETHUSDT",
@@ -95,6 +99,7 @@ const INSTRUMENTS: Instrument[] = [
 		change: -5.2,
 		volume: "1.1B",
 		accent: "bg-indigo-500",
+		logo: "https://assets.coingecko.com/coins/images/279/thumb/ethereum.png",
 	},
 	{
 		symbol: "SOLUSDT",
@@ -103,6 +108,7 @@ const INSTRUMENTS: Instrument[] = [
 		change: -6.01,
 		volume: "438M",
 		accent: "bg-violet-500",
+		logo: "https://assets.coingecko.com/coins/images/4128/thumb/solana.png",
 	},
 ];
 
@@ -113,6 +119,7 @@ const SOURCES: Source[] = [
 		handle: "@SignalLab",
 		initials: "所",
 		accent: "bg-sky-500",
+		avatar: "https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGI_400x400.jpg",
 	},
 	{
 		id: "feiyang",
@@ -120,6 +127,7 @@ const SOURCES: Source[] = [
 		handle: "@Momentum",
 		initials: "飞",
 		accent: "bg-emerald-500",
+		avatar: "https://pbs.twimg.com/profile_images/1648376978935726081/L0LwFYFX_400x400.jpg",
 	},
 	{
 		id: "shanzhiwang",
@@ -127,6 +135,7 @@ const SOURCES: Source[] = [
 		handle: "@AltScout",
 		initials: "山",
 		accent: "bg-amber-500",
+		avatar: "https://pbs.twimg.com/profile_images/1706963shotgun/1706963_400x400.jpg",
 	},
 	{
 		id: "wangbot",
@@ -134,6 +143,7 @@ const SOURCES: Source[] = [
 		handle: "@Quant",
 		initials: "WG",
 		accent: "bg-stone-500",
+		avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=wgbot&backgroundColor=374151",
 	},
 ];
 
@@ -144,6 +154,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "xinsuo",
 		sourceName: "所长",
 		avatarLabel: "所",
+		avatarUrl: "https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGI_400x400.jpg",
 		direction: "long",
 		status: "active",
 		entry: 69_700,
@@ -160,6 +171,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "feiyang",
 		sourceName: "飞扬",
 		avatarLabel: "飞",
+		avatarUrl: "https://pbs.twimg.com/profile_images/1648376978935726081/L0LwFYFX_400x400.jpg",
 		direction: "long",
 		status: "active",
 		entry: 69_500,
@@ -176,6 +188,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "shanzhiwang",
 		sourceName: "山寨之王",
 		avatarLabel: "山",
+		avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=shanzhiwang&backgroundColor=f59e0b",
 		direction: "long",
 		status: "history",
 		entry: 68_324,
@@ -193,6 +206,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "xinsuo",
 		sourceName: "所长",
 		avatarLabel: "所",
+		avatarUrl: "https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGI_400x400.jpg",
 		direction: "short",
 		status: "history",
 		entry: 73_350,
@@ -210,6 +224,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "xinsuo",
 		sourceName: "所长",
 		avatarLabel: "所",
+		avatarUrl: "https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGI_400x400.jpg",
 		direction: "long",
 		status: "active",
 		entry: 2_876,
@@ -226,6 +241,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "wangbot",
 		sourceName: "WG Bot",
 		avatarLabel: "WG",
+		avatarUrl: "https://api.dicebear.com/7.x/bottts/svg?seed=wgbot&backgroundColor=374151",
 		direction: "short",
 		status: "history",
 		entry: 2_945,
@@ -243,6 +259,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "feiyang",
 		sourceName: "飞扬",
 		avatarLabel: "飞",
+		avatarUrl: "https://pbs.twimg.com/profile_images/1648376978935726081/L0LwFYFX_400x400.jpg",
 		direction: "long",
 		status: "active",
 		entry: 87.5,
@@ -259,6 +276,7 @@ const SIGNALS: TradeSignal[] = [
 		sourceId: "shanzhiwang",
 		sourceName: "山寨之王",
 		avatarLabel: "山",
+		avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=shanzhiwang&backgroundColor=f59e0b",
 		direction: "short",
 		status: "history",
 		entry: 91.8,
@@ -381,13 +399,12 @@ export function SignalsWorkspace() {
 									: "border-transparent bg-transparent",
 							)}
 						>
-							<span
-								className={cn(
-									"size-5 font-bold text-white flex items-center justify-center rounded-full text-[10px]",
-									instrument.accent,
-								)}
-							>
-								{instrument.base.slice(0, 1)}
+							<span className="size-5 flex shrink-0 items-center justify-center rounded-full overflow-hidden bg-black">
+								<img
+									alt={instrument.base}
+									className="size-5 object-contain"
+									src={instrument.logo}
+								/>
 							</span>
 							<span className="font-semibold">{instrument.base}</span>
 							<span className="font-mono text-muted-foreground">
@@ -511,13 +528,27 @@ export function SignalsWorkspace() {
 												: "bg-[#141414] hover:bg-white/8",
 										)}
 									>
-										<span
-											className={cn(
-												"size-5 font-bold text-white flex items-center justify-center rounded-full text-[10px]",
-												source.accent,
-											)}
-										>
-											{source.initials}
+										<span className="size-5 flex shrink-0 items-center justify-center rounded-full overflow-hidden">
+											<img
+												alt={source.name}
+												className="size-5 object-cover"
+												onError={(e) => {
+													const target = e.currentTarget;
+													target.style.display = "none";
+													const next = target.nextElementSibling as HTMLElement | null;
+													if (next) next.style.display = "flex";
+												}}
+												src={source.avatar}
+											/>
+											<span
+												className={cn(
+													"size-5 font-bold text-white hidden items-center justify-center rounded-full text-[10px]",
+													source.accent,
+												)}
+												style={{ display: "none" }}
+											>
+												{source.initials}
+											</span>
 										</span>
 										{source.name}
 									</button>
@@ -687,15 +718,29 @@ export function SignalsWorkspace() {
 								>
 									<div className="mb-3 gap-3 flex items-center justify-between">
 										<div className="min-w-0 gap-2 flex items-center">
-											<span
-												className={cn(
-													"size-8 text-xs font-bold text-white flex shrink-0 items-center justify-center rounded-full",
-													signal.direction === "long"
-														? "bg-emerald-500"
-														: "bg-rose-500",
-												)}
-											>
-												{signal.avatarLabel}
+											<span className="size-8 flex shrink-0 items-center justify-center rounded-full overflow-hidden">
+												<img
+													alt={signal.sourceName}
+													className="size-8 object-cover"
+													onError={(e) => {
+														const target = e.currentTarget;
+														target.style.display = "none";
+														const next = target.nextElementSibling as HTMLElement | null;
+														if (next) next.style.display = "flex";
+													}}
+													src={signal.avatarUrl}
+												/>
+												<span
+													className={cn(
+														"size-8 text-xs font-bold text-white hidden items-center justify-center rounded-full",
+														signal.direction === "long"
+															? "bg-emerald-500"
+															: "bg-rose-500",
+													)}
+													style={{ display: "none" }}
+												>
+													{signal.avatarLabel}
+												</span>
 											</span>
 											<div className="min-w-0">
 												<p className="text-sm font-semibold truncate">
