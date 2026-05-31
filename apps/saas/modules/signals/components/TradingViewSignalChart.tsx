@@ -59,12 +59,12 @@ interface MarkerPosition {
 }
 
 const CHART_BACKGROUND = "#141414";
-const CHART_GRID = "rgba(255, 255, 255, 0.10)";
-const CHART_TEXT = "#d7d7df";
-const UP_COLOR = "#13c8bd";
-const DOWN_COLOR = "#ff4d57";
-const PROFIT_COLOR = "#22e58d";
-const RISK_COLOR = "#ff4d68";
+const CHART_GRID = "rgba(255, 255, 255, 0.05)";
+const CHART_TEXT = "#9ca3af";
+const UP_COLOR = "#de5b52";
+const DOWN_COLOR = "#51a59b";
+const PROFIT_COLOR = "#26a69a";
+const RISK_COLOR = "#ef5350";
 const ENTRY_COLOR = "#f59e0b";
 
 function getSignalCandleIndex(signal: SignalChartSignal, candlesLength: number) {
@@ -220,8 +220,8 @@ export function TradingViewSignalChart({
 				precision: pricePrecision,
 				type: "price",
 			},
-			priceLineColor: DOWN_COLOR,
-			priceLineStyle: LineStyle.Dotted,
+			priceLineColor: "rgba(255,255,255,0.2)",
+			priceLineStyle: LineStyle.Dashed,
 			priceLineWidth: 1,
 			upColor: UP_COLOR,
 			wickDownColor: DOWN_COLOR,

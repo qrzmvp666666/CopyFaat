@@ -610,7 +610,7 @@
 			"short": "做空"
 		},
 		"filters": {
-			"allSources": "全部KOL"
+			"allSources": "全部"
 		},
 		"market": {
 			"eyebrow": "Market",

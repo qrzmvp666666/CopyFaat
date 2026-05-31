@@ -402,7 +402,7 @@ export function SignalsWorkspace() {
 							<span className="size-5 flex shrink-0 items-center justify-center rounded-full overflow-hidden bg-black">
 								<img
 									alt={instrument.base}
-									className="size-5 object-contain"
+									className="size-6 object-contain"
 									src={instrument.logo}
 								/>
 							</span>
@@ -429,7 +429,7 @@ export function SignalsWorkspace() {
 			</header>
 
 			<div className="gap-0 lg:h-[calc(100vh-121px)] xl:grid-cols-[minmax(700px,1fr)_328px] grid min-h-[760px] grid-cols-1">
-				<aside className="xl:border-r xl:border-b-0 border-b bg-[#1c1c1c] hidden">
+				<aside className="xl:border-r xl:border-b-0 border-b bg-[#141414] hidden">
 					<div className="px-4 py-4 flex items-center justify-between border-b">
 						<div>
 							<p className="text-xs text-muted-foreground">{t("market.eyebrow")}</p>
@@ -501,14 +501,14 @@ export function SignalsWorkspace() {
 				</aside>
 
 				<main className="min-w-0 flex flex-col bg-[#141414]">
-					<section className="px-4 py-3 border-b bg-[#1c1c1c]">
+					<section className="px-4 py-3 border-b bg-[#141414]">
 						<div className="gap-3 flex flex-col">
 							<div className="gap-2 flex flex-wrap items-center">
 								<button
 									type="button"
 									onClick={() => setSelectedSource("all")}
 									className={cn(
-										"px-3 py-1.5 text-sm font-medium rounded-full border transition-colors",
+										"px-2.5 py-1 text-xs font-medium rounded-md border transition-colors",
 										selectedSource === "all"
 											? "border-foreground/20 bg-foreground text-background"
 											: "bg-[#141414] hover:bg-white/8",
@@ -522,7 +522,7 @@ export function SignalsWorkspace() {
 										type="button"
 										onClick={() => setSelectedSource(source.id)}
 										className={cn(
-											"gap-2 px-2.5 py-1.5 text-sm flex items-center rounded-full border transition-colors",
+											"gap-1.5 px-2 py-1 text-xs flex items-center rounded-md border transition-colors",
 											selectedSource === source.id
 												? "border-foreground/20 bg-foreground text-background"
 												: "bg-[#141414] hover:bg-white/8",
@@ -542,7 +542,7 @@ export function SignalsWorkspace() {
 											/>
 											<span
 												className={cn(
-													"size-5 font-bold text-white hidden items-center justify-center rounded-full text-[10px]",
+													"size-5 font-bold text-white hidden items-center justify-center rounded-full text-[9px]",
 													source.accent,
 												)}
 												style={{ display: "none" }}
@@ -556,7 +556,7 @@ export function SignalsWorkspace() {
 							</div>
 
 							<div className="gap-2 flex flex-wrap items-center">
-								<div className="gap-1 p-1 flex items-center rounded-md border bg-[#1e1e1e]">
+								<div className="gap-1 p-1 flex items-center rounded-md border bg-[#141414]">
 									{SIGNAL_DIRECTIONS.map((direction) => (
 										<button
 											key={direction}
@@ -617,7 +617,7 @@ export function SignalsWorkspace() {
 					</section>
 
 					<section className="min-h-0 flex flex-1 flex-col">
-						<div className="px-4 py-3 flex items-center justify-between border-b bg-[#1c1c1c]">
+						<div className="px-4 py-3 flex items-center justify-between border-b bg-[#141414]">
 							<div className="gap-2 flex items-center">
 								<ChartCandlestickIcon className="size-4 text-muted-foreground" />
 								<span className="font-mono text-sm font-semibold">
@@ -662,7 +662,7 @@ export function SignalsWorkspace() {
 					</section>
 				</main>
 
-				<aside className="xl:border-t-0 xl:border-l border-t bg-[#1c1c1c]">
+				<aside className="xl:border-t-0 xl:border-l border-t bg-[#141414]">
 					<div className="grid grid-cols-2 border-b">
 						{SIGNAL_STATUSES.map((status) => (
 							<button
@@ -711,9 +711,9 @@ export function SignalsWorkspace() {
 									type="button"
 									onClick={() => focusSignal(signal)}
 									className={cn(
-										"p-3 w-full rounded-md border bg-[#141414] text-left transition-colors hover:bg-white/6",
+										"p-3 w-full rounded-xl border border-white/5 bg-[#141414] text-left transition-colors hover:bg-white/5",
 										signal.id === activeSignal?.id &&
-											"border-emerald-500/60 bg-emerald-500/5",
+											"border-white/10 bg-white/5",
 									)}
 								>
 									<div className="mb-3 gap-3 flex items-center justify-between">
@@ -787,7 +787,7 @@ export function SignalsWorkspace() {
 										/>
 									</div>
 
-									<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-[#1c1c1c]">
+									<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-[#141414]">
 										<span className="gap-1 flex items-center text-muted-foreground">
 											{signal.status === "active" ? (
 												<CheckCircle2Icon className="size-3.5 text-emerald-500" />
