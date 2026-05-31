@@ -340,12 +340,6 @@ export function NavBar() {
 				: undefined;
 
 		return [
-			{
-				label: t("app.menu.start"),
-				href: startHref,
-				icon: HomeIcon,
-				isActive: pathname === "/" || pathname === basePath,
-			},
 			...(config.enableAiChatbot !== false
 				? [
 						{
