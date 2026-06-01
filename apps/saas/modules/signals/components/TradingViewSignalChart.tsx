@@ -375,16 +375,16 @@ export function TradingViewSignalChart({
 							type="button"
 							onClick={() => onSelectSignal(signal)}
 							className={cn(
-								"gap-2 py-1 pl-1 pr-2 text-xs font-semibold text-white shadow-lg pointer-events-auto absolute flex -translate-x-1/2 -translate-y-1/2 items-center rounded-full border bg-[#141414]/95 transition-all",
+								"gap-1.5 py-0.5 pl-0.5 pr-1.5 font-semibold text-white shadow-lg pointer-events-auto absolute flex -translate-x-1/2 -translate-y-1/2 items-center rounded-full border bg-[#141414]/95 text-[11px] transition-all",
 								isActive
-									? "border-emerald-400 shadow-[0_0_0_8px_rgba(34,229,141,0.16)]"
+									? "border-emerald-400 shadow-[0_0_0_6px_rgba(34,229,141,0.14)]"
 									: "border-white/15 hover:border-white/35",
 							)}
 							style={{ left, top } satisfies CSSProperties}
 						>
 							<span
 								className={cn(
-									"size-7 flex shrink-0 items-center justify-center overflow-hidden rounded-full",
+									"size-5 flex shrink-0 items-center justify-center overflow-hidden rounded-full",
 									!signal.avatarUrl &&
 										(signal.direction === "long"
 											? "bg-emerald-500"
@@ -394,11 +394,11 @@ export function TradingViewSignalChart({
 								{signal.avatarUrl ? (
 									<img
 										alt={signal.sourceName}
-										className="size-7 object-cover"
+										className="size-5 object-cover"
 										src={signal.avatarUrl}
 									/>
 								) : (
-									<span className="font-bold text-white text-[11px]">
+									<span className="font-bold text-white text-[9px]">
 										{signal.avatarLabel}
 									</span>
 								)}
