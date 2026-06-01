@@ -384,8 +384,11 @@ export function TradingViewSignalChart({
 						>
 							<span
 								className={cn(
-									"size-7 flex shrink-0 items-center justify-center rounded-full overflow-hidden",
-									!signal.avatarUrl && (signal.direction === "long" ? "bg-emerald-500" : "bg-rose-500"),
+									"size-7 flex shrink-0 items-center justify-center overflow-hidden rounded-full",
+									!signal.avatarUrl &&
+										(signal.direction === "long"
+											? "bg-emerald-500"
+											: "bg-rose-500"),
 								)}
 							>
 								{signal.avatarUrl ? (

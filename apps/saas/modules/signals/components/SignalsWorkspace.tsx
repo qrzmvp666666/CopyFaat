@@ -538,7 +538,6 @@ export function SignalsWorkspace() {
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
 
-	// 图表只展示有效信号（不含历史）
 	const chartSignals = useMemo(
 		() =>
 			SIGNALS.filter(
@@ -698,12 +697,12 @@ export function SignalsWorkspace() {
 				<main className="min-w-0 flex flex-col bg-[#141414]">
 					<section className="px-3 py-3 border-b bg-[#141414]">
 						<div className="gap-3 flex flex-col">
-							<div className="gap-2 flex flex-wrap items-center">
+							<div className="no-scrollbar -mx-3 min-w-0 gap-2 px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 flex flex-nowrap items-center overflow-x-auto">
 								<button
 									type="button"
 									onClick={() => setSelectedSource("all")}
 									className={cn(
-										"px-2.5 py-1.5 text-xs font-medium min-w-[52px] rounded-md border text-center transition-colors",
+										"px-2.5 py-1.5 text-xs font-medium min-w-[52px] shrink-0 rounded-md border text-center transition-colors",
 										selectedSource === "all"
 											? "border-foreground/20 bg-foreground text-background"
 											: "hover:bg-white/8 bg-[#141414]",
@@ -717,7 +716,7 @@ export function SignalsWorkspace() {
 										type="button"
 										onClick={() => setSelectedSource(source.id)}
 										className={cn(
-											"gap-1.5 px-2 py-1 text-xs flex items-center rounded-md border transition-colors",
+											"gap-1.5 px-2 py-1 text-xs flex shrink-0 items-center rounded-md border transition-colors",
 											selectedSource === source.id
 												? "border-foreground/20 bg-foreground text-background"
 												: "hover:bg-white/8 bg-[#141414]",
@@ -758,10 +757,10 @@ export function SignalsWorkspace() {
 										type="button"
 										onClick={() => setSelectedDirection(direction)}
 										className={cn(
-											"gap-1 min-w-[52px] px-2.5 py-1.5 text-xs font-semibold flex items-center justify-center rounded-md border transition-colors",
+											"gap-1 px-2.5 py-1.5 text-xs font-semibold flex min-w-[52px] items-center justify-center rounded-md border transition-colors",
 											selectedDirection === direction
 												? "border-foreground/20 bg-foreground text-background"
-												: "bg-[#141414] border-transparent hover:bg-white/8 text-muted-foreground hover:text-foreground",
+												: "hover:bg-white/8 border-transparent bg-[#141414] text-muted-foreground hover:text-foreground",
 										)}
 									>
 										{direction === "long" && (
@@ -774,7 +773,6 @@ export function SignalsWorkspace() {
 									</button>
 								))}
 
-								{/* 时间范围下拉 */}
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>
 										<button
@@ -825,7 +823,6 @@ export function SignalsWorkspace() {
 									</DropdownMenuContent>
 								</DropdownMenu>
 
-								{/* 入场状态下拉 */}
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>
 										<button
