@@ -357,13 +357,13 @@ export function TradingViewSignalChart({
 	]);
 
 	return (
-		<div className={cn("relative min-h-[560px] overflow-hidden bg-[#141414]", className)}>
+		<div className={cn("relative min-h-[520px] overflow-hidden bg-[#141414]", className)}>
 			<div className="left-6 top-5 gap-3 pointer-events-none absolute z-20 flex items-baseline">
 				<span className="text-xl font-semibold tracking-normal text-white">{symbol}</span>
 				<span className="text-lg font-semibold text-white/55">{timeframe}</span>
 			</div>
 
-			<div ref={containerRef} className="h-full min-h-[560px] w-full" />
+			<div ref={containerRef} className="h-full min-h-[520px] w-full" />
 
 			<div className="inset-0 pointer-events-none absolute z-30">
 				{markerPositions.map(({ left, signal, top }) => {
@@ -384,7 +384,7 @@ export function TradingViewSignalChart({
 						>
 							<span
 								className={cn(
-									"size-5 flex shrink-0 items-center justify-center overflow-hidden rounded-full",
+									"flex size-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full",
 									!signal.avatarUrl &&
 										(signal.direction === "long"
 											? "bg-emerald-500"
@@ -394,11 +394,11 @@ export function TradingViewSignalChart({
 								{signal.avatarUrl ? (
 									<img
 										alt={signal.sourceName}
-										className="size-5 object-cover"
+										className="size-[22px] object-cover"
 										src={signal.avatarUrl}
 									/>
 								) : (
-									<span className="font-bold text-white text-[9px]">
+									<span className="font-bold text-white text-[10px]">
 										{signal.avatarLabel}
 									</span>
 								)}

@@ -14,6 +14,8 @@ import {
 	CheckCircle2Icon,
 	CheckIcon,
 	ChevronDownIcon,
+	ChevronLeftIcon,
+	ChevronRightIcon,
 	Clock3Icon,
 	Maximize2Icon,
 	RadioIcon,
@@ -500,6 +502,7 @@ export function SignalsWorkspace() {
 	const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("30d");
 	const [selectedEntryStatus, setSelectedEntryStatus] = useState<EntryStatus>("all");
 	const [activeSignalId, setActiveSignalId] = useState<string | null>("btc-1");
+	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
 
 	const candles = useMemo(
 		() => buildCandles(selectedSymbol, selectedTimeframe),
@@ -622,7 +625,14 @@ export function SignalsWorkspace() {
 				</div>
 			</header>
 
-			<div className="gap-0 lg:h-[calc(100vh-121px)] xl:grid-cols-[minmax(700px,1fr)_328px] grid min-h-[760px] grid-cols-1">
+			<div
+				className={cn(
+					"gap-0 lg:min-h-[760px] xl:h-[calc(100vh-121px)] grid grid-cols-1",
+					isSignalPanelCollapsed
+						? "xl:grid-cols-[minmax(700px,1fr)_52px]"
+						: "xl:grid-cols-[minmax(700px,1fr)_328px]",
+				)}
+			>
 				<aside className="xl:border-r xl:border-b-0 hidden border-b bg-[#141414]">
 					<div className="px-4 py-4 flex items-center justify-between border-b">
 						<div>
@@ -883,7 +893,7 @@ export function SignalsWorkspace() {
 						</div>
 					</section>
 
-					<section className="min-h-0 flex flex-1 flex-col">
+					<section className="xl:min-h-0 xl:flex-1 flex flex-col">
 						<div className="px-4 py-3 flex items-center justify-between border-b bg-[#141414]">
 							<div className="gap-3 flex items-center">
 								<ChartCandlestickIcon className="size-4 text-muted-foreground" />
@@ -922,7 +932,7 @@ export function SignalsWorkspace() {
 							</div>
 						</div>
 
-						<div className="min-h-0 flex-1">
+						<div className="xl:min-h-0 xl:flex-1 h-[620px]">
 							<TradingViewSignalChart
 								activeSignal={activeSignal}
 								candles={candles}
@@ -943,41 +953,74 @@ export function SignalsWorkspace() {
 					</section>
 				</main>
 
-				<aside className="xl:border-t-0 xl:border-l border-t bg-[#141414]">
-					<div className="grid grid-cols-2 border-b">
-						{SIGNAL_STATUSES.map((status) => (
-							<button
-								key={status}
-								type="button"
-								onClick={() => {
-									setSelectedStatus(status);
-									const nextSignal = SIGNALS.find(
-										(signal) =>
-											signal.symbol === selectedSymbol &&
-											signal.status === status &&
-											(selectedSource === "all" ||
-												signal.sourceId === selectedSource),
-									);
-									setActiveSignalId(nextSignal?.id ?? null);
-								}}
-								className={cn(
-									"px-4 py-3 text-xs font-medium border-b-2 transition-colors",
-									selectedStatus === status
-										? "border-white text-white bg-[#222222]"
-										: "hover:text-white border-transparent bg-transparent text-muted-foreground",
-								)}
-							>
-								<span>{t(`status.${status}`)}</span>
-								{statusCounts[status] > 0 && (
-									<span className="ml-1.5 text-xs font-semibold opacity-60">
-										{statusCounts[status]}
-									</span>
-								)}
-							</button>
-						))}
+				<aside
+					className={cn(
+						"xl:border-l xl:border-t-0 border-t bg-[#141414]",
+						isSignalPanelCollapsed && "xl:overflow-hidden",
+					)}
+				>
+					<div className="flex border-b">
+						<button
+							type="button"
+							onClick={() => setIsSignalPanelCollapsed((current) => !current)}
+							className={cn(
+								"hover:bg-white/5 hover:text-white xl:flex hidden h-[48px] w-[52px] shrink-0 items-center justify-center text-muted-foreground transition-colors",
+								!isSignalPanelCollapsed && "border-r",
+							)}
+							aria-label={isSignalPanelCollapsed ? "展开信号面板" : "收起信号面板"}
+							aria-expanded={!isSignalPanelCollapsed}
+						>
+							{isSignalPanelCollapsed ? (
+								<ChevronLeftIcon className="size-4" />
+							) : (
+								<ChevronRightIcon className="size-4" />
+							)}
+						</button>
+						<div
+							className={cn(
+								"min-w-0 grid flex-1 grid-cols-2",
+								isSignalPanelCollapsed && "xl:hidden",
+							)}
+						>
+							{SIGNAL_STATUSES.map((status) => (
+								<button
+									key={status}
+									type="button"
+									onClick={() => {
+										setSelectedStatus(status);
+										const nextSignal = SIGNALS.find(
+											(signal) =>
+												signal.symbol === selectedSymbol &&
+												signal.status === status &&
+												(selectedSource === "all" ||
+													signal.sourceId === selectedSource),
+										);
+										setActiveSignalId(nextSignal?.id ?? null);
+									}}
+									className={cn(
+										"px-4 py-3 text-xs font-medium border-b-2 transition-colors",
+										selectedStatus === status
+											? "border-white text-white bg-[#222222]"
+											: "hover:text-white border-transparent bg-transparent text-muted-foreground",
+									)}
+								>
+									<span>{t(`status.${status}`)}</span>
+									{statusCounts[status] > 0 && (
+										<span className="ml-1.5 text-xs font-semibold opacity-60">
+											{statusCounts[status]}
+										</span>
+									)}
+								</button>
+							))}
+						</div>
 					</div>
 
-					<div className="space-y-3 p-3 max-h-[680px] overflow-y-auto">
+					<div
+						className={cn(
+							"space-y-3 p-3 xl:max-h-[680px] xl:overflow-y-auto",
+							isSignalPanelCollapsed && "xl:hidden",
+						)}
+					>
 						{filteredSignals.length ? (
 							filteredSignals.map((signal) => (
 								<button
