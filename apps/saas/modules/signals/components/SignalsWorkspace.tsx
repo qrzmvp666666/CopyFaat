@@ -78,6 +78,7 @@ interface TradeSignal {
 	avatarLabel: string;
 	avatarUrl: string;
 	direction: Exclude<SignalDirection, "all">;
+	entryStatus: Exclude<EntryStatus, "all">;
 	status: SignalStatus;
 	entry: number;
 	takeProfit: number;
@@ -202,6 +203,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "所",
 		avatarUrl: "https://i.pravatar.cc/80?img=11",
 		direction: "long",
+		entryStatus: "entered",
 		status: "active",
 		entry: 69_700,
 		takeProfit: 73_825,
@@ -219,6 +221,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "飞",
 		avatarUrl: "https://i.pravatar.cc/80?img=33",
 		direction: "long",
+		entryStatus: "entered",
 		status: "active",
 		entry: 69_500,
 		takeProfit: 70_300,
@@ -236,6 +239,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "山",
 		avatarUrl: "https://i.pravatar.cc/80?img=47",
 		direction: "long",
+		entryStatus: "entered",
 		status: "history",
 		entry: 68_324,
 		takeProfit: 70_800,
@@ -254,6 +258,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "所",
 		avatarUrl: "https://i.pravatar.cc/80?img=11",
 		direction: "short",
+		entryStatus: "pending",
 		status: "history",
 		entry: 73_350,
 		takeProfit: 70_050,
@@ -272,6 +277,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "所",
 		avatarUrl: "https://i.pravatar.cc/80?img=11",
 		direction: "long",
+		entryStatus: "pending",
 		status: "active",
 		entry: 2_876,
 		takeProfit: 3_040,
@@ -289,6 +295,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "WG",
 		avatarUrl: "https://i.pravatar.cc/80?img=64",
 		direction: "short",
+		entryStatus: "entered",
 		status: "history",
 		entry: 2_945,
 		takeProfit: 2_820,
@@ -307,6 +314,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "飞",
 		avatarUrl: "https://i.pravatar.cc/80?img=33",
 		direction: "long",
+		entryStatus: "entered",
 		status: "active",
 		entry: 87.5,
 		takeProfit: 94.2,
@@ -324,6 +332,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "山",
 		avatarUrl: "https://i.pravatar.cc/80?img=47",
 		direction: "short",
+		entryStatus: "entered",
 		status: "history",
 		entry: 91.8,
 		takeProfit: 86.6,
@@ -342,6 +351,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "陈",
 		avatarUrl: "https://i.pravatar.cc/80?img=52",
 		direction: "short",
+		entryStatus: "entered",
 		status: "active",
 		entry: 71_200,
 		takeProfit: 68_500,
@@ -359,6 +369,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "必",
 		avatarUrl: "https://i.pravatar.cc/80?img=57",
 		direction: "long",
+		entryStatus: "pending",
 		status: "active",
 		entry: 68_900,
 		takeProfit: 72_400,
@@ -376,6 +387,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "舒",
 		avatarUrl: "https://i.pravatar.cc/80?img=25",
 		direction: "long",
+		entryStatus: "pending",
 		status: "active",
 		entry: 69_100,
 		takeProfit: 73_000,
@@ -393,6 +405,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "峰",
 		avatarUrl: "https://i.pravatar.cc/80?img=68",
 		direction: "long",
+		entryStatus: "entered",
 		status: "active",
 		entry: 2_830,
 		takeProfit: 3_100,
@@ -410,6 +423,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "必",
 		avatarUrl: "https://i.pravatar.cc/80?img=57",
 		direction: "short",
+		entryStatus: "pending",
 		status: "active",
 		entry: 2_960,
 		takeProfit: 2_750,
@@ -427,6 +441,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "陈",
 		avatarUrl: "https://i.pravatar.cc/80?img=52",
 		direction: "long",
+		entryStatus: "entered",
 		status: "active",
 		entry: 85.6,
 		takeProfit: 92.8,
@@ -444,6 +459,7 @@ const SIGNALS: TradeSignal[] = [
 		avatarLabel: "WG",
 		avatarUrl: "https://i.pravatar.cc/80?img=64",
 		direction: "short",
+		entryStatus: "pending",
 		status: "active",
 		entry: 90.2,
 		takeProfit: 84.5,
@@ -516,10 +532,11 @@ export function SignalsWorkspace() {
 					signal.symbol === selectedSymbol &&
 					signal.status === selectedStatus &&
 					(selectedSource === "all" || signal.sourceId === selectedSource) &&
-					(selectedDirection === "all" || signal.direction === selectedDirection)
+					(selectedDirection === "all" || signal.direction === selectedDirection) &&
+					(selectedEntryStatus === "all" || signal.entryStatus === selectedEntryStatus)
 				);
 			}),
-		[selectedDirection, selectedSource, selectedStatus, selectedSymbol],
+		[selectedDirection, selectedEntryStatus, selectedSource, selectedStatus, selectedSymbol],
 	);
 
 	const statusCounts = useMemo(
@@ -532,11 +549,14 @@ export function SignalsWorkspace() {
 							signal.symbol === selectedSymbol &&
 							signal.status === status &&
 							(selectedSource === "all" || signal.sourceId === selectedSource) &&
-							(selectedDirection === "all" || signal.direction === selectedDirection),
+							(selectedDirection === "all" ||
+								signal.direction === selectedDirection) &&
+							(selectedEntryStatus === "all" ||
+								signal.entryStatus === selectedEntryStatus),
 					).length,
 				]),
 			) as Record<SignalStatus, number>,
-		[selectedDirection, selectedSource, selectedSymbol],
+		[selectedDirection, selectedEntryStatus, selectedSource, selectedSymbol],
 	);
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
@@ -548,9 +568,10 @@ export function SignalsWorkspace() {
 					signal.symbol === selectedSymbol &&
 					signal.status === "active" &&
 					(selectedSource === "all" || signal.sourceId === selectedSource) &&
-					(selectedDirection === "all" || signal.direction === selectedDirection),
+					(selectedDirection === "all" || signal.direction === selectedDirection) &&
+					(selectedEntryStatus === "all" || signal.entryStatus === selectedEntryStatus),
 			),
-		[selectedDirection, selectedSource, selectedSymbol],
+		[selectedDirection, selectedEntryStatus, selectedSource, selectedSymbol],
 	);
 	const selectedInstrument =
 		INSTRUMENTS.find((instrument) => instrument.symbol === selectedSymbol) ?? INSTRUMENTS[0];
@@ -571,7 +592,9 @@ export function SignalsWorkspace() {
 			(signal) =>
 				signal.symbol === symbol &&
 				signal.status === selectedStatus &&
-				(selectedSource === "all" || signal.sourceId === selectedSource),
+				(selectedSource === "all" || signal.sourceId === selectedSource) &&
+				(selectedDirection === "all" || signal.direction === selectedDirection) &&
+				(selectedEntryStatus === "all" || signal.entryStatus === selectedEntryStatus),
 		);
 		setActiveSignalId(nextSignal?.id ?? null);
 	}
@@ -993,7 +1016,11 @@ export function SignalsWorkspace() {
 												signal.symbol === selectedSymbol &&
 												signal.status === status &&
 												(selectedSource === "all" ||
-													signal.sourceId === selectedSource),
+													signal.sourceId === selectedSource) &&
+												(selectedDirection === "all" ||
+													signal.direction === selectedDirection) &&
+												(selectedEntryStatus === "all" ||
+													signal.entryStatus === selectedEntryStatus),
 										);
 										setActiveSignalId(nextSignal?.id ?? null);
 									}}
@@ -1079,7 +1106,9 @@ export function SignalsWorkspace() {
 											)}
 										>
 											{signal.status === "active"
-												? t("signalsPanel.entered")
+												? signal.entryStatus === "entered"
+													? t("signalsPanel.entered")
+													: t("signalsPanel.pending")
 												: (signal.outcome ?? t("signalsPanel.closed"))}
 										</span>
 									</div>

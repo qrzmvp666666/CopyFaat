@@ -625,6 +625,7 @@
 			"entry": "入场价",
 			"expectedRr": "预计盈亏比",
 			"eyebrow": "Signals",
+			"pending": "待入场",
 			"stopLoss": "止损价",
 			"submittedAt": "委托时间",
 			"takeProfit": "止盈价",

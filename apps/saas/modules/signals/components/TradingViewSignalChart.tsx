@@ -39,6 +39,7 @@ export interface SignalChartSignal {
 	avatarUrl: string;
 	direction: "long" | "short";
 	entry: number;
+	entryStatus: "entered" | "pending";
 	id: string;
 	sourceName: string;
 	stopLoss: number;
@@ -368,6 +369,7 @@ export function TradingViewSignalChart({
 			<div className="inset-0 pointer-events-none absolute z-30">
 				{markerPositions.map(({ left, signal, top }) => {
 					const isActive = signal.id === activeSignal?.id;
+					const isEntered = signal.entryStatus === "entered";
 
 					return (
 						<button
@@ -375,13 +377,21 @@ export function TradingViewSignalChart({
 							type="button"
 							onClick={() => onSelectSignal(signal)}
 							className={cn(
-								"gap-1.5 py-0.5 pl-0.5 pr-1.5 font-semibold text-white shadow-lg pointer-events-auto absolute flex -translate-x-1/2 -translate-y-1/2 items-center rounded-full border bg-[#141414]/95 text-[11px] transition-all",
-								isActive
-									? "border-emerald-400 shadow-[0_0_0_6px_rgba(34,229,141,0.14)]"
-									: "border-white/15 hover:border-white/35",
+								"gap-1.5 py-0.5 pl-0.5 pr-1.5 font-semibold text-white shadow-lg pointer-events-auto absolute isolate flex -translate-x-1/2 -translate-y-1/2 items-center rounded-full border bg-[#141414]/95 text-[11px] transition-all",
+								isEntered
+									? "border-emerald-400 shadow-[0_0_18px_rgba(16,185,129,0.36)]"
+									: isActive
+										? "border-emerald-400 shadow-[0_0_0_6px_rgba(34,229,141,0.14)]"
+										: "border-white/15 hover:border-white/35",
 							)}
 							style={{ left, top } satisfies CSSProperties}
 						>
+							{isEntered && (
+								<>
+									<span className="-inset-1.5 border-emerald-400/45 animate-ping pointer-events-none absolute -z-10 rounded-full border opacity-70" />
+									<span className="-inset-2 bg-emerald-500/20 blur-md animate-pulse pointer-events-none absolute -z-10 rounded-full" />
+								</>
+							)}
 							<span
 								className={cn(
 									"flex size-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full",
