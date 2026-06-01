@@ -652,7 +652,7 @@ export function SignalsWorkspace() {
 				className={cn(
 					"gap-0 lg:min-h-[760px] xl:h-[calc(100vh-121px)] grid grid-cols-1",
 					isSignalPanelCollapsed
-						? "xl:grid-cols-[minmax(700px,1fr)_52px]"
+						? "xl:grid-cols-[minmax(700px,1fr)_0px]"
 						: "xl:grid-cols-[minmax(700px,1fr)_328px]",
 				)}
 			>
@@ -977,31 +977,31 @@ export function SignalsWorkspace() {
 				</main>
 
 				<aside
-					className={cn(
-						"xl:border-l xl:border-t-0 border-t bg-[#141414]",
-						isSignalPanelCollapsed && "xl:overflow-hidden",
-					)}
+					className={cn("group xl:border-l xl:border-t-0 relative border-t bg-[#141414]")}
 				>
-					<div className="flex border-b">
-						<button
-							type="button"
-							onClick={() => setIsSignalPanelCollapsed((current) => !current)}
-							className={cn(
-								"hover:bg-white/5 hover:text-white xl:flex hidden h-[48px] w-[52px] shrink-0 items-center justify-center text-muted-foreground transition-colors",
-								!isSignalPanelCollapsed && "border-r",
-							)}
-							aria-label={isSignalPanelCollapsed ? "展开信号面板" : "收起信号面板"}
-							aria-expanded={!isSignalPanelCollapsed}
-						>
-							{isSignalPanelCollapsed ? (
-								<ChevronLeftIcon className="size-4" />
-							) : (
-								<ChevronRightIcon className="size-4" />
-							)}
-						</button>
+					<button
+						type="button"
+						onClick={() => setIsSignalPanelCollapsed((current) => !current)}
+						className={cn(
+							"left-0 top-3 size-8 border-white/10 hover:border-white/20 hover:text-white xl:flex backdrop-blur absolute z-40 hidden -translate-x-1/2 items-center justify-center rounded-full border bg-[#1f1f1f]/95 text-muted-foreground shadow-[0_10px_32px_rgba(0,0,0,0.35)] transition-all hover:bg-[#272727] focus-visible:opacity-100",
+							isSignalPanelCollapsed
+								? "opacity-100"
+								: "opacity-0 group-hover:opacity-100",
+						)}
+						aria-label={isSignalPanelCollapsed ? "展开信号面板" : "收起信号面板"}
+						aria-expanded={!isSignalPanelCollapsed}
+					>
+						{isSignalPanelCollapsed ? (
+							<ChevronLeftIcon className="size-4" />
+						) : (
+							<ChevronRightIcon className="size-4" />
+						)}
+					</button>
+
+					<div className={cn("border-b", isSignalPanelCollapsed && "xl:hidden")}>
 						<div
 							className={cn(
-								"min-w-0 grid flex-1 grid-cols-2",
+								"min-w-0 grid grid-cols-2",
 								isSignalPanelCollapsed && "xl:hidden",
 							)}
 						>
