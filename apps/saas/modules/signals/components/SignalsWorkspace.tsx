@@ -56,6 +56,7 @@ interface Instrument {
 	volume: string;
 	accent: string;
 	logo: string;
+	tickDirection?: "down" | "up";
 }
 
 interface Source {
@@ -73,6 +74,25 @@ interface Candle {
 	low: number;
 	open: number;
 	time: UTCTimestamp;
+}
+
+interface BinanceTickerStreamPayload {
+	data?: {
+		c?: string;
+		P?: string;
+		q?: string;
+		s?: string;
+	};
+}
+
+interface BinanceKlineStreamPayload {
+	k?: {
+		c?: string;
+		h?: string;
+		l?: string;
+		o?: string;
+		t?: number;
+	};
 }
 
 interface TradeSignal {
@@ -132,6 +152,10 @@ const INSTRUMENTS: Instrument[] = [
 		logo: "https://assets.coingecko.com/coins/images/4128/thumb/solana.png",
 	},
 ];
+
+const BINANCE_STREAM_BASE_URL = "wss://stream.binance.com:9443";
+const BINANCE_RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000] as const;
+const TICK_FLASH_MS = 700;
 
 const SOURCES: Source[] = [
 	{
@@ -566,6 +590,129 @@ function buildFallbackCandles(symbol: string, timeframe: Timeframe): Candle[] {
 	});
 }
 
+function formatCompactVolume(value: number) {
+	return new Intl.NumberFormat("en", {
+		maximumFractionDigits: 1,
+		notation: "compact",
+	}).format(value);
+}
+
+function upsertCandle(candles: Candle[], nextCandle: Candle) {
+	const index = candles.findIndex((candle) => candle.time === nextCandle.time);
+
+	if (index === -1) {
+		return [...candles, nextCandle].slice(-180);
+	}
+
+	return candles.map((candle, candleIndex) => (candleIndex === index ? nextCandle : candle));
+}
+
+function parseTickerPayload(eventData: string) {
+	try {
+		const payload = JSON.parse(eventData) as BinanceTickerStreamPayload;
+		const data = payload.data;
+
+		if (!data?.s) {
+			return null;
+		}
+
+		const price = Number(data.c);
+		const change = Number(data.P);
+		const quoteVolume = Number(data.q);
+
+		if (!Number.isFinite(price) || !Number.isFinite(change)) {
+			return null;
+		}
+
+		return {
+			change,
+			price,
+			symbol: data.s,
+			volume: Number.isFinite(quoteVolume) ? formatCompactVolume(quoteVolume) : undefined,
+		};
+	} catch {
+		return null;
+	}
+}
+
+function parseKlinePayload(eventData: string): Candle | null {
+	try {
+		const payload = JSON.parse(eventData) as BinanceKlineStreamPayload;
+		const kline = payload.k;
+
+		if (!kline?.t) {
+			return null;
+		}
+
+		const candle = {
+			close: Number(kline.c),
+			high: Number(kline.h),
+			low: Number(kline.l),
+			open: Number(kline.o),
+			time: Math.floor(kline.t / 1000) as UTCTimestamp,
+		};
+
+		if (
+			!Number.isFinite(candle.close) ||
+			!Number.isFinite(candle.high) ||
+			!Number.isFinite(candle.low) ||
+			!Number.isFinite(candle.open)
+		) {
+			return null;
+		}
+
+		return candle;
+	} catch {
+		return null;
+	}
+}
+
+function connectBinanceSocket(url: string, onMessage: (eventData: string) => void) {
+	let isClosed = false;
+	let reconnectAttempt = 0;
+	let reconnectTimer: number | undefined;
+	let socket: WebSocket | undefined;
+
+	function connect() {
+		socket = new WebSocket(url);
+
+		socket.addEventListener("open", () => {
+			reconnectAttempt = 0;
+		});
+
+		socket.addEventListener("message", (event) => {
+			onMessage(String(event.data));
+		});
+
+		socket.addEventListener("close", () => {
+			if (isClosed) {
+				return;
+			}
+
+			const delay =
+				BINANCE_RECONNECT_DELAYS_MS[
+					Math.min(reconnectAttempt, BINANCE_RECONNECT_DELAYS_MS.length - 1)
+				];
+			reconnectAttempt += 1;
+			reconnectTimer = window.setTimeout(connect, delay);
+		});
+
+		socket.addEventListener("error", () => {
+			socket?.close();
+		});
+	}
+
+	connect();
+
+	return () => {
+		isClosed = true;
+		if (reconnectTimer) {
+			window.clearTimeout(reconnectTimer);
+		}
+		socket?.close();
+	};
+}
+
 function getSelectedSignal(signals: TradeSignal[], activeSignalId: string | null) {
 	return signals.find((signal) => signal.id === activeSignalId) ?? signals[0] ?? null;
 }
@@ -575,6 +722,7 @@ export function SignalsWorkspace() {
 	const locale = useLocale();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
 	const [binanceCandles, setBinanceCandles] = useState<Candle[]>([]);
+	const [instruments, setInstruments] = useState<Instrument[]>(INSTRUMENTS);
 	const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
 	const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("1h");
 	const [selectedSource, setSelectedSource] = useState("all");
@@ -682,6 +830,86 @@ export function SignalsWorkspace() {
 		};
 	}, [selectedSymbol, selectedTimeframe]);
 
+	useEffect(() => {
+		const timers = instruments
+			.filter((instrument) => instrument.tickDirection)
+			.map((instrument) =>
+				window.setTimeout(() => {
+					setInstruments((currentInstruments) =>
+						currentInstruments.map((currentInstrument) =>
+							currentInstrument.symbol === instrument.symbol
+								? { ...currentInstrument, tickDirection: undefined }
+								: currentInstrument,
+						),
+					);
+				}, TICK_FLASH_MS),
+			);
+
+		return () => {
+			for (const timer of timers) {
+				window.clearTimeout(timer);
+			}
+		};
+	}, [instruments]);
+
+	useEffect(() => {
+		const streams = INSTRUMENTS.map(
+			(instrument) => `${instrument.symbol.toLowerCase()}@ticker`,
+		).join("/");
+		const disconnect = connectBinanceSocket(
+			`${BINANCE_STREAM_BASE_URL}/stream?streams=${streams}`,
+			(eventData) => {
+				const ticker = parseTickerPayload(eventData);
+
+				if (!ticker) {
+					return;
+				}
+
+				setInstruments((currentInstruments) =>
+					currentInstruments.map((instrument) => {
+						if (instrument.symbol !== ticker.symbol) {
+							return instrument;
+						}
+
+						const tickDirection =
+							ticker.price > instrument.price
+								? "up"
+								: ticker.price < instrument.price
+									? "down"
+									: instrument.tickDirection;
+
+						return {
+							...instrument,
+							change: ticker.change,
+							price: ticker.price,
+							tickDirection,
+							volume: ticker.volume ?? instrument.volume,
+						};
+					}),
+				);
+			},
+		);
+
+		return disconnect;
+	}, []);
+
+	useEffect(() => {
+		const disconnect = connectBinanceSocket(
+			`${BINANCE_STREAM_BASE_URL}/ws/${selectedSymbol.toLowerCase()}@kline_${selectedTimeframe}`,
+			(eventData) => {
+				const candle = parseKlinePayload(eventData);
+
+				if (!candle) {
+					return;
+				}
+
+				setBinanceCandles((currentCandles) => upsertCandle(currentCandles, candle));
+			},
+		);
+
+		return disconnect;
+	}, [selectedSymbol, selectedTimeframe]);
+
 	const signals = useMemo(
 		() => webhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
 		[locale, webhookSignals],
@@ -752,7 +980,9 @@ export function SignalsWorkspace() {
 	);
 
 	const selectedInstrument =
-		INSTRUMENTS.find((instrument) => instrument.symbol === selectedSymbol) ?? INSTRUMENTS[0];
+		instruments.find((instrument) => instrument.symbol === selectedSymbol) ??
+		instruments[0] ??
+		INSTRUMENTS[0];
 	function formatPrice(value: number, fractionDigits = selectedSymbol === "SOLUSDT" ? 2 : 0) {
 		return new Intl.NumberFormat(locale, {
 			maximumFractionDigits: fractionDigits,
@@ -785,18 +1015,18 @@ export function SignalsWorkspace() {
 						<RadioIcon className="size-4 text-emerald-500" />
 						<span>{t("ticker.live")}</span>
 					</div>
-					{INSTRUMENTS.map((instrument) => (
+					{instruments.map((instrument) => (
 						<button
 							key={instrument.symbol}
 							type="button"
-							onClick={() => selectSymbol(instrument.symbol)}
-							className={cn(
-								"gap-2 px-3 py-1.5 text-sm hover:bg-white/8 flex shrink-0 items-center rounded-md border text-left transition-colors",
-								selectedSymbol === instrument.symbol
-									? "bg-white/8 border-foreground/20"
-									: "border-transparent bg-transparent",
-							)}
-						>
+								onClick={() => selectSymbol(instrument.symbol)}
+								className={cn(
+									"gap-2 px-3 py-1.5 text-sm hover:bg-white/8 flex shrink-0 items-center rounded-md border text-left transition-colors duration-200",
+									selectedSymbol === instrument.symbol
+										? "bg-white/8 border-foreground/20"
+										: "border-transparent bg-transparent",
+								)}
+							>
 							<span className="size-5 bg-black flex shrink-0 items-center justify-center overflow-hidden rounded-full">
 								<img
 									alt={instrument.base}
@@ -805,7 +1035,13 @@ export function SignalsWorkspace() {
 								/>
 							</span>
 							<span className="font-semibold">{instrument.base}</span>
-							<span className="font-mono text-muted-foreground">
+								<span
+									className={cn(
+										"font-mono text-muted-foreground transition-colors duration-200",
+										instrument.tickDirection === "up" && "text-emerald-400",
+										instrument.tickDirection === "down" && "text-rose-400",
+									)}
+								>
 								$
 								{formatPrice(
 									instrument.price,
@@ -846,7 +1082,7 @@ export function SignalsWorkspace() {
 					</div>
 
 					<div className="divide-y">
-						{INSTRUMENTS.map((instrument) => {
+						{instruments.map((instrument) => {
 							const isSelected = instrument.symbol === selectedSymbol;
 
 							return (
