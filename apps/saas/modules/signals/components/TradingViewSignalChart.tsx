@@ -119,11 +119,11 @@ function getMinMove(symbol: string) {
 }
 
 function getProfitPrice(signal: SignalChartSignal) {
-	return signal.direction === "long" ? signal.takeProfit : signal.stopLoss;
+	return signal.takeProfit;
 }
 
 function getRiskPrice(signal: SignalChartSignal) {
-	return signal.direction === "long" ? signal.stopLoss : signal.takeProfit;
+	return signal.stopLoss;
 }
 
 function getSignalPriceRange(signals: SignalChartSignal[]) {
