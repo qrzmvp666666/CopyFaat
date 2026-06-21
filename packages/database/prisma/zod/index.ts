@@ -82,6 +82,12 @@ export const UserNotificationPreferenceScalarFieldEnumSchema = z.enum(['id', 'us
 
 export type UserNotificationPreferenceScalarFieldEnum = z.infer<typeof UserNotificationPreferenceScalarFieldEnumSchema>;
 
+// File: SignalScalarFieldEnum.schema.ts
+
+export const SignalScalarFieldEnumSchema = z.enum(['id', 'eventId', 'symbol', 'direction', 'entryStatus', 'status', 'entry', 'takeProfit', 'stopLoss', 'riskReward', 'submittedAt', 'chartPositionPct', 'sourceId', 'sourceName', 'sourceAvatarUrl', 'exchange', 'timeframe', 'outcome', 'note', 'createdAt', 'updatedAt'])
+
+export type SignalScalarFieldEnum = z.infer<typeof SignalScalarFieldEnumSchema>;
+
 // File: SortOrder.schema.ts
 
 export const SortOrderSchema = z.enum(['asc', 'desc'])
@@ -328,4 +334,33 @@ export const UserNotificationPreferenceSchema = z.object({
 });
 
 export type UserNotificationPreferenceType = z.infer<typeof UserNotificationPreferenceSchema>;
+
+
+// File: Signal.schema.ts
+
+export const SignalSchema = z.object({
+  id: z.string(),
+  eventId: z.string(),
+  symbol: z.string(),
+  direction: z.string(),
+  entryStatus: z.string().default("pending"),
+  status: z.string().default("active"),
+  entry: z.number(),
+  takeProfit: z.number(),
+  stopLoss: z.number(),
+  riskReward: z.number(),
+  submittedAt: z.date(),
+  chartPositionPct: z.number().default(92.0),
+  sourceId: z.string().nullish(),
+  sourceName: z.string(),
+  sourceAvatarUrl: z.string().nullish(),
+  exchange: z.string().nullish(),
+  timeframe: z.string().nullish(),
+  outcome: z.string().nullish(),
+  note: z.string().nullish(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type SignalType = z.infer<typeof SignalSchema>;
 

@@ -243,3 +243,32 @@ model UserNotificationPreference {
   @@unique([userId, type, target])
   @@map("user_notification_preference")
 }
+
+model Signal {
+  id               String   @id @default(cuid())
+  eventId          String   @unique
+  symbol           String
+  direction        String
+  entryStatus      String   @default("pending")
+  status           String   @default("active")
+  entry            Float
+  takeProfit       Float
+  stopLoss         Float
+  riskReward       Float
+  submittedAt      DateTime
+  chartPositionPct Float    @default(92)
+  sourceId         String?
+  sourceName       String
+  sourceAvatarUrl  String?
+  exchange         String?
+  timeframe        String?
+  outcome          String?
+  note             String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([symbol, status])
+  @@index([sourceId])
+  @@index([submittedAt])
+  @@map("signal")
+}

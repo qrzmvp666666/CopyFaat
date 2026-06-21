@@ -26,10 +26,11 @@ import {
 	TrendingUpIcon,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { SignalChartSignal } from "./TradingViewSignalChart";
 import { TradingViewSignalChart } from "./TradingViewSignalChart";
+import type { SignalsListResponse, StoredSignal } from "../lib/signal-types";
 
 const SUPPORTED_TIMEFRAMES = ["15m", "1h", "4h", "1d"] as const;
 const SIGNAL_DIRECTIONS = ["all", "long", "short"] as const;
@@ -477,6 +478,58 @@ const MARKET_SEED: Record<string, number> = {
 	SOLUSDT: 87.5,
 };
 
+function getAvatarLabel(sourceName: string) {
+	return sourceName.trim().slice(0, 2).toUpperCase();
+}
+
+function formatSignalSubmittedAt(value: string, locale: string) {
+	const date = new Date(value);
+
+	if (Number.isNaN(date.getTime())) {
+		return value;
+	}
+
+	return new Intl.DateTimeFormat(locale, {
+		day: "2-digit",
+		hour: "2-digit",
+		hour12: false,
+		minute: "2-digit",
+		month: "2-digit",
+	}).format(date);
+}
+
+function mapStoredSignalToTradeSignal(signal: StoredSignal, locale: string): TradeSignal {
+	return {
+		avatarLabel: getAvatarLabel(signal.source.name),
+		avatarUrl: signal.source.avatarUrl ?? "",
+		confidence: signal.riskReward,
+		direction: signal.direction,
+		entry: signal.entry,
+		entryStatus: signal.entryStatus,
+		id: signal.id,
+		outcome: signal.outcome,
+		sourceId: signal.source.id ?? signal.source.name,
+		sourceName: signal.source.name,
+		status: signal.status,
+		stopLoss: signal.stopLoss,
+		submittedAt: formatSignalSubmittedAt(signal.submittedAt, locale),
+		symbol: signal.symbol,
+		takeProfit: signal.takeProfit,
+		x: signal.chartPositionPct,
+		y: 50,
+	};
+}
+
+function upsertWebhookSignal(signals: StoredSignal[], nextSignal: StoredSignal) {
+	const existingIndex = signals.findIndex((signal) => signal.eventId === nextSignal.eventId);
+
+	if (existingIndex === -1) {
+		return [nextSignal, ...signals];
+	}
+
+	return signals.map((signal, index) => (index === existingIndex ? nextSignal : signal));
+}
+
 function buildCandles(symbol: string, timeframe: Timeframe): Candle[] {
 	const intervalSeconds = TIMEFRAME_SECONDS[timeframe];
 	const now = Math.floor(Date.now() / 1000);
@@ -510,6 +563,7 @@ function getSelectedSignal(signals: TradeSignal[], activeSignalId: string | null
 export function SignalsWorkspace() {
 	const t = useTranslations("signals");
 	const locale = useLocale();
+	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
 	const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
 	const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("1h");
 	const [selectedSource, setSelectedSource] = useState("all");
@@ -517,7 +571,7 @@ export function SignalsWorkspace() {
 	const [selectedStatus, setSelectedStatus] = useState<SignalStatus>("active");
 	const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("30d");
 	const [selectedEntryStatus, setSelectedEntryStatus] = useState<EntryStatus>("all");
-	const [activeSignalId, setActiveSignalId] = useState<string | null>("btc-1");
+	const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
 
 	const candles = useMemo(
@@ -525,9 +579,60 @@ export function SignalsWorkspace() {
 		[selectedSymbol, selectedTimeframe],
 	);
 
+	useEffect(() => {
+		let isMounted = true;
+
+		async function loadWebhookSignals() {
+			try {
+				const response = await fetch("/api/signals", {
+					cache: "no-store",
+				});
+
+				if (!response.ok) {
+					return;
+				}
+
+				const data = (await response.json()) as SignalsListResponse;
+
+				if (isMounted) {
+					setWebhookSignals(data.signals);
+				}
+			} catch {
+				// Keep the static demo data visible if the local API is temporarily unavailable.
+			}
+		}
+
+		void loadWebhookSignals();
+		const eventSource = new EventSource("/api/signals/events");
+
+		eventSource.addEventListener("signal", (event) => {
+			try {
+				const signal = JSON.parse((event as MessageEvent<string>).data) as StoredSignal;
+
+				if (isMounted) {
+					setWebhookSignals((currentSignals) =>
+						upsertWebhookSignal(currentSignals, signal),
+					);
+				}
+			} catch {
+				// Ignore malformed local dev events and keep the current view intact.
+			}
+		});
+
+		return () => {
+			isMounted = false;
+			eventSource.close();
+		};
+	}, []);
+
+	const signals = useMemo(
+		() => webhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
+		[locale, webhookSignals],
+	);
+
 	const filteredSignals = useMemo(
 		() =>
-			SIGNALS.filter((signal) => {
+			signals.filter((signal) => {
 				return (
 					signal.symbol === selectedSymbol &&
 					signal.status === selectedStatus &&
@@ -536,7 +641,14 @@ export function SignalsWorkspace() {
 					(selectedEntryStatus === "all" || signal.entryStatus === selectedEntryStatus)
 				);
 			}),
-		[selectedDirection, selectedEntryStatus, selectedSource, selectedStatus, selectedSymbol],
+		[
+			selectedDirection,
+			selectedEntryStatus,
+			selectedSource,
+			selectedStatus,
+			selectedSymbol,
+			signals,
+		],
 	);
 
 	const statusCounts = useMemo(
@@ -544,7 +656,7 @@ export function SignalsWorkspace() {
 			Object.fromEntries(
 				SIGNAL_STATUSES.map((status) => [
 					status,
-					SIGNALS.filter(
+					signals.filter(
 						(signal) =>
 							signal.symbol === selectedSymbol &&
 							signal.status === status &&
@@ -556,14 +668,14 @@ export function SignalsWorkspace() {
 					).length,
 				]),
 			) as Record<SignalStatus, number>,
-		[selectedDirection, selectedEntryStatus, selectedSource, selectedSymbol],
+		[selectedDirection, selectedEntryStatus, selectedSource, selectedSymbol, signals],
 	);
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
 
 	const chartSignals = useMemo(
 		() =>
-			SIGNALS.filter(
+			signals.filter(
 				(signal) =>
 					signal.symbol === selectedSymbol &&
 					signal.status === "active" &&
@@ -571,7 +683,7 @@ export function SignalsWorkspace() {
 					(selectedDirection === "all" || signal.direction === selectedDirection) &&
 					(selectedEntryStatus === "all" || signal.entryStatus === selectedEntryStatus),
 			),
-		[selectedDirection, selectedEntryStatus, selectedSource, selectedSymbol],
+		[selectedDirection, selectedEntryStatus, selectedSource, selectedSymbol, signals],
 	);
 	const selectedInstrument =
 		INSTRUMENTS.find((instrument) => instrument.symbol === selectedSymbol) ?? INSTRUMENTS[0];
@@ -588,7 +700,7 @@ export function SignalsWorkspace() {
 
 	function selectSymbol(symbol: string) {
 		setSelectedSymbol(symbol);
-		const nextSignal = SIGNALS.find(
+		const nextSignal = signals.find(
 			(signal) =>
 				signal.symbol === symbol &&
 				signal.status === selectedStatus &&
@@ -1011,7 +1123,7 @@ export function SignalsWorkspace() {
 									type="button"
 									onClick={() => {
 										setSelectedStatus(status);
-										const nextSignal = SIGNALS.find(
+										const nextSignal = signals.find(
 											(signal) =>
 												signal.symbol === selectedSymbol &&
 												signal.status === status &&
@@ -1063,26 +1175,29 @@ export function SignalsWorkspace() {
 									<div className="mb-3 gap-3 flex items-center justify-between">
 										<div className="min-w-0 gap-2 flex items-center">
 											<span className="size-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
-												<img
-													alt={signal.sourceName}
-													className="size-8 object-cover"
-													onError={(e) => {
-														const target = e.currentTarget;
-														target.style.display = "none";
-														const next =
-															target.nextElementSibling as HTMLElement | null;
-														if (next) next.style.display = "flex";
-													}}
-													src={signal.avatarUrl}
-												/>
+												{signal.avatarUrl && (
+													<img
+														alt={signal.sourceName}
+														className="size-8 object-cover"
+														onError={(e) => {
+															const target = e.currentTarget;
+															target.style.display = "none";
+															const next =
+																target.nextElementSibling as HTMLElement | null;
+															if (next) next.style.display = "flex";
+														}}
+														src={signal.avatarUrl}
+													/>
+												)}
 												<span
 													className={cn(
-														"size-8 text-xs font-bold text-white hidden items-center justify-center rounded-full",
+														"size-8 text-xs font-bold text-white items-center justify-center rounded-full",
+														signal.avatarUrl && "hidden",
 														signal.direction === "long"
 															? "bg-emerald-500"
 															: "bg-rose-500",
 													)}
-													style={{ display: "none" }}
+													style={signal.avatarUrl ? { display: "none" } : undefined}
 												>
 													{signal.avatarLabel}
 												</span>
