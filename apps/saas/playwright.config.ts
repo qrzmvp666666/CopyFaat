@@ -3,7 +3,7 @@ import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 import dotenv from "dotenv";
 
-dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -16,7 +16,7 @@ export default defineConfig({
 	workers: process.env.CI ? 1 : undefined,
 	reporter: [["html"]],
 	use: {
-		baseURL: "http://localhost:3000",
+		baseURL: process.env.NEXT_PUBLIC_SAAS_URL ?? "http://fastsignal.localhost:4100",
 		trace: "on-first-retry",
 		video: {
 			mode: "retain-on-failure",
@@ -33,8 +33,8 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: "pnpm --filter saas run build && pnpm --filter saas run start",
-		url: "http://localhost:3000",
+		command: "pnpm --filter saas run build && PORT=4100 pnpm --filter saas run start",
+		url: process.env.NEXT_PUBLIC_SAAS_URL ?? "http://fastsignal.localhost:4100",
 		reuseExistingServer: !process.env.CI,
 		stdout: "pipe",
 		timeout: 180 * 1000,

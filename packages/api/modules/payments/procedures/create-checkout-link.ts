@@ -65,7 +65,11 @@ export const createCheckoutLink = protectedProcedure
 			// ── QiXiang (WeChat / Alipay) ─────────────────────────────────────
 			if (paymentMethod === "wechat_person" || paymentMethod === "alipay_person") {
 				const qixiangType = paymentMethod === "wechat_person" ? "wxpay" : "alipay";
-				const baseUrl = getBaseUrl(process.env.NEXT_PUBLIC_SAAS_URL, 3000);
+				const baseUrl = getBaseUrl(
+					process.env.NEXT_PUBLIC_SAAS_URL,
+					4100,
+					"fastsignal.localhost",
+				);
 
 				const param = JSON.stringify({
 					...(organizationId ? { organizationId } : { userId: user.id }),

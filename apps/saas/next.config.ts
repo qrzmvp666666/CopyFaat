@@ -14,8 +14,8 @@ const nextConfig: NextConfig = {
 	allowedDevOrigins: [
 		...(allowedDevOrigin ? [allowedDevOrigin] : []),
 		"192.168.2.20",
-		"192.168.2.20:3000",
-		"http://192.168.2.20:3000",
+		"192.168.2.20:4100",
+		"http://192.168.2.20:4100",
 		"https://unwandering-paradisaical-marietta.ngrok-free.dev",
 		"*.ngrok-free.dev",
 		"*.ngrok-free.app",

@@ -11,7 +11,7 @@ description: 如何在本地开发、构建和预览文档站，以及搜索等�
 pnpm --filter docs dev
 ```
 
-默认运行在 **http://localhost:3002**。
+默认运行在 **http://fastsignal.localhost:4102**。
 
 > **注意：** 开发模式下，搜索（⌘K）和部分 UI 功能（如侧边栏折叠）**无法正常使用**，这是 fumadocs 开发模式的已知限制。
 
@@ -23,7 +23,7 @@ pnpm --filter docs dev
 # 第一步：构建
 pnpm --filter docs build
 
-# 第二步：启动（docs 默认端口 3000，需指定其他端口避免冲突）
+# 第二步：启动（docs 使用 FastSignal 专属 4102 端口，避免和其他项目冲突）
 cd apps/docs && npx next start -p 3004
 ```
 
