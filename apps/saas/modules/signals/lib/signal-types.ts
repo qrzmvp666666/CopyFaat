@@ -50,6 +50,21 @@ export interface SignalsListResponse {
 	signals: StoredSignal[];
 }
 
+export interface SignalKline {
+	close: number;
+	high: number;
+	low: number;
+	open: number;
+	time: number;
+}
+
+export interface SignalKlinesResponse {
+	klines: SignalKline[];
+	source: "binance";
+	symbol: string;
+	timeframe: string;
+}
+
 export interface SignalWebhookSuccessResponse {
 	ok: true;
 	receivedAt: string;

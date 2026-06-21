@@ -30,7 +30,11 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { SignalChartSignal } from "./TradingViewSignalChart";
 import { TradingViewSignalChart } from "./TradingViewSignalChart";
-import type { SignalsListResponse, StoredSignal } from "../lib/signal-types";
+import type {
+	SignalKlinesResponse,
+	SignalsListResponse,
+	StoredSignal,
+} from "../lib/signal-types";
 
 const SUPPORTED_TIMEFRAMES = ["15m", "1h", "4h", "1d"] as const;
 const SIGNAL_DIRECTIONS = ["all", "long", "short"] as const;
@@ -85,6 +89,7 @@ interface TradeSignal {
 	takeProfit: number;
 	stopLoss: number;
 	submittedAt: string;
+	submittedAtTime?: UTCTimestamp;
 	confidence: number;
 	x: number;
 	y: number;
@@ -499,6 +504,8 @@ function formatSignalSubmittedAt(value: string, locale: string) {
 }
 
 function mapStoredSignalToTradeSignal(signal: StoredSignal, locale: string): TradeSignal {
+	const submittedAtTime = Math.floor(new Date(signal.submittedAt).getTime() / 1000);
+
 	return {
 		avatarLabel: getAvatarLabel(signal.source.name),
 		avatarUrl: signal.source.avatarUrl ?? "",
@@ -513,6 +520,9 @@ function mapStoredSignalToTradeSignal(signal: StoredSignal, locale: string): Tra
 		status: signal.status,
 		stopLoss: signal.stopLoss,
 		submittedAt: formatSignalSubmittedAt(signal.submittedAt, locale),
+		submittedAtTime: Number.isFinite(submittedAtTime)
+			? (submittedAtTime as UTCTimestamp)
+			: undefined,
 		symbol: signal.symbol,
 		takeProfit: signal.takeProfit,
 		x: signal.chartPositionPct,
@@ -530,7 +540,7 @@ function upsertWebhookSignal(signals: StoredSignal[], nextSignal: StoredSignal) 
 	return signals.map((signal, index) => (index === existingIndex ? nextSignal : signal));
 }
 
-function buildCandles(symbol: string, timeframe: Timeframe): Candle[] {
+function buildFallbackCandles(symbol: string, timeframe: Timeframe): Candle[] {
 	const intervalSeconds = TIMEFRAME_SECONDS[timeframe];
 	const now = Math.floor(Date.now() / 1000);
 	const lastCandleTime = now - (now % intervalSeconds);
@@ -564,6 +574,7 @@ export function SignalsWorkspace() {
 	const t = useTranslations("signals");
 	const locale = useLocale();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
+	const [binanceCandles, setBinanceCandles] = useState<Candle[]>([]);
 	const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
 	const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("1h");
 	const [selectedSource, setSelectedSource] = useState("all");
@@ -573,11 +584,6 @@ export function SignalsWorkspace() {
 	const [selectedEntryStatus, setSelectedEntryStatus] = useState<EntryStatus>("all");
 	const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
-
-	const candles = useMemo(
-		() => buildCandles(selectedSymbol, selectedTimeframe),
-		[selectedSymbol, selectedTimeframe],
-	);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -624,6 +630,57 @@ export function SignalsWorkspace() {
 			eventSource.close();
 		};
 	}, []);
+
+	useEffect(() => {
+		let isMounted = true;
+		const controller = new AbortController();
+
+		async function loadKlines() {
+			try {
+				const params = new URLSearchParams({
+					interval: selectedTimeframe,
+					limit: "180",
+					symbol: selectedSymbol,
+				});
+				const response = await fetch(`/api/signals/klines?${params.toString()}`, {
+					cache: "no-store",
+					signal: controller.signal,
+				});
+
+				if (!response.ok) {
+					if (isMounted) {
+						setBinanceCandles([]);
+					}
+					return;
+				}
+
+				const data = (await response.json()) as SignalKlinesResponse;
+
+				if (isMounted) {
+					setBinanceCandles(
+						data.klines.map((kline) => ({
+							close: kline.close,
+							high: kline.high,
+							low: kline.low,
+							open: kline.open,
+							time: kline.time as UTCTimestamp,
+						})),
+					);
+				}
+			} catch (error) {
+				if (!controller.signal.aborted && isMounted) {
+					setBinanceCandles([]);
+				}
+			}
+		}
+
+		void loadKlines();
+
+		return () => {
+			isMounted = false;
+			controller.abort();
+		};
+	}, [selectedSymbol, selectedTimeframe]);
 
 	const signals = useMemo(
 		() => webhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
@@ -685,6 +742,15 @@ export function SignalsWorkspace() {
 			),
 		[selectedDirection, selectedEntryStatus, selectedSource, selectedSymbol, signals],
 	);
+
+	const candles = useMemo(
+		() =>
+			binanceCandles.length
+				? binanceCandles
+				: buildFallbackCandles(selectedSymbol, selectedTimeframe),
+		[binanceCandles, selectedSymbol, selectedTimeframe],
+	);
+
 	const selectedInstrument =
 		INSTRUMENTS.find((instrument) => instrument.symbol === selectedSymbol) ?? INSTRUMENTS[0];
 	function formatPrice(value: number, fractionDigits = selectedSymbol === "SOLUSDT" ? 2 : 0) {
@@ -1172,7 +1238,7 @@ export function SignalsWorkspace() {
 											"border-white/10 bg-white/5",
 									)}
 								>
-									<div className="mb-3 gap-3 flex items-center justify-between">
+									<div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
 										<div className="min-w-0 gap-2 flex items-center">
 											<span className="size-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
 												{signal.avatarUrl && (
@@ -1202,7 +1268,7 @@ export function SignalsWorkspace() {
 													{signal.avatarLabel}
 												</span>
 											</span>
-											<div className="min-w-0">
+											<div className="min-w-0 flex-1">
 												<p className="text-sm font-semibold truncate">
 													{signal.sourceName}
 												</p>
@@ -1214,7 +1280,7 @@ export function SignalsWorkspace() {
 										</div>
 										<span
 											className={cn(
-												"px-2 py-1 font-semibold text-white rounded-full text-[11px]",
+												"max-w-[64px] px-2 py-1 text-center font-semibold leading-tight text-white rounded-full text-[11px]",
 												signal.status === "active"
 													? "bg-emerald-500"
 													: "bg-amber-500",

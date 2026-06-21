@@ -9,6 +9,7 @@ import {
 	createChart,
 } from "lightweight-charts";
 import type {
+	AutoscaleInfoProvider,
 	CandlestickData,
 	IChartApi,
 	IPriceLine,
@@ -43,6 +44,7 @@ export interface SignalChartSignal {
 	id: string;
 	sourceName: string;
 	stopLoss: number;
+	submittedAtTime?: UTCTimestamp;
 	symbol: string;
 	takeProfit: number;
 	x: number;
@@ -76,6 +78,38 @@ function getSignalCandleIndex(signal: SignalChartSignal, candlesLength: number) 
 	);
 }
 
+function getNearestSignalCandle(signal: SignalChartSignal, candles: SignalChartCandle[]) {
+	if (!signal.submittedAtTime || candles.length === 0) {
+		return candles[getSignalCandleIndex(signal, candles.length)];
+	}
+
+	const firstCandle = candles[0];
+	const lastCandle = candles[candles.length - 1];
+
+	if (
+		firstCandle &&
+		lastCandle &&
+		(signal.submittedAtTime < Number(firstCandle.time) ||
+			signal.submittedAtTime > Number(lastCandle.time))
+	) {
+		return candles[getSignalCandleIndex(signal, candles.length)];
+	}
+
+	let nearest = candles[0];
+	let nearestDistance = Math.abs(Number(nearest.time) - signal.submittedAtTime);
+
+	for (const candle of candles) {
+		const distance = Math.abs(Number(candle.time) - signal.submittedAtTime);
+
+		if (distance < nearestDistance) {
+			nearest = candle;
+			nearestDistance = distance;
+		}
+	}
+
+	return nearest;
+}
+
 function getPricePrecision(symbol: string) {
 	return symbol === "SOLUSDT" ? 2 : 0;
 }
@@ -90,6 +124,20 @@ function getProfitPrice(signal: SignalChartSignal) {
 
 function getRiskPrice(signal: SignalChartSignal) {
 	return signal.direction === "long" ? signal.stopLoss : signal.takeProfit;
+}
+
+function getSignalPriceRange(signals: SignalChartSignal[]) {
+	const prices = signals.flatMap((signal) => [signal.entry, signal.takeProfit, signal.stopLoss]);
+	const validPrices = prices.filter((price) => Number.isFinite(price) && price > 0);
+
+	if (!validPrices.length) {
+		return null;
+	}
+
+	return {
+		maxValue: Math.max(...validPrices),
+		minValue: Math.min(...validPrices),
+	};
 }
 
 export function TradingViewSignalChart({
@@ -113,6 +161,30 @@ export function TradingViewSignalChart({
 	const [markerPositions, setMarkerPositions] = useState<MarkerPosition[]>([]);
 	const pricePrecision = getPricePrecision(symbol);
 
+	const autoscaleInfoProvider = useCallback<AutoscaleInfoProvider>(
+		(original) => {
+			const base = original();
+			const signalRange = getSignalPriceRange(latestSignalsRef.current);
+
+			if (!base?.priceRange || !signalRange) {
+				return base;
+			}
+
+			const minValue = Math.min(base.priceRange.minValue, signalRange.minValue);
+			const maxValue = Math.max(base.priceRange.maxValue, signalRange.maxValue);
+			const padding = Math.max((maxValue - minValue) * 0.08, getMinMove(symbol) * 6);
+
+			return {
+				...base,
+				priceRange: {
+					maxValue: maxValue + padding,
+					minValue: Math.max(0, minValue - padding),
+				},
+			};
+		},
+		[symbol],
+	);
+
 	const chartData = useMemo(
 		() =>
 			candles.map((candle) => ({
@@ -134,10 +206,7 @@ export function TradingViewSignalChart({
 		}
 
 		const nextPositions = latestSignalsRef.current.flatMap((signal) => {
-			const candle =
-				latestCandlesRef.current[
-					getSignalCandleIndex(signal, latestCandlesRef.current.length)
-				];
+			const candle = getNearestSignalCandle(signal, latestCandlesRef.current);
 
 			if (!candle) {
 				return [];
@@ -215,6 +284,7 @@ export function TradingViewSignalChart({
 		});
 
 		const series = chart.addSeries(CandlestickSeries, {
+			autoscaleInfoProvider,
 			borderVisible: false,
 			downColor: DOWN_COLOR,
 			priceFormat: {
@@ -249,7 +319,7 @@ export function TradingViewSignalChart({
 			seriesRef.current = null;
 			priceLinesRef.current = [];
 		};
-	}, [formatPrice, locale, pricePrecision, symbol, updateMarkerPositions]);
+	}, [autoscaleInfoProvider, formatPrice, locale, pricePrecision, symbol, updateMarkerPositions]);
 
 	useEffect(() => {
 		const chart = chartRef.current;
@@ -270,6 +340,7 @@ export function TradingViewSignalChart({
 			},
 		});
 		series.applyOptions({
+			autoscaleInfoProvider,
 			priceFormat: {
 				minMove: getMinMove(symbol),
 				precision: pricePrecision,
@@ -285,7 +356,15 @@ export function TradingViewSignalChart({
 		});
 
 		window.requestAnimationFrame(updateMarkerPositions);
-	}, [chartData, formatPrice, locale, pricePrecision, symbol, updateMarkerPositions]);
+	}, [
+		autoscaleInfoProvider,
+		chartData,
+		formatPrice,
+		locale,
+		pricePrecision,
+		symbol,
+		updateMarkerPositions,
+	]);
 
 	useEffect(() => {
 		const chart = chartRef.current;
@@ -339,9 +418,11 @@ export function TradingViewSignalChart({
 			];
 
 			const index = getSignalCandleIndex(activeSignal, candles.length);
+			const activeCandle = getNearestSignalCandle(activeSignal, candles);
+			const nearestIndex = activeCandle ? candles.indexOf(activeCandle) : index;
 			chart.timeScale().setVisibleLogicalRange({
-				from: Math.max(0, index - 72),
-				to: Math.min(candles.length + 10, index + 26),
+				from: Math.max(0, nearestIndex - 72),
+				to: Math.min(candles.length + 10, nearestIndex + 26),
 			});
 		}
 
@@ -413,7 +494,9 @@ export function TradingViewSignalChart({
 									</span>
 								)}
 							</span>
-							<span className="whitespace-nowrap">{signal.sourceName}</span>
+							<span className="max-w-24 truncate whitespace-nowrap">
+								{signal.sourceName}
+							</span>
 							{isActive && (
 								<span
 									className={cn(
