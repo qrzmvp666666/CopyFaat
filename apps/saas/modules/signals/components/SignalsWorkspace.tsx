@@ -159,73 +159,6 @@ const BINANCE_STREAM_BASE_URL = "wss://stream.binance.com:9443";
 const BINANCE_RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000] as const;
 const TICK_FLASH_MS = 700;
 
-const SOURCES: Source[] = [
-	{
-		id: "xinsuo",
-		name: "所长",
-		handle: "@SignalLab",
-		initials: "所",
-		accent: "bg-sky-500",
-		avatar: "https://i.pravatar.cc/80?img=11",
-	},
-	{
-		id: "feiyang",
-		name: "飞扬",
-		handle: "@Momentum",
-		initials: "飞",
-		accent: "bg-emerald-500",
-		avatar: "https://i.pravatar.cc/80?img=33",
-	},
-	{
-		id: "shanzhiwang",
-		name: "山寨之王",
-		handle: "@AltScout",
-		initials: "山",
-		accent: "bg-amber-500",
-		avatar: "https://i.pravatar.cc/80?img=47",
-	},
-	{
-		id: "wangbot",
-		name: "WG Bot",
-		handle: "@Quant",
-		initials: "WG",
-		accent: "bg-stone-500",
-		avatar: "https://i.pravatar.cc/80?img=64",
-	},
-	{
-		id: "chengg",
-		name: "陈哥",
-		handle: "@ChenTrade",
-		initials: "陈",
-		accent: "bg-blue-500",
-		avatar: "https://i.pravatar.cc/80?img=52",
-	},
-	{
-		id: "bidaoge",
-		name: "必到哥",
-		handle: "@MustArrive",
-		initials: "必",
-		accent: "bg-purple-500",
-		avatar: "https://i.pravatar.cc/80?img=57",
-	},
-	{
-		id: "shuqin",
-		name: "舒琴",
-		handle: "@ShuQin",
-		initials: "舒",
-		accent: "bg-pink-500",
-		avatar: "https://i.pravatar.cc/80?img=25",
-	},
-	{
-		id: "fengg",
-		name: "峰哥",
-		handle: "@FengSignal",
-		initials: "峰",
-		accent: "bg-teal-500",
-		avatar: "https://i.pravatar.cc/80?img=68",
-	},
-];
-
 const SIGNALS: TradeSignal[] = [
 	{
 		id: "btc-1",
@@ -522,6 +455,44 @@ const FALLBACK_ACCENTS = [
 	"bg-cyan-500",
 ] as const;
 
+const GENERATED_AVATAR_COLORS = [
+	"#00C087",
+	"#F6465D",
+	"#F0B90B",
+	"#7C5CFF",
+	"#2D9CDB",
+	"#E056FD",
+	"#FF7A45",
+	"#22C55E",
+] as const;
+
+function getSeedHash(seed: string) {
+	return Array.from(seed).reduce((total, char) => total + char.charCodeAt(0), 0);
+}
+
+function getGeneratedSvgDataUrl(seed: string, label: string, variant: "symbol" | "trader") {
+	const seedHash = getSeedHash(seed);
+	const background = GENERATED_AVATAR_COLORS[seedHash % GENERATED_AVATAR_COLORS.length];
+	const secondary = GENERATED_AVATAR_COLORS[(seedHash + 3) % GENERATED_AVATAR_COLORS.length];
+	const safeLabel = label.trim().slice(0, 2).toUpperCase();
+	const fontSize = variant === "symbol" ? 34 : 30;
+	const svg = `
+		<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+			<defs>
+				<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+					<stop offset="0%" stop-color="${background}"/>
+					<stop offset="100%" stop-color="${secondary}"/>
+				</linearGradient>
+			</defs>
+			<rect width="96" height="96" rx="48" fill="url(#g)"/>
+			<circle cx="74" cy="22" r="18" fill="rgba(255,255,255,0.18)"/>
+			<text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-family="Inter, Arial, sans-serif" font-size="${fontSize}" font-weight="800">${safeLabel}</text>
+		</svg>
+	`;
+
+	return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
 function getAvatarLabel(sourceName: string) {
 	return sourceName.trim().slice(0, 2).toUpperCase();
 }
@@ -542,7 +513,7 @@ function getSymbolBase(symbol: string) {
 }
 
 function getSymbolAccent(symbol: string) {
-	const code = Array.from(symbol).reduce((total, char) => total + char.charCodeAt(0), 0);
+	const code = getSeedHash(symbol);
 	return FALLBACK_ACCENTS[code % FALLBACK_ACCENTS.length];
 }
 
@@ -551,11 +522,30 @@ function createInstrumentFromTradingSymbol(symbol: StoredTradingSymbol): Instrum
 		accent: getSymbolAccent(symbol.symbol),
 		base: symbol.baseAsset || getSymbolBase(symbol.symbol),
 		change: 0,
-		logo: symbol.logoUrl ?? FALLBACK_LOGOS[symbol.symbol] ?? "",
+		logo:
+			symbol.logoUrl ??
+			FALLBACK_LOGOS[symbol.symbol] ??
+			getGeneratedSvgDataUrl(symbol.symbol, symbol.baseAsset || symbol.symbol, "symbol"),
 		price: 0,
 		pricePrecision: symbol.pricePrecision ?? getDefaultPricePrecision(symbol.symbol),
 		symbol: symbol.symbol,
 		volume: "-",
+	};
+}
+
+function createSourceFilterFromSignal(signal: StoredSignal): Source {
+	const id = signal.source.id ?? signal.source.name;
+	const name = signal.source.name;
+
+	return {
+		accent: getSymbolAccent(id),
+		avatar:
+			signal.source.avatarUrl ??
+			getGeneratedSvgDataUrl(id, name, "trader"),
+		handle: signal.source.handle ?? signal.source.platform ?? "",
+		id,
+		initials: getAvatarLabel(name),
+		name,
 	};
 }
 
@@ -578,9 +568,15 @@ function formatSignalSubmittedAt(value: string, locale: string) {
 function mapStoredSignalToTradeSignal(signal: StoredSignal, locale: string): TradeSignal {
 	const submittedAtTime = Math.floor(new Date(signal.submittedAt).getTime() / 1000);
 
-	return {
-		avatarLabel: getAvatarLabel(signal.source.name),
-		avatarUrl: signal.source.avatarUrl ?? "",
+		return {
+			avatarLabel: getAvatarLabel(signal.source.name),
+			avatarUrl:
+				signal.source.avatarUrl ??
+				getGeneratedSvgDataUrl(
+					signal.source.id ?? signal.source.name,
+					signal.source.name,
+					"trader",
+				),
 		confidence: signal.riskReward,
 		direction: signal.direction,
 		entry: signal.entry,
@@ -811,6 +807,16 @@ export function SignalsWorkspace() {
 		() => baseInstruments.map((instrument) => instrument.symbol).join("/"),
 		[baseInstruments],
 	);
+	const sourceFilters = useMemo(() => {
+		const sources = new Map<string, Source>();
+
+		for (const signal of webhookSignals) {
+			const source = createSourceFilterFromSignal(signal);
+			sources.set(source.id, source);
+		}
+
+		return Array.from(sources.values()).sort((a, b) => a.name.localeCompare(b.name));
+	}, [webhookSignals]);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -919,6 +925,15 @@ export function SignalsWorkspace() {
 			setActiveSignalId(null);
 		}
 	}, [instruments, selectedSymbol]);
+
+	useEffect(() => {
+		if (
+			selectedSource !== "all" &&
+			!sourceFilters.some((source) => source.id === selectedSource)
+		) {
+			setSelectedSource("all");
+		}
+	}, [selectedSource, sourceFilters]);
 
 	useEffect(() => {
 		const timers = instruments
@@ -1255,7 +1270,7 @@ export function SignalsWorkspace() {
 								>
 									{t("filters.allSources")}
 								</button>
-								{SOURCES.map((source) => (
+								{sourceFilters.map((source) => (
 									<button
 										key={source.id}
 										type="button"
@@ -1271,26 +1286,10 @@ export function SignalsWorkspace() {
 											<img
 												alt={source.name}
 												className="size-5 object-cover"
-												onError={(e) => {
-													const target = e.currentTarget;
-													target.style.display = "none";
-													const next =
-														target.nextElementSibling as HTMLElement | null;
-													if (next) next.style.display = "flex";
-												}}
 												src={source.avatar}
 											/>
-											<span
-												className={cn(
-													"size-5 font-bold text-white hidden items-center justify-center rounded-full text-[9px]",
-													source.accent,
-												)}
-												style={{ display: "none" }}
-											>
-												{source.initials}
-											</span>
 										</span>
-										{source.name}
+										<span className="max-w-32 truncate">{source.name}</span>
 									</button>
 								))}
 							</div>
@@ -1571,37 +1570,16 @@ export function SignalsWorkspace() {
 										signal.id === activeSignal?.id &&
 											"border-white/10 bg-white/5",
 									)}
-								>
-									<div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-										<div className="min-w-0 gap-2 flex items-center">
-											<span className="size-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
-												{signal.avatarUrl && (
+									>
+										<div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+											<div className="min-w-0 gap-2 flex items-center">
+												<span className="size-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
 													<img
 														alt={signal.sourceName}
 														className="size-8 object-cover"
-														onError={(e) => {
-															const target = e.currentTarget;
-															target.style.display = "none";
-															const next =
-																target.nextElementSibling as HTMLElement | null;
-															if (next) next.style.display = "flex";
-														}}
 														src={signal.avatarUrl}
 													/>
-												)}
-												<span
-													className={cn(
-														"size-8 text-xs font-bold text-white items-center justify-center rounded-full",
-														signal.avatarUrl && "hidden",
-														signal.direction === "long"
-															? "bg-emerald-500"
-															: "bg-rose-500",
-													)}
-													style={signal.avatarUrl ? { display: "none" } : undefined}
-												>
-													{signal.avatarLabel}
 												</span>
-											</span>
 											<div className="min-w-0 flex-1">
 												<p className="text-sm font-semibold truncate">
 													{signal.sourceName}

@@ -473,27 +473,17 @@ export function TradingViewSignalChart({
 									<span className="-inset-2 bg-emerald-500/20 blur-md animate-pulse pointer-events-none absolute -z-10 rounded-full" />
 								</>
 							)}
-							<span
-								className={cn(
-									"flex size-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full",
-									!signal.avatarUrl &&
-										(signal.direction === "long"
-											? "bg-emerald-500"
-											: "bg-rose-500"),
-								)}
-							>
-								{signal.avatarUrl ? (
+								<span
+									className={cn(
+										"flex size-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full",
+									)}
+								>
 									<img
 										alt={signal.sourceName}
 										className="size-[22px] object-cover"
 										src={signal.avatarUrl}
 									/>
-								) : (
-									<span className="font-bold text-white text-[10px]">
-										{signal.avatarLabel}
-									</span>
-								)}
-							</span>
+								</span>
 							<span className="max-w-24 truncate whitespace-nowrap">
 								{signal.sourceName}
 							</span>
