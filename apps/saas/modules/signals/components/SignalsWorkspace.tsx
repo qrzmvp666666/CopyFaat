@@ -22,9 +22,12 @@ import {
 	RefreshCwIcon,
 	SearchIcon,
 	SlidersHorizontalIcon,
+	TargetIcon,
 	TrendingDownIcon,
 	TrendingUpIcon,
+	XCircleIcon,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
@@ -116,6 +119,15 @@ interface TradeSignal {
 	x: number;
 	y: number;
 	outcome?: string;
+}
+
+interface SignalStatusPresentation {
+	icon: LucideIcon;
+	label: string;
+	badgeClassName: string;
+	resultIconClassName: string;
+	resultValueClassName: string;
+	resultLabel: string;
 }
 
 const TIMEFRAME_SECONDS: Record<Timeframe, number> = {
@@ -563,6 +575,119 @@ function formatSignalSubmittedAt(value: string, locale: string) {
 		minute: "2-digit",
 		month: "2-digit",
 	}).format(date);
+}
+
+function getHistoryOutcomeTone(outcome?: string) {
+	const normalizedOutcome = outcome?.trim().toLowerCase();
+
+	if (!normalizedOutcome) {
+		return "closed";
+	}
+
+	if (
+		normalizedOutcome.startsWith("tp") ||
+		normalizedOutcome.includes("止盈") ||
+		normalizedOutcome.includes("take")
+	) {
+		return "profit";
+	}
+
+	if (
+		normalizedOutcome.startsWith("sl") ||
+		normalizedOutcome.includes("止损") ||
+		normalizedOutcome.includes("stop")
+	) {
+		return "risk";
+	}
+
+	if (
+		normalizedOutcome.includes("未触发") ||
+		normalizedOutcome.includes("取消") ||
+		normalizedOutcome.includes("cancel") ||
+		normalizedOutcome.includes("invalid")
+	) {
+		return "inactive";
+	}
+
+	return "closed";
+}
+
+function getSignalStatusPresentation(
+	signal: TradeSignal,
+	labels: {
+		closed: string;
+		entered: string;
+		expectedRr: string;
+		pending: string;
+		result: string;
+	},
+): SignalStatusPresentation {
+	if (signal.status === "active") {
+		if (signal.entryStatus === "entered") {
+			return {
+				badgeClassName: "border-emerald-400/35 bg-emerald-400/15 text-emerald-300",
+				icon: CheckCircle2Icon,
+				label: labels.entered,
+				resultIconClassName: "text-emerald-400",
+				resultLabel: labels.expectedRr,
+				resultValueClassName: "text-emerald-400",
+			};
+		}
+
+		return {
+			badgeClassName: "border-sky-400/35 bg-sky-400/15 text-sky-300",
+			icon: TargetIcon,
+			label: labels.pending,
+			resultIconClassName: "text-sky-400",
+			resultLabel: labels.expectedRr,
+			resultValueClassName: "text-sky-400",
+		};
+	}
+
+	const label = signal.outcome?.trim() || labels.closed;
+	const historyTone = getHistoryOutcomeTone(signal.outcome);
+
+	if (historyTone === "profit") {
+		return {
+			badgeClassName: "border-emerald-400/35 bg-emerald-400/15 text-emerald-300",
+			icon: CheckCircle2Icon,
+			label,
+			resultIconClassName: "text-emerald-400",
+			resultLabel: labels.result,
+			resultValueClassName: "text-emerald-400",
+		};
+	}
+
+	if (historyTone === "risk") {
+		return {
+			badgeClassName: "border-rose-400/35 bg-rose-400/15 text-rose-300",
+			icon: XCircleIcon,
+			label,
+			resultIconClassName: "text-rose-400",
+			resultLabel: labels.result,
+			resultValueClassName: "text-rose-400",
+		};
+	}
+
+	if (historyTone === "inactive") {
+		return {
+			badgeClassName: "border-amber-400/35 bg-amber-400/15 text-amber-300",
+			icon: Clock3Icon,
+			label,
+			resultIconClassName: "text-amber-400",
+			resultLabel: labels.result,
+			resultValueClassName: "text-amber-400",
+		};
+	}
+
+	return {
+		badgeClassName: "border-zinc-400/30 bg-zinc-400/15 text-zinc-200",
+		icon: CheckCircle2Icon,
+		label,
+		resultIconClassName: "text-zinc-300",
+		resultLabel: labels.result,
+		resultValueClassName: "text-zinc-200",
+	};
 }
 
 function mapStoredSignalToTradeSignal(signal: StoredSignal, locale: string): TradeSignal {
@@ -1560,16 +1685,26 @@ export function SignalsWorkspace() {
 						)}
 					>
 						{filteredSignals.length ? (
-							filteredSignals.map((signal) => (
-								<button
-									key={signal.id}
-									type="button"
-									onClick={() => focusSignal(signal)}
-									className={cn(
-										"p-3 border-white/5 hover:bg-white/5 w-full rounded-xl border bg-[#141414] text-left transition-colors",
-										signal.id === activeSignal?.id &&
-											"border-white/10 bg-white/5",
-									)}
+							filteredSignals.map((signal) => {
+								const statusPresentation = getSignalStatusPresentation(signal, {
+									closed: t("signalsPanel.closed"),
+									entered: t("signalsPanel.entered"),
+									expectedRr: t("signalsPanel.expectedRr"),
+									pending: t("signalsPanel.pending"),
+									result: t("signalsPanel.result"),
+								});
+								const StatusIcon = statusPresentation.icon;
+
+								return (
+									<button
+										key={signal.id}
+										type="button"
+										onClick={() => focusSignal(signal)}
+										className={cn(
+											"p-3 border-white/5 hover:bg-white/5 w-full rounded-xl border bg-[#141414] text-left transition-colors",
+											signal.id === activeSignal?.id &&
+												"border-white/10 bg-white/5",
+										)}
 									>
 										<div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
 											<div className="min-w-0 gap-2 flex items-center">
@@ -1592,17 +1727,11 @@ export function SignalsWorkspace() {
 										</div>
 										<span
 											className={cn(
-												"max-w-[64px] px-2 py-1 text-center font-semibold leading-tight text-white rounded-full text-[11px]",
-												signal.status === "active"
-													? "bg-emerald-500"
-													: "bg-amber-500",
+												"max-w-[72px] px-2 py-1 text-center font-semibold leading-tight rounded-full border text-[11px]",
+												statusPresentation.badgeClassName,
 											)}
 										>
-											{signal.status === "active"
-												? signal.entryStatus === "entered"
-													? t("signalsPanel.entered")
-													: t("signalsPanel.pending")
-												: (signal.outcome ?? t("signalsPanel.closed"))}
+											{statusPresentation.label}
 										</span>
 									</div>
 
@@ -1629,19 +1758,28 @@ export function SignalsWorkspace() {
 
 									<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-[#141414]">
 										<span className="gap-1 flex items-center text-muted-foreground">
-											{signal.status === "active" ? (
-												<CheckCircle2Icon className="size-3.5 text-emerald-500" />
-											) : (
-												<Clock3Icon className="size-3.5 text-amber-500" />
-											)}
-											{t("signalsPanel.expectedRr")}
+											<StatusIcon
+												className={cn(
+													"size-3.5",
+													statusPresentation.resultIconClassName,
+												)}
+											/>
+											{statusPresentation.resultLabel}
 										</span>
-										<span className="font-mono font-semibold text-emerald-500">
-											{signal.confidence.toFixed(2)}
+										<span
+											className={cn(
+												"font-mono font-semibold",
+												statusPresentation.resultValueClassName,
+											)}
+										>
+											{signal.status === "active"
+												? signal.confidence.toFixed(2)
+												: statusPresentation.label}
 										</span>
 									</div>
 								</button>
-							))
+								);
+							})
 						) : (
 							<div className="p-6 rounded-md border border-dashed text-center">
 								<p className="font-medium">{t("signalsPanel.emptyTitle")}</p>

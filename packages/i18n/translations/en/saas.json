@@ -626,6 +626,7 @@
 			"expectedRr": "Expected R/R",
 			"eyebrow": "Signals",
 			"pending": "Pending",
+			"result": "Signal result",
 			"stopLoss": "Stop",
 			"submittedAt": "Submitted",
 			"takeProfit": "Take profit",

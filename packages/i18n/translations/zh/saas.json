@@ -618,7 +618,7 @@
 			"title": "市场"
 		},
 		"signalsPanel": {
-			"closed": "已结束",
+			"closed": "已平仓",
 			"emptyDescription": "换一个 KOL、方向或状态筛选看看。",
 			"emptyTitle": "暂无匹配信号",
 			"entered": "已入场",
@@ -626,6 +626,7 @@
 			"expectedRr": "预计盈亏比",
 			"eyebrow": "Signals",
 			"pending": "待入场",
+			"result": "信号结果",
 			"stopLoss": "止损价",
 			"submittedAt": "委托时间",
 			"takeProfit": "止盈价",
