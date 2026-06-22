@@ -73,6 +73,15 @@ interface Source {
 	avatar: string;
 }
 
+function normalizeSourceKey(value: string) {
+	return value
+		.normalize("NFKC")
+		.trim()
+		.toLowerCase()
+		.replace(/[—–]/g, "-")
+		.replace(/\s+/g, "");
+}
+
 interface Candle {
 	close: number;
 	high: number;
@@ -546,8 +555,8 @@ function createInstrumentFromTradingSymbol(symbol: StoredTradingSymbol): Instrum
 }
 
 function createSourceFilterFromSignal(signal: StoredSignal): Source {
-	const id = signal.source.id ?? signal.source.name;
 	const name = signal.source.name;
+	const id = normalizeSourceKey(name);
 
 	return {
 		accent: getSymbolAccent(id),
@@ -708,7 +717,7 @@ function mapStoredSignalToTradeSignal(signal: StoredSignal, locale: string): Tra
 		entryStatus: signal.entryStatus,
 		id: signal.id,
 		outcome: signal.outcome,
-		sourceId: signal.source.id ?? signal.source.name,
+		sourceId: normalizeSourceKey(signal.source.name),
 		sourceName: signal.source.name,
 		status: signal.status,
 		stopLoss: signal.stopLoss,
@@ -937,7 +946,12 @@ export function SignalsWorkspace() {
 
 		for (const signal of webhookSignals) {
 			const source = createSourceFilterFromSignal(signal);
-			sources.set(source.id, source);
+			const existingSource = sources.get(source.id);
+			sources.set(source.id, {
+				...source,
+				avatar: existingSource?.avatar ?? source.avatar,
+				handle: existingSource?.handle || source.handle,
+			});
 		}
 
 		return Array.from(sources.values()).sort((a, b) => a.name.localeCompare(b.name));

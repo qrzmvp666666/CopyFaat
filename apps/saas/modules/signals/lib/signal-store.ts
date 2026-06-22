@@ -33,8 +33,31 @@ function getChartPosition(input: ParsedSignalWebhookRequest) {
 	return 92;
 }
 
+function normalizeIdentityPart(value: string) {
+	return value
+		.normalize("NFKC")
+		.trim()
+		.toLowerCase()
+		.replace(/[—–]/g, "-")
+		.replace(/\s+/g, "");
+}
+
 function getTraderExternalId(input: ParsedSignalWebhookRequest) {
-	return input.source.id?.trim() || input.source.name.trim();
+	const sourcePlatform = normalizeIdentityPart(input.source.platform || "webhook");
+	const sourceName = normalizeIdentityPart(input.source.name);
+
+	return `${sourcePlatform}:${sourceName}`.slice(0, 160);
+}
+
+function normalizeSignalPrice(value: number) {
+	return value.toFixed(8).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+function getSubmittedAtMinute(value: Date) {
+	const submittedAtMinute = new Date(value);
+	submittedAtMinute.setSeconds(0, 0);
+
+	return submittedAtMinute.toISOString();
 }
 
 function getSymbolAssets(symbol: string) {
@@ -50,17 +73,16 @@ function getSymbolAssets(symbol: string) {
 }
 
 function getStableEventId(input: ParsedSignalWebhookRequest, submittedAt: Date, traderExternalId: string) {
-	if (input.eventId) {
-		return input.eventId;
-	}
-
-	const sourcePlatform = input.source.platform?.trim() || "webhook";
+	const sourcePlatform = normalizeIdentityPart(input.source.platform || "webhook");
 	const stableParts = [
 		sourcePlatform,
 		traderExternalId,
 		input.symbol,
 		input.direction,
-		submittedAt.toISOString(),
+		normalizeSignalPrice(input.entry),
+		normalizeSignalPrice(input.takeProfit),
+		normalizeSignalPrice(input.stopLoss),
+		getSubmittedAtMinute(submittedAt),
 	];
 	const digest = createHash("sha256").update(stableParts.join("|")).digest("hex").slice(0, 16);
 
