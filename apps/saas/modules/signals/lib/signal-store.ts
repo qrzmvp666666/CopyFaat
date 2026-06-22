@@ -1,9 +1,16 @@
 import { db } from "@repo/database";
-import type { Signal } from "@repo/database";
-import { randomUUID } from "node:crypto";
+import type { Prisma } from "@repo/database";
+import { createHash } from "node:crypto";
 
 import type { ParsedSignalWebhookRequest } from "./signal-webhook-schema";
 import type { StoredSignal } from "./signal-types";
+
+type SignalWithTrader = Prisma.SignalGetPayload<{
+	include: {
+		trader: true;
+		tradingSymbol: true;
+	};
+}>;
 
 function getRiskReward(input: Pick<ParsedSignalWebhookRequest, "direction" | "entry" | "stopLoss" | "takeProfit">) {
 	const profit =
@@ -26,7 +33,41 @@ function getChartPosition(input: ParsedSignalWebhookRequest) {
 	return 92;
 }
 
-function signalModelToStoredSignal(signal: Signal): StoredSignal {
+function getTraderExternalId(input: ParsedSignalWebhookRequest) {
+	return input.source.id?.trim() || input.source.name.trim();
+}
+
+function getSymbolAssets(symbol: string) {
+	const quoteAssets = ["USDT", "USDC", "USD", "BTC", "ETH"] as const;
+	const quoteAsset = quoteAssets.find((quote) => symbol.endsWith(quote)) ?? "";
+	const baseAsset = quoteAsset ? symbol.slice(0, -quoteAsset.length) : symbol;
+
+	return {
+		baseAsset: baseAsset || symbol,
+		displayName: quoteAsset ? `${baseAsset}/${quoteAsset}` : symbol,
+		quoteAsset,
+	};
+}
+
+function getStableEventId(input: ParsedSignalWebhookRequest, submittedAt: Date, traderExternalId: string) {
+	if (input.eventId) {
+		return input.eventId;
+	}
+
+	const sourcePlatform = input.source.platform?.trim() || "webhook";
+	const stableParts = [
+		sourcePlatform,
+		traderExternalId,
+		input.symbol,
+		input.direction,
+		submittedAt.toISOString(),
+	];
+	const digest = createHash("sha256").update(stableParts.join("|")).digest("hex").slice(0, 16);
+
+	return `${sourcePlatform}:${traderExternalId}:${input.symbol}:${input.direction}:${digest}`.slice(0, 160);
+}
+
+function signalModelToStoredSignal(signal: SignalWithTrader): StoredSignal {
 	return {
 		chartPositionPct: signal.chartPositionPct,
 		createdAt: signal.createdAt.toISOString(),
@@ -40,22 +81,39 @@ function signalModelToStoredSignal(signal: Signal): StoredSignal {
 		outcome: signal.outcome ?? undefined,
 		riskReward: signal.riskReward,
 		source: {
-			avatarUrl: signal.sourceAvatarUrl ?? undefined,
-			id: signal.sourceId ?? undefined,
-			name: signal.sourceName,
+			avatarUrl: signal.trader.avatarUrl ?? undefined,
+			bio: signal.trader.bio ?? undefined,
+			handle: signal.trader.handle ?? undefined,
+			id: signal.trader.externalId,
+			name: signal.trader.displayName ?? signal.trader.name,
+			platform: signal.trader.platform ?? undefined,
 		},
 		status: signal.status as StoredSignal["status"],
 		stopLoss: signal.stopLoss,
-		submittedAt: signal.submittedAt.toISOString(),
-		symbol: signal.symbol,
-		takeProfit: signal.takeProfit,
-		timeframe: signal.timeframe ?? undefined,
-		updatedAt: signal.updatedAt.toISOString(),
-	};
-}
+			submittedAt: signal.submittedAt.toISOString(),
+			symbol: signal.tradingSymbol.symbol,
+			takeProfit: signal.takeProfit,
+			timeframe: signal.timeframe ?? undefined,
+			tradingSymbol: {
+				baseAsset: signal.tradingSymbol.baseAsset,
+				displayName: signal.tradingSymbol.displayName ?? undefined,
+				exchange: signal.tradingSymbol.exchange,
+				id: signal.tradingSymbol.id,
+				logoUrl: signal.tradingSymbol.logoUrl ?? undefined,
+				pricePrecision: signal.tradingSymbol.pricePrecision ?? undefined,
+				quoteAsset: signal.tradingSymbol.quoteAsset,
+				symbol: signal.tradingSymbol.symbol,
+			},
+			updatedAt: signal.updatedAt.toISOString(),
+		};
+	}
 
 export async function listStoredSignals(): Promise<StoredSignal[]> {
 	const signals = await db.signal.findMany({
+		include: {
+			trader: true,
+			tradingSymbol: true,
+		},
 		orderBy: {
 			submittedAt: "desc",
 		},
@@ -67,8 +125,50 @@ export async function listStoredSignals(): Promise<StoredSignal[]> {
 
 export async function upsertStoredSignal(input: ParsedSignalWebhookRequest): Promise<StoredSignal> {
 	const now = new Date();
-	const eventId = input.eventId ?? randomUUID();
 	const submittedAt = input.submittedAt ? new Date(input.submittedAt) : now;
+	const traderExternalId = getTraderExternalId(input);
+	const eventId = getStableEventId(input, submittedAt, traderExternalId);
+	const symbolAssets = getSymbolAssets(input.symbol);
+	const trader = await db.trader.upsert({
+		create: {
+			avatarUrl: input.source.avatarUrl,
+			bio: input.source.bio,
+			externalId: traderExternalId,
+			handle: input.source.handle,
+			name: input.source.name,
+			platform: input.source.platform,
+		},
+		update: {
+			avatarUrl: input.source.avatarUrl,
+			bio: input.source.bio,
+			handle: input.source.handle,
+			isActive: true,
+			name: input.source.name,
+			platform: input.source.platform,
+		},
+		where: {
+			externalId: traderExternalId,
+		},
+	});
+	const tradingSymbol = await db.tradingSymbol.upsert({
+		create: {
+			baseAsset: symbolAssets.baseAsset,
+			displayName: symbolAssets.displayName,
+			exchange: input.exchange ?? "binance",
+			quoteAsset: symbolAssets.quoteAsset,
+			symbol: input.symbol,
+		},
+		update: {
+			baseAsset: symbolAssets.baseAsset,
+			displayName: symbolAssets.displayName,
+			exchange: input.exchange ?? "binance",
+			isActive: true,
+			quoteAsset: symbolAssets.quoteAsset,
+		},
+		where: {
+			symbol: input.symbol,
+		},
+	});
 	const signal = await db.signal.upsert({
 		create: {
 			chartPositionPct: getChartPosition(input),
@@ -80,15 +180,17 @@ export async function upsertStoredSignal(input: ParsedSignalWebhookRequest): Pro
 			note: input.note,
 			outcome: input.outcome,
 			riskReward: getRiskReward(input),
-			sourceAvatarUrl: input.source.avatarUrl,
-			sourceId: input.source.id ?? input.source.name,
-			sourceName: input.source.name,
 			status: input.status ?? "active",
 			stopLoss: input.stopLoss,
 			submittedAt,
-			symbol: input.symbol,
+			symbolId: tradingSymbol.id,
 			takeProfit: input.takeProfit,
 			timeframe: input.timeframe,
+			traderId: trader.id,
+		},
+		include: {
+			trader: true,
+			tradingSymbol: true,
 		},
 		update: {
 			chartPositionPct: getChartPosition(input),
@@ -99,15 +201,13 @@ export async function upsertStoredSignal(input: ParsedSignalWebhookRequest): Pro
 			note: input.note,
 			outcome: input.outcome,
 			riskReward: getRiskReward(input),
-			sourceAvatarUrl: input.source.avatarUrl,
-			sourceId: input.source.id ?? input.source.name,
-			sourceName: input.source.name,
 			status: input.status ?? "active",
 			stopLoss: input.stopLoss,
 			submittedAt,
-			symbol: input.symbol,
+			symbolId: tradingSymbol.id,
 			takeProfit: input.takeProfit,
 			timeframe: input.timeframe,
+			traderId: trader.id,
 		},
 		where: {
 			eventId,

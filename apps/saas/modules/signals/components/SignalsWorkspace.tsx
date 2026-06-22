@@ -34,6 +34,7 @@ import type {
 	SignalKlinesResponse,
 	SignalsListResponse,
 	StoredSignal,
+	StoredTradingSymbol,
 } from "../lib/signal-types";
 
 const SUPPORTED_TIMEFRAMES = ["15m", "1h", "4h", "1d"] as const;
@@ -56,6 +57,7 @@ interface Instrument {
 	volume: string;
 	accent: string;
 	logo: string;
+	pricePrecision?: number;
 	tickDirection?: "down" | "up";
 }
 
@@ -507,8 +509,54 @@ const MARKET_SEED: Record<string, number> = {
 	SOLUSDT: 87.5,
 };
 
+const FALLBACK_LOGOS: Record<string, string> = Object.fromEntries(
+	INSTRUMENTS.map((instrument) => [instrument.symbol, instrument.logo]),
+);
+
+const FALLBACK_ACCENTS = [
+	"bg-sky-500",
+	"bg-emerald-500",
+	"bg-violet-500",
+	"bg-rose-500",
+	"bg-amber-500",
+	"bg-cyan-500",
+] as const;
+
 function getAvatarLabel(sourceName: string) {
 	return sourceName.trim().slice(0, 2).toUpperCase();
+}
+
+function getDefaultPricePrecision(symbol: string) {
+	if (symbol.includes("BTC") || symbol.includes("ETH")) {
+		return 0;
+	}
+
+	return 2;
+}
+
+function getSymbolBase(symbol: string) {
+	const quoteAssets = ["USDT", "USDC", "USD", "BTC", "ETH"];
+	const quoteAsset = quoteAssets.find((quote) => symbol.endsWith(quote));
+
+	return quoteAsset ? symbol.slice(0, -quoteAsset.length) : symbol;
+}
+
+function getSymbolAccent(symbol: string) {
+	const code = Array.from(symbol).reduce((total, char) => total + char.charCodeAt(0), 0);
+	return FALLBACK_ACCENTS[code % FALLBACK_ACCENTS.length];
+}
+
+function createInstrumentFromTradingSymbol(symbol: StoredTradingSymbol): Instrument {
+	return {
+		accent: getSymbolAccent(symbol.symbol),
+		base: symbol.baseAsset || getSymbolBase(symbol.symbol),
+		change: 0,
+		logo: symbol.logoUrl ?? FALLBACK_LOGOS[symbol.symbol] ?? "",
+		price: 0,
+		pricePrecision: symbol.pricePrecision ?? getDefaultPricePrecision(symbol.symbol),
+		symbol: symbol.symbol,
+		volume: "-",
+	};
 }
 
 function formatSignalSubmittedAt(value: string, locale: string) {
@@ -722,7 +770,7 @@ export function SignalsWorkspace() {
 	const locale = useLocale();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
 	const [binanceCandles, setBinanceCandles] = useState<Candle[]>([]);
-	const [instruments, setInstruments] = useState<Instrument[]>(INSTRUMENTS);
+	const [instrumentQuotes, setInstrumentQuotes] = useState<Record<string, Partial<Instrument>>>({});
 	const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
 	const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("1h");
 	const [selectedSource, setSelectedSource] = useState("all");
@@ -732,6 +780,37 @@ export function SignalsWorkspace() {
 	const [selectedEntryStatus, setSelectedEntryStatus] = useState<EntryStatus>("all");
 	const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
+
+	const signals = useMemo(
+		() => webhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
+		[locale, webhookSignals],
+	);
+	const baseInstruments = useMemo(() => {
+		const symbols = new Map<string, StoredTradingSymbol>();
+
+		for (const signal of webhookSignals) {
+			symbols.set(signal.tradingSymbol.symbol, signal.tradingSymbol);
+		}
+
+		return (symbols.size
+			? Array.from(symbols.values()).map(createInstrumentFromTradingSymbol)
+			: INSTRUMENTS
+		).sort((a, b) => a.symbol.localeCompare(b.symbol));
+	}, [webhookSignals]);
+	const instruments = useMemo(
+		() =>
+			baseInstruments
+				.map((instrument) => ({
+					...instrument,
+					...instrumentQuotes[instrument.symbol],
+				}))
+				.sort((a, b) => a.symbol.localeCompare(b.symbol)),
+		[baseInstruments, instrumentQuotes],
+	);
+	const tickerSymbols = useMemo(
+		() => baseInstruments.map((instrument) => instrument.symbol).join("/"),
+		[baseInstruments],
+	);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -831,17 +910,28 @@ export function SignalsWorkspace() {
 	}, [selectedSymbol, selectedTimeframe]);
 
 	useEffect(() => {
+		if (!instruments.length) {
+			return;
+		}
+
+		if (!instruments.some((instrument) => instrument.symbol === selectedSymbol)) {
+			setSelectedSymbol(instruments[0]?.symbol ?? "BTCUSDT");
+			setActiveSignalId(null);
+		}
+	}, [instruments, selectedSymbol]);
+
+	useEffect(() => {
 		const timers = instruments
 			.filter((instrument) => instrument.tickDirection)
 			.map((instrument) =>
 				window.setTimeout(() => {
-					setInstruments((currentInstruments) =>
-						currentInstruments.map((currentInstrument) =>
-							currentInstrument.symbol === instrument.symbol
-								? { ...currentInstrument, tickDirection: undefined }
-								: currentInstrument,
-						),
-					);
+					setInstrumentQuotes((currentQuotes) => ({
+						...currentQuotes,
+						[instrument.symbol]: {
+							...currentQuotes[instrument.symbol],
+							tickDirection: undefined,
+						},
+					}));
 				}, TICK_FLASH_MS),
 			);
 
@@ -853,9 +943,17 @@ export function SignalsWorkspace() {
 	}, [instruments]);
 
 	useEffect(() => {
-		const streams = INSTRUMENTS.map(
-			(instrument) => `${instrument.symbol.toLowerCase()}@ticker`,
-		).join("/");
+		if (!tickerSymbols) {
+			return;
+		}
+
+		const instrumentBySymbol = new Map(
+			baseInstruments.map((instrument) => [instrument.symbol, instrument]),
+		);
+		const streams = tickerSymbols
+			.split("/")
+			.map((symbol) => `${symbol.toLowerCase()}@ticker`)
+			.join("/");
 		const disconnect = connectBinanceSocket(
 			`${BINANCE_STREAM_BASE_URL}/stream?streams=${streams}`,
 			(eventData) => {
@@ -865,33 +963,36 @@ export function SignalsWorkspace() {
 					return;
 				}
 
-				setInstruments((currentInstruments) =>
-					currentInstruments.map((instrument) => {
-						if (instrument.symbol !== ticker.symbol) {
-							return instrument;
-						}
+				const currentInstrument = instrumentBySymbol.get(ticker.symbol);
 
-						const tickDirection =
-							ticker.price > instrument.price
-								? "up"
-								: ticker.price < instrument.price
-									? "down"
-									: instrument.tickDirection;
+				if (!currentInstrument) {
+					return;
+				}
 
-						return {
-							...instrument,
+				setInstrumentQuotes((currentQuotes) => {
+					const previousPrice = currentQuotes[ticker.symbol]?.price ?? currentInstrument.price;
+					const tickDirection =
+						ticker.price > previousPrice
+							? "up"
+							: ticker.price < previousPrice
+								? "down"
+								: currentQuotes[ticker.symbol]?.tickDirection;
+
+					return {
+						...currentQuotes,
+						[ticker.symbol]: {
 							change: ticker.change,
 							price: ticker.price,
 							tickDirection,
-							volume: ticker.volume ?? instrument.volume,
-						};
-					}),
-				);
+							volume: ticker.volume ?? currentInstrument.volume,
+						},
+					};
+				});
 			},
 		);
 
 		return disconnect;
-	}, []);
+	}, [baseInstruments, tickerSymbols]);
 
 	useEffect(() => {
 		const disconnect = connectBinanceSocket(
@@ -909,11 +1010,6 @@ export function SignalsWorkspace() {
 
 		return disconnect;
 	}, [selectedSymbol, selectedTimeframe]);
-
-	const signals = useMemo(
-		() => webhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
-		[locale, webhookSignals],
-	);
 
 	const filteredSignals = useMemo(
 		() =>
@@ -983,7 +1079,7 @@ export function SignalsWorkspace() {
 		instruments.find((instrument) => instrument.symbol === selectedSymbol) ??
 		instruments[0] ??
 		INSTRUMENTS[0];
-	function formatPrice(value: number, fractionDigits = selectedSymbol === "SOLUSDT" ? 2 : 0) {
+	function formatPrice(value: number, fractionDigits = selectedInstrument.pricePrecision ?? 0) {
 		return new Intl.NumberFormat(locale, {
 			maximumFractionDigits: fractionDigits,
 			minimumFractionDigits: fractionDigits,
@@ -1015,10 +1111,10 @@ export function SignalsWorkspace() {
 						<RadioIcon className="size-4 text-emerald-500" />
 						<span>{t("ticker.live")}</span>
 					</div>
-					{instruments.map((instrument) => (
-						<button
-							key={instrument.symbol}
-							type="button"
+						{instruments.map((instrument) => (
+							<button
+								key={instrument.symbol}
+								type="button"
 								onClick={() => selectSymbol(instrument.symbol)}
 								className={cn(
 									"gap-2 px-3 py-1.5 text-sm hover:bg-white/8 flex shrink-0 items-center rounded-md border text-left transition-colors duration-200",
@@ -1027,14 +1123,18 @@ export function SignalsWorkspace() {
 										: "border-transparent bg-transparent",
 								)}
 							>
-							<span className="size-5 bg-black flex shrink-0 items-center justify-center overflow-hidden rounded-full">
-								<img
-									alt={instrument.base}
-									className="size-6 object-contain"
-									src={instrument.logo}
-								/>
-							</span>
-							<span className="font-semibold">{instrument.base}</span>
+								<span className="size-5 bg-black text-[10px] font-bold flex shrink-0 items-center justify-center overflow-hidden rounded-full">
+									{instrument.logo ? (
+										<img
+											alt={instrument.base}
+											className="size-6 object-contain"
+											src={instrument.logo}
+										/>
+									) : (
+										instrument.base.slice(0, 2)
+									)}
+								</span>
+								<span className="font-semibold">{instrument.base}</span>
 								<span
 									className={cn(
 										"font-mono text-muted-foreground transition-colors duration-200",
@@ -1042,12 +1142,10 @@ export function SignalsWorkspace() {
 										instrument.tickDirection === "down" && "text-rose-400",
 									)}
 								>
-								$
-								{formatPrice(
-									instrument.price,
-									instrument.symbol === "SOLUSDT" ? 2 : 0,
-								)}
-							</span>
+									{instrument.price > 0
+										? `$${formatPrice(instrument.price, instrument.pricePrecision ?? 0)}`
+										: "--"}
+								</span>
 							<span
 								className={cn(
 									"font-mono text-xs",

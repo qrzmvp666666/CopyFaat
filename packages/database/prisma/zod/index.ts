@@ -82,9 +82,21 @@ export const UserNotificationPreferenceScalarFieldEnumSchema = z.enum(['id', 'us
 
 export type UserNotificationPreferenceScalarFieldEnum = z.infer<typeof UserNotificationPreferenceScalarFieldEnumSchema>;
 
+// File: TraderScalarFieldEnum.schema.ts
+
+export const TraderScalarFieldEnumSchema = z.enum(['id', 'externalId', 'name', 'displayName', 'avatarUrl', 'platform', 'handle', 'bio', 'isActive', 'createdAt', 'updatedAt'])
+
+export type TraderScalarFieldEnum = z.infer<typeof TraderScalarFieldEnumSchema>;
+
+// File: TradingSymbolScalarFieldEnum.schema.ts
+
+export const TradingSymbolScalarFieldEnumSchema = z.enum(['id', 'symbol', 'baseAsset', 'quoteAsset', 'exchange', 'displayName', 'logoUrl', 'pricePrecision', 'isActive', 'createdAt', 'updatedAt'])
+
+export type TradingSymbolScalarFieldEnum = z.infer<typeof TradingSymbolScalarFieldEnumSchema>;
+
 // File: SignalScalarFieldEnum.schema.ts
 
-export const SignalScalarFieldEnumSchema = z.enum(['id', 'eventId', 'symbol', 'direction', 'entryStatus', 'status', 'entry', 'takeProfit', 'stopLoss', 'riskReward', 'submittedAt', 'chartPositionPct', 'sourceId', 'sourceName', 'sourceAvatarUrl', 'exchange', 'timeframe', 'outcome', 'note', 'createdAt', 'updatedAt'])
+export const SignalScalarFieldEnumSchema = z.enum(['id', 'eventId', 'traderId', 'symbolId', 'direction', 'entryStatus', 'status', 'entry', 'takeProfit', 'stopLoss', 'riskReward', 'submittedAt', 'chartPositionPct', 'exchange', 'timeframe', 'outcome', 'note', 'createdAt', 'updatedAt'])
 
 export type SignalScalarFieldEnum = z.infer<typeof SignalScalarFieldEnumSchema>;
 
@@ -336,12 +348,51 @@ export const UserNotificationPreferenceSchema = z.object({
 export type UserNotificationPreferenceType = z.infer<typeof UserNotificationPreferenceSchema>;
 
 
+// File: Trader.schema.ts
+
+export const TraderSchema = z.object({
+  id: z.string(),
+  externalId: z.string(),
+  name: z.string(),
+  displayName: z.string().nullish(),
+  avatarUrl: z.string().nullish(),
+  platform: z.string().nullish(),
+  handle: z.string().nullish(),
+  bio: z.string().nullish(),
+  isActive: z.boolean().default(true),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type TraderType = z.infer<typeof TraderSchema>;
+
+
+// File: TradingSymbol.schema.ts
+
+export const TradingSymbolSchema = z.object({
+  id: z.string(),
+  symbol: z.string(),
+  baseAsset: z.string(),
+  quoteAsset: z.string(),
+  exchange: z.string().default("binance"),
+  displayName: z.string().nullish(),
+  logoUrl: z.string().nullish(),
+  pricePrecision: z.number().int().nullish(),
+  isActive: z.boolean().default(true),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type TradingSymbolType = z.infer<typeof TradingSymbolSchema>;
+
+
 // File: Signal.schema.ts
 
 export const SignalSchema = z.object({
   id: z.string(),
   eventId: z.string(),
-  symbol: z.string(),
+  traderId: z.string(),
+  symbolId: z.string(),
   direction: z.string(),
   entryStatus: z.string().default("pending"),
   status: z.string().default("active"),
@@ -351,9 +402,6 @@ export const SignalSchema = z.object({
   riskReward: z.number(),
   submittedAt: z.date(),
   chartPositionPct: z.number().default(92.0),
-  sourceId: z.string().nullish(),
-  sourceName: z.string(),
-  sourceAvatarUrl: z.string().nullish(),
   exchange: z.string().nullish(),
   timeframe: z.string().nullish(),
   outcome: z.string().nullish(),

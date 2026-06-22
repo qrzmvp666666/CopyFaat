@@ -244,10 +244,50 @@ model UserNotificationPreference {
   @@map("user_notification_preference")
 }
 
+model Trader {
+  id          String   @id @default(cuid())
+  externalId  String   @unique
+  name        String
+  displayName String?
+  avatarUrl   String?
+  platform    String?
+  handle      String?
+  bio         String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  signals     Signal[]
+
+  @@index([name])
+  @@map("trader")
+}
+
+model TradingSymbol {
+  id             String   @id @default(cuid())
+  symbol         String   @unique
+  baseAsset      String
+  quoteAsset     String
+  exchange       String   @default("binance")
+  displayName    String?
+  logoUrl        String?
+  pricePrecision Int?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  signals        Signal[]
+
+  @@index([baseAsset])
+  @@index([quoteAsset])
+  @@map("trading_symbol")
+}
+
 model Signal {
   id               String   @id @default(cuid())
   eventId          String   @unique
-  symbol           String
+  traderId         String
+  trader           Trader   @relation(fields: [traderId], references: [id])
+  symbolId         String
+  tradingSymbol    TradingSymbol @relation(fields: [symbolId], references: [id])
   direction        String
   entryStatus      String   @default("pending")
   status           String   @default("active")
@@ -257,9 +297,6 @@ model Signal {
   riskReward       Float
   submittedAt      DateTime
   chartPositionPct Float    @default(92)
-  sourceId         String?
-  sourceName       String
-  sourceAvatarUrl  String?
   exchange         String?
   timeframe        String?
   outcome          String?
@@ -267,8 +304,8 @@ model Signal {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  @@index([symbol, status])
-  @@index([sourceId])
+  @@index([symbolId, status])
+  @@index([traderId])
   @@index([submittedAt])
   @@map("signal")
 }
