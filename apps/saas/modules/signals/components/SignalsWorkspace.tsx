@@ -635,12 +635,12 @@ function getSignalStatusPresentation(
 		}
 
 		return {
-			badgeClassName: "border-sky-400/35 bg-sky-400/15 text-sky-300",
+			badgeClassName: "border-amber-400/35 bg-amber-400/15 text-amber-300",
 			icon: TargetIcon,
 			label: labels.pending,
-			resultIconClassName: "text-sky-400",
+			resultIconClassName: "text-amber-400",
 			resultLabel: labels.expectedRr,
-			resultValueClassName: "text-sky-400",
+			resultValueClassName: "text-amber-400",
 		};
 	}
 
