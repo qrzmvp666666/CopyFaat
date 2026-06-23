@@ -96,7 +96,7 @@ export type TradingSymbolScalarFieldEnum = z.infer<typeof TradingSymbolScalarFie
 
 // File: SignalScalarFieldEnum.schema.ts
 
-export const SignalScalarFieldEnumSchema = z.enum(['id', 'eventId', 'traderId', 'symbolId', 'direction', 'entryStatus', 'status', 'entry', 'takeProfit', 'stopLoss', 'riskReward', 'submittedAt', 'chartPositionPct', 'exchange', 'timeframe', 'outcome', 'note', 'createdAt', 'updatedAt'])
+export const SignalScalarFieldEnumSchema = z.enum(['id', 'eventId', 'businessKey', 'traderId', 'symbolId', 'direction', 'entryStatus', 'status', 'entry', 'takeProfit', 'stopLoss', 'riskReward', 'submittedAt', 'chartPositionPct', 'exchange', 'timeframe', 'outcome', 'note', 'createdAt', 'updatedAt'])
 
 export type SignalScalarFieldEnum = z.infer<typeof SignalScalarFieldEnumSchema>;
 
@@ -391,6 +391,7 @@ export type TradingSymbolType = z.infer<typeof TradingSymbolSchema>;
 export const SignalSchema = z.object({
   id: z.string(),
   eventId: z.string(),
+  businessKey: z.string().nullish(),
   traderId: z.string(),
   symbolId: z.string(),
   direction: z.string(),

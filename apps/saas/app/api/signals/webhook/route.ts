@@ -56,11 +56,23 @@ export async function POST(request: Request) {
 	}
 
 	const signal = await upsertStoredSignal(parsed.data);
+	const receivedAt = new Date().toISOString();
+
+	if (!signal) {
+		const response: SignalWebhookSuccessResponse = {
+			ignored: true,
+			ok: true,
+			receivedAt,
+		};
+
+		return NextResponse.json(response, { status: 202 });
+	}
+
 	publishSignalEvent(signal);
 
 	const response: SignalWebhookSuccessResponse = {
 		ok: true,
-		receivedAt: new Date().toISOString(),
+		receivedAt,
 		signal,
 	};
 

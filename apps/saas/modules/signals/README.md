@@ -35,7 +35,7 @@ Set `SIGNAL_WEBHOOK_SECRET` to require callers to send `x-signal-webhook-secret`
 }
 ```
 
-`eventId` is optional, but external producers should send it for idempotency. Reusing the same `eventId` updates the existing database signal instead of creating a duplicate.
+`eventId` is optional, but external producers should send it for source-level idempotency. Reusing the same `eventId` updates the existing database signal instead of creating a duplicate. When `eventId` is absent or changes between captures, FastSignal still deduplicates by trader, symbol, direction, entry, take-profit, and stop-loss. `submittedAt` is stored for display and recency, but it is not part of the business identity, so repeated captures of the same trading plan update one signal instead of creating multiple cards.
 
 ## Success Response
 

@@ -3,6 +3,13 @@ import type { Prisma } from "@repo/database";
 import { createHash } from "node:crypto";
 
 import type { ParsedSignalWebhookRequest } from "./signal-webhook-schema";
+import {
+	getSignalBusinessKey,
+	getTraderExternalId,
+	isBlockedSignalTrader,
+	normalizeSignalIdentityPart,
+	normalizeSignalPrice,
+} from "./signal-identity";
 import type { StoredSignal } from "./signal-types";
 
 type SignalWithTrader = Prisma.SignalGetPayload<{
@@ -33,33 +40,6 @@ function getChartPosition(input: ParsedSignalWebhookRequest) {
 	return 92;
 }
 
-function normalizeIdentityPart(value: string) {
-	return value
-		.normalize("NFKC")
-		.trim()
-		.toLowerCase()
-		.replace(/[—–]/g, "-")
-		.replace(/\s+/g, "");
-}
-
-function getTraderExternalId(input: ParsedSignalWebhookRequest) {
-	const sourcePlatform = normalizeIdentityPart(input.source.platform || "webhook");
-	const sourceName = normalizeIdentityPart(input.source.name);
-
-	return `${sourcePlatform}:${sourceName}`.slice(0, 160);
-}
-
-function normalizeSignalPrice(value: number) {
-	return value.toFixed(8).replace(/0+$/, "").replace(/\.$/, "");
-}
-
-function getSubmittedAtMinute(value: Date) {
-	const submittedAtMinute = new Date(value);
-	submittedAtMinute.setSeconds(0, 0);
-
-	return submittedAtMinute.toISOString();
-}
-
 function getSymbolAssets(symbol: string) {
 	const quoteAssets = ["USDT", "USDC", "USD", "BTC", "ETH"] as const;
 	const quoteAsset = quoteAssets.find((quote) => symbol.endsWith(quote)) ?? "";
@@ -72,21 +52,46 @@ function getSymbolAssets(symbol: string) {
 	};
 }
 
-function getStableEventId(input: ParsedSignalWebhookRequest, submittedAt: Date, traderExternalId: string) {
-	const sourcePlatform = normalizeIdentityPart(input.source.platform || "webhook");
-	const stableParts = [
-		sourcePlatform,
-		traderExternalId,
-		input.symbol,
-		input.direction,
-		normalizeSignalPrice(input.entry),
-		normalizeSignalPrice(input.takeProfit),
-		normalizeSignalPrice(input.stopLoss),
-		getSubmittedAtMinute(submittedAt),
-	];
-	const digest = createHash("sha256").update(stableParts.join("|")).digest("hex").slice(0, 16);
+function getStableEventId(input: ParsedSignalWebhookRequest, traderExternalId: string) {
+	const sourcePlatform = normalizeSignalIdentityPart(input.source.platform || "webhook");
+	const digest = createHash("sha256")
+		.update(getSignalBusinessKey(input, traderExternalId))
+		.digest("hex")
+		.slice(0, 16);
 
 	return `${sourcePlatform}:${traderExternalId}:${input.symbol}:${input.direction}:${digest}`.slice(0, 160);
+}
+
+function getStoredSignalBusinessKey(signal: SignalWithTrader) {
+	return getSignalBusinessKey(
+		{
+			direction: signal.direction as ParsedSignalWebhookRequest["direction"],
+			entry: signal.entry,
+			stopLoss: signal.stopLoss,
+			symbol: signal.tradingSymbol.symbol,
+			takeProfit: signal.takeProfit,
+		},
+		signal.trader.externalId,
+	);
+}
+
+function dedupeStoredSignals(signals: SignalWithTrader[]) {
+	const seenKeys = new Set<string>();
+
+	return signals.filter((signal) => {
+		if (isBlockedSignalTrader(signal.trader)) {
+			return false;
+		}
+
+		const signalKey = getStoredSignalBusinessKey(signal);
+
+		if (seenKeys.has(signalKey)) {
+			return false;
+		}
+
+		seenKeys.add(signalKey);
+		return true;
+	});
 }
 
 function signalModelToStoredSignal(signal: SignalWithTrader): StoredSignal {
@@ -112,23 +117,23 @@ function signalModelToStoredSignal(signal: SignalWithTrader): StoredSignal {
 		},
 		status: signal.status as StoredSignal["status"],
 		stopLoss: signal.stopLoss,
-			submittedAt: signal.submittedAt.toISOString(),
+		submittedAt: signal.submittedAt.toISOString(),
+		symbol: signal.tradingSymbol.symbol,
+		takeProfit: signal.takeProfit,
+		timeframe: signal.timeframe ?? undefined,
+		tradingSymbol: {
+			baseAsset: signal.tradingSymbol.baseAsset,
+			displayName: signal.tradingSymbol.displayName ?? undefined,
+			exchange: signal.tradingSymbol.exchange,
+			id: signal.tradingSymbol.id,
+			logoUrl: signal.tradingSymbol.logoUrl ?? undefined,
+			pricePrecision: signal.tradingSymbol.pricePrecision ?? undefined,
+			quoteAsset: signal.tradingSymbol.quoteAsset,
 			symbol: signal.tradingSymbol.symbol,
-			takeProfit: signal.takeProfit,
-			timeframe: signal.timeframe ?? undefined,
-			tradingSymbol: {
-				baseAsset: signal.tradingSymbol.baseAsset,
-				displayName: signal.tradingSymbol.displayName ?? undefined,
-				exchange: signal.tradingSymbol.exchange,
-				id: signal.tradingSymbol.id,
-				logoUrl: signal.tradingSymbol.logoUrl ?? undefined,
-				pricePrecision: signal.tradingSymbol.pricePrecision ?? undefined,
-				quoteAsset: signal.tradingSymbol.quoteAsset,
-				symbol: signal.tradingSymbol.symbol,
-			},
-			updatedAt: signal.updatedAt.toISOString(),
-		};
-	}
+		},
+		updatedAt: signal.updatedAt.toISOString(),
+	};
+}
 
 export async function listStoredSignals(): Promise<StoredSignal[]> {
 	const signals = await db.signal.findMany({
@@ -142,14 +147,19 @@ export async function listStoredSignals(): Promise<StoredSignal[]> {
 		take: 200,
 	});
 
-	return signals.map(signalModelToStoredSignal);
+	return dedupeStoredSignals(signals).map(signalModelToStoredSignal);
 }
 
-export async function upsertStoredSignal(input: ParsedSignalWebhookRequest): Promise<StoredSignal> {
+export async function upsertStoredSignal(input: ParsedSignalWebhookRequest): Promise<StoredSignal | null> {
+	if (isBlockedSignalTrader(input.source)) {
+		return null;
+	}
+
 	const now = new Date();
 	const submittedAt = input.submittedAt ? new Date(input.submittedAt) : now;
 	const traderExternalId = getTraderExternalId(input);
-	const eventId = getStableEventId(input, submittedAt, traderExternalId);
+	const eventId = input.eventId ?? getStableEventId(input, traderExternalId);
+	const businessKey = getSignalBusinessKey(input, traderExternalId);
 	const symbolAssets = getSymbolAssets(input.symbol);
 	const trader = await db.trader.upsert({
 		create: {
@@ -191,50 +201,78 @@ export async function upsertStoredSignal(input: ParsedSignalWebhookRequest): Pro
 			symbol: input.symbol,
 		},
 	});
-	const signal = await db.signal.upsert({
-		create: {
-			chartPositionPct: getChartPosition(input),
-			direction: input.direction,
-			entry: input.entry,
-			entryStatus: input.entryStatus ?? "pending",
-			eventId,
-			exchange: input.exchange,
-			note: input.note,
-			outcome: input.outcome,
-			riskReward: getRiskReward(input),
-			status: input.status ?? "active",
-			stopLoss: input.stopLoss,
-			submittedAt,
-			symbolId: tradingSymbol.id,
-			takeProfit: input.takeProfit,
-			timeframe: input.timeframe,
-			traderId: trader.id,
-		},
-		include: {
-			trader: true,
-			tradingSymbol: true,
-		},
-		update: {
-			chartPositionPct: getChartPosition(input),
-			direction: input.direction,
-			entry: input.entry,
-			entryStatus: input.entryStatus ?? "pending",
-			exchange: input.exchange,
-			note: input.note,
-			outcome: input.outcome,
-			riskReward: getRiskReward(input),
-			status: input.status ?? "active",
-			stopLoss: input.stopLoss,
-			submittedAt,
-			symbolId: tradingSymbol.id,
-			takeProfit: input.takeProfit,
-			timeframe: input.timeframe,
-			traderId: trader.id,
-		},
+	const signalInclude = {
+		trader: true,
+		tradingSymbol: true,
+	} satisfies Prisma.SignalInclude;
+	const existingSignalByEventId = await db.signal.findUnique({
+		include: signalInclude,
 		where: {
 			eventId,
 		},
 	});
+	const existingSignalByBusinessKey =
+		existingSignalByEventId ??
+		(await db.signal.findFirst({
+			include: signalInclude,
+			orderBy: {
+				submittedAt: "desc",
+			},
+			where: {
+				OR: [
+					{
+						businessKey,
+					},
+					{
+						direction: input.direction,
+						entry: input.entry,
+						stopLoss: input.stopLoss,
+						symbolId: tradingSymbol.id,
+						takeProfit: input.takeProfit,
+						traderId: trader.id,
+					},
+				],
+			},
+		}));
+	const signalData = {
+		businessKey,
+		chartPositionPct: getChartPosition(input),
+		direction: input.direction,
+		entry: input.entry,
+		entryStatus: input.entryStatus ?? "pending",
+		exchange: input.exchange,
+		note: input.note,
+		outcome: input.outcome,
+		riskReward: getRiskReward(input),
+		status: input.status ?? "active",
+		stopLoss: input.stopLoss,
+		submittedAt,
+		symbolId: tradingSymbol.id,
+		takeProfit: input.takeProfit,
+		timeframe: input.timeframe,
+		traderId: trader.id,
+	};
+	const signal = existingSignalByBusinessKey
+		? await db.signal.update({
+				data: signalData,
+				include: {
+					trader: true,
+					tradingSymbol: true,
+				},
+				where: {
+					id: existingSignalByBusinessKey.id,
+				},
+			})
+		: await db.signal.create({
+				data: {
+					...signalData,
+					eventId,
+				},
+				include: {
+					trader: true,
+					tradingSymbol: true,
+				},
+			});
 
 	return signalModelToStoredSignal(signal);
 }

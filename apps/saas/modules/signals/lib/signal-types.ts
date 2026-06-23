@@ -81,9 +81,10 @@ export interface SignalKlinesResponse {
 }
 
 export interface SignalWebhookSuccessResponse {
+	ignored?: boolean;
 	ok: true;
 	receivedAt: string;
-	signal: StoredSignal;
+	signal?: StoredSignal;
 }
 
 export interface SignalWebhookErrorResponse {

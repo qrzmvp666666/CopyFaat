@@ -284,6 +284,7 @@ model TradingSymbol {
 model Signal {
   id               String   @id @default(cuid())
   eventId          String   @unique
+  businessKey      String?  @unique
   traderId         String
   trader           Trader   @relation(fields: [traderId], references: [id])
   symbolId         String

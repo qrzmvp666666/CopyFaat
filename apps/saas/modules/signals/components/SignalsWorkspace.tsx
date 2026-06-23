@@ -33,6 +33,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { SignalChartSignal } from "./TradingViewSignalChart";
 import { TradingViewSignalChart } from "./TradingViewSignalChart";
+import { isBlockedSignalTrader } from "../lib/signal-identity";
 import type {
 	SignalKlinesResponse,
 	SignalsListResponse,
@@ -733,6 +734,10 @@ function mapStoredSignalToTradeSignal(signal: StoredSignal, locale: string): Tra
 }
 
 function upsertWebhookSignal(signals: StoredSignal[], nextSignal: StoredSignal) {
+	if (isBlockedSignalTrader(nextSignal.source)) {
+		return signals;
+	}
+
 	const existingIndex = signals.findIndex((signal) => signal.eventId === nextSignal.eventId);
 
 	if (existingIndex === -1) {
@@ -895,6 +900,10 @@ function getSelectedSignal(signals: TradeSignal[], activeSignalId: string | null
 	return signals.find((signal) => signal.id === activeSignalId) ?? signals[0] ?? null;
 }
 
+function matchesSelectedSources(signal: Pick<TradeSignal, "sourceId">, selectedSourceIds: string[]) {
+	return selectedSourceIds.length === 0 || selectedSourceIds.includes(signal.sourceId);
+}
+
 export function SignalsWorkspace() {
 	const t = useTranslations("signals");
 	const locale = useLocale();
@@ -903,7 +912,7 @@ export function SignalsWorkspace() {
 	const [instrumentQuotes, setInstrumentQuotes] = useState<Record<string, Partial<Instrument>>>({});
 	const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
 	const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("1h");
-	const [selectedSource, setSelectedSource] = useState("all");
+	const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
 	const [selectedDirection, setSelectedDirection] = useState<SignalDirection>("all");
 	const [selectedStatus, setSelectedStatus] = useState<SignalStatus>("active");
 	const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("30d");
@@ -973,7 +982,9 @@ export function SignalsWorkspace() {
 				const data = (await response.json()) as SignalsListResponse;
 
 				if (isMounted) {
-					setWebhookSignals(data.signals);
+					setWebhookSignals(
+						data.signals.filter((signal) => !isBlockedSignalTrader(signal.source)),
+					);
 				}
 			} catch {
 				// Keep the static demo data visible if the local API is temporarily unavailable.
@@ -1066,13 +1077,15 @@ export function SignalsWorkspace() {
 	}, [instruments, selectedSymbol]);
 
 	useEffect(() => {
-		if (
-			selectedSource !== "all" &&
-			!sourceFilters.some((source) => source.id === selectedSource)
-		) {
-			setSelectedSource("all");
+		const visibleSourceIds = new Set(sourceFilters.map((source) => source.id));
+		const nextSelectedSourceIds = selectedSourceIds.filter((sourceId) =>
+			visibleSourceIds.has(sourceId),
+		);
+
+		if (nextSelectedSourceIds.length !== selectedSourceIds.length) {
+			setSelectedSourceIds(nextSelectedSourceIds);
 		}
-	}, [selectedSource, sourceFilters]);
+	}, [selectedSourceIds, sourceFilters]);
 
 	useEffect(() => {
 		const timers = instruments
@@ -1171,7 +1184,7 @@ export function SignalsWorkspace() {
 				return (
 					signal.symbol === selectedSymbol &&
 					signal.status === selectedStatus &&
-					(selectedSource === "all" || signal.sourceId === selectedSource) &&
+					matchesSelectedSources(signal, selectedSourceIds) &&
 					(selectedDirection === "all" || signal.direction === selectedDirection) &&
 					(selectedEntryStatus === "all" || signal.entryStatus === selectedEntryStatus)
 				);
@@ -1179,7 +1192,7 @@ export function SignalsWorkspace() {
 		[
 			selectedDirection,
 			selectedEntryStatus,
-			selectedSource,
+			selectedSourceIds,
 			selectedStatus,
 			selectedSymbol,
 			signals,
@@ -1195,7 +1208,7 @@ export function SignalsWorkspace() {
 						(signal) =>
 							signal.symbol === selectedSymbol &&
 							signal.status === status &&
-							(selectedSource === "all" || signal.sourceId === selectedSource) &&
+							matchesSelectedSources(signal, selectedSourceIds) &&
 							(selectedDirection === "all" ||
 								signal.direction === selectedDirection) &&
 							(selectedEntryStatus === "all" ||
@@ -1203,7 +1216,7 @@ export function SignalsWorkspace() {
 					).length,
 				]),
 			) as Record<SignalStatus, number>,
-		[selectedDirection, selectedEntryStatus, selectedSource, selectedSymbol, signals],
+		[selectedDirection, selectedEntryStatus, selectedSourceIds, selectedSymbol, signals],
 	);
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
@@ -1214,11 +1227,11 @@ export function SignalsWorkspace() {
 				(signal) =>
 					signal.symbol === selectedSymbol &&
 					signal.status === "active" &&
-					(selectedSource === "all" || signal.sourceId === selectedSource) &&
+					matchesSelectedSources(signal, selectedSourceIds) &&
 					(selectedDirection === "all" || signal.direction === selectedDirection) &&
 					(selectedEntryStatus === "all" || signal.entryStatus === selectedEntryStatus),
 			),
-		[selectedDirection, selectedEntryStatus, selectedSource, selectedSymbol, signals],
+		[selectedDirection, selectedEntryStatus, selectedSourceIds, selectedSymbol, signals],
 	);
 
 	const candles = useMemo(
@@ -1250,11 +1263,25 @@ export function SignalsWorkspace() {
 			(signal) =>
 				signal.symbol === symbol &&
 				signal.status === selectedStatus &&
-				(selectedSource === "all" || signal.sourceId === selectedSource) &&
+				matchesSelectedSources(signal, selectedSourceIds) &&
 				(selectedDirection === "all" || signal.direction === selectedDirection) &&
 				(selectedEntryStatus === "all" || signal.entryStatus === selectedEntryStatus),
 		);
 		setActiveSignalId(nextSignal?.id ?? null);
+	}
+
+	function toggleSourceFilter(sourceId: string) {
+		setSelectedSourceIds((currentSourceIds) =>
+			currentSourceIds.includes(sourceId)
+				? currentSourceIds.filter((currentSourceId) => currentSourceId !== sourceId)
+				: [...currentSourceIds, sourceId],
+		);
+		setActiveSignalId(null);
+	}
+
+	function clearSourceFilters() {
+		setSelectedSourceIds([]);
+		setActiveSignalId(null);
 	}
 
 	return (
@@ -1399,10 +1426,10 @@ export function SignalsWorkspace() {
 							<div className="no-scrollbar -mx-3 min-w-0 gap-2 px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 flex flex-nowrap items-center overflow-x-auto">
 								<button
 									type="button"
-									onClick={() => setSelectedSource("all")}
+									onClick={clearSourceFilters}
 									className={cn(
 										"px-2.5 py-1.5 text-xs font-medium min-w-[52px] shrink-0 rounded-md border text-center transition-colors",
-										selectedSource === "all"
+										selectedSourceIds.length === 0
 											? "border-foreground/20 bg-foreground text-background"
 											: "hover:bg-white/8 bg-[#141414]",
 									)}
@@ -1413,13 +1440,14 @@ export function SignalsWorkspace() {
 									<button
 										key={source.id}
 										type="button"
-										onClick={() => setSelectedSource(source.id)}
+										onClick={() => toggleSourceFilter(source.id)}
 										className={cn(
 											"gap-1.5 px-2 py-1 text-xs flex shrink-0 items-center rounded-md border transition-colors",
-											selectedSource === source.id
+											selectedSourceIds.includes(source.id)
 												? "border-foreground/20 bg-foreground text-background"
 												: "hover:bg-white/8 bg-[#141414]",
 										)}
+										aria-pressed={selectedSourceIds.includes(source.id)}
 									>
 										<span className="size-5 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
 											<img
@@ -1665,8 +1693,7 @@ export function SignalsWorkspace() {
 											(signal) =>
 												signal.symbol === selectedSymbol &&
 												signal.status === status &&
-												(selectedSource === "all" ||
-													signal.sourceId === selectedSource) &&
+												matchesSelectedSources(signal, selectedSourceIds) &&
 												(selectedDirection === "all" ||
 													signal.direction === selectedDirection) &&
 												(selectedEntryStatus === "all" ||
