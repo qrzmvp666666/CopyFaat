@@ -35,7 +35,7 @@ Set `SIGNAL_WEBHOOK_SECRET` to require callers to send `x-signal-webhook-secret`
 }
 ```
 
-`eventId` is optional, but external producers should send it for source-level idempotency. Reusing the same `eventId` updates the existing database signal instead of creating a duplicate. When `eventId` is absent or changes between captures, FastSignal still deduplicates by trader, symbol, direction, entry, take-profit, and stop-loss. `submittedAt` is stored for display and recency, but it is not part of the business identity, so repeated captures of the same trading plan update one signal instead of creating multiple cards.
+`eventId` is optional, but external producers should send it for source-level idempotency. Reusing the same `eventId` updates the existing database signal instead of creating a duplicate. When `eventId` is absent or changes between captures, SignalFast still deduplicates by trader, symbol, direction, entry, take-profit, and stop-loss. `submittedAt` is stored for display and recency, but it is not part of the business identity, so repeated captures of the same trading plan update one signal instead of creating multiple cards.
 
 ## Success Response
 
@@ -68,7 +68,7 @@ Set `SIGNAL_WEBHOOK_SECRET` to require callers to send `x-signal-webhook-secret`
 ## Local Test
 
 ```bash
-curl -sS -X POST http://fastsignal.localhost:4100/api/signals/webhook \
+curl -sS -X POST http://signalfast.localhost:4100/api/signals/webhook \
 	-H "Content-Type: application/json" \
 	-H "x-signal-webhook-secret: $SIGNAL_WEBHOOK_SECRET" \
 	-d '{
@@ -93,25 +93,25 @@ curl -sS -X POST http://fastsignal.localhost:4100/api/signals/webhook \
 Read stored signals:
 
 ```bash
-curl -sS http://fastsignal.localhost:4100/api/signals
+curl -sS http://signalfast.localhost:4100/api/signals
 ```
 
 Listen for live signal events:
 
 ```bash
-curl -N http://fastsignal.localhost:4100/api/signals/events
+curl -N http://signalfast.localhost:4100/api/signals/events
 ```
 
 ## AutoFastExt Local Bridge
 
-For local integration testing, AutoFastExt can collect visible signal text from `https://kol.lysq.cc/signals`, normalize it into this webhook contract, and post it to FastSignal.
+For local integration testing, AutoFastExt can collect visible signal text from `https://kol.lysq.cc/signals`, normalize it into this webhook contract, and post it to SignalFast.
 
 From `/Users/qrz/Desktop/AutoFastExt`:
 
 ```bash
-node scripts/push-kol-signals-to-fastsignal.js < /tmp/kol-signals-page-text.txt
+node scripts/push-kol-signals-to-signalfast.js < /tmp/kol-signals-page-text.txt
 ```
 
-The bridge posts to `http://fastsignal.localhost:4100/api/signals/webhook` by default. Override it with `FASTSIGNAL_WEBHOOK_URL` if the app runs somewhere else. If `SIGNAL_WEBHOOK_SECRET` is set for FastSignal, set the same value in AutoFastExt so the script sends `x-signal-webhook-secret`.
+The bridge posts to `http://signalfast.localhost:4100/api/signals/webhook` by default. Override it with `SIGNALFAST_WEBHOOK_URL` if the app runs somewhere else. If `SIGNAL_WEBHOOK_SECRET` is set for SignalFast, set the same value in AutoFastExt so the script sends `x-signal-webhook-secret`.
 
 The bridge currently sends only complete signals that include valid entry, take-profit, and stop-loss prices. Incomplete rows are parsed as candidates but skipped because the webhook schema requires all three prices to calculate risk/reward and render the card/chart marker safely.

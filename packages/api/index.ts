@@ -17,7 +17,7 @@ export const app = new Hono()
 	// Cors middleware
 	.use(
 		cors({
-			origin: getBaseUrl(process.env.NEXT_PUBLIC_SAAS_URL, 4100, "fastsignal.localhost"),
+			origin: getBaseUrl(process.env.NEXT_PUBLIC_SAAS_URL, 4100, "signalfast.localhost"),
 			allowHeaders: ["Content-Type", "Authorization"],
 			allowMethods: ["POST", "GET", "OPTIONS"],
 			exposeHeaders: ["Content-Length"],

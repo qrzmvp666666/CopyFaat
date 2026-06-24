@@ -26,13 +26,13 @@ describe("getBaseUrl (saas)", () => {
 		expect(getBaseUrl()).toBe("https://my-app.vercel.app");
 	});
 
-	it("returns the FastSignal local SaaS URL by default", () => {
-		expect(getBaseUrl()).toBe("http://fastsignal.localhost:4100");
+	it("returns the SignalFast local SaaS URL by default", () => {
+		expect(getBaseUrl()).toBe("http://signalfast.localhost:4100");
 	});
 
 	it("uses PORT env when set and no other env vars", () => {
 		process.env.PORT = "4000";
-		expect(getBaseUrl()).toBe("http://fastsignal.localhost:4000");
+		expect(getBaseUrl()).toBe("http://signalfast.localhost:4000");
 	});
 
 	it("prefers NEXT_PUBLIC_SAAS_URL over NEXT_PUBLIC_VERCEL_URL", () => {

@@ -94,7 +94,7 @@ export default async function ChoosePlanPage({
 		if (price && priceId) {
 			const appUrl =
 				process.env.NEXT_PUBLIC_SAAS_URL?.replace(/\/$/, "") ??
-				"http://fastsignal.localhost:4100";
+				"http://signalfast.localhost:4100";
 			const redirectUrl = organizationId
 				? `${appUrl}/checkout-return?organizationId=${organizationId}`
 				: `${appUrl}/checkout-return`;

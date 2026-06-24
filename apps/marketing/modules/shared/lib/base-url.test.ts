@@ -26,13 +26,13 @@ describe("getBaseUrl (marketing)", () => {
 		expect(getBaseUrl()).toBe("https://my-marketing.vercel.app");
 	});
 
-	it("returns the FastSignal local marketing URL by default", () => {
-		expect(getBaseUrl()).toBe("http://fastsignal.localhost:4101");
+	it("returns the SignalFast local marketing URL by default", () => {
+		expect(getBaseUrl()).toBe("http://signalfast.localhost:4101");
 	});
 
 	it("uses PORT env when set and no other env vars", () => {
 		process.env.PORT = "5000";
-		expect(getBaseUrl()).toBe("http://fastsignal.localhost:5000");
+		expect(getBaseUrl()).toBe("http://signalfast.localhost:5000");
 	});
 
 	it("prefers NEXT_PUBLIC_MARKETING_URL over NEXT_PUBLIC_VERCEL_URL", () => {

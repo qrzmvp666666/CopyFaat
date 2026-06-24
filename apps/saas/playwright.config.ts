@@ -16,7 +16,7 @@ export default defineConfig({
 	workers: process.env.CI ? 1 : undefined,
 	reporter: [["html"]],
 	use: {
-		baseURL: process.env.NEXT_PUBLIC_SAAS_URL ?? "http://fastsignal.localhost:4100",
+		baseURL: process.env.NEXT_PUBLIC_SAAS_URL ?? "http://signalfast.localhost:4100",
 		trace: "on-first-retry",
 		video: {
 			mode: "retain-on-failure",
@@ -34,7 +34,7 @@ export default defineConfig({
 	],
 	webServer: {
 		command: "pnpm --filter saas run build && PORT=4100 pnpm --filter saas run start",
-		url: process.env.NEXT_PUBLIC_SAAS_URL ?? "http://fastsignal.localhost:4100",
+		url: process.env.NEXT_PUBLIC_SAAS_URL ?? "http://signalfast.localhost:4100",
 		reuseExistingServer: !process.env.CI,
 		stdout: "pipe",
 		timeout: 180 * 1000,

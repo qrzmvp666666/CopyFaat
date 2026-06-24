@@ -9,13 +9,13 @@ description: 环境准备、克隆项目、安装依赖，5 分钟跑起本地�
 
 ## 所需工具
 
-| 工具 | 本地开发 | 生产环境 | 说明 |
-|------|:--------:|:--------:|------|
-| Node.js ≥ 20 | ✅ | ✅ | JS 运行时 |
-| pnpm ≥ 10 | ✅ | ✅ | 包管理器 |
-| Docker | ✅ | — | 本地数据库和存储 |
-| Git | ✅ | ✅ | 版本控制 |
-| PostgreSQL | — | ✅ | 生产数据库（Neon/Supabase/Railway 等） |
+| 工具         | 本地开发 | 生产环境 | 说明                                   |
+| ------------ | :------: | :------: | -------------------------------------- |
+| Node.js ≥ 20 |    ✅    |    ✅    | JS 运行时                              |
+| pnpm ≥ 10    |    ✅    |    ✅    | 包管理器                               |
+| Docker       |    ✅    |    —     | 本地数据库和存储                       |
+| Git          |    ✅    |    ✅    | 版本控制                               |
+| PostgreSQL   |    —     |    ✅    | 生产数据库（Neon/Supabase/Railway 等） |
 
 ## 克隆项目 & 安装依赖
 
@@ -33,10 +33,10 @@ pnpm install
 docker compose up -d
 ```
 
-| 服务 | 地址 | 说明 |
-|------|------|------|
-| PostgreSQL | `localhost:5432` | 用户名/密码均为 `postgres` |
-| MinIO S3 API | `localhost:9000` | 对象存储接口 |
+| 服务         | 地址             | 说明                             |
+| ------------ | ---------------- | -------------------------------- |
+| PostgreSQL   | `localhost:5432` | 用户名/密码均为 `postgres`       |
+| MinIO S3 API | `localhost:9000` | 对象存储接口                     |
 | MinIO 控制台 | `localhost:9001` | 账号 `minioadmin` / `minioadmin` |
 
 > MinIO 启动时会自动创建 `avatars` bucket 并设置公开读权限。
@@ -53,29 +53,29 @@ docker compose up -d
 
 ```yaml
 services:
-  postgres:
-    container_name: myproject-postgres      # 改成你的项目名
-    ports:
-      - "5433:5432"                         # 换一个未被占用的端口
-    volumes:
-      - myproject_postgres_data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: myproject                # 可选：改数据库名
+    postgres:
+        container_name: myproject-postgres # 改成你的项目名
+        ports:
+            - "5433:5432" # 换一个未被占用的端口
+        volumes:
+            - myproject_postgres_data:/var/lib/postgresql/data
+        environment:
+            POSTGRES_DB: myproject # 可选：改数据库名
 
-  minio:
-    container_name: myproject-minio
-    ports:
-      - "9002:9000"
-      - "9003:9001"
-    volumes:
-      - myproject_minio_data:/data
+    minio:
+        container_name: myproject-minio
+        ports:
+            - "9002:9000"
+            - "9003:9001"
+        volumes:
+            - myproject_minio_data:/data
 
-  minio-setup:
-    container_name: myproject-minio-setup
+    minio-setup:
+        container_name: myproject-minio-setup
 
 volumes:
-  myproject_postgres_data:
-  myproject_minio_data:
+    myproject_postgres_data:
+    myproject_minio_data:
 ```
 
 ### 2. .env
@@ -100,9 +100,9 @@ cp .env.local.example .env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/supastarter"
 
 # 应用 URL
-NEXT_PUBLIC_MARKETING_URL="http://fastsignal.localhost:4101"
-NEXT_PUBLIC_SAAS_URL="http://fastsignal.localhost:4100"
-NEXT_PUBLIC_DOCS_URL="http://fastsignal.localhost:4102"
+NEXT_PUBLIC_MARKETING_URL="http://signalfast.localhost:4101"
+NEXT_PUBLIC_SAAS_URL="http://signalfast.localhost:4100"
+NEXT_PUBLIC_DOCS_URL="http://signalfast.localhost:4102"
 
 # Auth 密钥
 BETTER_AUTH_SECRET="your-random-secret-here"
@@ -132,10 +132,10 @@ pnpm --filter @repo/database push
 pnpm dev
 ```
 
-| 服务 | 地址 |
-|------|------|
-| SaaS 应用 | http://fastsignal.localhost:4100 |
-| 营销站点 | http://fastsignal.localhost:4101 |
-| 文档站 | http://fastsignal.localhost:4102 |
-| 邮件预览 | http://fastsignal.localhost:4103 |
-| MinIO 控制台 | http://localhost:9001 |
+| 服务         | 地址                             |
+| ------------ | -------------------------------- |
+| SaaS 应用    | http://signalfast.localhost:4100 |
+| 营销站点     | http://signalfast.localhost:4101 |
+| 文档站       | http://signalfast.localhost:4102 |
+| 邮件预览     | http://signalfast.localhost:4103 |
+| MinIO 控制台 | http://localhost:9001            |

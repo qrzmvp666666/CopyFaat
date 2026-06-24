@@ -28,11 +28,20 @@ const getLocaleFromRequest = (request?: Request) => {
 	return (cookies[i18nConfig.localeCookieName] as Locale) ?? i18nConfig.defaultLocale;
 };
 
-const appUrl = getBaseUrl(process.env.NEXT_PUBLIC_SAAS_URL, 4100, "fastsignal.localhost");
+const appUrl = getBaseUrl(process.env.NEXT_PUBLIC_SAAS_URL, 4100, "signalfast.localhost");
+const localDevTrustedOrigins =
+	process.env.NODE_ENV === "production"
+		? []
+		: [
+				`http://localhost:${process.env.PORT ?? 4100}`,
+				`http://127.0.0.1:${process.env.PORT ?? 4100}`,
+				`http://0.0.0.0:${process.env.PORT ?? 4100}`,
+			];
+const trustedOrigins = Array.from(new Set([appUrl, ...localDevTrustedOrigins]));
 
 export const auth = betterAuth({
 	baseURL: appUrl,
-	trustedOrigins: [appUrl],
+	trustedOrigins,
 	database: prismaAdapter(db, {
 		provider: "postgresql",
 	}),
@@ -248,7 +257,7 @@ export const auth = betterAuth({
 
 				const url = new URL(
 					existingUser ? "/login" : "/signup",
-					getBaseUrl(process.env.NEXT_PUBLIC_SAAS_URL, 4100, "fastsignal.localhost"),
+					getBaseUrl(process.env.NEXT_PUBLIC_SAAS_URL, 4100, "signalfast.localhost"),
 				);
 
 				url.searchParams.set("invitationId", id);

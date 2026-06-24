@@ -68,7 +68,7 @@ export const createCheckoutLink = protectedProcedure
 				const baseUrl = getBaseUrl(
 					process.env.NEXT_PUBLIC_SAAS_URL,
 					4100,
-					"fastsignal.localhost",
+					"signalfast.localhost",
 				);
 
 				const param = JSON.stringify({
