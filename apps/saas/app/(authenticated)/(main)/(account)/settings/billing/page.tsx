@@ -19,7 +19,7 @@ export async function generateMetadata() {
 
 export default async function BillingSettingsPage() {
 	const session = await getSession();
-	const purchases = await listPurchases();
+	const purchasesResult = await listPurchases();
 
 	const queryClient = getServerQueryClient();
 
@@ -27,10 +27,15 @@ export default async function BillingSettingsPage() {
 		queryKey: orpc.payments.listPurchases.queryKey({
 			input: {},
 		}),
-		queryFn: () => purchases,
+		queryFn: () => purchasesResult,
 	});
 
-	const { activePlan } = createPurchasesHelper(purchases);
+	const { activePlan } = createPurchasesHelper(
+		purchasesResult.purchases,
+		purchasesResult.entitlementGrants,
+	);
+	const activePurchasedPlanId =
+		activePlan && "purchaseId" in activePlan ? activePlan.id : undefined;
 
 	const t = await getTranslations("settings.billing");
 
@@ -39,8 +44,8 @@ export default async function BillingSettingsPage() {
 			<PageHeader title={t("title")} subtitle={t("changePlan.description")} />
 
 			<SettingsList>
-				{activePlan && <ActivePlan />}
-				<ChangePlan userId={session?.user.id} activePlanId={activePlan?.id} />
+				{activePlan && <ActivePlan showRedeemButton />}
+				<ChangePlan userId={session?.user.id} activePlanId={activePurchasedPlanId} />
 			</SettingsList>
 		</>
 	);

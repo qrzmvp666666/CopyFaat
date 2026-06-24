@@ -2,14 +2,24 @@
 
 import { usePlanData } from "@payments/hooks/plan-data";
 import { usePurchases } from "@payments/hooks/purchases";
+import { Button } from "@repo/ui/components/button";
 import { SettingsItem } from "@shared/components/SettingsItem";
-import { BadgeCheckIcon, CheckIcon } from "lucide-react";
+import { BadgeCheckIcon, CheckIcon, TicketCheckIcon } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
+import Link from "next/link";
 
 import { CustomerPortalButton } from "../../settings/components/CustomerPortalButton";
 import { SubscriptionStatusBadge } from "../../settings/components/SubscriptionStatusBadge";
+import { BILLING_INSET_CLASS } from "./billing-surface-styles";
 
-export function ActivePlan({ organizationId }: { organizationId?: string; seats?: number }) {
+export function ActivePlan({
+	organizationId,
+	showRedeemButton = false,
+}: {
+	organizationId?: string;
+	seats?: number;
+	showRedeemButton?: boolean;
+}) {
 	const t = useTranslations();
 	const format = useFormatter();
 	const { planData } = usePlanData();
@@ -29,15 +39,26 @@ export function ActivePlan({ organizationId }: { organizationId?: string; seats?
 
 	return (
 		<SettingsItem title={t("settings.billing.activePlan.title")}>
-			<div className="p-4 rounded-lg border">
-				<div className="">
-					<div className="gap-2 flex items-center">
-						<BadgeCheckIcon className="size-6 text-primary" />
-						<h4 className="font-bold text-lg text-primary">
-							<span>{activePlanData.title}</span>
-						</h4>
-						{activePlan.status && (
-							<SubscriptionStatusBadge status={activePlan.status} />
+			<div className={`p-4 rounded-2xl border ${BILLING_INSET_CLASS}`}>
+				<div>
+					<div className="gap-3 sm:flex-row sm:items-start sm:justify-between flex flex-col">
+						<div className="gap-2 flex items-center">
+							<BadgeCheckIcon className="size-6 text-primary" />
+							<h4 className="font-bold text-lg text-primary">
+								<span>{activePlanData.title}</span>
+							</h4>
+							{activePlan.status && (
+								<SubscriptionStatusBadge status={activePlan.status} />
+							)}
+						</div>
+
+						{showRedeemButton && (
+							<Button asChild variant="primary" className="sm:w-auto w-full">
+								<Link href="/redeem">
+									<TicketCheckIcon className="size-4" />
+									{t("settings.billing.redeemCode.submit")}
+								</Link>
+							</Button>
 						)}
 					</div>
 
@@ -80,6 +101,15 @@ export function ActivePlan({ organizationId }: { organizationId?: string; seats?
 								</span>
 							)}
 						</strong>
+					)}
+					{"expiresAt" in activePlan && activePlan.expiresAt && (
+						<p className="mt-2 text-sm text-muted-foreground">
+							{t("settings.billing.activePlan.expiresAt", {
+								date: format.dateTime(new Date(activePlan.expiresAt), {
+									dateStyle: "medium",
+								}),
+							})}
+						</p>
 					)}
 				</div>
 

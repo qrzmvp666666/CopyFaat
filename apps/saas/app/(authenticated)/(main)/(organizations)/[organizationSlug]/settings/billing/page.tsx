@@ -30,7 +30,7 @@ export default async function BillingSettingsPage({
 		return notFound();
 	}
 
-	const purchases = await listPurchases(organization.id);
+	const purchasesResult = await listPurchases(organization.id);
 
 	const queryClient = getServerQueryClient();
 
@@ -40,10 +40,13 @@ export default async function BillingSettingsPage({
 				organizationId: organization.id,
 			},
 		}),
-		queryFn: () => purchases,
+		queryFn: () => purchasesResult,
 	});
 
-	const { activePlan } = createPurchasesHelper(purchases);
+	const { activePlan } = createPurchasesHelper(
+		purchasesResult.purchases,
+		purchasesResult.entitlementGrants,
+	);
 
 	const t = await getTranslations("settings.billing");
 
@@ -53,7 +56,10 @@ export default async function BillingSettingsPage({
 
 			<SettingsList>
 				{activePlan && <ActivePlan organizationId={organization.id} />}
-				<ChangePlan organizationId={organization.id} activePlanId={activePlan?.id} />
+				<ChangePlan
+					organizationId={organization.id}
+					activePlanId={activePlan && "purchaseId" in activePlan ? activePlan.id : undefined}
+				/>
 			</SettingsList>
 		</>
 	);

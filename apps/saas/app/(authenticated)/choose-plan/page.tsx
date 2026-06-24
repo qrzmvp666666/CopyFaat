@@ -58,9 +58,12 @@ export default async function ChoosePlanPage({
 		organizationId = organization.id;
 	}
 
-	const purchases = await listPurchases(organizationId);
+	const purchasesResult = await listPurchases(organizationId);
 
-	const { activePlan } = createPurchasesHelper(purchases);
+	const { activePlan } = createPurchasesHelper(
+		purchasesResult.purchases,
+		purchasesResult.entitlementGrants,
+	);
 
 	if (activePlan && activePlan.id !== "free") {
 		redirect("/");

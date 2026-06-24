@@ -11,11 +11,15 @@ export const usePurchases = (organizationId?: string) => {
 		}),
 	);
 
-	const purchases = data ?? [];
+	const purchases = data?.purchases ?? [];
+	const entitlementGrants = data?.entitlementGrants ?? [];
 
-	const { activePlan, hasSubscription, hasPurchase } = createPurchasesHelper(purchases);
+	const { activePlan, hasSubscription, hasPurchase } = createPurchasesHelper(
+		purchases,
+		entitlementGrants,
+	);
 
-	return { purchases, activePlan, hasSubscription, hasPurchase };
+	return { purchases, entitlementGrants, activePlan, hasSubscription, hasPurchase };
 };
 
 export const useUserPurchases = () => usePurchases();

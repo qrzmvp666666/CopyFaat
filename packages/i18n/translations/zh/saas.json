@@ -2,7 +2,8 @@
 	"admin": {
 		"menu": {
 			"organizations": "组织管理",
-			"users": "用户管理"
+			"users": "用户管理",
+			"redeemCodes": "兑换码"
 		},
 		"organizations": {
 			"backToList": "返回列表",
@@ -67,7 +68,100 @@
 			"assignAdminRole": "设为管理员",
 			"removeAdminRole": "移除管理员角色"
 		},
-		"description": "管理您的应用程序。"
+		"description": "管理您的应用程序。",
+		"redeemCodes": {
+			"create": {
+				"description": "批量生成兑换码，并立即下载 CSV 文件。",
+				"durationDays": "会员天数",
+				"name": "批次名称",
+				"note": "备注",
+				"plan": "套餐",
+				"quantity": "数量",
+				"redeemBefore": "兑换截止时间",
+				"redeemBeforeDate": "兑换截止日期",
+				"redeemBeforeOptions": {
+					"7": "7 天内可兑换",
+					"30": "30 天内可兑换",
+					"90": "90 天内可兑换",
+					"365": "1 年内可兑换",
+					"none": "不限制兑换时间",
+					"custom": "自定义截止时间"
+				},
+				"redeemBeforeTime": "兑换截止时间",
+				"submit": "生成并下载 CSV",
+				"title": "生成兑换码",
+				"trigger": "生成兑换码",
+				"cancel": "取消"
+			},
+			"list": {
+				"columns": {
+					"actions": "操作",
+					"createdAt": "创建时间",
+					"name": "批次",
+					"plan": "套餐",
+					"usage": "已使用"
+				},
+				"description": "查看历史批次，并可再次下载对应 CSV 文件。",
+				"download": "下载",
+				"duration": "{days} 天",
+				"empty": "暂无兑换码批次。",
+				"loading": "正在加载兑换码批次...",
+				"search": "搜索批次...",
+				"title": "兑换码批次"
+			},
+			"notifications": {
+				"copied": "兑换码已复制。",
+				"copyError": "无法复制兑换码，请手动复制。",
+				"created": "兑换码已生成并下载。",
+				"createError": "无法生成兑换码，请重试。",
+				"exportError": "无法下载兑换码，请重试。"
+			},
+			"title": "兑换码管理",
+			"description": "生成、查询并追踪兑换码使用情况。",
+			"tabs": {
+				"batches": "批次列表",
+				"codes": "兑换码明细"
+			},
+			"stats": {
+				"total": "总兑换码",
+				"redeemed": "已兑换",
+				"available": "未使用",
+				"expired": "已过期"
+			},
+			"status": {
+				"all": "全部",
+				"available": "未使用",
+				"redeemed": "已兑换",
+				"expired": "已过期"
+			},
+			"filters": {
+				"all": "全部",
+				"reset": "重置",
+				"export": "导出",
+				"redeemedFrom": "兑换开始时间",
+				"redeemedTo": "兑换结束时间",
+				"startDate": "开始日期",
+				"startTime": "开始时间",
+				"endDate": "结束日期",
+				"endTime": "结束时间"
+			},
+			"codes": {
+				"search": "搜索兑换码 / 用户邮箱",
+				"copy": "复制",
+				"empty": "暂无兑换码。",
+				"loading": "正在加载兑换码...",
+				"columns": {
+					"code": "兑换码",
+					"plan": "套餐",
+					"batch": "批次",
+					"status": "状态",
+					"user": "兑换用户",
+					"redeemedAt": "兑换时间",
+					"expiresAt": "权益到期",
+					"actions": "操作"
+				}
+			}
+		}
 	},
 	"app": {
 		"menu": {
@@ -78,7 +172,10 @@
 			"openNavigation": "打开导航",
 			"organizationSettings": "组织设置",
 			"signals": "聚合K线",
-			"start": "首页"
+			"start": "首页",
+			"entitlements": "套餐权益",
+			"redeemCode": "兑换记录",
+			"redeemCodeAdmin": "兑换码管理"
 		},
 		"userMenu": {
 			"accountSettings": "账户设置",
@@ -542,13 +639,51 @@
 					"trialing": "试用中",
 					"unpaid": "未付款"
 				},
-				"title": "您的套餐"
+				"title": "您的套餐",
+				"expiresAt": "兑换码权益将于 {date} 到期。"
 			},
 			"changePlan": {
 				"description": "选择要订阅的套餐。",
 				"title": "更改套餐"
 			},
-			"title": "账单"
+			"title": "权益",
+			"redeemCode": {
+				"description": "使用兑换码为当前账号叠加会员时长。",
+				"history": {
+					"active": "生效中",
+					"code": "兑换码",
+					"empty": "还没有使用过兑换码。",
+					"expired": "已过期",
+					"expiresAt": "到期时间",
+					"plan": "套餐",
+					"redeemedAt": "兑换时间"
+				},
+				"notifications": {
+					"already_redeemed": {
+						"title": "该兑换码已被使用。"
+					},
+					"empty": {
+						"title": "请先输入兑换码。"
+					},
+					"error": {
+						"title": "无法兑换该兑换码，请重试。"
+					},
+					"expired": {
+						"title": "该兑换码已过期。"
+					},
+					"not_found": {
+						"title": "未找到该兑换码。"
+					},
+					"success": {
+						"title": "兑换码已生效。"
+					}
+				},
+				"openPage": "前往兑换",
+				"pageDescription": "输入兑换码并查看当前账号的兑换记录。",
+				"placeholder": "输入兑换码",
+				"submit": "兑换",
+				"title": "兑换码"
+			}
 		},
 		"notificationsPage": {
 			"title": "通知",

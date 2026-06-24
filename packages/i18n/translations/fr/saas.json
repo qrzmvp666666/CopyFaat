@@ -2,7 +2,8 @@
 	"admin": {
 		"menu": {
 			"organizations": "Organisations",
-			"users": "Utilisateurs"
+			"users": "Utilisateurs",
+			"redeemCodes": "Redeem codes"
 		},
 		"organizations": {
 			"backToList": "Retour aux organisations",
@@ -67,7 +68,100 @@
 			"assignAdminRole": "Attribuer le rôle administrateur",
 			"removeAdminRole": "Retirer le rôle administrateur"
 		},
-		"description": "Gérez votre application."
+		"description": "Gérez votre application.",
+		"redeemCodes": {
+			"create": {
+				"description": "Generate a batch of redeem codes and download them as CSV.",
+				"durationDays": "Duration days",
+				"name": "Batch name",
+				"note": "Note",
+				"plan": "Plan",
+				"quantity": "Quantity",
+				"redeemBefore": "Redeem before",
+				"submit": "Générer et télécharger CSV",
+				"title": "Generate codes",
+				"redeemBeforeDate": "Redeem cutoff date",
+				"redeemBeforeOptions": {
+					"7": "Redeem within 7 days",
+					"30": "Redeem within 30 days",
+					"90": "Redeem within 90 days",
+					"365": "Redeem within 1 year",
+					"none": "No redemption deadline",
+					"custom": "Custom deadline"
+				},
+				"redeemBeforeTime": "Redeem cutoff time",
+				"trigger": "Générer des codes",
+				"cancel": "Annuler"
+			},
+			"list": {
+				"columns": {
+					"actions": "Actions",
+					"createdAt": "Created",
+					"name": "Batch",
+					"plan": "Plan",
+					"usage": "Used"
+				},
+				"description": "View previous batches and download their CSV files again.",
+				"download": "Download",
+				"duration": "{days} days",
+				"empty": "No redeem code batches yet.",
+				"loading": "Loading redeem code batches...",
+				"search": "Search batches...",
+				"title": "Redeem code batches"
+			},
+			"notifications": {
+				"copied": "Redeem code copied.",
+				"copyError": "Could not copy the redeem code. Please copy it manually.",
+				"created": "Redeem codes generated and downloaded.",
+				"createError": "Could not generate redeem codes. Please try again.",
+				"exportError": "Could not download redeem codes. Please try again."
+			},
+			"title": "Gestion des codes",
+			"description": "Générez, recherchez et suivez l’utilisation des codes.",
+			"tabs": {
+				"batches": "Lots",
+				"codes": "Détail des codes"
+			},
+			"stats": {
+				"total": "Codes totaux",
+				"redeemed": "Utilisés",
+				"available": "Non utilisés",
+				"expired": "Expirés"
+			},
+			"status": {
+				"all": "Tous",
+				"available": "Non utilisé",
+				"redeemed": "Utilisé",
+				"expired": "Expiré"
+			},
+			"filters": {
+				"all": "Tous",
+				"reset": "Réinitialiser",
+				"export": "Exporter",
+				"redeemedFrom": "Utilisé depuis",
+				"redeemedTo": "Utilisé jusqu'à",
+				"startDate": "Date de début",
+				"startTime": "Heure de début",
+				"endDate": "Date de fin",
+				"endTime": "Heure de fin"
+			},
+			"codes": {
+				"search": "Rechercher code / e-mail utilisateur",
+				"copy": "Copier",
+				"empty": "Aucun code pour le moment.",
+				"loading": "Chargement des codes...",
+				"columns": {
+					"code": "Code",
+					"plan": "Offre",
+					"batch": "Lot",
+					"status": "Statut",
+					"user": "Utilisateur",
+					"redeemedAt": "Utilisé le",
+					"expiresAt": "Droit expire le",
+					"actions": "Actions"
+				}
+			}
+		}
 	},
 	"app": {
 		"menu": {
@@ -77,7 +171,10 @@
 			"navigationTitle": "Menu",
 			"openNavigation": "Ouvrir la navigation",
 			"organizationSettings": "Paramètres de l'organisation",
-			"start": "Démarrage"
+			"start": "Démarrage",
+			"entitlements": "Droits",
+			"redeemCode": "Redeem code",
+			"redeemCodeAdmin": "Gestion des codes"
 		},
 		"userMenu": {
 			"accountSettings": "Paramètres du compte",
@@ -541,13 +638,51 @@
 					"trialing": "En essai",
 					"unpaid": "Impayé"
 				},
-				"title": "Votre forfait"
+				"title": "Votre forfait",
+				"expiresAt": "Redeem code access ends on {date}."
 			},
 			"changePlan": {
 				"description": "Choisissez un forfait auquel vous abonner.",
 				"title": "Changer de forfait"
 			},
-			"title": "Facturation"
+			"title": "Droits",
+			"redeemCode": {
+				"description": "Use a redeem code to add membership time to your account.",
+				"history": {
+					"active": "Active",
+					"code": "Code",
+					"empty": "No redeem codes used yet.",
+					"expired": "Expired",
+					"expiresAt": "Expires",
+					"plan": "Plan",
+					"redeemedAt": "Redeemed"
+				},
+				"notifications": {
+					"already_redeemed": {
+						"title": "This redeem code has already been used."
+					},
+					"empty": {
+						"title": "Enter a redeem code first."
+					},
+					"error": {
+						"title": "Could not redeem this code. Please try again."
+					},
+					"expired": {
+						"title": "This redeem code has expired."
+					},
+					"not_found": {
+						"title": "Redeem code not found."
+					},
+					"success": {
+						"title": "Redeem code applied."
+					}
+				},
+				"openPage": "Go to redeem",
+				"pageDescription": "Enter a redeem code and review your account redemption history.",
+				"placeholder": "Enter redeem code",
+				"submit": "Redeem",
+				"title": "Redeem code"
+			}
 		},
 		"notificationsPage": {
 			"title": "Notifications",

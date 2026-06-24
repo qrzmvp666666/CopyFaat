@@ -30,9 +30,10 @@ import { NotificationCenter } from "@shared/components/NotificationCenter";
 import { UserMenu } from "@shared/components/UserMenu";
 import {
 	BotMessageSquareIcon,
+	BadgeCheckIcon,
 	ChartCandlestickIcon,
 	ChevronRightIcon,
-	HomeIcon,
+	GiftIcon,
 	MenuIcon,
 	PanelLeftCloseIcon,
 	PanelLeftOpenIcon,
@@ -288,8 +289,6 @@ export function NavBar() {
 	const isCollapsedEffective = isCollapsed && !isMobile;
 
 	const basePath = activeOrganization ? `/${activeOrganization.slug}` : "";
-	/** Home for the current context: org dashboard or `/` when no org is selected. */
-	const startHref = basePath || "/";
 
 	const menuItems: NavMenuItem[] = useMemo(() => {
 		const accountSubItems: NavSubItem[] = [
@@ -305,14 +304,6 @@ export function NavBar() {
 				label: t("settings.menu.account.notifications"),
 				href: "/settings/notifications",
 			},
-			...(paymentsConfig.billingAttachedTo === "user"
-				? [
-						{
-							label: t("settings.menu.account.billing"),
-							href: "/settings/billing",
-						},
-					]
-				: []),
 		];
 
 		const orgSettingsPrefix = `${basePath}/settings`;
@@ -367,11 +358,28 @@ export function NavBar() {
 						},
 					]
 				: []),
+			...(paymentsConfig.billingAttachedTo === "user"
+				? [
+						{
+							label: t("app.menu.entitlements"),
+							href: "/settings/billing",
+							icon: BadgeCheckIcon,
+							isActive: pathname.startsWith("/settings/billing"),
+						},
+						{
+							label: t("app.menu.redeemCode"),
+							href: "/redeem",
+							icon: GiftIcon,
+							isActive: pathname.startsWith("/redeem"),
+						},
+					]
+				: []),
 			{
 				label: t("app.menu.accountSettings"),
 				href: "/settings/general",
 				icon: UserCogIcon,
-				isActive: pathname.startsWith("/settings/"),
+				isActive:
+					pathname.startsWith("/settings/") && !pathname.startsWith("/settings/billing"),
 				subItems: accountSubItems,
 			},
 			...(user?.role === "admin"
@@ -385,7 +393,7 @@ export function NavBar() {
 					]
 				: []),
 		];
-	}, [activeOrganization, basePath, isOrganizationAdmin, pathname, startHref, t, user?.role]);
+	}, [activeOrganization, basePath, isOrganizationAdmin, pathname, t, user?.role]);
 
 	return (
 		<nav

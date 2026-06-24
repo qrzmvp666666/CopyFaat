@@ -1,4 +1,8 @@
-import { getPurchasesByOrganizationId, getPurchasesByUserId } from "@repo/database";
+import {
+	getEntitlementGrantsByUserId,
+	getPurchasesByOrganizationId,
+	getPurchasesByUserId,
+} from "@repo/database";
 import { getPlanIdByProviderPriceId, getPlanPriceByProviderPriceId } from "@repo/payments";
 import { z } from "zod";
 
@@ -21,10 +25,14 @@ export const listPurchases = protectedProcedure
 		const purchases = organizationId
 			? await getPurchasesByOrganizationId(organizationId)
 			: await getPurchasesByUserId(user.id);
+		const entitlementGrants = organizationId ? [] : await getEntitlementGrantsByUserId(user.id);
 
-		return purchases.map((purchase) => ({
-			...purchase,
-			planId: getPlanIdByProviderPriceId(purchase.priceId),
-			planPrice: getPlanPriceByProviderPriceId(purchase.priceId)?.price ?? null,
-		}));
+		return {
+			purchases: purchases.map((purchase) => ({
+				...purchase,
+				planId: getPlanIdByProviderPriceId(purchase.priceId),
+				planPrice: getPlanPriceByProviderPriceId(purchase.priceId)?.price ?? null,
+			})),
+			entitlementGrants,
+		};
 	});

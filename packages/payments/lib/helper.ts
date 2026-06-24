@@ -13,6 +13,18 @@ export interface ResolvedPurchase extends PurchaseWithoutTimestamps {
 	planPrice?: PlanPrice | null;
 }
 
+export interface ResolvedEntitlementGrant {
+	id: string;
+	userId: string;
+	source: string;
+	planId: string;
+	durationDays: number;
+	startsAt: Date | string;
+	expiresAt: Date | string;
+	createdAt?: Date | string;
+	redeemCodeId?: string | null;
+}
+
 function resolvePurchasePlan(purchase: ResolvedPurchase) {
 	if (purchase.planId && purchase.planPrice) {
 		return {
@@ -84,8 +96,39 @@ function getActivePlanFromPurchases(purchases?: ResolvedPurchase[]) {
 	return null;
 }
 
-export function createPurchasesHelper(purchases: ResolvedPurchase[]) {
-	const activePlan = getActivePlanFromPurchases(purchases);
+function getActiveGrantFromEntitlements(entitlementGrants?: ResolvedEntitlementGrant[]) {
+	const now = Date.now();
+	const activeGrants = entitlementGrants
+		?.filter((grant) => new Date(grant.expiresAt).getTime() > now)
+		.sort((left, right) => {
+			return new Date(right.expiresAt).getTime() - new Date(left.expiresAt).getTime();
+		});
+	const activeGrant = activeGrants?.[0];
+
+	if (!activeGrant || !(activeGrant.planId in config.plans)) {
+		return null;
+	}
+
+	return {
+		id: activeGrant.planId as PlanId,
+		price: undefined,
+		status: "active",
+		entitlementGrantId: activeGrant.id,
+		expiresAt: new Date(activeGrant.expiresAt),
+		source: activeGrant.source,
+	};
+}
+
+export function createPurchasesHelper(
+	purchases: ResolvedPurchase[],
+	entitlementGrants: ResolvedEntitlementGrant[] = [],
+) {
+	const paidPurchasePlan = getActivePlanFromPurchases(purchases);
+	const activeGrantPlan = getActiveGrantFromEntitlements(entitlementGrants);
+	const activePlan =
+		paidPurchasePlan && paidPurchasePlan.id !== "free"
+			? paidPurchasePlan
+			: activeGrantPlan || paidPurchasePlan;
 
 	const hasSubscription = (planIds?: PlanId[] | PlanId) => {
 		return (

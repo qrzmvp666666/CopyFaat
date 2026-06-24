@@ -35,13 +35,16 @@ export default async function MainLayout({ children }: PropsWithChildren) {
 			? session?.session.activeOrganizationId || organizations?.at(0)?.id
 			: undefined;
 
-		const purchases = await listPurchases.callable({
+		const purchasesResult = await listPurchases.callable({
 			context: { headers: await headers() },
 		})({
 			organizationId,
 		});
 
-		const { activePlan } = createPurchasesHelper(purchases);
+		const { activePlan } = createPurchasesHelper(
+			purchasesResult.purchases,
+			purchasesResult.entitlementGrants,
+		);
 
 		if (!activePlan) {
 			redirect("/choose-plan");

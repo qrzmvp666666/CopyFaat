@@ -70,6 +70,24 @@ export const PurchaseScalarFieldEnumSchema = z.enum(['id', 'organizationId', 'us
 
 export type PurchaseScalarFieldEnum = z.infer<typeof PurchaseScalarFieldEnumSchema>;
 
+// File: RedeemCodeBatchScalarFieldEnum.schema.ts
+
+export const RedeemCodeBatchScalarFieldEnumSchema = z.enum(['id', 'name', 'planId', 'durationDays', 'quantity', 'redeemBefore', 'note', 'createdById', 'createdAt', 'updatedAt'])
+
+export type RedeemCodeBatchScalarFieldEnum = z.infer<typeof RedeemCodeBatchScalarFieldEnumSchema>;
+
+// File: RedeemCodeScalarFieldEnum.schema.ts
+
+export const RedeemCodeScalarFieldEnumSchema = z.enum(['id', 'batchId', 'code', 'codeHash', 'codePrefix', 'status', 'redeemedById', 'redeemedAt', 'createdAt', 'updatedAt'])
+
+export type RedeemCodeScalarFieldEnum = z.infer<typeof RedeemCodeScalarFieldEnumSchema>;
+
+// File: EntitlementGrantScalarFieldEnum.schema.ts
+
+export const EntitlementGrantScalarFieldEnumSchema = z.enum(['id', 'userId', 'redeemCodeId', 'source', 'planId', 'durationDays', 'startsAt', 'expiresAt', 'createdAt', 'updatedAt'])
+
+export type EntitlementGrantScalarFieldEnum = z.infer<typeof EntitlementGrantScalarFieldEnumSchema>;
+
 // File: NotificationScalarFieldEnum.schema.ts
 
 export const NotificationScalarFieldEnumSchema = z.enum(['id', 'userId', 'type', 'data', 'link', 'read', 'createdAt', 'updatedAt'])
@@ -319,6 +337,60 @@ export const PurchaseSchema = z.object({
 });
 
 export type PurchaseModel = z.infer<typeof PurchaseSchema>;
+
+// File: RedeemCodeBatch.schema.ts
+
+export const RedeemCodeBatchSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  planId: z.string(),
+  durationDays: z.number().int(),
+  quantity: z.number().int(),
+  redeemBefore: z.date().nullish(),
+  note: z.string().nullish(),
+  createdById: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type RedeemCodeBatchType = z.infer<typeof RedeemCodeBatchSchema>;
+
+
+// File: RedeemCode.schema.ts
+
+export const RedeemCodeSchema = z.object({
+  id: z.string(),
+  batchId: z.string(),
+  code: z.string(),
+  codeHash: z.string(),
+  codePrefix: z.string(),
+  status: z.string().default("available"),
+  redeemedById: z.string().nullish(),
+  redeemedAt: z.date().nullish(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type RedeemCodeType = z.infer<typeof RedeemCodeSchema>;
+
+
+// File: EntitlementGrant.schema.ts
+
+export const EntitlementGrantSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  redeemCodeId: z.string().nullish(),
+  source: z.string(),
+  planId: z.string(),
+  durationDays: z.number().int(),
+  startsAt: z.date(),
+  expiresAt: z.date(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type EntitlementGrantType = z.infer<typeof EntitlementGrantSchema>;
+
 
 // File: Notification.schema.ts
 

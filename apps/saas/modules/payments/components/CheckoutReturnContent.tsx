@@ -23,8 +23,9 @@ export function CheckoutReturnContent({ organizationId }: { organizationId?: str
 		refetchInterval: polling ? POLL_INTERVAL_MS : false,
 	});
 
-	const purchases = data ?? [];
-	const { activePlan } = createPurchasesHelper(purchases);
+	const purchases = data?.purchases ?? [];
+	const entitlementGrants = data?.entitlementGrants ?? [];
+	const { activePlan } = createPurchasesHelper(purchases, entitlementGrants);
 
 	useEffect(() => {
 		if (activePlan) {

@@ -2,7 +2,8 @@
 	"admin": {
 		"menu": {
 			"organizations": "Organisationen",
-			"users": "Benutzer"
+			"users": "Benutzer",
+			"redeemCodes": "Redeem codes"
 		},
 		"organizations": {
 			"backToList": "Zurück zu Organisationen",
@@ -67,7 +68,100 @@
 			"assignAdminRole": "Administration-Rolle zuweisen",
 			"removeAdminRole": "Adminstrator-Rolle entfernen"
 		},
-		"description": "Verwalte deine Anwendung."
+		"description": "Verwalte deine Anwendung.",
+		"redeemCodes": {
+			"create": {
+				"description": "Generate a batch of redeem codes and download them as CSV.",
+				"durationDays": "Duration days",
+				"name": "Batch name",
+				"note": "Note",
+				"plan": "Plan",
+				"quantity": "Quantity",
+				"redeemBefore": "Redeem before",
+				"submit": "Generieren und CSV herunterladen",
+				"title": "Generate codes",
+				"redeemBeforeDate": "Redeem cutoff date",
+				"redeemBeforeOptions": {
+					"7": "Redeem within 7 days",
+					"30": "Redeem within 30 days",
+					"90": "Redeem within 90 days",
+					"365": "Redeem within 1 year",
+					"none": "No redemption deadline",
+					"custom": "Custom deadline"
+				},
+				"redeemBeforeTime": "Redeem cutoff time",
+				"trigger": "Codes generieren",
+				"cancel": "Abbrechen"
+			},
+			"list": {
+				"columns": {
+					"actions": "Actions",
+					"createdAt": "Created",
+					"name": "Batch",
+					"plan": "Plan",
+					"usage": "Used"
+				},
+				"description": "View previous batches and download their CSV files again.",
+				"download": "Download",
+				"duration": "{days} days",
+				"empty": "No redeem code batches yet.",
+				"loading": "Loading redeem code batches...",
+				"search": "Search batches...",
+				"title": "Redeem code batches"
+			},
+			"notifications": {
+				"copied": "Redeem code copied.",
+				"copyError": "Could not copy the redeem code. Please copy it manually.",
+				"created": "Redeem codes generated and downloaded.",
+				"createError": "Could not generate redeem codes. Please try again.",
+				"exportError": "Could not download redeem codes. Please try again."
+			},
+			"title": "Codeverwaltung",
+			"description": "Codes erstellen, suchen und Nutzung nachverfolgen.",
+			"tabs": {
+				"batches": "Chargen",
+				"codes": "Code-Details"
+			},
+			"stats": {
+				"total": "Codes gesamt",
+				"redeemed": "Eingelöst",
+				"available": "Unbenutzt",
+				"expired": "Abgelaufen"
+			},
+			"status": {
+				"all": "Alle",
+				"available": "Unbenutzt",
+				"redeemed": "Eingelöst",
+				"expired": "Abgelaufen"
+			},
+			"filters": {
+				"all": "Alle",
+				"reset": "Zurücksetzen",
+				"export": "Exportieren",
+				"redeemedFrom": "Eingelöst ab",
+				"redeemedTo": "Eingelöst bis",
+				"startDate": "Startdatum",
+				"startTime": "Startzeit",
+				"endDate": "Enddatum",
+				"endTime": "Endzeit"
+			},
+			"codes": {
+				"search": "Code / Nutzer-E-Mail suchen",
+				"copy": "Kopieren",
+				"empty": "Noch keine Codes.",
+				"loading": "Codes werden geladen...",
+				"columns": {
+					"code": "Code",
+					"plan": "Plan",
+					"batch": "Charge",
+					"status": "Status",
+					"user": "Eingelöst von",
+					"redeemedAt": "Eingelöst am",
+					"expiresAt": "Anspruch läuft ab",
+					"actions": "Aktionen"
+				}
+			}
+		}
 	},
 	"app": {
 		"menu": {
@@ -77,7 +171,10 @@
 			"navigationTitle": "Menü",
 			"openNavigation": "Navigation öffnen",
 			"organizationSettings": "Organisationseinstellungen",
-			"start": "Start"
+			"start": "Start",
+			"entitlements": "Entitlements",
+			"redeemCode": "Redeem code",
+			"redeemCodeAdmin": "Codeverwaltung"
 		},
 		"userMenu": {
 			"accountSettings": "Kontoeinstellungen",
@@ -540,13 +637,51 @@
 					"trialing": "Testversion",
 					"unpaid": "Unbezahlt"
 				},
-				"title": "Dein Plan"
+				"title": "Dein Plan",
+				"expiresAt": "Redeem code access ends on {date}."
 			},
 			"changePlan": {
 				"description": "Wähle einen Plan aus, den du abonnieren möchtest.",
 				"title": "Ändere deinen Plan"
 			},
-			"title": "Zahlung"
+			"title": "Entitlements",
+			"redeemCode": {
+				"description": "Use a redeem code to add membership time to your account.",
+				"history": {
+					"active": "Active",
+					"code": "Code",
+					"empty": "No redeem codes used yet.",
+					"expired": "Expired",
+					"expiresAt": "Expires",
+					"plan": "Plan",
+					"redeemedAt": "Redeemed"
+				},
+				"notifications": {
+					"already_redeemed": {
+						"title": "This redeem code has already been used."
+					},
+					"empty": {
+						"title": "Enter a redeem code first."
+					},
+					"error": {
+						"title": "Could not redeem this code. Please try again."
+					},
+					"expired": {
+						"title": "This redeem code has expired."
+					},
+					"not_found": {
+						"title": "Redeem code not found."
+					},
+					"success": {
+						"title": "Redeem code applied."
+					}
+				},
+				"openPage": "Go to redeem",
+				"pageDescription": "Enter a redeem code and review your account redemption history.",
+				"placeholder": "Enter redeem code",
+				"submit": "Redeem",
+				"title": "Redeem code"
+			}
 		},
 		"notificationsPage": {
 			"title": "Benachrichtigungen",
