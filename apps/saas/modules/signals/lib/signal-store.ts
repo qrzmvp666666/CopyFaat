@@ -8,7 +8,6 @@ import {
 	getTraderExternalId,
 	isBlockedSignalTrader,
 	normalizeSignalIdentityPart,
-	normalizeSignalPrice,
 } from "./signal-identity";
 import type { StoredSignal } from "./signal-types";
 
@@ -20,6 +19,10 @@ type SignalWithTrader = Prisma.SignalGetPayload<{
 }>;
 
 function getRiskReward(input: Pick<ParsedSignalWebhookRequest, "direction" | "entry" | "stopLoss" | "takeProfit">) {
+	if (input.takeProfit === undefined) {
+		return 0;
+	}
+
 	const profit =
 		input.direction === "long"
 			? input.takeProfit - input.entry
@@ -69,7 +72,7 @@ function getStoredSignalBusinessKey(signal: SignalWithTrader) {
 			entry: signal.entry,
 			stopLoss: signal.stopLoss,
 			symbol: signal.tradingSymbol.symbol,
-			takeProfit: signal.takeProfit,
+			takeProfit: signal.takeProfit ?? undefined,
 		},
 		signal.trader.externalId,
 	);
@@ -119,7 +122,7 @@ function signalModelToStoredSignal(signal: SignalWithTrader): StoredSignal {
 		stopLoss: signal.stopLoss,
 		submittedAt: signal.submittedAt.toISOString(),
 		symbol: signal.tradingSymbol.symbol,
-		takeProfit: signal.takeProfit,
+		takeProfit: signal.takeProfit ?? undefined,
 		timeframe: signal.timeframe ?? undefined,
 		tradingSymbol: {
 			baseAsset: signal.tradingSymbol.baseAsset,
@@ -223,14 +226,18 @@ export async function upsertStoredSignal(input: ParsedSignalWebhookRequest): Pro
 					{
 						businessKey,
 					},
-					{
-						direction: input.direction,
-						entry: input.entry,
-						stopLoss: input.stopLoss,
-						symbolId: tradingSymbol.id,
-						takeProfit: input.takeProfit,
-						traderId: trader.id,
-					},
+					...(input.takeProfit === undefined
+						? []
+						: [
+								{
+									direction: input.direction,
+									entry: input.entry,
+									stopLoss: input.stopLoss,
+									symbolId: tradingSymbol.id,
+									takeProfit: input.takeProfit,
+									traderId: trader.id,
+								},
+							]),
 				],
 			},
 		}));
@@ -247,14 +254,24 @@ export async function upsertStoredSignal(input: ParsedSignalWebhookRequest): Pro
 		status: input.status ?? "active",
 		stopLoss: input.stopLoss,
 		submittedAt,
-		symbolId: tradingSymbol.id,
-		takeProfit: input.takeProfit,
+		takeProfit: input.takeProfit ?? null,
 		timeframe: input.timeframe,
-		traderId: trader.id,
 	};
 	const signal = existingSignalByBusinessKey
 		? await db.signal.update({
-				data: signalData,
+				data: {
+					...signalData,
+					trader: {
+						connect: {
+							id: trader.id,
+						},
+					},
+					tradingSymbol: {
+						connect: {
+							id: tradingSymbol.id,
+						},
+					},
+				},
 				include: {
 					trader: true,
 					tradingSymbol: true,
@@ -267,6 +284,16 @@ export async function upsertStoredSignal(input: ParsedSignalWebhookRequest): Pro
 				data: {
 					...signalData,
 					eventId,
+					trader: {
+						connect: {
+							id: trader.id,
+						},
+					},
+					tradingSymbol: {
+						connect: {
+							id: tradingSymbol.id,
+						},
+					},
 				},
 				include: {
 					trader: true,

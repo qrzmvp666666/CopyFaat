@@ -9,7 +9,6 @@ import Image from "next/image";
 import heroImageDark from "../../../public/images/hero-image-dark.png";
 import heroImage from "../../../public/images/hero-image.png";
 import { AVATAR_PHOTO_IDS, TESTIMONIAL_KEYS } from "../lib/testimonials";
-import { BorderBeam } from "./BorderBeam";
 import { TypewriterTitle } from "./TypewriterTitle";
 
 export function HeroSection() {
@@ -34,11 +33,6 @@ export function HeroSection() {
 
 	return (
 		<div className="relative max-w-full overflow-x-hidden bg-linear-to-t from-background via-primary/5 to-background">
-			<div className="pointer-events-none absolute inset-0 overflow-hidden">
-				<div className="absolute inset-0 bg-[linear-gradient(to_bottom,color-mix(in_srgb,var(--foreground)_8%,transparent)_1px,transparent_1px)] bg-size-[100%_112px]" />
-				<div className="absolute inset-[-10%] bg-[repeating-linear-gradient(102deg,transparent_0,transparent_186px,color-mix(in_srgb,var(--foreground)_9%,transparent)_187px,transparent_188px)]" />
-				<div className="absolute inset-0 bg-radial-[ellipse_at_center,transparent_0%,color-mix(in_srgb,var(--background)_18%,transparent)_62%,var(--background)_100%]" />
-			</div>
 			<div className="py-8 md:py-16 relative z-20 container text-center">
 				<div className="mb-4 flex justify-center">
 					<div className="px-3 py-1 font-normal text-sm flex flex-wrap items-center justify-center rounded-full bg-muted p-px text-foreground">
@@ -51,11 +45,9 @@ export function HeroSection() {
 					</div>
 				</div>
 
-				<h1 className="font-medium text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight max-w-3xl mx-auto text-foreground min-h-[2.5em] md:min-h-[2.4em]">
-					<TypewriterTitle />
-				</h1>
+				<TypewriterTitle />
 
-							<div className="mt-4 gap-2 flex items-center justify-center">
+				<div className="mt-4 gap-2 flex items-center justify-center">
 					<Button size="lg" variant="primary" asChild>
 						<a href={config.saasUrl}>
 							{heroCopy.getStarted}
@@ -98,20 +90,27 @@ export function HeroSection() {
 					</div>
 				</div>
 
-				<div id="hero-image-area" className="mt-8 lg:mt-10 p-2 mx-auto rounded-4xl border border-primary/10 bg-primary/5 max-w-6xl relative overflow-hidden scroll-mt-28">
-				<BorderBeam size={250} duration={10} colorFrom="#ffaa40" colorTo="#9c40ff" />
-					<Image
-						src={heroImage}
-						alt={t("home.hero.imageAlt")}
-						className="block rounded-xl dark:hidden w-full"
-						priority
-					/>
-					<Image
-						src={heroImageDark}
-						alt={t("home.hero.imageAlt")}
-						className="hidden rounded-xl dark:block w-full"
-						priority
-					/>
+				<div id="hero-image-area" className="scroll-mt-20 mt-7 lg:mt-9 max-w-6xl mx-auto">
+					<div className="p-1.5 md:p-2 shadow-2xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/40 relative overflow-hidden rounded-3xl border border-primary/10 bg-primary/5 shadow-primary/5">
+						<div className="relative aspect-[3342/2126] overflow-hidden rounded-2xl">
+							<Image
+								src={heroImage}
+								alt={t("home.hero.imageAlt")}
+								fill
+								className="object-cover dark:hidden"
+								priority
+								sizes="(min-width: 1280px) 1152px, calc(100vw - 48px)"
+							/>
+							<Image
+								src={heroImageDark}
+								alt={t("home.hero.imageAlt")}
+								fill
+								className="hidden object-cover dark:block"
+								priority
+								sizes="(min-width: 1280px) 1152px, calc(100vw - 48px)"
+							/>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

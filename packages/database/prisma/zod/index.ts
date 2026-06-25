@@ -470,7 +470,7 @@ export const SignalSchema = z.object({
   entryStatus: z.string().default("pending"),
   status: z.string().default("active"),
   entry: z.number(),
-  takeProfit: z.number(),
+  takeProfit: z.number().nullish(),
   stopLoss: z.number(),
   riskReward: z.number(),
   submittedAt: z.date(),

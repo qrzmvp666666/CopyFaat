@@ -356,7 +356,7 @@ model Signal {
   entryStatus      String   @default("pending")
   status           String   @default("active")
   entry            Float
-  takeProfit       Float
+  takeProfit       Float?
   stopLoss         Float
   riskReward       Float
   submittedAt      DateTime

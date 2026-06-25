@@ -11,14 +11,10 @@ import { MoonIcon, SunIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { useIsClient } from "usehooks-ts";
 
 export function ColorModeToggle() {
 	const { resolvedTheme, setTheme, theme } = useTheme();
-	const [value, setValue] = useState<string>(
-		(theme === "system" ? resolvedTheme : theme) ?? "light",
-	);
-	const isClient = useIsClient();
+	const [value, setValue] = useState<"light" | "dark">("light");
 	const t = useTranslations();
 
 	const colorModeOptions = [
@@ -28,18 +24,14 @@ export function ColorModeToggle() {
 
 	useEffect(() => {
 		const resolved = theme === "system" ? resolvedTheme : theme;
-		if (resolved) {
+		if (resolved === "light" || resolved === "dark") {
 			setValue(resolved);
 		}
 	}, [theme, resolvedTheme]);
 
-	if (!isClient) {
-		return null;
-	}
-
 	const activeIndex = colorModeOptions.findIndex((option) => option.value === value);
 
-	const handleClick = (optionValue: string) => {
+	const handleClick = (optionValue: "light" | "dark") => {
 		setTheme(optionValue);
 		setValue(optionValue);
 	};
@@ -47,12 +39,12 @@ export function ColorModeToggle() {
 	return (
 		<TooltipProvider delayDuration={0}>
 			<div
-				className="gap-0 p-0.5 relative inline-flex items-center rounded-full bg-muted"
+				className="gap-0 p-0.5 relative inline-flex h-8 w-[60px] shrink-0 items-center rounded-full bg-muted"
 				data-test="color-mode-toggle"
 			>
 				{/* Active indicator */}
 				<div
-					className="left-0.5 top-0.5 h-7 w-7 shadow-sm ease-in-out absolute rounded-full border border-border bg-background transition-transform duration-200"
+					className="left-0.5 top-0.5 h-7 w-7 shadow-sm absolute rounded-full border border-border bg-background"
 					style={{
 						transform: `translateX(${activeIndex * 100}%)`,
 					}}

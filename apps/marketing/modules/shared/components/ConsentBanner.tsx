@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 export function ConsentBanner() {
 	const { userHasConsented, allowCookies, declineCookies } = useCookieConsent();
 	const [mounted, setMounted] = useState(false);
+
 	useEffect(() => {
 		setMounted(true);
 	}, []);

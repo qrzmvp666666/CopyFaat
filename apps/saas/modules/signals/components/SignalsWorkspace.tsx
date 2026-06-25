@@ -121,7 +121,7 @@ interface TradeSignal {
 	entryStatus: Exclude<EntryStatus, "all">;
 	status: SignalStatus;
 	entry: number;
-	takeProfit: number;
+	takeProfit?: number;
 	stopLoss: number;
 	submittedAt: string;
 	submittedAtTime?: UTCTimestamp;
@@ -525,6 +525,43 @@ function getDefaultPricePrecision(symbol: string) {
 	}
 
 	return 2;
+}
+
+function getPrecisionForPrice(value: number) {
+	if (!Number.isFinite(value) || value <= 0) {
+		return 0;
+	}
+
+	if (value >= 100) {
+		return 0;
+	}
+
+	if (value >= 1) {
+		return 2;
+	}
+
+	return Math.min(8, Math.max(2, Math.ceil(Math.abs(Math.log10(value))) + 2));
+}
+
+function isPositiveFiniteNumber(value: number | undefined): value is number {
+	return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
+function getChartPricePrecision(
+	candles: Candle[],
+	signals: TradeSignal[],
+	fallbackPrecision: number,
+) {
+	const prices = [
+		...candles.flatMap((candle) => [candle.open, candle.high, candle.low, candle.close]),
+		...signals.flatMap((signal) => [signal.entry, signal.takeProfit, signal.stopLoss]),
+	].filter(isPositiveFiniteNumber);
+
+	if (!prices.length) {
+		return fallbackPrecision;
+	}
+
+	return Math.max(fallbackPrecision, ...prices.map(getPrecisionForPrice));
 }
 
 function getSymbolBase(symbol: string) {
@@ -1246,6 +1283,11 @@ export function SignalsWorkspace() {
 		instruments.find((instrument) => instrument.symbol === selectedSymbol) ??
 		instruments[0] ??
 		INSTRUMENTS[0];
+	const chartPricePrecision = getChartPricePrecision(
+		candles,
+		chartSignals,
+		selectedInstrument.pricePrecision ?? 0,
+	);
 	function formatPrice(value: number, fractionDigits = selectedInstrument.pricePrecision ?? 0) {
 		return new Intl.NumberFormat(locale, {
 			maximumFractionDigits: fractionDigits,
@@ -1646,6 +1688,7 @@ export function SignalsWorkspace() {
 								}}
 								locale={locale}
 								onSelectSignal={focusSignal}
+								pricePrecision={chartPricePrecision}
 								signals={chartSignals}
 								symbol={selectedSymbol}
 								timeframe={selectedTimeframe}
@@ -1787,7 +1830,11 @@ export function SignalsWorkspace() {
 										/>
 										<SignalMetric
 											label={t("signalsPanel.takeProfit")}
-											value={formatPrice(signal.takeProfit)}
+											value={
+												signal.takeProfit === undefined
+													? "--"
+													: formatPrice(signal.takeProfit)
+											}
 											tone="profit"
 										/>
 										<SignalMetric
@@ -1814,7 +1861,9 @@ export function SignalsWorkspace() {
 											)}
 										>
 											{signal.status === "active"
-												? signal.confidence.toFixed(2)
+												? signal.takeProfit === undefined
+													? "--"
+													: signal.confidence.toFixed(2)
 												: statusPresentation.label}
 										</span>
 									</div>

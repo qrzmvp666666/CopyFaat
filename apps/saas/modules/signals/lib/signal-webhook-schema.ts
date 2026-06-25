@@ -107,10 +107,10 @@ export const signalWebhookRequestSchema = z
 			.min(3)
 			.max(24)
 			.transform(normalizeSymbol),
-		takeProfit: z.preprocess(numberFromInput, z.number().positive()),
+		takeProfit: z.preprocess(numberFromInput, z.number().positive().optional()),
 		timeframe: z.string().trim().min(1).max(12).optional(),
 	})
-	.refine((input) => input.takeProfit !== input.entry, {
+	.refine((input) => input.takeProfit === undefined || input.takeProfit !== input.entry, {
 		message: "takeProfit must be different from entry",
 		path: ["takeProfit"],
 	})
@@ -121,11 +121,13 @@ export const signalWebhookRequestSchema = z
 	.refine(
 		(input) =>
 			input.direction === "long"
-				? input.takeProfit > input.entry && input.stopLoss < input.entry
-				: input.takeProfit < input.entry && input.stopLoss > input.entry,
+				? input.stopLoss < input.entry &&
+					(input.takeProfit === undefined || input.takeProfit > input.entry)
+				: input.stopLoss > input.entry &&
+					(input.takeProfit === undefined || input.takeProfit < input.entry),
 		{
 			message:
-				"For long signals, takeProfit must be above entry and stopLoss below entry. For short signals, takeProfit must be below entry and stopLoss above entry.",
+				"For long signals, stopLoss must be below entry and takeProfit, when present, must be above entry. For short signals, stopLoss must be above entry and takeProfit, when present, must be below entry.",
 			path: ["direction"],
 		},
 	);

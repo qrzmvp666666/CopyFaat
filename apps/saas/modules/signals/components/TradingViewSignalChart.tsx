@@ -28,6 +28,7 @@ interface TradingViewSignalChartProps {
 	labels: PriceLineLabels;
 	locale: string;
 	onSelectSignal: (signal: SignalChartSignal) => void;
+	pricePrecision: number;
 	signals: SignalChartSignal[];
 	symbol: string;
 	timeframe: string;
@@ -46,7 +47,7 @@ export interface SignalChartSignal {
 	stopLoss: number;
 	submittedAtTime?: UTCTimestamp;
 	symbol: string;
-	takeProfit: number;
+	takeProfit?: number;
 	x: number;
 }
 
@@ -110,25 +111,21 @@ function getNearestSignalCandle(signal: SignalChartSignal, candles: SignalChartC
 	return nearest;
 }
 
-function getPricePrecision(symbol: string) {
-	return symbol === "SOLUSDT" ? 2 : 0;
-}
-
-function getMinMove(symbol: string) {
-	return symbol === "SOLUSDT" ? 0.01 : 1;
-}
-
-function getProfitPrice(signal: SignalChartSignal) {
-	return signal.takeProfit;
+function getMinMove(pricePrecision: number) {
+	return 10 ** -pricePrecision;
 }
 
 function getRiskPrice(signal: SignalChartSignal) {
 	return signal.stopLoss;
 }
 
+function isPositiveFiniteNumber(value: number | undefined): value is number {
+	return typeof value === "number" && Number.isFinite(value) && value > 0;
+}
+
 function getSignalPriceRange(signals: SignalChartSignal[]) {
 	const prices = signals.flatMap((signal) => [signal.entry, signal.takeProfit, signal.stopLoss]);
-	const validPrices = prices.filter((price) => Number.isFinite(price) && price > 0);
+	const validPrices = prices.filter(isPositiveFiniteNumber);
 
 	if (!validPrices.length) {
 		return null;
@@ -148,6 +145,7 @@ export function TradingViewSignalChart({
 	labels,
 	locale,
 	onSelectSignal,
+	pricePrecision,
 	signals,
 	symbol,
 	timeframe,
@@ -159,7 +157,7 @@ export function TradingViewSignalChart({
 	const latestSignalsRef = useRef(signals);
 	const latestCandlesRef = useRef(candles);
 	const [markerPositions, setMarkerPositions] = useState<MarkerPosition[]>([]);
-	const pricePrecision = getPricePrecision(symbol);
+	const minMove = getMinMove(pricePrecision);
 
 	const autoscaleInfoProvider = useCallback<AutoscaleInfoProvider>(
 		(original) => {
@@ -172,7 +170,7 @@ export function TradingViewSignalChart({
 
 			const minValue = Math.min(base.priceRange.minValue, signalRange.minValue);
 			const maxValue = Math.max(base.priceRange.maxValue, signalRange.maxValue);
-			const padding = Math.max((maxValue - minValue) * 0.08, getMinMove(symbol) * 6);
+			const padding = Math.max((maxValue - minValue) * 0.08, minMove * 6);
 
 			return {
 				...base,
@@ -182,7 +180,7 @@ export function TradingViewSignalChart({
 				},
 			};
 		},
-		[symbol],
+		[minMove],
 	);
 
 	const chartData = useMemo(
@@ -288,7 +286,7 @@ export function TradingViewSignalChart({
 			borderVisible: false,
 			downColor: DOWN_COLOR,
 			priceFormat: {
-				minMove: getMinMove(symbol),
+				minMove,
 				precision: pricePrecision,
 				type: "price",
 			},
@@ -319,7 +317,15 @@ export function TradingViewSignalChart({
 			seriesRef.current = null;
 			priceLinesRef.current = [];
 		};
-	}, [autoscaleInfoProvider, formatPrice, locale, pricePrecision, symbol, updateMarkerPositions]);
+	}, [
+		autoscaleInfoProvider,
+		formatPrice,
+		locale,
+		minMove,
+		pricePrecision,
+		symbol,
+		updateMarkerPositions,
+	]);
 
 	useEffect(() => {
 		const chart = chartRef.current;
@@ -342,7 +348,7 @@ export function TradingViewSignalChart({
 		series.applyOptions({
 			autoscaleInfoProvider,
 			priceFormat: {
-				minMove: getMinMove(symbol),
+				minMove,
 				precision: pricePrecision,
 				type: "price",
 			},
@@ -361,6 +367,7 @@ export function TradingViewSignalChart({
 		chartData,
 		formatPrice,
 		locale,
+		minMove,
 		pricePrecision,
 		symbol,
 		updateMarkerPositions,
@@ -381,7 +388,7 @@ export function TradingViewSignalChart({
 		priceLinesRef.current = [];
 
 		if (activeSignal) {
-			priceLinesRef.current = [
+			const priceLines = [
 				series.createPriceLine({
 					axisLabelColor: ENTRY_COLOR,
 					axisLabelTextColor: "#111111",
@@ -392,17 +399,6 @@ export function TradingViewSignalChart({
 					lineWidth: 1,
 					price: activeSignal.entry,
 					title: `${labels.entry} ${formatPrice(activeSignal.entry, pricePrecision)}`,
-				}),
-				series.createPriceLine({
-					axisLabelColor: PROFIT_COLOR,
-					axisLabelTextColor: "#111111",
-					axisLabelVisible: true,
-					color: PROFIT_COLOR,
-					lineStyle: LineStyle.Dotted,
-					lineVisible: true,
-					lineWidth: 1,
-					price: getProfitPrice(activeSignal),
-					title: `${labels.takeProfit} ${formatPrice(getProfitPrice(activeSignal), pricePrecision)}`,
 				}),
 				series.createPriceLine({
 					axisLabelColor: RISK_COLOR,
@@ -417,6 +413,26 @@ export function TradingViewSignalChart({
 				}),
 			];
 
+			if (activeSignal.takeProfit !== undefined) {
+				priceLines.splice(
+					1,
+					0,
+					series.createPriceLine({
+						axisLabelColor: PROFIT_COLOR,
+						axisLabelTextColor: "#111111",
+						axisLabelVisible: true,
+						color: PROFIT_COLOR,
+						lineStyle: LineStyle.Dotted,
+						lineVisible: true,
+						lineWidth: 1,
+						price: activeSignal.takeProfit,
+						title: `${labels.takeProfit} ${formatPrice(activeSignal.takeProfit, pricePrecision)}`,
+					}),
+				);
+			}
+
+			priceLinesRef.current = priceLines;
+
 			const index = getSignalCandleIndex(activeSignal, candles.length);
 			const activeCandle = getNearestSignalCandle(activeSignal, candles);
 			const nearestIndex = activeCandle ? candles.indexOf(activeCandle) : index;
@@ -429,7 +445,7 @@ export function TradingViewSignalChart({
 		window.requestAnimationFrame(updateMarkerPositions);
 	}, [
 		activeSignal,
-		candles.length,
+		candles,
 		formatPrice,
 		labels.entry,
 		labels.stopLoss,

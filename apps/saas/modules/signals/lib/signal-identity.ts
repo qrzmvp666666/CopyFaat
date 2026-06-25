@@ -48,7 +48,7 @@ export function getSignalBusinessKey(
 		input.symbol,
 		input.direction,
 		normalizeSignalPrice(input.entry),
-		normalizeSignalPrice(input.takeProfit),
+		input.takeProfit === undefined ? "no-tp" : normalizeSignalPrice(input.takeProfit),
 		normalizeSignalPrice(input.stopLoss),
 	].join("|");
 }

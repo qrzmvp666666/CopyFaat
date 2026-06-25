@@ -386,7 +386,7 @@ export function PricingSection() {
 													alt="QQ 二维码"
 													width={140}
 													height={140}
-													className="rounded-lg"
+													className="size-[140px] rounded-lg object-contain"
 												/>
 											</div>
 										)}

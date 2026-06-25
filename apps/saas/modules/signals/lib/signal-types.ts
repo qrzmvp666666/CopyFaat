@@ -29,7 +29,7 @@ export interface SignalWebhookRequest {
 	stopLoss: number;
 	submittedAt?: string;
 	symbol: string;
-	takeProfit: number;
+	takeProfit?: number;
 	timeframe?: string;
 }
 
@@ -44,7 +44,7 @@ export interface StoredTradingSymbol {
 	symbol: string;
 }
 
-export interface StoredSignal extends Required<Pick<SignalWebhookRequest, "direction" | "entry" | "source" | "stopLoss" | "symbol" | "takeProfit">> {
+export interface StoredSignal extends Required<Pick<SignalWebhookRequest, "direction" | "entry" | "source" | "stopLoss" | "symbol">> {
 	chartPositionPct: number;
 	createdAt: string;
 	entryStatus: WebhookSignalEntryStatus;
@@ -56,6 +56,7 @@ export interface StoredSignal extends Required<Pick<SignalWebhookRequest, "direc
 	riskReward: number;
 	status: WebhookSignalStatus;
 	submittedAt: string;
+	takeProfit?: number;
 	timeframe?: string;
 	tradingSymbol: StoredTradingSymbol;
 	updatedAt: string;

@@ -13,19 +13,26 @@ const PAUSE_AFTER_DELETE = 300;
 export function TypewriterTitle() {
 	const locale = useLocale();
 	const { prefix, features } = getTypewriterData(locale);
+	const initialTitle = features[0]?.title ?? "";
 
-	const [displayed, setDisplayed] = useState("");
+	const [displayed, setDisplayed] = useState(initialTitle);
 	const [featureIndex, setFeatureIndex] = useState(0);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [subtitleVisible, setSubtitleVisible] = useState(true);
 
 	const target = features[featureIndex]?.title ?? "";
 	const subtitle = features[featureIndex]?.subtitle ?? "";
+	const isAnimated = features.length > 1;
 
 	useEffect(() => {
-		if (features.length <= 1) {
-			setDisplayed(target);
-			setSubtitleVisible(true);
+		setDisplayed(initialTitle);
+		setFeatureIndex(0);
+		setIsDeleting(false);
+		setSubtitleVisible(true);
+	}, [initialTitle]);
+
+	useEffect(() => {
+		if (!isAnimated) {
 			return;
 		}
 
@@ -51,15 +58,19 @@ export function TypewriterTitle() {
 			);
 		}, delay);
 		return () => clearTimeout(timer);
-	}, [displayed, featureIndex, isDeleting, target, features.length]);
+	}, [displayed, featureIndex, isAnimated, isDeleting, target, features.length]);
 
 	return (
 		<>
-			{prefix && <span className="block">{prefix}</span>}
-			<span className="block text-primary">
-				{displayed}
-				<span className="inline-block w-[2px] h-[0.85em] ml-0.5 align-middle bg-primary animate-pulse" />
-			</span>
+			<h1 className="font-medium text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight max-w-3xl mx-auto text-foreground min-h-[2.5em] md:min-h-[2.4em]">
+				{prefix && <span className="block">{prefix}</span>}
+				<span className="block text-primary">
+					{displayed}
+					{isAnimated && (
+						<span className="inline-block w-[2px] h-[0.85em] ml-0.5 align-middle bg-primary animate-pulse" />
+					)}
+				</span>
+			</h1>
 			<p
 				className={`mt-2 text-sm sm:text-lg max-w-3xl mx-auto text-balance text-foreground/60 transition-opacity duration-300 ${subtitleVisible ? "opacity-100" : "opacity-0"}`}
 			>

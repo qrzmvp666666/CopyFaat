@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { getSignalBusinessKey, isBlockedSignalTraderName } from "./signal-identity";
+import { signalWebhookRequestSchema } from "./signal-webhook-schema";
 
 describe("getSignalBusinessKey", () => {
 	it("keeps repeated captures of the same signal under one business identity", () => {
@@ -51,6 +52,62 @@ describe("getSignalBusinessKey", () => {
 		);
 
 		expect(changedPlanKey).not.toBe(baseKey);
+	});
+
+	it("keeps a stable identity for signals without take profit", () => {
+		const firstKey = getSignalBusinessKey(
+			{
+				direction: "long",
+				entry: 63200,
+				stopLoss: 62000,
+				symbol: "BTCUSDT",
+			},
+			"webhook:舒琴操作日记vip分享",
+		);
+		const secondKey = getSignalBusinessKey(
+			{
+				direction: "long",
+				entry: 63200,
+				stopLoss: 62000,
+				symbol: "BTCUSDT",
+			},
+			"webhook:舒琴操作日记vip分享",
+		);
+
+		expect(secondKey).toBe(firstKey);
+	});
+});
+
+describe("signalWebhookRequestSchema", () => {
+	const basePayload = {
+		direction: "long",
+		entry: 63200,
+		source: {
+			name: "舒琴操作日记VIP分享",
+			platform: "链云",
+		},
+		stopLoss: 62000,
+		symbol: "BTC/USDT",
+	};
+
+	it("accepts signals with entry and stop loss when take profit is missing", () => {
+		const parsed = signalWebhookRequestSchema.safeParse(basePayload);
+
+		expect(parsed.success).toBe(true);
+		if (parsed.success) {
+			expect(parsed.data.takeProfit).toBeUndefined();
+			expect(parsed.data.symbol).toBe("BTCUSDT");
+		}
+	});
+
+	it("rejects signals without stop loss", () => {
+		const parsed = signalWebhookRequestSchema.safeParse({
+			...basePayload,
+			stopLoss: undefined,
+			takeProfit: 64600,
+		});
+
+		expect(parsed.success).toBe(false);
 	});
 });
 

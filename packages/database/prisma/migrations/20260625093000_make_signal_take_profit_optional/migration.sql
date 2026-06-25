@@ -1,0 +1,1 @@
+ALTER TABLE "signal" ALTER COLUMN "takeProfit" DROP NOT NULL;
