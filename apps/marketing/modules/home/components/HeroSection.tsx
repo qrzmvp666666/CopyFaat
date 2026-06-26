@@ -11,6 +11,59 @@ import heroImage from "../../../public/images/hero-image.png";
 import { AVATAR_PHOTO_IDS, TESTIMONIAL_KEYS } from "../lib/testimonials";
 import { TypewriterTitle } from "./TypewriterTitle";
 
+interface FloatingIcon {
+	alt: string;
+	className: string;
+	delay: string;
+	duration: string;
+	src: string;
+}
+
+const FLOATING_ICONS: FloatingIcon[] = [
+	{
+		alt: "KOL avatar",
+		className: "left-[7%] top-[45%] size-[72px]",
+		delay: "-1s",
+		duration: "9s",
+		src: "/images/hero-floating/icon-1.png",
+	},
+	{
+		alt: "KOL avatar",
+		className: "left-[9%] top-[5%] size-16",
+		delay: "-4s",
+		duration: "11s",
+		src: "/images/hero-floating/icon-2.png",
+	},
+	{
+		alt: "Trading community",
+		className: "right-[9%] top-[5%] size-16",
+		delay: "-2.5s",
+		duration: "10s",
+		src: "/images/hero-floating/icon-3.png",
+	},
+	{
+		alt: "KOL channel",
+		className: "right-[7%] top-[46%] size-[68px]",
+		delay: "-5.5s",
+		duration: "12s",
+		src: "/images/hero-floating/icon-4.png",
+	},
+	{
+		alt: "Discord",
+		className: "left-[16%] top-[78%] size-[60px]",
+		delay: "-7s",
+		duration: "10.5s",
+		src: "/images/hero-floating/icon-5.png",
+	},
+	{
+		alt: "Telegram",
+		className: "right-[16%] top-[78%] size-[60px]",
+		delay: "-3.5s",
+		duration: "9.5s",
+		src: "/images/hero-floating/icon-6.png",
+	},
+];
+
 export function HeroSection() {
 	const t = useTranslations();
 	const locale = useLocale();
@@ -33,6 +86,7 @@ export function HeroSection() {
 
 	return (
 		<div className="relative max-w-full overflow-x-hidden bg-linear-to-t from-background via-primary/5 to-background">
+			<FloatingHeroIcons />
 			<div className="py-8 md:py-16 relative z-20 container text-center">
 				<div className="mb-4 flex justify-center">
 					<div className="px-3 py-1 font-normal text-sm flex flex-wrap items-center justify-center rounded-full bg-muted p-px text-foreground">
@@ -114,6 +168,35 @@ export function HeroSection() {
 					</div>
 				</div>
 			</div>
+		</div>
+	);
+}
+
+function FloatingHeroIcons() {
+	return (
+		<div
+			aria-hidden="true"
+			className="inset-x-0 top-8 lg:block pointer-events-none absolute z-10 mx-auto hidden h-[430px] max-w-[1800px]"
+		>
+			{FLOATING_ICONS.map((icon) => (
+				<div key={icon.src} className={`absolute ${icon.className}`}>
+					<div
+						className="hero-floating-icon border-white/20 p-1 shadow-2xl backdrop-blur-md dark:border-white/10 dark:bg-white/8 dark:shadow-black/40 relative size-full overflow-hidden rounded-2xl border bg-background/35 opacity-55 shadow-primary/10 dark:opacity-45"
+						style={{
+							animationDelay: icon.delay,
+							animationDuration: icon.duration,
+						}}
+					>
+						<Image
+							src={icon.src}
+							alt={icon.alt}
+							width={96}
+							height={96}
+							className="size-full rounded-xl object-cover saturate-90"
+						/>
+					</div>
+				</div>
+			))}
 		</div>
 	);
 }

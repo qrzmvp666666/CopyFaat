@@ -23,6 +23,7 @@ export function TypewriterTitle() {
 	const target = features[featureIndex]?.title ?? "";
 	const subtitle = features[featureIndex]?.subtitle ?? "";
 	const isAnimated = features.length > 1;
+	const titleMinHeight = prefix ? "min-h-[2.5em] md:min-h-[2.4em]" : "min-h-[1.15em]";
 
 	useEffect(() => {
 		setDisplayed(initialTitle);
@@ -54,7 +55,9 @@ export function TypewriterTitle() {
 		const delay = isDeleting ? DELETE_SPEED : TYPE_SPEED;
 		const timer = setTimeout(() => {
 			setDisplayed(
-				isDeleting ? target.slice(0, displayed.length - 1) : target.slice(0, displayed.length + 1),
+				isDeleting
+					? target.slice(0, displayed.length - 1)
+					: target.slice(0, displayed.length + 1),
 			);
 		}, delay);
 		return () => clearTimeout(timer);
@@ -62,12 +65,14 @@ export function TypewriterTitle() {
 
 	return (
 		<>
-			<h1 className="font-medium text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight max-w-3xl mx-auto text-foreground min-h-[2.5em] md:min-h-[2.4em]">
+			<h1
+				className={`font-medium text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight max-w-3xl mx-auto text-foreground ${titleMinHeight}`}
+			>
 				{prefix && <span className="block">{prefix}</span>}
 				<span className="block text-primary">
 					{displayed}
 					{isAnimated && (
-						<span className="inline-block w-[2px] h-[0.85em] ml-0.5 align-middle bg-primary animate-pulse" />
+						<span className="ml-0.5 animate-pulse inline-block h-[0.85em] w-[2px] bg-primary align-middle" />
 					)}
 				</span>
 			</h1>

@@ -29,6 +29,16 @@
 			offset-distance: 100%;
 		}
 	}
+
+	@keyframes hero-float {
+		0%,
+		100% {
+			transform: translate3d(0, 0, 0) rotate(-4deg);
+		}
+		50% {
+			transform: translate3d(0, -18px, 0) rotate(4deg);
+		}
+	}
 }
 
 @layer base {
@@ -38,5 +48,12 @@
 	::backdrop,
 	::file-selector-button {
 		border-color: var(--border);
+	}
+}
+
+@layer components {
+	.hero-floating-icon {
+		animation: hero-float 10s ease-in-out infinite;
+		will-change: transform;
 	}
 }
