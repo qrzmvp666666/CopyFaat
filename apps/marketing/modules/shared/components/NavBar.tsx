@@ -55,10 +55,6 @@ export function NavBar() {
 			href: "/#pricing",
 		},
 		{
-			label: "聚合K线",
-			href: "/#kline",
-		},
-		{
 			label: t("common.menu.faq"),
 			href: "/#faq",
 		},
