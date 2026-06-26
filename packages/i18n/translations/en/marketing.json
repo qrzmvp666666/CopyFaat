@@ -70,8 +70,8 @@
 				"answer": "All code is fully open. You can freely modify themes, UI components, business logic, and integrate any third-party services."
 			},
 			"dataSource": {
-				"question": "Where does KOLArena's data come from?",
-				"answer": "KOLArena aggregates public market data, on-chain data, and trading views publicly posted by KOLs, then organizes and backtests them through a unified metric system."
+				"question": "Where does SignalFast's data come from?",
+				"answer": "SignalFast aggregates public market data, on-chain data, and trading views publicly posted by KOLs, then organizes and backtests them through a unified metric system."
 			},
 			"beginnerFriendly": {
 				"question": "Is your platform suitable for beginners?",
@@ -198,16 +198,16 @@
 		},
 		"earlyAccess": {
 			"title": "Capture the Latest KOL Trading Signals in Real-Time",
-			"subtitle": "Start here and get stable, high-win-rate KOL signals with KOLArena.",
+			"subtitle": "Start here and get stable, high-win-rate KOL signals with SignalFast.",
 			"getStarted": "Get Started for Free",
 			"readDocs": "Read Docs"
 		},
 		"testimonials": {
-			"title": "KOLArena User Reviews",
-			"subtitle": "KOLArena has helped thousands of crypto enthusiasts and quantitative traders build stable, profitable strategies",
+			"title": "SignalFast User Reviews",
+			"subtitle": "SignalFast has helped thousands of crypto enthusiasts and quantitative traders build stable, profitable strategies",
 			"items": {
 				"andy": {
-					"quote": "I finally stopped paying a fortune to join endless private groups. On KOLArena, I can see signal calls from leading KOLs directly. This is a lifeline for anyone following trade signals.",
+					"quote": "I finally stopped paying a fortune to join endless private groups. On SignalFast, I can see signal calls from leading KOLs directly. This is a lifeline for anyone following trade signals.",
 					"name": "Alex",
 					"role": "Experienced crypto retail trader",
 					"initials": "An"

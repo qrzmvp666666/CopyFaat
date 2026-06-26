@@ -21,14 +21,14 @@ export function HeroSection() {
 				badge: "2026 特价优惠",
 				getStarted: "免费开始",
 				documentation: "查看引导",
-				socialProof: "999+ 用户使用 KOLArena 构建策略",
+				socialProof: "999+ 用户使用 SignalFast 构建策略",
 			}
 		: {
 				new: "🎇 Happy New Year",
 				badge: "2026 Special Offer",
 				getStarted: "Start Free",
 				documentation: "View Guide",
-				socialProof: "999+ users build strategies with KOLArena",
+				socialProof: "999+ users build strategies with SignalFast",
 			};
 
 	return (
@@ -39,9 +39,7 @@ export function HeroSection() {
 						<span className="gap-2 font-semibold flex items-center rounded-full">
 							{heroCopy.new}
 						</span>
-						<span className="ml-1 font-medium block">
-							{heroCopy.badge}
-						</span>
+						<span className="ml-1 font-medium block">{heroCopy.badge}</span>
 					</div>
 				</div>
 
@@ -60,12 +58,12 @@ export function HeroSection() {
 				</div>
 
 				{/* Social proof */}
-				<div className="mt-6 flex items-center justify-center gap-3">
+				<div className="mt-6 gap-3 flex items-center justify-center">
 					<div className="flex items-center">
 						{TESTIMONIAL_KEYS.map((key, i) => (
 							<div
 								key={key}
-								className={`size-9 rounded-full border-2 border-background overflow-hidden ${i > 0 ? "-ml-3" : ""}`}
+								className={`size-9 overflow-hidden rounded-full border-2 border-background ${i > 0 ? "-ml-3" : ""}`}
 							>
 								<Image
 									src={`https://i.pravatar.cc/72?img=${AVATAR_PHOTO_IDS[key]}`}
@@ -79,9 +77,12 @@ export function HeroSection() {
 						))}
 					</div>
 					<div className="text-left">
-						<div className="flex items-center gap-0.5">
+						<div className="gap-0.5 flex items-center">
 							{Array.from({ length: 5 }).map((_, i) => (
-								<StarIcon key={i} className="size-4 fill-yellow-400 text-yellow-400" />
+								<StarIcon
+									key={i}
+									className="size-4 fill-yellow-400 text-yellow-400"
+								/>
 							))}
 						</div>
 						<p className="mt-0.5 text-xs text-muted-foreground">

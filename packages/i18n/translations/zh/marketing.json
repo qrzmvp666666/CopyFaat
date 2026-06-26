@@ -70,8 +70,8 @@
 				"answer": "所有代码完全开放，您可以自由修改主题、UI 组件、业务逻辑，以及集成任意第三方服务。"
 			},
 			"dataSource": {
-				"question": "KOLArena 的数据来源是哪里？",
-				"answer": "KOLArena 会聚合公开市场行情、链上数据以及 KOL 公开发布的交易观点，并通过统一的指标体系进行整理、回测和展示。"
+				"question": "SignalFast 的数据来源是哪里？",
+				"answer": "SignalFast 会聚合公开市场行情、链上数据以及 KOL 公开发布的交易观点，并通过统一的指标体系进行整理、回测和展示。"
 			},
 			"beginnerFriendly": {
 				"question": "普通小白用户适合使用你们的平台吗？",
@@ -198,16 +198,16 @@
 		},
 		"earlyAccess": {
 			"title": "实时捕获最新 KOL 交易信号",
-			"subtitle": "从这里开始，使用 KOLArena 获取稳定高胜率的 KOL 信号。",
+			"subtitle": "从这里开始，使用 SignalFast 获取稳定高胜率的 KOL 信号。",
 			"getStarted": "免费开始",
 			"readDocs": "阅读文档"
 		},
 		"testimonials": {
-			"title": "KOLArena 用户评价",
-			"subtitle": "KOLArena 已帮助数千名加密爱好者和量化交易员构建稳定盈利的策略",
+			"title": "SignalFast 用户评价",
+			"subtitle": "SignalFast 已帮助数千名加密爱好者和量化交易员构建稳定盈利的策略",
 			"items": {
 				"andy": {
-					"quote": "终于不用花大价钱加一堆收费群了！在 KOLArena 上可以直接看到各个头部 KOL 的喊单信号，这就是在草带单老师的命啊！",
+					"quote": "终于不用花大价钱加一堆收费群了！在 SignalFast 上可以直接看到各个头部 KOL 的喊单信号，这就是在草带单老师的命啊！",
 					"name": "Alex",
 					"role": "资深加密散户",
 					"initials": "An"
