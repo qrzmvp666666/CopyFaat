@@ -55,6 +55,10 @@ export function NavBar() {
 			href: "/#pricing",
 		},
 		{
+			label: t("common.menu.blog"),
+			href: "/blog",
+		},
+		{
 			label: t("common.menu.faq"),
 			href: "/#faq",
 		},
