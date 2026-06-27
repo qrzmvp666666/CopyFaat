@@ -12,7 +12,7 @@ export function Logo({ withLabel = true, className }: { className?: string; with
 				src="/images/brand/signalfast-logo-mark.png"
 				alt={withLabel ? "" : "SignalFast"}
 				aria-hidden={withLabel}
-				className="size-10 object-contain"
+				className="size-10 object-contain invert dark:invert-0"
 			/>
 			{withLabel && <span className="ml-3 text-lg md:block hidden">SignalFast</span>}
 		</span>
