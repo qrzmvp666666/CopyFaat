@@ -1,71 +1,77 @@
 {
-  "pricing": {
-    "choosePlan": "Choose plan",
-    "contactSales": "Contact sales",
-    "description": "Choose the plan that works best for you.",
-    "getStarted": "Get started",
-    "month": "{count, plural, one {month} other {{count} months}}",
-    "monthly": "Monthly",
-    "products": {
-      "basic": {
-        "description": "Perfect to small teams.",
-        "features": {
-          "anotherFeature": "Another amazing feature",
-          "limitedSupport": "Limited support"
-        },
-        "title": "Basic"
-      },
-      "enterprise": {
-        "description": "Custom plan tailored to your requirements",
-        "features": {
-          "enterpriseSupport": "Enterprise support",
-          "unlimitedProjects": "Unlimited projects"
-        },
-        "title": "Enterprise"
-      },
-      "free": {
-        "description": "Limited offer for the first 200 users: after registration, scan the QR code and contact support to claim a Pro membership redemption code",
-        "features": {
-          "freeAccess": "0 USD free access",
-          "proCode": "Limited-time Pro membership redemption code",
-          "qqSupport": "QQ live support: 1934416232"
-        },
-        "title": "Free"
-      },
-      "lifetime": {
-        "description": "Buy once. Use forever.",
-        "features": {
-          "extendSupport": "Extended support",
-          "noRecurringCosts": "No recurring costs"
-        },
-        "title": "Lifetime"
-      },
-      "pro": {
-        "description": "For crypto traders who need real-time market data, KOL signals, and dedicated support",
-        "features": {
-          "adFree": "Ad-free experience",
-          "marketQuotes": "Real-time crypto market quotes",
-          "kolKlineTracking": "Aggregated KOL K-line tracking",
-          "kolSignals": "Real-time KOL signal pushes",
-          "dedicatedSupport": "Dedicated support",
-          "communityNotifications": "Exclusive community notifications"
-        },
-        "title": "Pro"
-      }
-    },
-    "purchase": "Purchase",
-    "recommended": "Recommended",
-    "subscribe": "Subscribe",
-    "title": "Pricing",
-    "trialPeriod": "{days} {days, plural, one {day} other {days}} free trial",
-    "year": "{count, plural, one {year} other {{count} years}}",
-    "yearly": "Yearly",
-    "perSeat": "seat",
-    "paymentMethod": "Pay with",
-    "paymentMethods": {
-      "card": "Credit Card",
-      "wechat_person": "WeChat Pay",
-      "alipay_person": "Alipay"
-    }
-  }
+	"pricing": {
+		"choosePlan": "Choose plan",
+		"contactSales": "Contact sales",
+		"description": "Choose the plan that works best for you.",
+		"getStarted": "Get started",
+		"month": "{count, plural, one {month} other {{count} months}}",
+		"monthly": "Monthly",
+		"products": {
+			"basic": {
+				"description": "Perfect to small teams.",
+				"features": {
+					"anotherFeature": "Another amazing feature",
+					"limitedSupport": "Limited support"
+				},
+				"title": "Basic"
+			},
+			"enterprise": {
+				"description": "Custom plan tailored to your requirements",
+				"features": {
+					"enterpriseSupport": "Enterprise support",
+					"unlimitedProjects": "Unlimited projects"
+				},
+				"title": "Enterprise"
+			},
+			"free": {
+				"description": "Limited offer for the first 200 users: after registration, scan the QR code and contact support to claim a Pro membership redemption code",
+				"features": {
+					"freeAccess": "0 USD free access",
+					"proCode": "Limited-time Pro membership redemption code",
+					"qqSupport": "QQ live support: 1934416232"
+				},
+				"price": "$0",
+				"title": "Free"
+			},
+			"lifetime": {
+				"description": "Buy once. Use forever.",
+				"features": {
+					"extendSupport": "Extended support",
+					"noRecurringCosts": "No recurring costs"
+				},
+				"title": "Lifetime"
+			},
+			"pro": {
+				"description": "For crypto traders who need real-time market data, KOL signals, and dedicated support",
+				"features": {
+					"adFree": "Ad-free experience",
+					"marketQuotes": "Real-time crypto market quotes",
+					"kolKlineTracking": "Aggregated KOL K-line tracking",
+					"kolSignals": "Real-time KOL signal pushes",
+					"dedicatedSupport": "Dedicated support",
+					"communityNotifications": "Exclusive community notifications"
+				},
+				"price": {
+					"month": "$29/mo",
+					"year": "$290/yr"
+				},
+				"title": "Pro"
+			}
+		},
+		"purchase": "Purchase",
+		"recommended": "Recommended",
+		"subscribe": "Subscribe",
+		"title": "Pricing",
+		"trialPeriod": "{days} {days, plural, one {day} other {days}} free trial",
+		"year": "{count, plural, one {year} other {{count} years}}",
+		"yearly": "Yearly",
+		"perSeat": "seat",
+		"included": "Included",
+		"paymentMethod": "Pay with",
+		"paymentMethods": {
+			"card": "Credit Card",
+			"wechat_person": "WeChat Pay",
+			"alipay_person": "Alipay"
+		}
+	}
 }

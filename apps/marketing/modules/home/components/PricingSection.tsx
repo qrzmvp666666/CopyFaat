@@ -1,51 +1,56 @@
 "use client";
 
-import Image from "next/image";
 import { config } from "@config";
 import { LocaleLink } from "@i18n/routing";
 import { config as paymentsConfig } from "@repo/payments/config";
-import type { PaidPlan, PaymentMethod } from "@repo/payments/types";
+import type { PaidPlan } from "@repo/payments/types";
 import { cn } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
+import { AlipayIcon, StripeIcon, WeChatIcon } from "@repo/ui/components/payment-brand-icons";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
-import {
-	ArrowRightIcon,
-	BadgePercentIcon,
-	CheckIcon,
-	CreditCardIcon,
-	StarIcon,
-} from "lucide-react";
+import { ArrowRightIcon, BadgePercentIcon, CheckIcon, GiftIcon, StarIcon } from "lucide-react";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 
-function WechatPayIcon({ className }: { className?: string }) {
-	return (
-		<svg className={className} viewBox="0 0 24 24" aria-hidden="true">
-			<path
-				fill="#07C160"
-				d="M9.2 3.5C5.22 3.5 2 6.18 2 9.5c0 1.88 1.03 3.54 2.63 4.64L4 17l2.37-1.18c.9.24 1.85.36 2.83.36 3.98 0 7.2-2.68 7.2-5.98S13.18 3.5 9.2 3.5Z"
-			/>
-			<path
-				fill="#07C160"
-				d="M16.8 9.85c-2.87 0-5.2 1.94-5.2 4.34 0 2.42 2.33 4.37 5.2 4.37.63 0 1.24-.1 1.8-.28L21 19.5l-.6-2.03c1-.8 1.6-1.95 1.6-3.28 0-2.4-2.33-4.34-5.2-4.34Z"
-			/>
-			<circle cx="7.2" cy="8.9" r="0.9" fill="#FFFFFF" />
-			<circle cx="11.1" cy="8.9" r="0.9" fill="#FFFFFF" />
-			<circle cx="15.2" cy="13.9" r="0.8" fill="#FFFFFF" />
-			<circle cx="18.3" cy="13.9" r="0.8" fill="#FFFFFF" />
-		</svg>
-	);
-}
+const visiblePaidPlanIds = ["pro"];
 
-function AlipayIcon({ className }: { className?: string }) {
+function PaymentMethodMarks() {
+	const methods = [
+		{
+			label: "Stripe",
+			icon: StripeIcon,
+			className: "h-5 w-7 text-[#635BFF]",
+		},
+		{
+			label: "微信支付",
+			icon: WeChatIcon,
+			className: "size-5 text-[#07C160]",
+		},
+		{
+			label: "支付宝",
+			icon: AlipayIcon,
+			className: "size-5 text-[#1677FF]",
+		},
+		{
+			label: "兑换码",
+			icon: GiftIcon,
+			className: "size-5 text-foreground/45",
+		},
+	];
+
 	return (
-		<svg className={className} viewBox="0 0 24 24" aria-hidden="true">
-			<rect x="2.5" y="2.5" width="19" height="19" rx="4.5" fill="#1677FF" />
-			<path
-				fill="#FFFFFF"
-				d="M15.47 7.25h-2.1l-.63 1.73H8.3v1.88h3.76l-.47 1.28H8.02v1.88h2.89l-1.27 3.48h2.12l1.27-3.48h3.9v-1.88H13.7l.46-1.28h3.18V8.98h-2.5l.63-1.73Z"
-			/>
-		</svg>
+		<div className="gap-3 flex shrink-0 items-center" aria-label="支持的支付与兑换方式">
+			{methods.map((method) => {
+				const Icon = method.icon;
+
+				return (
+					<span key={method.label} className="inline-flex" title={method.label}>
+						<Icon className={method.className} aria-hidden="true" />
+					</span>
+				);
+			})}
+		</div>
 	);
 }
 
@@ -107,7 +112,8 @@ const MARKETING_PLAN_COPY = {
 		},
 		lifetime: {
 			title: "Lifetime",
-			description: "Buy once, use forever. Includes all Pro features with no recurring charges.",
+			description:
+				"Buy once, use forever. Includes all Pro features with no recurring charges.",
 			features: [
 				"All Pro features included",
 				"Lifetime updates, always accessible",
@@ -125,13 +131,11 @@ export function PricingSection() {
 	const locale = useLocale();
 	const format = useFormatter();
 	const [interval, setBillingInterval] = useState<"month" | "year">("month");
-	const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
 
 	const saasUrl = useMemo(
 		() => config.saasUrl && `${String(config.saasUrl).replace(/\/$/, "")}`,
 		[],
 	);
-	const isChinesePayment = paymentMethod === "wechat_person" || paymentMethod === "alipay_person";
 	const marketingPlanCopy =
 		MARKETING_PLAN_COPY[locale as keyof typeof MARKETING_PLAN_COPY] ?? MARKETING_PLAN_COPY.en;
 
@@ -143,8 +147,8 @@ export function PricingSection() {
 			features: string[];
 			cta: string;
 			recommended?: boolean;
-			isEnterprise?: boolean;
 			prices?: PaidPlan["prices"];
+			priceLabel?: string;
 			to: string;
 		}> = [];
 
@@ -156,53 +160,73 @@ export function PricingSection() {
 				description: freeCopy.description,
 				features: [...freeCopy.features],
 				cta: t("pricing.getStarted") ?? "",
+				priceLabel: t.raw("pricing.products.free.price") as string,
 				to: saasUrl ? `${saasUrl}/signup` : "#",
 			});
 		}
 
 		for (const [planId, plan] of Object.entries(paymentsConfig.plans)) {
-			const isEnterprise = "isEnterprise" in plan;
-			if (isEnterprise) continue;
-			const prices = "prices" in plan ? (plan as PaidPlan).prices : undefined;
-			const hasSelectedPaymentMethod = prices?.some(
-				(price) => (price.paymentMethod ?? "card") === paymentMethod,
-			);
-
-			if (isChinesePayment && !hasSelectedPaymentMethod) {
+			if (!visiblePaidPlanIds.includes(planId)) {
 				continue;
 			}
 
-			const copy = planId === "pro" ? marketingPlanCopy.pro : planId === "lifetime" ? marketingPlanCopy.lifetime : undefined;
+			const isEnterprise = "isEnterprise" in plan;
+			if (isEnterprise) continue;
+			const prices = "prices" in plan ? (plan as PaidPlan).prices : undefined;
+			const price = prices?.find(
+				(price) =>
+					!plan.hidden &&
+					(price.type === "one-time" || price.interval === interval) &&
+					(price.paymentMethod ?? "card") === "card",
+			);
+
+			if (!price) {
+				continue;
+			}
+
+			const copy =
+				planId === "pro"
+					? marketingPlanCopy.pro
+					: planId === "lifetime"
+						? marketingPlanCopy.lifetime
+						: undefined;
+			const rawPrice = t.raw(`pricing.products.${planId}.price`) as
+				| string
+				| Record<string, string>;
+			const priceLabel = typeof rawPrice === "string" ? rawPrice : rawPrice[interval];
 
 			// Point directly to /choose-plan on the saas app with planId+interval.
 			// The saas app redirects to /login if not authenticated, preserving the query params.
 			const planUrl = saasUrl
-				? `${saasUrl}/choose-plan?planId=${planId}&interval=${interval}&paymentMethod=${paymentMethod}`
+				? `${saasUrl}/choose-plan?planId=${planId}&interval=${interval}`
 				: "#";
 
 			result.push({
 				id: planId,
-				title: copy?.title ?? (t(`pricing.products.${planId}.title`) ?? ""),
-				description: copy?.description ?? (t(`pricing.products.${planId}.description`) ?? ""),
+				title: copy?.title ?? t(`pricing.products.${planId}.title`) ?? "",
+				description: copy?.description ?? t(`pricing.products.${planId}.description`) ?? "",
 				features:
 					(copy?.features ? [...copy.features] : undefined) ??
 					Object.values(
-						(t.raw(`pricing.products.${planId}.features`) as Record<string, string>) ?? {},
+						(t.raw(`pricing.products.${planId}.features`) as Record<string, string>) ??
+							{},
 					),
-				cta: isEnterprise
-					? (t("pricing.contactSales") ?? "")
-					: (t("pricing.getStarted") ?? ""),
+				cta: t("pricing.getStarted") ?? "",
 				recommended: plan.recommended,
-				isEnterprise,
 				prices,
+				priceLabel,
 				to: isEnterprise ? (saasUrl ? `${saasUrl}/signup` : "#") : planUrl,
 			});
 		}
 
 		return result;
-	}, [t, saasUrl, interval, paymentMethod, isChinesePayment, marketingPlanCopy]);
+	}, [t, saasUrl, interval, marketingPlanCopy]);
 
-	const hasSubscriptions = false;
+	const hasSubscriptions = Object.entries(paymentsConfig.plans).some(([planId, plan]) =>
+		visiblePaidPlanIds.includes(planId) && "prices" in plan
+			? (plan as PaidPlan).prices.some((price) => price.type === "subscription")
+			: false,
+	);
 
 	return (
 		<section id="pricing" className="scroll-mt-16 py-12 lg:py-16 border-y">
@@ -217,51 +241,6 @@ export function PricingSection() {
 				</div>
 
 				<div className="@container">
-					<div className="mb-4 gap-2 flex flex-wrap items-center justify-center">
-						<span className="text-sm text-foreground/50">
-							{t("pricing.paymentMethod")}:
-						</span>
-						<button
-							type="button"
-							onClick={() => setPaymentMethod("card")}
-							className={cn(
-								"gap-1.5 px-3 py-1.5 text-xs font-medium flex items-center rounded-full border transition-all",
-								paymentMethod === "card"
-									? "border-foreground/30 bg-foreground/10 text-foreground"
-									: "border-border text-foreground/50 hover:border-foreground/30 hover:text-foreground/80",
-							)}
-						>
-							<CreditCardIcon className="size-3.5" />
-							{t("pricing.paymentMethods.card")}
-						</button>
-						<button
-							type="button"
-							onClick={() => setPaymentMethod("wechat_person")}
-							className={cn(
-								"gap-1.5 px-3 py-1.5 text-xs font-medium flex items-center rounded-full border transition-all",
-								paymentMethod === "wechat_person"
-									? "border-[#07c160] bg-[#07c160]/10 text-[#07c160]"
-									: "border-border text-foreground/50 hover:border-[#07c160]/50 hover:text-[#07c160]/80",
-							)}
-						>
-							<WechatPayIcon className="size-3.5" />
-							{t("pricing.paymentMethods.wechat_person")}
-						</button>
-						<button
-							type="button"
-							onClick={() => setPaymentMethod("alipay_person")}
-							className={cn(
-								"gap-1.5 px-3 py-1.5 text-xs font-medium flex items-center rounded-full border transition-all",
-								paymentMethod === "alipay_person"
-									? "border-[#1677ff] bg-[#1677ff]/10 text-[#1677ff]"
-									: "border-border text-foreground/50 hover:border-[#1677ff]/50 hover:text-[#1677ff]/80",
-							)}
-						>
-							<AlipayIcon className="size-3.5" />
-							{t("pricing.paymentMethods.alipay_person")}
-						</button>
-					</div>
-
 					{hasSubscriptions && (
 						<div className="mb-6 flex justify-center">
 							<Tabs
@@ -280,7 +259,7 @@ export function PricingSection() {
 					)}
 					<div
 						className={cn(
-							"gap-4 grid grid-cols-1 mx-auto",
+							"gap-4 mx-auto grid grid-cols-1",
 							plans.length <= 2 ? "max-w-4xl" : "max-w-7xl",
 							plans.length >= 2 && "@xl:grid-cols-2",
 							plans.length >= 3 && "@3xl:grid-cols-3",
@@ -288,13 +267,13 @@ export function PricingSection() {
 						)}
 					>
 						{plans.map((plan) => {
-							const isFree = !plan.prices && !plan.isEnterprise;
+							const isFree = !plan.prices;
 							const price = isFree
 								? undefined
 								: plan.prices?.find(
 										(p) =>
 											(p.type === "one-time" || p.interval === interval) &&
-											(p.paymentMethod ?? "card") === paymentMethod,
+											(p.paymentMethod ?? "card") === "card",
 									);
 							const trialPeriodDays =
 								price && "trialPeriodDays" in price && price.trialPeriodDays
@@ -311,27 +290,30 @@ export function PricingSection() {
 									data-test="price-table-plan"
 								>
 									{plan.recommended && (
-										<div className="-top-3 px-2 py-1 font-semibold text-xs absolute left-1/2 flex -translate-x-1/2 items-center justify-center rounded-full bg-primary text-center text-primary-foreground">
-											<StarIcon className="mr-1.5 size-3 inline-block" />
+										<div className="-top-3.5 px-3 py-1 font-semibold text-xs shadow-sm border-white bg-white text-black absolute left-1/2 flex -translate-x-1/2 items-center justify-center rounded-full border text-center">
+											<StarIcon className="mr-1.5 size-3.5 inline-block" />
 											{t("pricing.recommended")}
 										</div>
 									)}
 									<div className="gap-4 flex h-full flex-col justify-between">
 										<div>
-											<h3 className="my-0 font-semibold text-2xl">
-												{plan.title}
-											</h3>
-											{isFree && (
+											<div className="gap-3 flex items-start justify-between">
+												<h3 className="my-0 font-semibold text-2xl">
+													{plan.title}
+												</h3>
+												{price && <PaymentMethodMarks />}
+											</div>
+											{plan.priceLabel && (
 												<strong
-													className="font-medium text-2xl lg:text-3xl block mt-2"
+													className="font-medium text-2xl lg:text-3xl mt-2 block"
 													data-test="price-table-plan-price"
 												>
-													0 USDT
+													{plan.priceLabel}
 												</strong>
 											)}
-											{price && (
+											{price && !plan.priceLabel && (
 												<strong
-													className="font-medium text-2xl lg:text-3xl block mt-2"
+													className="font-medium text-2xl lg:text-3xl mt-2 block"
 													data-test="price-table-plan-price"
 												>
 													{price.amount} USDT
@@ -379,49 +361,49 @@ export function PricingSection() {
 													</div>
 												)}
 
-										{isFree && (
-											<div className="mt-4 flex justify-start">
-												<Image
-													src="/images/qq-qrcode.png"
-													alt="QQ 二维码"
-													width={140}
-													height={140}
-													className="size-[140px] rounded-lg object-contain"
-												/>
-											</div>
-										)}
-									</div>
+											{isFree && (
+												<div className="mt-4 flex justify-start">
+													<Image
+														src="/images/qq-qrcode.png"
+														alt="QQ 二维码"
+														width={140}
+														height={140}
+														className="size-[140px] rounded-lg object-contain"
+													/>
+												</div>
+											)}
+										</div>
 
-									<div>
-										{plan.to.startsWith("/") ? (
-											<Button
-												className="mt-4 w-full"
-												variant={
-													plan.recommended ? "primary" : "secondary"
-												}
-												asChild
-											>
-												<LocaleLink href={plan.to}>
-													{plan.cta}
-													<ArrowRightIcon className="ml-2 size-4" />
-												</LocaleLink>
-											</Button>
-										) : (
-											<Button
-												className="mt-4 w-full"
-												variant={
-													plan.recommended ? "primary" : "secondary"
-												}
-												asChild
-											>
-												<a href={plan.to}>
-													{plan.cta}
-													<ArrowRightIcon className="ml-2 size-4" />
-												</a>
-											</Button>
-										)}
+										<div>
+											{plan.to.startsWith("/") ? (
+												<Button
+													className="mt-4 w-full"
+													variant={
+														plan.recommended ? "primary" : "secondary"
+													}
+													asChild
+												>
+													<LocaleLink href={plan.to}>
+														{plan.cta}
+														<ArrowRightIcon className="ml-2 size-4" />
+													</LocaleLink>
+												</Button>
+											) : (
+												<Button
+													className="mt-4 w-full"
+													variant={
+														plan.recommended ? "primary" : "secondary"
+													}
+													asChild
+												>
+													<a href={plan.to}>
+														{plan.cta}
+														<ArrowRightIcon className="ml-2 size-4" />
+													</a>
+												</Button>
+											)}
+										</div>
 									</div>
-								</div>
 								</div>
 							);
 						})}

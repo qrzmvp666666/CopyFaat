@@ -5,6 +5,7 @@ export const config: PaymentsConfig = {
 	requireActiveSubscription: false,
 	plans: {
 		pro: {
+			recommended: true,
 			prices: [
 				// ── Pro Monthly (card only — WeChat/Alipay are lifetime-only) ─
 				{
@@ -33,7 +34,6 @@ export const config: PaymentsConfig = {
 			],
 		},
 		lifetime: {
-			recommended: true,
 			prices: [
 				// ── Lifetime Card (Stripe) ────────────────────────────────────
 				{
