@@ -24,11 +24,10 @@
 				"title": "Enterprise"
 			},
 			"free": {
-				"description": "Limited offer for the first 200 users: after registration, scan the QR code and contact support to claim a Pro membership redemption code",
+				"description": "Limited offer for the first 200 users: sign up to claim 48 hours of Pro membership",
 				"features": {
 					"freeAccess": "0 USD free access",
-					"proCode": "Limited-time Pro membership redemption code",
-					"qqSupport": "QQ live support: 1934416232"
+					"proTrial48Hours": "Claim 48 hours of Pro after signup"
 				},
 				"price": "$0",
 				"title": "Free"

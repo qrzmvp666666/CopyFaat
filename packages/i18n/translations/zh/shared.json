@@ -24,11 +24,10 @@
 				"title": "企业版"
 			},
 			"free": {
-				"description": "前200名用户限时领取：注册成功后，扫码联系客服即可领取 Pro 会员兑换码",
+				"description": "前200名用户限时领取：注册成功后，即可领取 48 小时 Pro 会员",
 				"features": {
 					"freeAccess": "0 USD 免费体验",
-					"proCode": "限时 Pro 会员兑换码",
-					"qqSupport": "QQ 在线咨询：1934416232"
+					"proTrial48Hours": "注册成功即可领取 48 小时 Pro 会员"
 				},
 				"price": "¥0",
 				"title": "免费"

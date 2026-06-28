@@ -53,8 +53,8 @@ const MARKETING_PLAN_COPY = {
 	zh: {
 		free: {
 			title: "免费",
-			description: "前200名用户限时领取：注册成功后，扫码联系客服即可领取 Pro 会员兑换码",
-			features: ["0 USD 免费体验", "限时 Pro 会员兑换码", "QQ 在线咨询：1934416232"],
+			description: "前200名用户限时领取：注册成功后，即可领取 48 小时 Pro 会员",
+			features: ["0 USD 免费体验", "注册成功即可领取 48 小时 Pro 会员"],
 		},
 		pro: {
 			title: "Pro",
@@ -85,12 +85,8 @@ const MARKETING_PLAN_COPY = {
 		free: {
 			title: "Free",
 			description:
-				"Limited offer for the first 200 users: after registration, scan the QR code and contact support to claim a Pro membership redemption code",
-			features: [
-				"0 USD free access",
-				"Limited-time Pro membership redemption code",
-				"QQ live support: 1934416232",
-			],
+				"Limited offer for the first 200 users: sign up to claim 48 hours of Pro membership",
+			features: ["0 USD free access", "Claim 48 hours of Pro after signup"],
 		},
 		pro: {
 			title: "Pro",
