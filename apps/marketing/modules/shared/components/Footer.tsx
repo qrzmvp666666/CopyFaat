@@ -124,7 +124,6 @@ export function Footer() {
 					>
 						{t("common.footer.builtWith")}
 					</a>
-					<span className="text-xs text-muted-foreground">QQ: 1934416232</span>
 				</div>
 				<div className="gap-3 flex items-center">
 					<ColorModeToggle />

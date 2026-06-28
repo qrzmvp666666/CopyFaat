@@ -20,12 +20,28 @@ const FAQ_COPY = {
 				answer: "SignalFast 会聚合公开市场行情、链上数据以及 KOL 公开发布的交易观点，并通过统一的指标体系进行整理、回测和展示。",
 			},
 			{
+				question: "SignalFast 和 Telegram、Discord 喊单群有什么区别？",
+				answer: "Telegram 和 Discord 更像消息入口，适合快速接收讨论；SignalFast 更像分析工作台，会把分散信号放回同一张 K 线和历史表现里，方便比较、筛选和复盘。",
+			},
+			{
+				question: "KOL 聚合 K 线主要解决什么问题？",
+				answer: "它可以帮助你看到信号发出时价格处在什么位置，例如突破前、追高后、回踩支撑还是震荡区间。相比只看聊天截图，K 线位置更容易判断信号是否滞后或值得继续观察。",
+			},
+			{
 				question: "普通小白用户适合使用你们的平台吗？",
 				answer: "适合。平台提供可视化榜单、信号追踪和回测结果，新手可以先从胜率、收益、回撤等关键指标判断 KOL 表现。",
 			},
 			{
-				question: "平台提供哪些回测指标？",
-				answer: "平台会展示胜率、累计收益、最大回撤、信号频率、盈亏比等核心指标，帮助用户更直观地评估策略质量。",
+				question: "平台会保证收益或者代替我做交易决策吗？",
+				answer: "不会。SignalFast 不承诺任何收益，也不替代用户的风险判断。平台提供的是信号整理、历史表现和行情位置分析，帮助你减少盲目跟单和只看盈利截图的风险。",
+			},
+			{
+				question: "如果多个 KOL 在同一位置发出信号，应该怎么看？",
+				answer: "多来源共振值得关注，但不代表一定正确。建议同时看这些来源是否独立、信号是否发生在行情大幅波动之后、历史上类似信号表现如何，以及是否有明确止损或失效条件。",
+			},
+			{
+				question: "信号推送会不会有延迟？",
+				answer: "平台会尽量提升信号采集、整理和推送速度，但任何跨平台聚合都可能受到来源发布时间、网络状态和第三方平台限制影响。短线用户建议结合实时行情和风险控制一起判断。",
 			},
 			{
 				question: "免费版与专业版套餐有什么区别？",
@@ -46,12 +62,28 @@ const FAQ_COPY = {
 				answer: "SignalFast aggregates public market data, on-chain data, and trading views publicly posted by KOLs, then organizes and backtests them through a unified metric system.",
 			},
 			{
+				question: "How is SignalFast different from Telegram or Discord signal groups?",
+				answer: "Telegram and Discord are message channels for fast discussion. SignalFast is an analysis workspace that places scattered signals back onto K-line charts and historical performance views for easier comparison and review.",
+			},
+			{
+				question: "What does the aggregated K-line view help with?",
+				answer: "It shows where a signal appeared in the market structure, such as before a breakout, after a chase, near support, or inside a range. This makes signals easier to evaluate than chat screenshots alone.",
+			},
+			{
 				question: "Is your platform suitable for beginners?",
 				answer: "Yes. The platform provides visual rankings, signal tracking, and backtest results, so beginners can start with key metrics such as win rate, returns, and drawdown.",
 			},
 			{
-				question: "What backtest metrics does the platform provide?",
-				answer: "The platform shows core metrics such as win rate, cumulative return, maximum drawdown, signal frequency, and profit-loss ratio to help users evaluate strategy quality.",
+				question: "Does SignalFast guarantee profit or make trading decisions for me?",
+				answer: "No. SignalFast does not guarantee returns or replace your risk judgment. It organizes signals, historical performance, and chart context so you can make more informed decisions.",
+			},
+			{
+				question: "How should I read multiple KOLs giving signals in the same area?",
+				answer: "Multi-source alignment is worth attention, but it is not certainty. Check whether sources are independent, whether the signal is late after a strong move, and how similar signals performed historically.",
+			},
+			{
+				question: "Can signal pushes be delayed?",
+				answer: "SignalFast works to keep collection, organization, and pushes fast, but third-party platforms, source timing, and network conditions can still introduce delay. Short-term traders should always combine signals with real-time market context.",
 			},
 			{
 				question: "What is the difference between the Free and Pro plans?",

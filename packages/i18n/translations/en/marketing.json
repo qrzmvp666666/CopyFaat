@@ -77,10 +77,6 @@
 				"question": "Is your platform suitable for beginners?",
 				"answer": "Yes. The platform provides visual rankings, signal tracking, and backtest results, so beginners can start with key metrics such as win rate, returns, and drawdown."
 			},
-			"backtestMetrics": {
-				"question": "What backtest metrics does the platform provide?",
-				"answer": "The platform shows core metrics such as win rate, cumulative return, maximum drawdown, signal frequency, and profit-loss ratio to help users evaluate strategy quality."
-			},
 			"planDifference": {
 				"question": "What is the difference between the Free and Pro plans?",
 				"answer": "The Free plan is for trying the basic experience. Pro includes more complete real-time market data, aggregated KOL K-line tracking, real-time signal pushes, and dedicated support."
