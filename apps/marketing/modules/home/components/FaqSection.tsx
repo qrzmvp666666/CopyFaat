@@ -7,14 +7,13 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@repo/ui/components/accordion";
+import { ContactChannels } from "@shared/components/ContactChannels";
 import { useLocale } from "next-intl";
 
 const FAQ_COPY = {
 	zh: {
 		title: "常见问题解答",
-		description: "有任何问题，请通过 QQ 联系我们：",
-		contactQqLabel: "有任何问题，请通过 QQ 联系我们：",
-		contactQq: "QQ号：1934416232",
+		description: "有任何问题，选择你习惯的方式找到我们。",
 		items: [
 			{
 				question: "SignalFast 的数据来源是哪里？",
@@ -40,9 +39,7 @@ const FAQ_COPY = {
 	},
 	en: {
 		title: "Frequently Asked Questions",
-		description: "Have a question? Contact us via QQ:",
-		contactQqLabel: "Have a question? Contact us via QQ:",
-		contactQq: "QQ: 1934416232",
+		description: "Have a question? Choose the channel you prefer.",
 		items: [
 			{
 				question: "Where does SignalFast's data come from?",
@@ -85,13 +82,7 @@ export function FaqSection({ className }: { className?: string }) {
 							<p className="mt-3 text-sm leading-6 text-muted-foreground">
 								{copy.description}
 							</p>
-							<div className="mt-6 text-sm leading-6 text-muted-foreground">
-								<div>
-									<p className="mt-3 font-medium text-foreground">
-										{copy.contactQq}
-									</p>
-								</div>
-							</div>
+							<ContactChannels className="mt-6 gap-3 grid" compact />
 						</div>
 
 						{/* Right accordion */}

@@ -1,8 +1,7 @@
-import { Logo } from "@repo/ui";
-
 import "./global.css";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { RootProvider } from "fumadocs-ui/provider/next";
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
 import { source } from "@/lib/source";
@@ -11,11 +10,19 @@ const inter = Inter({
 	subsets: ["latin"],
 });
 
+export const metadata: Metadata = {
+	metadataBase: new URL(process.env.NEXT_PUBLIC_DOCS_URL ?? "http://signalfast.localhost:4102"),
+};
+
 export default function Layout({ children }: LayoutProps<"/">) {
 	return (
-		<html lang="zh" className={inter.className} suppressHydrationWarning>
+		<html lang="zh" className={`${inter.className} dark`} suppressHydrationWarning>
 			<body className="flex min-h-screen flex-col">
 				<RootProvider
+					theme={{
+						defaultTheme: "dark",
+						enableSystem: false,
+					}}
 					search={{
 						options: {
 							api: "/api/search",
@@ -25,7 +32,19 @@ export default function Layout({ children }: LayoutProps<"/">) {
 					<DocsLayout
 						tree={source.getPageTree()}
 						nav={{
-							title: <Logo />,
+							title: (
+								<span className="gap-2 font-semibold flex items-center text-foreground">
+									<img
+										src="/images/brand/signalfast-logo-mark.png"
+										alt=""
+										aria-hidden
+										width={32}
+										height={32}
+										className="size-8 object-contain"
+									/>
+									<span>SignalFast</span>
+								</span>
+							),
 						}}
 						sidebar={{ collapsible: true }}
 					>

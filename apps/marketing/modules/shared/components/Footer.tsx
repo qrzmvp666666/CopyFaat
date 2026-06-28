@@ -59,21 +59,22 @@ export function Footer() {
 							{t("common.footer.resourcesTitle")}
 						</h3>
 						<ul className="space-y-3">
-							{/* {config.docsUrl && (
-								<li>
-									<a href={config.docsUrl} className="transition-colors hover:text-foreground">
-										{t("common.footer.docs")}
-									</a>
-								</li>
-							)}
 							<li>
 								<LocaleLink
-									href="/changelog"
+									href="/blog"
 									className="transition-colors hover:text-foreground"
 								>
-									{t("common.footer.changelog")}
+									{t("common.footer.blog")}
 								</LocaleLink>
-							</li> */}
+							</li>
+							<li>
+								<a
+									href={config.docsUrl ?? "/docs"}
+									className="transition-colors hover:text-foreground"
+								>
+									{t("common.footer.docs")}
+								</a>
+							</li>
 							<li>
 								<LocaleLink
 									href="/contact"

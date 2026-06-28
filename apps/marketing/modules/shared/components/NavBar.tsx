@@ -49,6 +49,7 @@ export function NavBar() {
 	const menuItems: {
 		label: string;
 		href: string;
+		external?: boolean;
 	}[] = [
 		{
 			label: t("common.menu.pricing"),
@@ -57,6 +58,11 @@ export function NavBar() {
 		{
 			label: t("common.menu.blog"),
 			href: "/blog",
+		},
+		{
+			label: t("common.menu.docs"),
+			href: config.docsUrl ?? "/docs",
+			external: true,
 		},
 		{
 			label: t("common.menu.faq"),
@@ -95,19 +101,11 @@ export function NavBar() {
 
 					<div className="lg:flex hidden flex-1 items-center justify-center">
 						{menuItems.map((menuItem) => (
-							<LocaleLink
+							<NavMenuItem
 								key={menuItem.href}
-								href={menuItem.href}
-								className={cn(
-									"px-3 py-2 font-medium text-sm block shrink-0 text-foreground/80",
-									isMenuItemActive(menuItem.href)
-										? "font-bold text-foreground"
-										: "",
-								)}
-								prefetch
-							>
-								{menuItem.label}
-							</LocaleLink>
+								menuItem={menuItem}
+								isActive={isMenuItemActive(menuItem.href)}
+							/>
 						))}
 					</div>
 
@@ -135,20 +133,13 @@ export function NavBar() {
 								<SheetTitle />
 								<div className="flex flex-col items-start justify-center">
 									{menuItems.map((menuItem) => (
-										<LocaleLink
+										<NavMenuItem
 											key={menuItem.href}
-											href={menuItem.href}
+											menuItem={menuItem}
+											isActive={isMenuItemActive(menuItem.href)}
 											onClick={handleMobileMenuClose}
-											className={cn(
-												"px-3 py-2 font-medium text-base block shrink-0 text-foreground/80",
-												isMenuItemActive(menuItem.href)
-													? "font-bold text-foreground"
-													: "",
-											)}
-											prefetch
-										>
-											{menuItem.label}
-										</LocaleLink>
+											className="text-base"
+										/>
 									))}
 
 									{config.saasUrl && (
@@ -176,5 +167,38 @@ export function NavBar() {
 				</div>
 			</div>
 		</nav>
+	);
+}
+
+interface NavMenuItemProps {
+	menuItem: {
+		label: string;
+		href: string;
+		external?: boolean;
+	};
+	isActive: boolean;
+	onClick?: () => void;
+	className?: string;
+}
+
+function NavMenuItem({ menuItem, isActive, onClick, className }: NavMenuItemProps) {
+	const linkClassName = cn(
+		"px-3 py-2 font-medium text-sm block shrink-0 text-foreground/80",
+		className,
+		isActive ? "font-bold text-foreground" : "",
+	);
+
+	if (menuItem.external) {
+		return (
+			<a href={menuItem.href} onClick={onClick} className={linkClassName}>
+				{menuItem.label}
+			</a>
+		);
+	}
+
+	return (
+		<LocaleLink href={menuItem.href} onClick={onClick} className={linkClassName} prefetch>
+			{menuItem.label}
+		</LocaleLink>
 	);
 }

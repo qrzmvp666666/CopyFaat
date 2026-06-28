@@ -10,7 +10,7 @@ export function PostListItem({ post }: { post: Post }) {
 	const { title, excerpt, authorName, image, date, path, authorImage, tags } = post;
 
 	return (
-		<div className="p-6 rounded-4xl border bg-card">
+		<div className="p-6 flex h-full flex-col rounded-4xl border bg-card">
 			{image && (
 				<div className="mb-4 aspect-video -mx-2 -mt-2 relative overflow-hidden rounded-2xl">
 					<Image
@@ -40,9 +40,9 @@ export function PostListItem({ post }: { post: Post }) {
 			<LocaleLink href={`/blog/${path}`} className="font-semibold text-xl">
 				{title}
 			</LocaleLink>
-			{excerpt && <p className="opacity-50">{excerpt}</p>}
+			{excerpt && <p className="flex-1 opacity-50">{excerpt}</p>}
 
-			<div className="mt-4 flex items-center justify-between">
+			<div className="pt-4 mt-auto flex items-center justify-between">
 				{authorName && (
 					<div className="flex items-center">
 						{authorImage && (
