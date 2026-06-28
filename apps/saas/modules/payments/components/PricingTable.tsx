@@ -176,6 +176,11 @@ export function PricingTable({
 				return [];
 			}
 
+			const rawPrice = t.raw(`pricing.products.${planId}.price`) as
+				| string
+				| Record<string, string>;
+			const priceLabel = typeof rawPrice === "string" ? rawPrice : rawPrice[interval];
+
 			return [
 				{
 					id: planId,
@@ -183,6 +188,7 @@ export function PricingTable({
 					description: planDataEntry.description,
 					features: planDataEntry.features,
 					price,
+					priceLabel,
 					recommended: typedPlan.recommended,
 				},
 			];
@@ -218,6 +224,16 @@ export function PricingTable({
 					const monthlyEquivalent = plan.price
 						? getMonthlyEquivalent(plan.price)
 						: undefined;
+					const intervalLabel =
+						plan.price && "interval" in plan.price
+							? interval === "month"
+								? t("pricing.month", {
+										count: 1,
+									})
+								: t("pricing.year", {
+										count: 1,
+									})
+							: undefined;
 
 					return (
 						<div
@@ -247,6 +263,56 @@ export function PricingTable({
 										</h3>
 										{plan.price && <PaymentMethodMarks />}
 									</div>
+
+									{plan.priceLabel && (
+										<strong
+											className="font-medium text-2xl mt-2 block whitespace-nowrap"
+											data-test="price-table-plan-price"
+										>
+											{plan.priceLabel}
+										</strong>
+									)}
+
+									{!plan.priceLabel && plan.price && (
+										<div className="mt-2">
+											<strong
+												className="font-medium text-2xl block whitespace-nowrap"
+												data-test="price-table-plan-price"
+											>
+												{format.number(plan.price.amount, {
+													style: "currency",
+													currency: plan.price.currency,
+												})}
+												{intervalLabel && (
+													<span className="font-normal text-xs opacity-60">
+														{" / "}
+														{intervalLabel}
+													</span>
+												)}
+												{organizationId &&
+													"seatBased" in plan.price &&
+													plan.price.seatBased && (
+														<span className="font-normal text-xs opacity-60">
+															{" / "}
+															{t("pricing.perSeat")}
+														</span>
+													)}
+											</strong>
+
+											{monthlyEquivalent !== undefined && (
+												<p className="mt-1 text-sm text-primary">
+													{t("pricing.monthlyEquivalent", {
+														price: format.number(monthlyEquivalent, {
+															style: "currency",
+															currency: plan.price.currency,
+															maximumFractionDigits: 1,
+														}),
+													})}
+												</p>
+											)}
+										</div>
+									)}
+
 									{plan.description && (
 										<div className="prose mt-2 text-sm text-foreground/60">
 											{plan.description}
@@ -280,59 +346,6 @@ export function PricingTable({
 								</div>
 
 								<div>
-									{plan.priceLabel && (
-										<strong
-											className="font-medium text-2xl lg:text-3xl block"
-											data-test="price-table-plan-price"
-										>
-											{plan.priceLabel}
-										</strong>
-									)}
-
-									{plan.price && (
-										<strong
-											className="font-medium text-2xl lg:text-3xl block"
-											data-test="price-table-plan-price"
-										>
-											{format.number(plan.price.amount, {
-												style: "currency",
-												currency: plan.price.currency,
-											})}
-											{"interval" in plan.price && (
-												<span className="font-normal text-xs opacity-60">
-													{" / "}
-													{interval === "month"
-														? t("pricing.month", {
-																count: 1,
-															})
-														: t("pricing.year", {
-																count: 1,
-															})}
-												</span>
-											)}
-											{organizationId &&
-												"seatBased" in plan.price &&
-												plan.price.seatBased && (
-													<span className="font-normal text-xs opacity-60">
-														{" / "}
-														{t("pricing.perSeat")}
-													</span>
-												)}
-										</strong>
-									)}
-
-									{plan.price && monthlyEquivalent !== undefined && (
-										<p className="mt-1 text-sm text-primary">
-											{t("pricing.monthlyEquivalent", {
-												price: format.number(monthlyEquivalent, {
-													style: "currency",
-													currency: plan.price.currency,
-													maximumFractionDigits: 1,
-												}),
-											})}
-										</p>
-									)}
-
 									<Button
 										className="mt-4 w-full"
 										variant={plan.recommended ? "primary" : "secondary"}
