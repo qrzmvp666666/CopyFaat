@@ -29,7 +29,7 @@
 					"freeAccess": "0 USD 免费体验",
 					"proTrial48Hours": "注册成功即可领取 48 小时 Pro 会员"
 				},
-				"price": "¥0",
+				"price": "0 USD",
 				"title": "免费"
 			},
 			"lifetime": {
@@ -53,8 +53,8 @@
 					"communityNotifications": "专属社区通知"
 				},
 				"price": {
-					"month": "¥39/月",
-					"year": "¥399/年，约 ¥33/月"
+					"month": "6.6 USD/月",
+					"year": "6.6 USD/年"
 				},
 				"title": "Pro"
 			}

@@ -29,7 +29,7 @@
 					"freeAccess": "0 USD free access",
 					"proTrial48Hours": "Claim 48 hours of Pro after signup"
 				},
-				"price": "$0",
+				"price": "0 USD",
 				"title": "Free"
 			},
 			"lifetime": {
@@ -51,8 +51,8 @@
 					"communityNotifications": "Exclusive community notifications"
 				},
 				"price": {
-					"month": "$29/mo",
-					"year": "$290/yr"
+					"month": "6.6 USD/mo",
+					"year": "6.6 USD/yr"
 				},
 				"title": "Pro"
 			}
