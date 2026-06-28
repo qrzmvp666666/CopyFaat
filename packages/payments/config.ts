@@ -41,7 +41,7 @@ export const config: PaymentsConfig = {
 					paymentMethod: "card",
 					priceId: (process.env.PRICE_ID_LIFETIME_CARD ??
 						process.env.PRICE_ID_LIFETIME) as string,
-					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_LIFETIME_CARD ?? 799),
+					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_LIFETIME_CARD ?? 99),
 					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_LIFETIME_CARD ?? "USD",
 				},
 				// ── Lifetime WeChat (QiXiang) ─────────────────────────────────

@@ -13,7 +13,7 @@ import { useFormatter, useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
-const visiblePaidPlanIds = ["pro"];
+const visiblePaidPlanIds = ["pro", "lifetime"];
 
 function PaymentMethodMarks() {
 	const methods = [
@@ -70,14 +70,14 @@ const MARKETING_PLAN_COPY = {
 		},
 		lifetime: {
 			title: "终身版",
-			description: "一次购买，终身使用。包含所有 Pro 功能，无任何二次收费。",
+			description: "适合长期使用 SignalFast 的用户，一次付费锁定核心权益。",
 			features: [
 				"包含 Pro 所有功能",
-				"终身更新，永久可用",
 				"一次付费，无二次收费",
-				"专属客服支持",
-				"专属社区通知",
-				"专属支持",
+				"后续新功能优先免费使用",
+				"邮箱提醒优先免费使用",
+				"Telegram 提醒优先免费使用",
+				"Discord 提醒优先免费使用",
 			],
 		},
 	},
@@ -103,15 +103,14 @@ const MARKETING_PLAN_COPY = {
 		},
 		lifetime: {
 			title: "Lifetime",
-			description:
-				"Buy once, use forever. Includes all Pro features with no recurring charges.",
+			description: "For long-term SignalFast users who want to lock in core access once.",
 			features: [
 				"All Pro features included",
-				"Lifetime updates, always accessible",
 				"One-time payment, no hidden fees",
-				"Dedicated customer support",
-				"Exclusive community notifications",
-				"Dedicated support",
+				"Priority free access to future features",
+				"Priority free email alerts",
+				"Priority free Telegram alerts",
+				"Priority free Discord alerts",
 			],
 		},
 	},
@@ -296,7 +295,7 @@ export function PricingSection() {
 											</div>
 											{plan.priceLabel && (
 												<strong
-													className="font-medium text-2xl lg:text-3xl mt-2 block"
+													className="font-medium text-2xl mt-2 block"
 													data-test="price-table-plan-price"
 												>
 													{plan.priceLabel}
@@ -304,7 +303,7 @@ export function PricingSection() {
 											)}
 											{price && !plan.priceLabel && (
 												<strong
-													className="font-medium text-2xl lg:text-3xl mt-2 block"
+													className="font-medium text-2xl mt-2 block"
 													data-test="price-table-plan-price"
 												>
 													{price.amount} USDT

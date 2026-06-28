@@ -18,7 +18,7 @@ import type { ReactNode } from "react";
 import { useState } from "react";
 
 const plans = paymentsConfig.plans;
-const visiblePaidPlanIds = ["pro"];
+const visiblePaidPlanIds = ["pro", "lifetime"];
 
 interface PlanSelection {
 	type: "one-time" | "subscription";

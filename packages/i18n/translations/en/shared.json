@@ -34,11 +34,16 @@
 				"title": "Free"
 			},
 			"lifetime": {
-				"description": "Buy once. Use forever.",
+				"description": "For long-term SignalFast users who want to lock in core access once.",
 				"features": {
-					"extendSupport": "Extended support",
-					"noRecurringCosts": "No recurring costs"
+					"containProFeatures": "All Pro features included",
+					"noRecurringCosts": "One-time payment, no recurring fees",
+					"futureFeatures": "Priority free access to future features",
+					"emailAlerts": "Priority free email alerts",
+					"telegramAlerts": "Priority free Telegram alerts",
+					"discordAlerts": "Priority free Discord alerts"
 				},
+				"price": "99 USD",
 				"title": "Lifetime"
 			},
 			"pro": {
