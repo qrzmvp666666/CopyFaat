@@ -16,12 +16,6 @@ export const CONTACT_METHODS: ContactMethod[] = [
 		label: "电报",
 	},
 	{
-		account: "@Michael_RunZe",
-		href: "https://x.com/Michael_RunZe",
-		icon: "x",
-		label: "X",
-	},
-	{
 		account: "1934416232",
 		href: "tencent://message/?uin=1934416232&Site=SignalFast&Menu=yes",
 		icon: "qq",
@@ -32,6 +26,12 @@ export const CONTACT_METHODS: ContactMethod[] = [
 		href: "https://discord.gg/signalfast",
 		icon: "discord",
 		label: "Discord",
+	},
+	{
+		account: "@Michael_RunZe",
+		href: "https://x.com/Michael_RunZe",
+		icon: "x",
+		label: "X",
 	},
 ];
 
