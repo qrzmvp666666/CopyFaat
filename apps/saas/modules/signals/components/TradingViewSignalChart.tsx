@@ -101,6 +101,25 @@ function hasMarkerPositionsChanged(previous: MarkerPosition[], next: MarkerPosit
 	});
 }
 
+function isMarkerInsideChartViewport(
+	position: MarkerPosition | undefined,
+	container: HTMLDivElement | null,
+) {
+	if (!position || !container) {
+		return false;
+	}
+
+	const { height, width } = container.getBoundingClientRect();
+	const edgePadding = 16;
+
+	return (
+		position.left >= edgePadding &&
+		position.left <= width - edgePadding &&
+		position.top >= edgePadding &&
+		position.top <= height - edgePadding
+	);
+}
+
 function getSignalCandleIndex(signal: SignalChartSignal, candlesLength: number) {
 	return Math.min(
 		candlesLength - 1,
@@ -561,13 +580,24 @@ export function TradingViewSignalChart({
 			const focusedSignalKey = `${symbol}:${timeframe}:${getChartDataRangeKey(chartData)}:${activeSignal.id}`;
 
 			if (latestFocusedSignalKeyRef.current !== focusedSignalKey) {
-				const index = getSignalCandleIndex(activeSignal, candles.length);
-				const activeCandle = getNearestSignalCandle(activeSignal, candles);
-				const nearestIndex = activeCandle ? candles.indexOf(activeCandle) : index;
-				chart.timeScale().setVisibleLogicalRange({
-					from: Math.max(0, nearestIndex - 72),
-					to: Math.min(candles.length + 10, nearestIndex + 26),
-				});
+				const activeMarkerPosition = latestMarkerPositionsRef.current.find(
+					(position) => position.signal.id === activeSignal.id,
+				);
+				const isActiveMarkerVisible = isMarkerInsideChartViewport(
+					activeMarkerPosition,
+					containerRef.current,
+				);
+
+				if (!isActiveMarkerVisible) {
+					const index = getSignalCandleIndex(activeSignal, candles.length);
+					const activeCandle = getNearestSignalCandle(activeSignal, candles);
+					const nearestIndex = activeCandle ? candles.indexOf(activeCandle) : index;
+					chart.timeScale().setVisibleLogicalRange({
+						from: Math.max(0, nearestIndex - 72),
+						to: Math.min(candles.length + 10, nearestIndex + 26),
+					});
+				}
+
 				latestFocusedSignalKeyRef.current = focusedSignalKey;
 			}
 		} else {
