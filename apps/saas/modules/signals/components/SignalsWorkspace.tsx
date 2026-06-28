@@ -1327,8 +1327,8 @@ export function SignalsWorkspace() {
 	}
 
 	return (
-		<div className="min-h-full bg-[#141414] text-foreground">
-			<header className="px-4 py-2 backdrop-blur border-b bg-[#141414]/80">
+		<div className="min-h-full bg-[#141414] text-foreground xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden">
+			<header className="shrink-0 px-4 py-2 backdrop-blur border-b bg-[#141414]/80">
 				<div className="min-w-0 gap-3 no-scrollbar flex items-center overflow-x-auto">
 					<div className="gap-2 pr-3 text-sm font-semibold flex shrink-0 items-center">
 						<RadioIcon className="size-4 text-emerald-500" />
@@ -1385,7 +1385,7 @@ export function SignalsWorkspace() {
 
 			<div
 				className={cn(
-					"gap-0 lg:min-h-[760px] xl:h-[calc(100vh-121px)] grid grid-cols-1",
+					"gap-0 lg:min-h-[760px] xl:min-h-0 xl:flex-1 xl:overflow-hidden grid grid-cols-1",
 					isSignalPanelCollapsed
 						? "xl:grid-cols-[minmax(700px,1fr)_0px]"
 						: "xl:grid-cols-[minmax(700px,1fr)_328px]",
@@ -1462,8 +1462,8 @@ export function SignalsWorkspace() {
 					</div>
 				</aside>
 
-				<main className="min-w-0 flex flex-col bg-[#141414]">
-					<section className="px-3 py-3 border-b bg-[#141414]">
+				<main className="min-h-0 min-w-0 flex flex-col bg-[#141414]">
+					<section className="shrink-0 px-3 py-3 border-b bg-[#141414]">
 						<div className="gap-3 flex flex-col">
 							<div className="no-scrollbar -mx-3 min-w-0 gap-2 px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 flex flex-nowrap items-center overflow-x-auto">
 								<button
@@ -1675,7 +1675,7 @@ export function SignalsWorkspace() {
 							</div>
 						</div>
 
-						<div className="xl:min-h-0 xl:flex-1 h-[620px]">
+						<div className="h-[620px] xl:min-h-0 xl:flex-1">
 							<TradingViewSignalChart
 								activeSignal={activeSignal}
 								candles={candles}
@@ -1698,7 +1698,9 @@ export function SignalsWorkspace() {
 				</main>
 
 				<aside
-					className={cn("group xl:border-l xl:border-t-0 relative border-t bg-[#141414]")}
+					className={cn(
+						"group xl:border-l xl:border-t-0 relative min-h-0 border-t bg-[#141414] xl:flex xl:flex-col xl:overflow-hidden",
+					)}
 				>
 					<button
 						type="button"
@@ -1719,7 +1721,9 @@ export function SignalsWorkspace() {
 						)}
 					</button>
 
-					<div className={cn("border-b", isSignalPanelCollapsed && "xl:hidden")}>
+					<div
+						className={cn("shrink-0 border-b", isSignalPanelCollapsed && "xl:hidden")}
+					>
 						<div
 							className={cn(
 								"min-w-0 grid grid-cols-2",
@@ -1764,7 +1768,7 @@ export function SignalsWorkspace() {
 
 					<div
 						className={cn(
-							"space-y-3 p-3 xl:max-h-[680px] xl:overflow-y-auto",
+							"space-y-3 p-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:overscroll-contain",
 							isSignalPanelCollapsed && "xl:hidden",
 						)}
 					>

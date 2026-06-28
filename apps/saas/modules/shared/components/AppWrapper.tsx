@@ -33,7 +33,9 @@ function AppContent({ children }: PropsWithChildren) {
 							: "py-6 md:overflow-y-auto h-full",
 					)}
 				>
-					<div className={cn(!isSignalsWorkspace && "container")}>{children}</div>
+					<div className={cn(isSignalsWorkspace ? "h-full min-h-0" : "container")}>
+						{children}
+					</div>
 				</main>
 			</div>
 		</div>
