@@ -35,6 +35,14 @@ interface DisplayPlan {
 	recommended?: boolean;
 }
 
+function getMonthlyEquivalent(price: PaidPlan["prices"][number]): number | undefined {
+	if (price.type !== "subscription" || price.interval !== "year") {
+		return undefined;
+	}
+
+	return price.amount / 12;
+}
+
 function PaymentMethodMarks() {
 	const methods = [
 		{
@@ -207,6 +215,10 @@ export function PricingTable({
 				)}
 			>
 				{displayPlans.map((plan) => {
+					const monthlyEquivalent = plan.price
+						? getMonthlyEquivalent(plan.price)
+						: undefined;
+
 					return (
 						<div
 							key={plan.id}
@@ -307,6 +319,18 @@ export function PricingTable({
 													</span>
 												)}
 										</strong>
+									)}
+
+									{plan.price && monthlyEquivalent !== undefined && (
+										<p className="mt-1 text-sm text-primary">
+											{t("pricing.monthlyEquivalent", {
+												price: format.number(monthlyEquivalent, {
+													style: "currency",
+													currency: plan.price.currency,
+													maximumFractionDigits: 1,
+												}),
+											})}
+										</p>
 									)}
 
 									<Button

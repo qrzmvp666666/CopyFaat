@@ -17,7 +17,7 @@ export const config: PaymentsConfig = {
 					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_PRO_MONTHLY_CARD ?? 6.6),
 					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_PRO_MONTHLY_CARD ?? "USD",
 					seatBased: true,
-					trialPeriodDays: 7,
+					trialPeriodDays: 2,
 				},
 				// ── Pro Yearly (card only) ────────────────────────────────────
 				{
@@ -26,10 +26,10 @@ export const config: PaymentsConfig = {
 					priceId: (process.env.PRICE_ID_PRO_YEARLY_CARD ??
 						process.env.PRICE_ID_PRO_YEARLY) as string,
 					interval: "year",
-					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_PRO_YEARLY_CARD ?? 6.6),
+					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_PRO_YEARLY_CARD ?? 66),
 					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_PRO_YEARLY_CARD ?? "USD",
 					seatBased: true,
-					trialPeriodDays: 7,
+					trialPeriodDays: 2,
 				},
 			],
 		},

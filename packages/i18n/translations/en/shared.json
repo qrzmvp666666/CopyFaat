@@ -6,6 +6,7 @@
 		"getStarted": "Get started",
 		"month": "{count, plural, one {month} other {{count} months}}",
 		"monthly": "Monthly",
+		"monthlyEquivalent": "About {price}/mo",
 		"products": {
 			"basic": {
 				"description": "Perfect to small teams.",
@@ -52,7 +53,7 @@
 				},
 				"price": {
 					"month": "6.6 USD/mo",
-					"year": "6.6 USD/yr"
+					"year": "66 USD/yr, about 5.5 USD/mo"
 				},
 				"title": "Pro"
 			}
@@ -61,7 +62,7 @@
 		"recommended": "Recommended",
 		"subscribe": "Subscribe",
 		"title": "Pricing",
-		"trialPeriod": "{days} {days, plural, one {day} other {days}} free trial",
+		"trialPeriod": "48-hour free trial",
 		"year": "{count, plural, one {year} other {{count} years}}",
 		"yearly": "Yearly",
 		"perSeat": "seat",
