@@ -72,6 +72,7 @@ const PROFIT_COLOR = "#26a69a";
 const RISK_COLOR = "#ef5350";
 const ENTRY_COLOR = "#f59e0b";
 const MARKER_STACK_GAP = 72;
+const DESKTOP_CHART_INTERACTION_QUERY = "(min-width: 1280px)";
 
 function getStackOffset(index: number) {
 	if (index === 0) {
@@ -191,6 +192,29 @@ function getSignalPriceRange(activeSignal: SignalChartSignal | null) {
 	return {
 		maxValue: Math.max(...validPrices),
 		minValue: Math.min(...validPrices),
+	};
+}
+
+function getChartInteractionOptions(isDesktopLayout: boolean) {
+	return {
+		handleScale: {
+			axisDoubleClickReset: {
+				price: true,
+				time: true,
+			},
+			axisPressedMouseMove: {
+				price: true,
+				time: true,
+			},
+			mouseWheel: isDesktopLayout,
+			pinch: true,
+		},
+		handleScroll: {
+			horzTouchDrag: isDesktopLayout,
+			mouseWheel: isDesktopLayout,
+			pressedMouseMove: true,
+			vertTouchDrag: false,
+		},
 	};
 }
 
@@ -345,6 +369,7 @@ export function TradingViewSignalChart({
 			return;
 		}
 
+		const interactionMediaQuery = window.matchMedia(DESKTOP_CHART_INTERACTION_QUERY);
 		const chart = createChart(container, {
 			height: Math.max(520, Math.round(container.getBoundingClientRect().height)),
 			width: Math.max(1, Math.round(container.getBoundingClientRect().width)),
@@ -359,6 +384,7 @@ export function TradingViewSignalChart({
 					color: CHART_GRID,
 				},
 			},
+			...getChartInteractionOptions(interactionMediaQuery.matches),
 			layout: {
 				attributionLogo: true,
 				background: {
@@ -429,7 +455,16 @@ export function TradingViewSignalChart({
 		const handleRangeChange = () => scheduleMarkerPositionUpdate();
 		chart.timeScale().subscribeVisibleLogicalRangeChange(handleRangeChange);
 
+		const handleInteractionMediaQueryChange = (event: MediaQueryListEvent) => {
+			chart.applyOptions(getChartInteractionOptions(event.matches));
+		};
+		interactionMediaQuery.addEventListener("change", handleInteractionMediaQueryChange);
+
 		return () => {
+			interactionMediaQuery.removeEventListener(
+				"change",
+				handleInteractionMediaQueryChange,
+			);
 			chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleRangeChange);
 			resizeObserver.disconnect();
 			chart.remove();

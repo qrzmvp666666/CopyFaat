@@ -1341,7 +1341,7 @@ export function SignalsWorkspace() {
 	}
 
 	return (
-		<div className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden min-h-full bg-[#141414] text-foreground">
+		<div className="min-h-full bg-[#141414] text-foreground xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden">
 			<header className="px-4 py-2 backdrop-blur shrink-0 border-b bg-[#141414]/80">
 				<div className="min-w-0 gap-3 no-scrollbar flex items-center overflow-x-auto">
 					<div className="gap-2 pr-3 text-sm font-semibold flex shrink-0 items-center">
@@ -1399,7 +1399,7 @@ export function SignalsWorkspace() {
 
 			<div
 				className={cn(
-					"gap-0 lg:min-h-[760px] xl:min-h-0 xl:flex-1 xl:overflow-hidden grid grid-cols-1",
+					"grid grid-cols-1 gap-0 xl:min-h-0 xl:flex-1 xl:overflow-hidden",
 					isSignalPanelCollapsed
 						? "xl:grid-cols-[minmax(700px,1fr)_0px]"
 						: "xl:grid-cols-[minmax(700px,1fr)_328px]",
@@ -1650,7 +1650,7 @@ export function SignalsWorkspace() {
 						</div>
 					</section>
 
-					<section className="xl:min-h-0 xl:flex-1 flex flex-col">
+					<section className="flex flex-col xl:min-h-0 xl:flex-1">
 						<div className="px-4 py-3 flex items-center justify-between border-b bg-[#141414]">
 							<div className="gap-3 flex items-center">
 								<ChartCandlestickIcon className="size-4 text-muted-foreground" />
@@ -1689,7 +1689,7 @@ export function SignalsWorkspace() {
 							</div>
 						</div>
 
-						<div className="xl:min-h-0 xl:flex-1 h-[620px]">
+						<div className="h-[min(620px,calc(100vh-260px))] min-h-[420px] xl:h-auto xl:min-h-0 xl:flex-1">
 							<TradingViewSignalChart
 								activeSignal={activeSignal}
 								candles={candles}
@@ -1713,7 +1713,7 @@ export function SignalsWorkspace() {
 
 				<aside
 					className={cn(
-						"group xl:border-l xl:border-t-0 min-h-0 xl:flex xl:flex-col xl:overflow-hidden relative border-t bg-[#141414]",
+						"group relative min-h-0 border-t bg-[#141414] xl:flex xl:flex-col xl:overflow-hidden xl:border-l xl:border-t-0",
 					)}
 				>
 					<button

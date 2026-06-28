@@ -29,7 +29,7 @@ function AppContent({ children }: PropsWithChildren) {
 					className={cn(
 						"md:border md:rounded-2xl w-full border-t bg-card",
 						isSignalsWorkspace
-							? "p-0 md:h-full md:overflow-hidden min-h-full overflow-visible"
+							? "p-0 md:h-full md:overflow-y-auto xl:overflow-hidden min-h-full overflow-visible"
 							: "py-6 md:overflow-y-auto h-full",
 					)}
 				>
