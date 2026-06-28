@@ -6,7 +6,7 @@ import { config as paymentsConfig } from "@repo/payments/config";
 import type { PaidPlan } from "@repo/payments/types";
 import { cn } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
-import { AlipayIcon, StripeIcon, WeChatIcon } from "@repo/ui/components/payment-brand-icons";
+import { AlipayIcon, StripeIcon } from "@repo/ui/components/payment-brand-icons";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
 import { toastError } from "@repo/ui/components/toast";
 import { useRouter } from "@shared/hooks/router";
@@ -41,11 +41,6 @@ function PaymentMethodMarks() {
 			label: "Stripe",
 			icon: StripeIcon,
 			className: "h-5 w-7 text-[#635BFF]",
-		},
-		{
-			label: "微信支付",
-			icon: WeChatIcon,
-			className: "size-5 text-[#07C160]",
 		},
 		{
 			label: "支付宝",
