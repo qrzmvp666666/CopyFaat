@@ -31,8 +31,6 @@ import type { LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
-import type { SignalChartSignal } from "./TradingViewSignalChart";
-import { TradingViewSignalChart } from "./TradingViewSignalChart";
 import { isBlockedSignalTrader } from "../lib/signal-identity";
 import type {
 	SignalKlinesResponse,
@@ -40,6 +38,8 @@ import type {
 	StoredSignal,
 	StoredTradingSymbol,
 } from "../lib/signal-types";
+import type { SignalChartSignal } from "./TradingViewSignalChart";
+import { TradingViewSignalChart } from "./TradingViewSignalChart";
 
 const SUPPORTED_TIMEFRAMES = ["15m", "1h", "4h", "1d"] as const;
 const SIGNAL_DIRECTIONS = ["all", "long", "short"] as const;
@@ -179,6 +179,7 @@ const INSTRUMENTS: Instrument[] = [
 
 const BINANCE_STREAM_BASE_URL = "wss://stream.binance.com:9443";
 const BINANCE_RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000] as const;
+const MIN_CHART_CANDLES = 20;
 const TICK_FLASH_MS = 700;
 
 const SIGNALS: TradeSignal[] = [
@@ -598,9 +599,7 @@ function createSourceFilterFromSignal(signal: StoredSignal): Source {
 
 	return {
 		accent: getSymbolAccent(id),
-		avatar:
-			signal.source.avatarUrl ??
-			getGeneratedSvgDataUrl(id, name, "trader"),
+		avatar: signal.source.avatarUrl ?? getGeneratedSvgDataUrl(id, name, "trader"),
 		handle: signal.source.handle ?? signal.source.platform ?? "",
 		id,
 		initials: getAvatarLabel(name),
@@ -740,15 +739,15 @@ function getSignalStatusPresentation(
 function mapStoredSignalToTradeSignal(signal: StoredSignal, locale: string): TradeSignal {
 	const submittedAtTime = Math.floor(new Date(signal.submittedAt).getTime() / 1000);
 
-		return {
-			avatarLabel: getAvatarLabel(signal.source.name),
-			avatarUrl:
-				signal.source.avatarUrl ??
-				getGeneratedSvgDataUrl(
-					signal.source.id ?? signal.source.name,
-					signal.source.name,
-					"trader",
-				),
+	return {
+		avatarLabel: getAvatarLabel(signal.source.name),
+		avatarUrl:
+			signal.source.avatarUrl ??
+			getGeneratedSvgDataUrl(
+				signal.source.id ?? signal.source.name,
+				signal.source.name,
+				"trader",
+			),
 		confidence: signal.riskReward,
 		direction: signal.direction,
 		entry: signal.entry,
@@ -937,7 +936,10 @@ function getSelectedSignal(signals: TradeSignal[], activeSignalId: string | null
 	return signals.find((signal) => signal.id === activeSignalId) ?? signals[0] ?? null;
 }
 
-function matchesSelectedSources(signal: Pick<TradeSignal, "sourceId">, selectedSourceIds: string[]) {
+function matchesSelectedSources(
+	signal: Pick<TradeSignal, "sourceId">,
+	selectedSourceIds: string[],
+) {
 	return selectedSourceIds.length === 0 || selectedSourceIds.includes(signal.sourceId);
 }
 
@@ -946,7 +948,9 @@ export function SignalsWorkspace() {
 	const locale = useLocale();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
 	const [binanceCandles, setBinanceCandles] = useState<Candle[]>([]);
-	const [instrumentQuotes, setInstrumentQuotes] = useState<Record<string, Partial<Instrument>>>({});
+	const [instrumentQuotes, setInstrumentQuotes] = useState<Record<string, Partial<Instrument>>>(
+		{},
+	);
 	const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
 	const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("1h");
 	const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
@@ -956,6 +960,7 @@ export function SignalsWorkspace() {
 	const [selectedEntryStatus, setSelectedEntryStatus] = useState<EntryStatus>("all");
 	const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
+	const [isSignalsLoading, setIsSignalsLoading] = useState(true);
 
 	const signals = useMemo(
 		() => webhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
@@ -968,9 +973,10 @@ export function SignalsWorkspace() {
 			symbols.set(signal.tradingSymbol.symbol, signal.tradingSymbol);
 		}
 
-		return (symbols.size
-			? Array.from(symbols.values()).map(createInstrumentFromTradingSymbol)
-			: INSTRUMENTS
+		return (
+			symbols.size
+				? Array.from(symbols.values()).map(createInstrumentFromTradingSymbol)
+				: INSTRUMENTS
 		).sort((a, b) => a.symbol.localeCompare(b.symbol));
 	}, [webhookSignals]);
 	const instruments = useMemo(
@@ -1022,9 +1028,12 @@ export function SignalsWorkspace() {
 					setWebhookSignals(
 						data.signals.filter((signal) => !isBlockedSignalTrader(signal.source)),
 					);
+					setIsSignalsLoading(false);
 				}
 			} catch {
-				// Keep the static demo data visible if the local API is temporarily unavailable.
+				if (isMounted) {
+					setIsSignalsLoading(false);
+				}
 			}
 		}
 
@@ -1174,7 +1183,8 @@ export function SignalsWorkspace() {
 				}
 
 				setInstrumentQuotes((currentQuotes) => {
-					const previousPrice = currentQuotes[ticker.symbol]?.price ?? currentInstrument.price;
+					const previousPrice =
+						currentQuotes[ticker.symbol]?.price ?? currentInstrument.price;
 					const tickDirection =
 						ticker.price > previousPrice
 							? "up"
@@ -1208,7 +1218,11 @@ export function SignalsWorkspace() {
 					return;
 				}
 
-				setBinanceCandles((currentCandles) => upsertCandle(currentCandles, candle));
+				setBinanceCandles((currentCandles) =>
+					currentCandles.length >= MIN_CHART_CANDLES
+						? upsertCandle(currentCandles, candle)
+						: currentCandles,
+				);
 			},
 		);
 
@@ -1273,7 +1287,7 @@ export function SignalsWorkspace() {
 
 	const candles = useMemo(
 		() =>
-			binanceCandles.length
+			binanceCandles.length >= MIN_CHART_CANDLES
 				? binanceCandles
 				: buildFallbackCandles(selectedSymbol, selectedTimeframe),
 		[binanceCandles, selectedSymbol, selectedTimeframe],
@@ -1327,48 +1341,48 @@ export function SignalsWorkspace() {
 	}
 
 	return (
-		<div className="min-h-full bg-[#141414] text-foreground xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden">
-			<header className="shrink-0 px-4 py-2 backdrop-blur border-b bg-[#141414]/80">
+		<div className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden min-h-full bg-[#141414] text-foreground">
+			<header className="px-4 py-2 backdrop-blur shrink-0 border-b bg-[#141414]/80">
 				<div className="min-w-0 gap-3 no-scrollbar flex items-center overflow-x-auto">
 					<div className="gap-2 pr-3 text-sm font-semibold flex shrink-0 items-center">
 						<RadioIcon className="size-4 text-emerald-500" />
 						<span>{t("ticker.live")}</span>
 					</div>
-						{instruments.map((instrument) => (
-							<button
-								key={instrument.symbol}
-								type="button"
-								onClick={() => selectSymbol(instrument.symbol)}
+					{instruments.map((instrument) => (
+						<button
+							key={instrument.symbol}
+							type="button"
+							onClick={() => selectSymbol(instrument.symbol)}
+							className={cn(
+								"gap-2 px-3 py-1.5 text-sm hover:bg-white/8 flex shrink-0 items-center rounded-md border text-left transition-colors duration-200",
+								selectedSymbol === instrument.symbol
+									? "bg-white/8 border-foreground/20"
+									: "border-transparent bg-transparent",
+							)}
+						>
+							<span className="size-5 bg-black font-bold flex shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px]">
+								{instrument.logo ? (
+									<img
+										alt={instrument.base}
+										className="size-6 object-contain"
+										src={instrument.logo}
+									/>
+								) : (
+									instrument.base.slice(0, 2)
+								)}
+							</span>
+							<span className="font-semibold">{instrument.base}</span>
+							<span
 								className={cn(
-									"gap-2 px-3 py-1.5 text-sm hover:bg-white/8 flex shrink-0 items-center rounded-md border text-left transition-colors duration-200",
-									selectedSymbol === instrument.symbol
-										? "bg-white/8 border-foreground/20"
-										: "border-transparent bg-transparent",
+									"font-mono text-muted-foreground transition-colors duration-200",
+									instrument.tickDirection === "up" && "text-emerald-400",
+									instrument.tickDirection === "down" && "text-rose-400",
 								)}
 							>
-								<span className="size-5 bg-black text-[10px] font-bold flex shrink-0 items-center justify-center overflow-hidden rounded-full">
-									{instrument.logo ? (
-										<img
-											alt={instrument.base}
-											className="size-6 object-contain"
-											src={instrument.logo}
-										/>
-									) : (
-										instrument.base.slice(0, 2)
-									)}
-								</span>
-								<span className="font-semibold">{instrument.base}</span>
-								<span
-									className={cn(
-										"font-mono text-muted-foreground transition-colors duration-200",
-										instrument.tickDirection === "up" && "text-emerald-400",
-										instrument.tickDirection === "down" && "text-rose-400",
-									)}
-								>
-									{instrument.price > 0
-										? `$${formatPrice(instrument.price, instrument.pricePrecision ?? 0)}`
-										: "--"}
-								</span>
+								{instrument.price > 0
+									? `$${formatPrice(instrument.price, instrument.pricePrecision ?? 0)}`
+									: "--"}
+							</span>
 							<span
 								className={cn(
 									"font-mono text-xs",
@@ -1463,7 +1477,7 @@ export function SignalsWorkspace() {
 				</aside>
 
 				<main className="min-h-0 min-w-0 flex flex-col bg-[#141414]">
-					<section className="shrink-0 px-3 py-3 border-b bg-[#141414]">
+					<section className="px-3 py-3 shrink-0 border-b bg-[#141414]">
 						<div className="gap-3 flex flex-col">
 							<div className="no-scrollbar -mx-3 min-w-0 gap-2 px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 flex flex-nowrap items-center overflow-x-auto">
 								<button
@@ -1675,7 +1689,7 @@ export function SignalsWorkspace() {
 							</div>
 						</div>
 
-						<div className="h-[620px] xl:min-h-0 xl:flex-1">
+						<div className="xl:min-h-0 xl:flex-1 h-[620px]">
 							<TradingViewSignalChart
 								activeSignal={activeSignal}
 								candles={candles}
@@ -1699,7 +1713,7 @@ export function SignalsWorkspace() {
 
 				<aside
 					className={cn(
-						"group xl:border-l xl:border-t-0 relative min-h-0 border-t bg-[#141414] xl:flex xl:flex-col xl:overflow-hidden",
+						"group xl:border-l xl:border-t-0 min-h-0 xl:flex xl:flex-col xl:overflow-hidden relative border-t bg-[#141414]",
 					)}
 				>
 					<button
@@ -1721,9 +1735,7 @@ export function SignalsWorkspace() {
 						)}
 					</button>
 
-					<div
-						className={cn("shrink-0 border-b", isSignalPanelCollapsed && "xl:hidden")}
-					>
+					<div className={cn("shrink-0 border-b", isSignalPanelCollapsed && "xl:hidden")}>
 						<div
 							className={cn(
 								"min-w-0 grid grid-cols-2",
@@ -1772,7 +1784,14 @@ export function SignalsWorkspace() {
 							isSignalPanelCollapsed && "xl:hidden",
 						)}
 					>
-						{filteredSignals.length ? (
+						{isSignalsLoading && !filteredSignals.length ? (
+							<div className="p-6 rounded-md border border-dashed text-center">
+								<p className="font-medium">正在加载信号</p>
+								<p className="mt-1 text-sm text-muted-foreground">
+									正在同步 KOL 信号与 K 线标记。
+								</p>
+							</div>
+						) : filteredSignals.length ? (
 							filteredSignals.map((signal) => {
 								const statusPresentation = getSignalStatusPresentation(signal, {
 									closed: t("signalsPanel.closed"),
@@ -1794,7 +1813,7 @@ export function SignalsWorkspace() {
 												"border-white/10 bg-white/5",
 										)}
 									>
-										<div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+										<div className="mb-3 gap-2 grid grid-cols-[minmax(0,1fr)_auto] items-start">
 											<div className="min-w-0 gap-2 flex items-center">
 												<span className="size-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
 													<img
@@ -1803,75 +1822,75 @@ export function SignalsWorkspace() {
 														src={signal.avatarUrl}
 													/>
 												</span>
-											<div className="min-w-0 flex-1">
-												<p className="text-sm font-semibold truncate">
-													{signal.sourceName}
-												</p>
-												<p className="text-xs truncate text-muted-foreground">
-													{selectedInstrument.symbol} ·{" "}
-													{t(`direction.${signal.direction}`)}
-												</p>
+												<div className="min-w-0 flex-1">
+													<p className="text-sm font-semibold truncate">
+														{signal.sourceName}
+													</p>
+													<p className="text-xs truncate text-muted-foreground">
+														{selectedInstrument.symbol} ·{" "}
+														{t(`direction.${signal.direction}`)}
+													</p>
+												</div>
 											</div>
-										</div>
-										<span
-											className={cn(
-												"max-w-[72px] px-2 py-1 text-center font-semibold leading-tight rounded-full border text-[11px]",
-												statusPresentation.badgeClassName,
-											)}
-										>
-											{statusPresentation.label}
-										</span>
-									</div>
-
-									<div className="gap-3 text-xs grid grid-cols-2">
-										<SignalMetric
-											label={t("signalsPanel.entry")}
-											value={formatPrice(signal.entry)}
-										/>
-										<SignalMetric
-											label={t("signalsPanel.submittedAt")}
-											value={signal.submittedAt}
-										/>
-										<SignalMetric
-											label={t("signalsPanel.takeProfit")}
-											value={
-												signal.takeProfit === undefined
-													? "--"
-													: formatPrice(signal.takeProfit)
-											}
-											tone="profit"
-										/>
-										<SignalMetric
-											label={t("signalsPanel.stopLoss")}
-											value={formatPrice(signal.stopLoss)}
-											tone="risk"
-										/>
-									</div>
-
-									<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-[#141414]">
-										<span className="gap-1 flex items-center text-muted-foreground">
-											<StatusIcon
+											<span
 												className={cn(
-													"size-3.5",
-													statusPresentation.resultIconClassName,
+													"px-2 py-1 font-semibold leading-tight max-w-[72px] rounded-full border text-center text-[11px]",
+													statusPresentation.badgeClassName,
 												)}
+											>
+												{statusPresentation.label}
+											</span>
+										</div>
+
+										<div className="gap-3 text-xs grid grid-cols-2">
+											<SignalMetric
+												label={t("signalsPanel.entry")}
+												value={formatPrice(signal.entry)}
 											/>
-											{statusPresentation.resultLabel}
-										</span>
-										<span
-											className={cn(
-												"font-mono font-semibold",
-												statusPresentation.resultValueClassName,
-											)}
-										>
-											{signal.status === "active"
-												? signal.takeProfit === undefined
-													? "--"
-													: signal.confidence.toFixed(2)
-												: statusPresentation.label}
-										</span>
-									</div>
-								</button>
+											<SignalMetric
+												label={t("signalsPanel.submittedAt")}
+												value={signal.submittedAt}
+											/>
+											<SignalMetric
+												label={t("signalsPanel.takeProfit")}
+												value={
+													signal.takeProfit === undefined
+														? "--"
+														: formatPrice(signal.takeProfit)
+												}
+												tone="profit"
+											/>
+											<SignalMetric
+												label={t("signalsPanel.stopLoss")}
+												value={formatPrice(signal.stopLoss)}
+												tone="risk"
+											/>
+										</div>
+
+										<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-[#141414]">
+											<span className="gap-1 flex items-center text-muted-foreground">
+												<StatusIcon
+													className={cn(
+														"size-3.5",
+														statusPresentation.resultIconClassName,
+													)}
+												/>
+												{statusPresentation.resultLabel}
+											</span>
+											<span
+												className={cn(
+													"font-mono font-semibold",
+													statusPresentation.resultValueClassName,
+												)}
+											>
+												{signal.status === "active"
+													? signal.takeProfit === undefined
+														? "--"
+														: signal.confidence.toFixed(2)
+													: statusPresentation.label}
+											</span>
+										</div>
+									</button>
 								);
 							})
 						) : (

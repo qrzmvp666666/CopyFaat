@@ -71,6 +71,35 @@ const DOWN_COLOR = "#51a59b";
 const PROFIT_COLOR = "#26a69a";
 const RISK_COLOR = "#ef5350";
 const ENTRY_COLOR = "#f59e0b";
+const MARKER_STACK_GAP = 72;
+
+function getStackOffset(index: number) {
+	if (index === 0) {
+		return 0;
+	}
+
+	const direction = index % 2 === 1 ? 1 : -1;
+	const distance = Math.ceil(index / 2) * MARKER_STACK_GAP;
+
+	return direction * distance;
+}
+
+function hasMarkerPositionsChanged(previous: MarkerPosition[], next: MarkerPosition[]) {
+	if (previous.length !== next.length) {
+		return true;
+	}
+
+	return previous.some((position, index) => {
+		const nextPosition = next[index];
+
+		return (
+			!nextPosition ||
+			position.signal.id !== nextPosition.signal.id ||
+			position.left !== nextPosition.left ||
+			position.top !== nextPosition.top
+		);
+	});
+}
 
 function getSignalCandleIndex(signal: SignalChartSignal, candlesLength: number) {
 	return Math.min(
@@ -119,12 +148,21 @@ function getRiskPrice(signal: SignalChartSignal) {
 	return signal.stopLoss;
 }
 
+function getChartDataRangeKey(chartData: CandlestickData<UTCTimestamp>[]) {
+	const firstCandle = chartData[0];
+	const lastCandle = chartData.at(-1);
+
+	return `${chartData.length}:${String(firstCandle?.time ?? "")}:${String(lastCandle?.time ?? "")}`;
+}
+
 function isPositiveFiniteNumber(value: number | undefined): value is number {
 	return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
-function getSignalPriceRange(signals: SignalChartSignal[]) {
-	const prices = signals.flatMap((signal) => [signal.entry, signal.takeProfit, signal.stopLoss]);
+function getSignalPriceRange(activeSignal: SignalChartSignal | null) {
+	const prices = activeSignal
+		? [activeSignal.entry, activeSignal.takeProfit, activeSignal.stopLoss]
+		: [];
 	const validPrices = prices.filter(isPositiveFiniteNumber);
 
 	if (!validPrices.length) {
@@ -156,13 +194,22 @@ export function TradingViewSignalChart({
 	const priceLinesRef = useRef<IPriceLine[]>([]);
 	const latestSignalsRef = useRef(signals);
 	const latestCandlesRef = useRef(candles);
+	const latestChartDataRef = useRef<CandlestickData<UTCTimestamp>[]>([]);
+	const latestMarkerPositionsRef = useRef<MarkerPosition[]>([]);
+	const latestActiveSignalRef = useRef(activeSignal);
+	const latestFormatPriceRef = useRef(formatPrice);
+	const latestPricePrecisionRef = useRef(pricePrecision);
+	const latestFocusedSignalKeyRef = useRef<string | null>(null);
+	const latestViewKeyRef = useRef<string | null>(null);
+	const markerRetryCountRef = useRef(0);
+	const markerRetryTimeoutRef = useRef<number | null>(null);
 	const [markerPositions, setMarkerPositions] = useState<MarkerPosition[]>([]);
 	const minMove = getMinMove(pricePrecision);
 
 	const autoscaleInfoProvider = useCallback<AutoscaleInfoProvider>(
 		(original) => {
 			const base = original();
-			const signalRange = getSignalPriceRange(latestSignalsRef.current);
+			const signalRange = getSignalPriceRange(latestActiveSignalRef.current);
 
 			if (!base?.priceRange || !signalRange) {
 				return base;
@@ -195,6 +242,10 @@ export function TradingViewSignalChart({
 		[candles],
 	);
 
+	latestActiveSignalRef.current = activeSignal;
+	latestFormatPriceRef.current = formatPrice;
+	latestPricePrecisionRef.current = pricePrecision;
+
 	const updateMarkerPositions = useCallback(() => {
 		const chart = chartRef.current;
 		const series = seriesRef.current;
@@ -203,6 +254,7 @@ export function TradingViewSignalChart({
 			return;
 		}
 
+		const stackCounts = new Map<string, number>();
 		const nextPositions = latestSignalsRef.current.flatMap((signal) => {
 			const candle = getNearestSignalCandle(signal, latestCandlesRef.current);
 
@@ -217,17 +269,55 @@ export function TradingViewSignalChart({
 				return [];
 			}
 
-			return [{ left, signal, top }];
+			const roundedLeft = Math.round(left);
+			const roundedTop = Math.round(top);
+			const stackKey = `${roundedLeft}:${roundedTop}`;
+			const stackIndex = stackCounts.get(stackKey) ?? 0;
+			stackCounts.set(stackKey, stackIndex + 1);
+
+			return [
+				{
+					left: roundedLeft + getStackOffset(stackIndex),
+					signal,
+					top: roundedTop,
+				},
+			];
 		});
 
-		setMarkerPositions(nextPositions);
+		if (nextPositions.length === 0 && latestSignalsRef.current.length > 0) {
+			if (markerRetryCountRef.current < 12 && markerRetryTimeoutRef.current === null) {
+				markerRetryCountRef.current += 1;
+				markerRetryTimeoutRef.current = window.setTimeout(() => {
+					markerRetryTimeoutRef.current = null;
+					updateMarkerPositions();
+				}, 120);
+			}
+			return;
+		}
+
+		markerRetryCountRef.current = 0;
+
+		if (hasMarkerPositionsChanged(latestMarkerPositionsRef.current, nextPositions)) {
+			latestMarkerPositionsRef.current = nextPositions;
+			setMarkerPositions(nextPositions);
+		}
 	}, []);
+
+	const scheduleMarkerPositionUpdate = useCallback(() => {
+		window.requestAnimationFrame(() => {
+			updateMarkerPositions();
+			window.requestAnimationFrame(updateMarkerPositions);
+		});
+
+		window.setTimeout(updateMarkerPositions, 80);
+	}, [updateMarkerPositions]);
 
 	useEffect(() => {
 		latestSignalsRef.current = signals;
 		latestCandlesRef.current = candles;
-		window.requestAnimationFrame(updateMarkerPositions);
-	}, [candles, signals, updateMarkerPositions]);
+		markerRetryCountRef.current = 0;
+		scheduleMarkerPositionUpdate();
+	}, [candles, signals, scheduleMarkerPositionUpdate]);
 
 	useEffect(() => {
 		const container = containerRef.current;
@@ -237,7 +327,8 @@ export function TradingViewSignalChart({
 		}
 
 		const chart = createChart(container, {
-			autoSize: true,
+			height: Math.max(520, Math.round(container.getBoundingClientRect().height)),
+			width: Math.max(1, Math.round(container.getBoundingClientRect().width)),
 			crosshair: {
 				mode: CrosshairMode.Normal,
 			},
@@ -262,7 +353,8 @@ export function TradingViewSignalChart({
 			},
 			localization: {
 				locale,
-				priceFormatter: (price: number) => formatPrice(price, pricePrecision),
+				priceFormatter: (price: number) =>
+					latestFormatPriceRef.current(price, latestPricePrecisionRef.current),
 			},
 			rightPriceScale: {
 				borderColor: "rgba(255, 255, 255, 0.12)",
@@ -300,13 +392,22 @@ export function TradingViewSignalChart({
 
 		chartRef.current = chart;
 		seriesRef.current = series;
+		latestChartDataRef.current = [];
+		latestViewKeyRef.current = null;
+		latestFocusedSignalKeyRef.current = null;
 
 		const resizeObserver = new ResizeObserver(() => {
-			window.requestAnimationFrame(updateMarkerPositions);
+			const { height, width } = container.getBoundingClientRect();
+
+			if (width > 0 && height > 0) {
+				chart.resize(Math.round(width), Math.round(height));
+			}
+
+			scheduleMarkerPositionUpdate();
 		});
 		resizeObserver.observe(container);
 
-		const handleRangeChange = () => updateMarkerPositions();
+		const handleRangeChange = () => scheduleMarkerPositionUpdate();
 		chart.timeScale().subscribeVisibleLogicalRangeChange(handleRangeChange);
 
 		return () => {
@@ -317,15 +418,7 @@ export function TradingViewSignalChart({
 			seriesRef.current = null;
 			priceLinesRef.current = [];
 		};
-	}, [
-		autoscaleInfoProvider,
-		formatPrice,
-		locale,
-		minMove,
-		pricePrecision,
-		symbol,
-		updateMarkerPositions,
-	]);
+	}, [autoscaleInfoProvider, locale, minMove, pricePrecision, scheduleMarkerPositionUpdate]);
 
 	useEffect(() => {
 		const chart = chartRef.current;
@@ -353,15 +446,47 @@ export function TradingViewSignalChart({
 				type: "price",
 			},
 		});
-		series.setData(chartData);
+		const previousData = latestChartDataRef.current;
+		const viewKey = `${symbol}:${timeframe}`;
+		const previousRangeKey = getChartDataRangeKey(previousData);
+		const nextRangeKey = getChartDataRangeKey(chartData);
+		const previousFirstCandle = previousData[0];
+		const previousLastCandle = previousData.at(-1);
+		const nextFirstCandle = chartData[0];
+		const nextLastCandle = chartData.at(-1);
+		const shouldResetView =
+			latestViewKeyRef.current !== viewKey ||
+			previousData.length === 0 ||
+			previousFirstCandle?.time !== nextFirstCandle?.time;
 
-		const from = Math.max(0, chartData.length - 110);
-		chart.timeScale().setVisibleLogicalRange({
-			from,
-			to: chartData.length + 8,
-		});
+		if (
+			!shouldResetView &&
+			previousData.length === chartData.length &&
+			previousLastCandle &&
+			nextLastCandle &&
+			previousLastCandle.time === nextLastCandle.time
+		) {
+			series.update(nextLastCandle);
+		} else {
+			series.setData(chartData);
+		}
 
-		window.requestAnimationFrame(updateMarkerPositions);
+		latestChartDataRef.current = chartData;
+		latestViewKeyRef.current = viewKey;
+
+		if (shouldResetView) {
+			const from = Math.max(0, chartData.length - 110);
+			chart.timeScale().setVisibleLogicalRange({
+				from,
+				to: chartData.length + 8,
+			});
+		}
+
+		if (previousRangeKey !== nextRangeKey) {
+			latestFocusedSignalKeyRef.current = null;
+		}
+
+		scheduleMarkerPositionUpdate();
 	}, [
 		autoscaleInfoProvider,
 		chartData,
@@ -370,7 +495,7 @@ export function TradingViewSignalChart({
 		minMove,
 		pricePrecision,
 		symbol,
-		updateMarkerPositions,
+		scheduleMarkerPositionUpdate,
 	]);
 
 	useEffect(() => {
@@ -433,26 +558,44 @@ export function TradingViewSignalChart({
 
 			priceLinesRef.current = priceLines;
 
-			const index = getSignalCandleIndex(activeSignal, candles.length);
-			const activeCandle = getNearestSignalCandle(activeSignal, candles);
-			const nearestIndex = activeCandle ? candles.indexOf(activeCandle) : index;
-			chart.timeScale().setVisibleLogicalRange({
-				from: Math.max(0, nearestIndex - 72),
-				to: Math.min(candles.length + 10, nearestIndex + 26),
-			});
+			const focusedSignalKey = `${symbol}:${timeframe}:${getChartDataRangeKey(chartData)}:${activeSignal.id}`;
+
+			if (latestFocusedSignalKeyRef.current !== focusedSignalKey) {
+				const index = getSignalCandleIndex(activeSignal, candles.length);
+				const activeCandle = getNearestSignalCandle(activeSignal, candles);
+				const nearestIndex = activeCandle ? candles.indexOf(activeCandle) : index;
+				chart.timeScale().setVisibleLogicalRange({
+					from: Math.max(0, nearestIndex - 72),
+					to: Math.min(candles.length + 10, nearestIndex + 26),
+				});
+				latestFocusedSignalKeyRef.current = focusedSignalKey;
+			}
+		} else {
+			latestFocusedSignalKeyRef.current = null;
 		}
 
-		window.requestAnimationFrame(updateMarkerPositions);
+		scheduleMarkerPositionUpdate();
 	}, [
 		activeSignal,
 		candles,
+		chartData,
 		formatPrice,
 		labels.entry,
 		labels.stopLoss,
 		labels.takeProfit,
 		pricePrecision,
-		updateMarkerPositions,
+		scheduleMarkerPositionUpdate,
+		symbol,
+		timeframe,
 	]);
+
+	useEffect(() => {
+		return () => {
+			if (markerRetryTimeoutRef.current !== null) {
+				window.clearTimeout(markerRetryTimeoutRef.current);
+			}
+		};
+	}, []);
 
 	return (
 		<div className={cn("relative min-h-[520px] overflow-hidden bg-[#141414]", className)}>
@@ -474,7 +617,7 @@ export function TradingViewSignalChart({
 							type="button"
 							onClick={() => onSelectSignal(signal)}
 							className={cn(
-								"gap-1.5 py-0.5 pl-0.5 pr-1.5 font-semibold text-white shadow-lg pointer-events-auto absolute isolate flex -translate-x-1/2 -translate-y-1/2 items-center rounded-full border bg-[#141414]/95 text-[11px] transition-all",
+								"gap-1.5 py-0.5 pl-0.5 pr-1.5 font-semibold text-white shadow-lg pointer-events-auto absolute isolate flex -translate-x-1/2 -translate-y-1/2 items-center rounded-full border bg-[#141414]/95 text-[11px] transition-colors",
 								isEntered
 									? "border-emerald-400 shadow-[0_0_18px_rgba(16,185,129,0.36)]"
 									: isActive
@@ -485,21 +628,21 @@ export function TradingViewSignalChart({
 						>
 							{isEntered && (
 								<>
-									<span className="-inset-1.5 border-emerald-400/45 animate-ping pointer-events-none absolute -z-10 rounded-full border opacity-70" />
-									<span className="-inset-2 bg-emerald-500/20 blur-md animate-pulse pointer-events-none absolute -z-10 rounded-full" />
+									<span className="-inset-1.5 border-emerald-400/35 pointer-events-none absolute -z-10 rounded-full border" />
+									<span className="-inset-2 bg-emerald-500/18 blur-md pointer-events-none absolute -z-10 rounded-full" />
 								</>
 							)}
-								<span
-									className={cn(
-										"flex size-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full",
-									)}
-								>
-									<img
-										alt={signal.sourceName}
-										className="size-[22px] object-cover"
-										src={signal.avatarUrl}
-									/>
-								</span>
+							<span
+								className={cn(
+									"flex size-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full",
+								)}
+							>
+								<img
+									alt={signal.sourceName}
+									className="size-[22px] object-cover"
+									src={signal.avatarUrl}
+								/>
+							</span>
 							<span className="max-w-24 truncate whitespace-nowrap">
 								{signal.sourceName}
 							</span>
