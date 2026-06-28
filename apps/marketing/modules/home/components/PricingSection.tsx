@@ -295,7 +295,7 @@ export function PricingSection() {
 											</div>
 											{plan.priceLabel && (
 												<strong
-													className="font-medium text-2xl mt-2 block"
+													className="font-medium text-2xl mt-2 block whitespace-nowrap"
 													data-test="price-table-plan-price"
 												>
 													{plan.priceLabel}
@@ -303,7 +303,7 @@ export function PricingSection() {
 											)}
 											{price && !plan.priceLabel && (
 												<strong
-													className="font-medium text-2xl mt-2 block"
+													className="font-medium text-2xl mt-2 block whitespace-nowrap"
 													data-test="price-table-plan-price"
 												>
 													{price.amount} USDT

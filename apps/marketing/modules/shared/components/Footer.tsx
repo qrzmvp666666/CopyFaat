@@ -86,27 +86,21 @@ export function Footer() {
 						</ul>
 					</div>
 
-					{/* Legal */}
+					{/* Friend links */}
 					<div>
 						<h3 className="mb-4 font-medium text-foreground">
-							{t("common.footer.legalTitle")}
+							{t("common.footer.friendLinksTitle")}
 						</h3>
 						<ul className="space-y-3">
 							<li>
-								<LocaleLink
-									href="/legal/privacy-policy"
+								<a
+									href="https://www.autofast.chat"
 									className="transition-colors hover:text-foreground"
+									target="_blank"
+									rel="noopener noreferrer"
 								>
-									{t("common.footer.privacyPolicy")}
-								</LocaleLink>
-							</li>
-							<li>
-								<LocaleLink
-									href="/legal/terms"
-									className="transition-colors hover:text-foreground"
-								>
-									{t("common.footer.termsAndConditions")}
-								</LocaleLink>
+									AutoFast
+								</a>
 							</li>
 						</ul>
 					</div>
