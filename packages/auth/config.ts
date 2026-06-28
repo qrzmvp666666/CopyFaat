@@ -4,7 +4,7 @@ export const config = {
 	enableSignup: true,
 	enableMagicLink: true,
 	enableSocialLogin: true,
-	enablePasskeys: true,
+	enablePasskeys: false,
 	enablePasswordLogin: true,
 	enableTwoFactor: true,
 	sessionCookieMaxAge: 60 * 60 * 24 * 30,
