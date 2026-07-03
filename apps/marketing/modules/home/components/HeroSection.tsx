@@ -3,7 +3,7 @@
 import { config } from "@config";
 import { Button } from "@repo/ui/components/button";
 import type { MotionValue } from "framer-motion";
-import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
 import { ArrowRightIcon, StarIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
@@ -161,26 +161,35 @@ function MacHeroShowcase({ imageAlt }: { imageAlt: string }) {
 		target: containerRef,
 		offset: ["start end", "end start"],
 	});
-	const rotateX = useTransform(
+	const rawRotateX = useTransform(
 		scrollYProgress,
 		[0, 0.28, 0.52, 1],
-		prefersReducedMotion ? [0, 0, 0, 0] : [4, 1.4, 0, 0],
+		prefersReducedMotion ? [0, 0, 0, 0] : [2.5, 1, 0, 0],
 	);
-	const scale = useTransform(
+	const rawScale = useTransform(
 		scrollYProgress,
 		[0, 0.28, 0.52, 1],
-		prefersReducedMotion ? [1, 1, 1, 1] : [0.94, 1.01, 1, 1],
+		prefersReducedMotion ? [1, 1, 1, 1] : [0.97, 0.995, 1, 1],
 	);
-	const translateY = useTransform(
+	const rawTranslateY = useTransform(
 		scrollYProgress,
 		[0, 0.28, 0.52, 1],
-		prefersReducedMotion ? [0, 0, 0, 0] : [8, -2, -8, -8],
+		prefersReducedMotion ? [0, 0, 0, 0] : [6, 3, 0, 0],
 	);
-	const baseTranslateY = useTransform(
+	const rawBaseTranslateY = useTransform(
 		scrollYProgress,
 		[0, 0.28, 0.52, 1],
-		prefersReducedMotion ? [0, 0, 0, 0] : [14, 2, -2, -2],
+		prefersReducedMotion ? [0, 0, 0, 0] : [7, 3, 0, 0],
 	);
+	const gentleSpring = {
+		damping: 34,
+		mass: 1.08,
+		stiffness: 48,
+	};
+	const rotateX = useSpring(rawRotateX, gentleSpring);
+	const scale = useSpring(rawScale, gentleSpring);
+	const translateY = useSpring(rawTranslateY, gentleSpring);
+	const baseTranslateY = useSpring(rawBaseTranslateY, gentleSpring);
 
 	return (
 		<div
