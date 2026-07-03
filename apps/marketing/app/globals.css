@@ -39,9 +39,25 @@
 			transform: translate3d(0, -18px, 0) rotate(4deg);
 		}
 	}
+
+	@keyframes hero-mac-backdrop {
+		0%,
+		100% {
+			opacity: 0.72;
+			transform: translate3d(0, 0, 0) scale(0.98);
+		}
+		50% {
+			opacity: 0.95;
+			transform: translate3d(0, -10px, 0) scale(1.02);
+		}
+	}
 }
 
 @layer base {
+	html {
+		position: relative;
+	}
+
 	*,
 	::after,
 	::before,
@@ -55,5 +71,35 @@
 	.hero-floating-icon {
 		animation: hero-float 10s ease-in-out infinite;
 		will-change: transform;
+	}
+
+	.hero-mac-stage {
+		perspective: 1000px;
+	}
+
+	.hero-mac-backdrop {
+		animation: hero-mac-backdrop 7s ease-in-out infinite;
+		background:
+			radial-gradient(circle at 24% 20%, rgba(59, 130, 246, 0.2), transparent 34%),
+			radial-gradient(circle at 78% 18%, rgba(16, 185, 129, 0.22), transparent 30%),
+			linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 78%);
+		filter: blur(18px);
+		will-change: opacity, transform;
+	}
+
+	.hero-mac-lid {
+		will-change: transform;
+	}
+
+	.hero-mac-base {
+		transform-origin: 50% 0;
+		will-change: transform;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hero-floating-icon,
+		.hero-mac-backdrop {
+			animation: none;
+		}
 	}
 }

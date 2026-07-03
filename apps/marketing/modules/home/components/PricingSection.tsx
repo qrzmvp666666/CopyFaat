@@ -9,7 +9,7 @@ import { Button } from "@repo/ui/components/button";
 import { AlipayIcon, StripeIcon } from "@repo/ui/components/payment-brand-icons";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
 import { ArrowRightIcon, BadgePercentIcon, CheckIcon, GiftIcon, StarIcon } from "lucide-react";
-import { useFormatter, useLocale, useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 
@@ -119,7 +119,6 @@ const MARKETING_PLAN_COPY = {
 export function PricingSection() {
 	const t = useTranslations();
 	const locale = useLocale();
-	const format = useFormatter();
 	const [interval, setBillingInterval] = useState<"month" | "year">("month");
 
 	const saasUrl = useMemo(
@@ -219,7 +218,7 @@ export function PricingSection() {
 	);
 
 	return (
-		<section id="pricing" className="scroll-mt-16 py-12 lg:py-16 border-y">
+		<section id="pricing" className="scroll-mt-16 pt-6 pb-10 lg:pt-8 lg:pb-14">
 			<div className="container">
 				<div className="mb-6 max-w-3xl mx-auto text-center">
 					<h1 className="font-medium text-2xl md:text-3xl lg:text-4xl xl:text-5xl leading-tight text-foreground">
