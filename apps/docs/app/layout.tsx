@@ -2,13 +2,8 @@ import "./global.css";
 import { DocsLayout } from "fumadocs-ui/layouts/docs";
 import { RootProvider } from "fumadocs-ui/provider/next";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 
 import { source } from "@/lib/source";
-
-const inter = Inter({
-	subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
 	metadataBase: new URL(process.env.NEXT_PUBLIC_DOCS_URL ?? "http://signalfast.localhost:4102"),
@@ -16,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function Layout({ children }: LayoutProps<"/">) {
 	return (
-		<html lang="zh" className={`${inter.className} dark`} suppressHydrationWarning>
+		<html lang="zh" className="dark" suppressHydrationWarning>
 			<body className="flex min-h-screen flex-col">
 				<RootProvider
 					theme={{

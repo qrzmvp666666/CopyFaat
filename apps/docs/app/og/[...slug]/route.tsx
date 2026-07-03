@@ -5,6 +5,7 @@ import { ImageResponse } from "next/og";
 import { getPageImage, source } from "@/lib/source";
 
 export const revalidate = false;
+export const dynamic = "force-dynamic";
 
 export async function GET(_req: Request, { params }: RouteContext<"/og/[...slug]">) {
 	const { slug } = await params;
@@ -23,8 +24,5 @@ export async function GET(_req: Request, { params }: RouteContext<"/og/[...slug]
 }
 
 export function generateStaticParams() {
-	return source.getPages().map((page) => ({
-		lang: page.locale,
-		slug: getPageImage(page).segments,
-	}));
+	return [];
 }
