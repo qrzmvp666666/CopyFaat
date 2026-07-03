@@ -45,7 +45,11 @@ export default async function MarketingLayout({
 	const consentCookie = cookieStore.get("consent");
 
 	return (
-		<html lang={locale} suppressHydrationWarning className={sansFont.variable}>
+		<html
+			lang={locale}
+			suppressHydrationWarning
+			className={cn(sansFont.variable, config.defaultTheme)}
+		>
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
 				<ConsentProvider initialConsent={consentCookie?.value === "true"}>
 					<NextIntlClientProvider locale={locale} messages={messages}>
@@ -53,8 +57,9 @@ export default async function MarketingLayout({
 							<ThemeProvider
 								attribute="class"
 								disableTransitionOnChange
-								enableSystem
+								enableSystem={false}
 								defaultTheme={config.defaultTheme}
+								forcedTheme={config.defaultTheme}
 								themes={Array.from(config.enabledThemes)}
 							>
 								<NavBar />

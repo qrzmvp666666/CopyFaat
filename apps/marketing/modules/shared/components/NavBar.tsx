@@ -5,7 +5,6 @@ import { LocaleLink, useLocalePathname } from "@i18n/routing";
 import { cn, Logo } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@repo/ui/components/sheet";
-import { ColorModeToggle } from "@shared/components/ColorModeToggle";
 import { LocaleSwitch } from "@shared/components/LocaleSwitch";
 import { MenuIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -110,7 +109,6 @@ export function NavBar() {
 					</div>
 
 					<div className="gap-3 flex flex-1 items-center justify-end">
-						<ColorModeToggle />
 						<Suspense>
 							<LocaleSwitch />
 						</Suspense>

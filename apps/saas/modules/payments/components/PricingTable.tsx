@@ -262,6 +262,10 @@ export function PricingTable({
 										count: 1,
 									})
 							: undefined;
+					const trialPeriodDays =
+						plan.price && "trialPeriodDays" in plan.price
+							? plan.price.trialPeriodDays
+							: undefined;
 
 					return (
 						<div
@@ -363,16 +367,14 @@ export function PricingTable({
 										</ul>
 									)}
 
-									{plan.price &&
-										"trialPeriodDays" in plan.price &&
-										plan.price.trialPeriodDays && (
-											<div className="mt-4 font-medium text-sm flex items-center justify-start text-primary opacity-80">
-												<BadgePercentIcon className="mr-2 size-4" />
-												{t("pricing.trialPeriod", {
-													days: plan.price.trialPeriodDays,
-												})}
-											</div>
-										)}
+									{trialPeriodDays !== undefined && trialPeriodDays > 0 && (
+										<div className="mt-4 font-medium text-sm flex items-center justify-start text-primary opacity-80">
+											<BadgePercentIcon className="mr-2 size-4" />
+											{t("pricing.trialPeriod", {
+												days: trialPeriodDays,
+											})}
+										</div>
+									)}
 								</div>
 
 								<div>

@@ -1,7 +1,6 @@
 import { config } from "@config";
 import { LocaleLink } from "@i18n/routing";
 import { Logo } from "@repo/ui";
-import { ColorModeToggle } from "@shared/components/ColorModeToggle";
 import { LocaleSwitch } from "@shared/components/LocaleSwitch";
 import { useTranslations } from "next-intl";
 import { Suspense } from "react";
@@ -120,7 +119,6 @@ export function Footer() {
 					</a>
 				</div>
 				<div className="gap-3 flex items-center">
-					<ColorModeToggle />
 					<Suspense>
 						<LocaleSwitch />
 					</Suspense>
