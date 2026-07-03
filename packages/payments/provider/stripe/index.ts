@@ -54,7 +54,7 @@ export const createCheckoutLink: CreateCheckoutLink = async (options) => {
 		user_id: userId || null,
 	};
 
-	const response = await stripeClient.checkout.sessions.create({
+	const sessionParams: Stripe.Checkout.SessionCreateParams = {
 		mode: type === "subscription" ? "subscription" : "payment",
 		success_url: redirectUrl ?? "",
 		line_items: [
@@ -69,7 +69,7 @@ export const createCheckoutLink: CreateCheckoutLink = async (options) => {
 					payment_intent_data: {
 						metadata,
 					},
-					customer_creation: "always",
+					...(customerId ? {} : { customer_creation: "always" as const }),
 				}
 			: {
 					subscription_data: {
@@ -78,10 +78,44 @@ export const createCheckoutLink: CreateCheckoutLink = async (options) => {
 					},
 				}),
 		metadata,
-	});
+	};
+
+	const response = await createCheckoutSession(stripeClient, sessionParams, email);
 
 	return response.url;
 };
+
+async function createCheckoutSession(
+	stripeClient: Stripe,
+	params: Stripe.Checkout.SessionCreateParams,
+	fallbackCustomerEmail?: string,
+) {
+	try {
+		return await stripeClient.checkout.sessions.create(params);
+	} catch (error) {
+		if (params.customer && isMissingCustomerError(error)) {
+			const { customer, ...retryParams } = params;
+
+			return stripeClient.checkout.sessions.create({
+				...retryParams,
+				...(fallbackCustomerEmail ? { customer_email: fallbackCustomerEmail } : {}),
+				...(params.mode === "payment" ? { customer_creation: "always" as const } : {}),
+			});
+		}
+
+		throw error;
+	}
+}
+
+function isMissingCustomerError(error: unknown) {
+	const stripeError = error as { type?: string; param?: string; message?: string };
+
+	return (
+		stripeError.type === "StripeInvalidRequestError" &&
+		stripeError.param === "customer" &&
+		(stripeError.message ?? "").toLowerCase().includes("no such customer")
+	);
+}
 
 export const createCustomerPortalLink: CreateCustomerPortalLink = async ({
 	customerId,

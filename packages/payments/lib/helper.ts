@@ -8,6 +8,8 @@ import { getPlanIdByProviderPriceId, getPlanPriceByProviderPriceId } from "./pro
 
 type PurchaseWithoutTimestamps = Omit<z.infer<typeof PurchaseSchema>, "createdAt" | "updatedAt">;
 
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
+
 export interface ResolvedPurchase extends PurchaseWithoutTimestamps {
 	planId?: PlanId | null;
 	planPrice?: PlanPrice | null;
@@ -50,8 +52,14 @@ function resolvePurchasePlanId(purchase: ResolvedPurchase) {
 	return getPlanIdByProviderPriceId(purchase.priceId);
 }
 
+function isActiveSubscriptionPurchase(purchase: ResolvedPurchase) {
+	return ACTIVE_SUBSCRIPTION_STATUSES.has(purchase.status ?? "");
+}
+
 function getActivePlanFromPurchases(purchases?: ResolvedPurchase[]) {
-	const subscriptionPurchase = purchases?.find((purchase) => purchase.type === "SUBSCRIPTION");
+	const subscriptionPurchase = purchases?.find(
+		(purchase) => purchase.type === "SUBSCRIPTION" && isActiveSubscriptionPurchase(purchase),
+	);
 
 	if (subscriptionPurchase) {
 		const resolvedPrice = resolvePurchasePlan(subscriptionPurchase);

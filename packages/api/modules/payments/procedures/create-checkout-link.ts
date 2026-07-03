@@ -98,8 +98,12 @@ export const createCheckoutLink = protectedProcedure
 				organizationId ? { organizationId } : { userId: user.id },
 			);
 
-			const trialPeriodDays =
+			const configuredTrialPeriodDays =
 				price && "trialPeriodDays" in price ? price.trialPeriodDays : undefined;
+			const trialPeriodDays =
+				configuredTrialPeriodDays && configuredTrialPeriodDays > 0
+					? configuredTrialPeriodDays
+					: undefined;
 
 			const organization = organizationId
 				? await getOrganizationById(organizationId)
