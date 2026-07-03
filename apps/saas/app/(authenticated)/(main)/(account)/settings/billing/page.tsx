@@ -34,9 +34,6 @@ export default async function BillingSettingsPage() {
 		purchasesResult.purchases,
 		purchasesResult.entitlementGrants,
 	);
-	const activePurchasedPlanId =
-		activePlan && "purchaseId" in activePlan ? activePlan.id : undefined;
-
 	const t = await getTranslations("settings.billing");
 
 	return (
@@ -45,7 +42,7 @@ export default async function BillingSettingsPage() {
 
 			<SettingsList>
 				{activePlan && <ActivePlan showRedeemButton />}
-				<ChangePlan userId={session?.user.id} activePlanId={activePurchasedPlanId} />
+				<ChangePlan userId={session?.user.id} activePlanId={activePlan?.id} />
 			</SettingsList>
 		</>
 	);

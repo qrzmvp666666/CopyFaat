@@ -73,6 +73,7 @@
 		"perSeat": "席位",
 		"included": "已包含",
 		"paymentMethod": "支付方式",
+		"payNow": "立刻支付",
 		"paymentMethods": {
 			"card": "信用卡",
 			"wechat_person": "微信支付",

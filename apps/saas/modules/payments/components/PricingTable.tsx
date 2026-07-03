@@ -6,7 +6,7 @@ import { config as paymentsConfig } from "@repo/payments/config";
 import type { PaidPlan } from "@repo/payments/types";
 import { cn } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
-import { AlipayIcon, StripeIcon } from "@repo/ui/components/payment-brand-icons";
+import { AlipayIcon, StripeIcon, WeChatIcon } from "@repo/ui/components/payment-brand-icons";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
 import { toastError } from "@repo/ui/components/toast";
 import { useRouter } from "@shared/hooks/router";
@@ -14,11 +14,14 @@ import { orpc } from "@shared/lib/orpc-query-utils";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowRightIcon, BadgePercentIcon, CheckIcon, GiftIcon, StarIcon } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useState } from "react";
 
 const plans = paymentsConfig.plans;
-const visiblePaidPlanIds = ["pro", "lifetime"];
+const visiblePaidPlanIds = ["pro", "lifetime"] as const;
+
+type VisiblePaidPlanId = (typeof visiblePaidPlanIds)[number];
+type PaymentMethodMark = "card" | "alipay_person" | "wechat_person" | "redeem";
 
 interface PlanSelection {
 	type: "one-time" | "subscription";
@@ -26,13 +29,14 @@ interface PlanSelection {
 }
 
 interface DisplayPlan {
-	id: string;
+	id: VisiblePaidPlanId;
 	title: string;
 	description: ReactNode;
 	features: ReactNode[];
 	price?: PaidPlan["prices"][number];
 	priceLabel?: string;
 	recommended?: boolean;
+	paymentMethods: PaymentMethodMark[];
 }
 
 function getMonthlyEquivalent(price: PaidPlan["prices"][number]): number | undefined {
@@ -43,33 +47,66 @@ function getMonthlyEquivalent(price: PaidPlan["prices"][number]): number | undef
 	return price.amount / 12;
 }
 
-function PaymentMethodMarks() {
-	const methods = [
+function getVisiblePlanIds(activePlanId?: string) {
+	if (activePlanId === "lifetime") {
+		return [];
+	}
+
+	if (activePlanId === "pro") {
+		return ["lifetime"] satisfies VisiblePaidPlanId[];
+	}
+
+	return ["pro", "lifetime"] satisfies VisiblePaidPlanId[];
+}
+
+function getPaymentMethodsForPlan(planId: VisiblePaidPlanId): PaymentMethodMark[] {
+	if (planId === "lifetime") {
+		return ["card", "alipay_person", "wechat_person", "redeem"];
+	}
+
+	return ["card", "redeem"];
+}
+
+function PaymentMethodMarks({ methods }: { methods: PaymentMethodMark[] }) {
+	const paymentMethods: Record<
+		PaymentMethodMark,
 		{
+			label: string;
+			icon: ComponentType<SVGProps<SVGSVGElement>>;
+			className: string;
+		}
+	> = {
+		card: {
 			label: "Stripe",
 			icon: StripeIcon,
 			className: "h-5 w-7 text-[#635BFF]",
 		},
-		{
+		alipay_person: {
 			label: "支付宝",
 			icon: AlipayIcon,
 			className: "size-5 text-[#1677FF]",
 		},
-		{
+		wechat_person: {
+			label: "微信",
+			icon: WeChatIcon,
+			className: "size-5 text-[#07C160]",
+		},
+		redeem: {
 			label: "兑换码",
 			icon: GiftIcon,
 			className: "size-5 text-foreground/45",
 		},
-	];
+	};
 
 	return (
 		<div className="gap-3 flex shrink-0 items-center" aria-label="支持的支付与兑换方式">
 			{methods.map((method) => {
-				const Icon = method.icon;
+				const paymentMethod = paymentMethods[method];
+				const Icon = paymentMethod.icon;
 
 				return (
-					<span key={method.label} className="inline-flex" title={method.label}>
-						<Icon className={method.className} aria-hidden="true" />
+					<span key={method} className="inline-flex" title={paymentMethod.label}>
+						<Icon className={paymentMethod.className} aria-hidden="true" />
 					</span>
 				);
 			})}
@@ -95,6 +132,7 @@ export function PricingTable({
 	const [interval, setInterval] = useState<"month" | "year">("month");
 
 	const { planData } = usePlanData();
+	const visiblePlanIds = getVisiblePlanIds(activePlanId);
 
 	const createCheckoutLinkMutation = useMutation(
 		orpc.payments.createCheckoutLink.mutationOptions(),
@@ -136,27 +174,11 @@ export function PricingTable({
 		}
 	};
 
-	const hasSubscriptions = Object.entries(plans).some(([planId, plan]) =>
-		visiblePaidPlanIds.includes(planId) && "prices" in plan
-			? (plan as PaidPlan).prices.some((price) => price.type === "subscription")
-			: false,
-	);
-
 	const displayPlans: DisplayPlan[] = [
-		...(!paymentsConfig.requireActiveSubscription && activePlanId !== "free" && planData.free
-			? [
-					{
-						id: "free",
-						title: planData.free.title,
-						description: planData.free.description,
-						features: planData.free.features,
-						priceLabel: t.raw("pricing.products.free.price") as string,
-					},
-				]
-			: []),
 		...Object.entries(plans).flatMap(([planId, plan]) => {
-			if (!visiblePaidPlanIds.includes(planId)) return [];
-			if (planId === activePlanId) return [];
+			const visiblePlanId = planId as VisiblePaidPlanId;
+
+			if (!visiblePlanIds.includes(visiblePlanId)) return [];
 			if (!("prices" in plan)) return [];
 
 			const typedPlan = plan as PaidPlan;
@@ -183,17 +205,23 @@ export function PricingTable({
 
 			return [
 				{
-					id: planId,
+					id: visiblePlanId,
 					title: planDataEntry.title,
 					description: planDataEntry.description,
 					features: planDataEntry.features,
 					price,
 					priceLabel,
 					recommended: typedPlan.recommended,
+					paymentMethods: getPaymentMethodsForPlan(visiblePlanId),
 				},
 			];
 		}),
 	];
+	const hasSubscriptions = displayPlans.some((plan) => plan.price?.type === "subscription");
+
+	if (displayPlans.length === 0) {
+		return null;
+	}
 
 	return (
 		<div className={cn("@container", className)}>
@@ -261,7 +289,9 @@ export function PricingTable({
 										>
 											{plan.title}
 										</h3>
-										{plan.price && <PaymentMethodMarks />}
+										{plan.price && (
+											<PaymentMethodMarks methods={plan.paymentMethods} />
+										)}
 									</div>
 
 									{plan.priceLabel && (
@@ -348,7 +378,7 @@ export function PricingTable({
 								<div>
 									<Button
 										className="mt-4 w-full"
-										variant={plan.recommended ? "primary" : "secondary"}
+										variant="primary"
 										onClick={() =>
 											plan.price &&
 											onSelectPlan(plan.id as PlanId, {
@@ -367,7 +397,9 @@ export function PricingTable({
 									>
 										{plan.price
 											? userId || organizationId
-												? t("pricing.choosePlan")
+												? plan.id === "pro"
+													? t("pricing.payNow")
+													: t("pricing.choosePlan")
 												: t("pricing.getStarted")
 											: t("pricing.included")}
 										{plan.price && <ArrowRightIcon className="ml-2 size-4" />}

@@ -73,6 +73,7 @@
 		"perSeat": "seat",
 		"included": "Included",
 		"paymentMethod": "Pay with",
+		"payNow": "Pay now",
 		"paymentMethods": {
 			"card": "Credit Card",
 			"wechat_person": "WeChat Pay",
