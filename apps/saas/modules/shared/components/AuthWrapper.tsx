@@ -10,7 +10,7 @@ export function AuthWrapper({
 	contentClass,
 }: PropsWithChildren<{ contentClass?: string }>) {
 	return (
-		<div className="dark py-6 flex min-h-dvh w-full bg-background text-foreground">
+		<div className="auth-dark-shell dark py-6 flex min-h-dvh w-full bg-background text-foreground">
 			<div className="gap-8 flex w-full flex-col items-center justify-between">
 				<div className="relative z-0 container">
 					<div className="flex items-center justify-between">

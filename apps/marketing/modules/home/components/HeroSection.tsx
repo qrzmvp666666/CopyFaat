@@ -147,7 +147,7 @@ export function HeroSection() {
 
 				<div id="hero-image-area" className="scroll-mt-20 mt-7 lg:mt-9 max-w-6xl mx-auto">
 					<div className="p-1.5 md:p-2 shadow-2xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-black/40 relative overflow-hidden rounded-3xl border border-primary/10 bg-primary/5 shadow-primary/5">
-						<div className="relative aspect-[3342/2126] overflow-hidden rounded-2xl">
+						<div className="relative aspect-[3024/1654] overflow-hidden rounded-2xl">
 							<Image
 								src={heroImage}
 								alt={t("home.hero.imageAlt")}
