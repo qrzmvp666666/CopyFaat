@@ -39,11 +39,13 @@ export function EntitlementCountdown({
 }: EntitlementCountdownProps) {
 	const t = useTranslations("settings.billing.activePlan.countdown");
 	const format = useFormatter();
-	const [now, setNow] = useState(() => Date.now());
+	const [now, setNow] = useState<number | null>(null);
 	const expiresAtDate = new Date(expiresAt);
-	const remainingMs = expiresAtDate.getTime() - now;
+	const remainingMs = now === null ? null : expiresAtDate.getTime() - now;
 
 	useEffect(() => {
+		setNow(Date.now());
+
 		const timer = window.setInterval(() => {
 			setNow(Date.now());
 		}, 1000);
@@ -51,7 +53,7 @@ export function EntitlementCountdown({
 		return () => window.clearInterval(timer);
 	}, []);
 
-	if (!Number.isFinite(expiresAtDate.getTime()) || remainingMs <= 0) {
+	if (!Number.isFinite(expiresAtDate.getTime()) || remainingMs === null || remainingMs <= 0) {
 		return null;
 	}
 

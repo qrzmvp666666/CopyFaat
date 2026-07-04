@@ -813,11 +813,11 @@
 			"live": "Live market"
 		},
 		"trialWelcome": {
-			"benefit": "A 2-day Pro trial has been added to your account. You can check the expiry time on the plan benefits page.",
-			"description": "Welcome to SignalFast. We will show you live markets, trader filters, the aggregated K-line chart, and the signal feed in 5 quick steps.",
+			"benefit": "",
+			"description": "Registration complete. You received 2 days of Pro membership.",
 			"skip": "Maybe later",
 			"startGuide": "Start guide",
-			"title": "Your 2-day Pro trial is active"
+			"title": "Congratulations"
 		}
 	},
 	"common": {

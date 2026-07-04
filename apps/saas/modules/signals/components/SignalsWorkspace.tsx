@@ -30,11 +30,11 @@ import {
 	CompassIcon,
 	CrownIcon,
 	Maximize2Icon,
+	PartyPopperIcon,
 	RadioIcon,
 	RefreshCwIcon,
 	SearchIcon,
 	SlidersHorizontalIcon,
-	SparklesIcon,
 	TargetIcon,
 	TrendingDownIcon,
 	TrendingUpIcon,
@@ -1600,21 +1600,17 @@ export function SignalsWorkspace() {
 					dismissWelcomeDialog();
 				}}
 			>
-				<DialogContent className="sm:max-w-[460px] border-white/10 text-white bg-[#151515]">
-					<DialogHeader>
-						<div className="mb-2 size-11 flex items-center justify-center rounded-full bg-primary/15 text-primary">
-							<CrownIcon className="size-5" />
+				<DialogContent className="sm:max-w-[380px] border-white/10 p-6 text-white bg-[#151515]">
+					<DialogHeader className="items-center text-center">
+						<div className="mb-2 size-16 flex items-center justify-center rounded-full bg-primary/15 text-primary shadow-[0_0_36px_rgba(16,185,129,0.22)]">
+							<PartyPopperIcon className="size-8" />
 						</div>
-						<DialogTitle>{t("trialWelcome.title")}</DialogTitle>
-						<DialogDescription className="text-muted-foreground">
+						<DialogTitle className="text-xl">{t("trialWelcome.title")}</DialogTitle>
+						<DialogDescription className="text-base font-medium leading-7 text-white/85 max-w-[260px]">
 							{t("trialWelcome.description")}
 						</DialogDescription>
 					</DialogHeader>
-					<div className="gap-3 border-white/10 bg-white/5 p-3 text-sm flex rounded-xl border">
-						<SparklesIcon className="mt-0.5 size-4 shrink-0 text-primary" />
-						<p className="text-muted-foreground">{t("trialWelcome.benefit")}</p>
-					</div>
-					<DialogFooter className="gap-2 sm:gap-2">
+					<DialogFooter className="mt-2 gap-2 sm:gap-2">
 						<Button type="button" variant="ghost" onClick={dismissWelcomeDialog}>
 							{t("trialWelcome.skip")}
 						</Button>

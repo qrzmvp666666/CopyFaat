@@ -813,11 +813,11 @@
 			"live": "实时行情"
 		},
 		"trialWelcome": {
-			"benefit": "系统已自动为你的账号开通 2 天 Pro 试用权益，可在套餐权益页面查看到期时间。",
-			"description": "欢迎进入 SignalFast。我们先用 5 个步骤带你熟悉实时行情、交易员筛选、聚合 K 线和信号列表。",
+			"benefit": "",
+			"description": "注册成功，已获取 2 天 Pro 会员",
 			"skip": "稍后再看",
 			"startGuide": "开始引导",
-			"title": "已赠送 2 天 Pro 试用"
+			"title": "恭喜您"
 		}
 	},
 	"common": {
