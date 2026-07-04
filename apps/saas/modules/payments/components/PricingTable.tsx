@@ -272,7 +272,7 @@ export function PricingTable({
 					return (
 						<div
 							key={plan.id}
-							className={cn("p-6 rounded-3xl border-2 bg-card", {
+							className={cn("p-6 rounded-3xl border-[3px] bg-card", {
 								"border-primary": plan.recommended,
 							})}
 							data-test="price-table-plan"
