@@ -6,42 +6,72 @@ import { config as paymentsConfig } from "@repo/payments/config";
 import type { PaidPlan } from "@repo/payments/types";
 import { cn } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
-import { AlipayIcon, StripeIcon } from "@repo/ui/components/payment-brand-icons";
+import { AlipayIcon, StripeIcon, WeChatIcon } from "@repo/ui/components/payment-brand-icons";
+import { RedeemCodePurchaseLink } from "@repo/ui/components/redeem-code-purchase-link";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
 import { ArrowRightIcon, BadgePercentIcon, CheckIcon, GiftIcon, StarIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
+import type { ComponentType, SVGProps } from "react";
 import { useMemo, useState } from "react";
 
-const visiblePaidPlanIds = ["pro", "lifetime"];
+const visiblePaidPlanIds = ["pro", "lifetime"] as const;
 
-function PaymentMethodMarks() {
-	const methods = [
+type VisiblePaidPlanId = (typeof visiblePaidPlanIds)[number];
+type PaymentMethodMark = "card" | "alipay_person" | "wechat_person" | "redeem";
+
+function isVisiblePaidPlanId(planId: string): planId is VisiblePaidPlanId {
+	return visiblePaidPlanIds.includes(planId as VisiblePaidPlanId);
+}
+
+function getPaymentMethodsForPlan(planId: VisiblePaidPlanId): PaymentMethodMark[] {
+	if (planId === "lifetime") {
+		return ["card", "alipay_person", "wechat_person", "redeem"];
+	}
+
+	return ["card", "redeem"];
+}
+
+function PaymentMethodMarks({ methods }: { methods: PaymentMethodMark[] }) {
+	const paymentMethods: Record<
+		PaymentMethodMark,
 		{
+			label: string;
+			icon: ComponentType<SVGProps<SVGSVGElement>>;
+			className: string;
+		}
+	> = {
+		card: {
 			label: "Stripe",
 			icon: StripeIcon,
 			className: "h-5 w-7 text-[#635BFF]",
 		},
-		{
+		alipay_person: {
 			label: "支付宝",
 			icon: AlipayIcon,
 			className: "size-5 text-[#1677FF]",
 		},
-		{
+		wechat_person: {
+			label: "微信",
+			icon: WeChatIcon,
+			className: "size-5 text-[#07C160]",
+		},
+		redeem: {
 			label: "兑换码",
 			icon: GiftIcon,
 			className: "size-5 text-foreground/45",
 		},
-	];
+	};
 
 	return (
 		<div className="gap-3 flex shrink-0 items-center" aria-label="支持的支付与兑换方式">
 			{methods.map((method) => {
-				const Icon = method.icon;
+				const paymentMethod = paymentMethods[method];
+				const Icon = paymentMethod.icon;
 
 				return (
-					<span key={method.label} className="inline-flex" title={method.label}>
-						<Icon className={method.className} aria-hidden="true" />
+					<span key={method} className="inline-flex" title={paymentMethod.label}>
+						<Icon className={paymentMethod.className} aria-hidden="true" />
 					</span>
 				);
 			})}
@@ -118,6 +148,7 @@ const MARKETING_PLAN_COPY = {
 
 export function PricingSection() {
 	const t = useTranslations();
+	const xianyuRedeemT = useTranslations("pricing.xianyuRedeem");
 	const locale = useLocale();
 	const [interval, setBillingInterval] = useState<"month" | "year">("month");
 
@@ -138,6 +169,7 @@ export function PricingSection() {
 			recommended?: boolean;
 			prices?: PaidPlan["prices"];
 			priceLabel?: string;
+			paymentMethods?: PaymentMethodMark[];
 			to: string;
 		}> = [];
 
@@ -155,7 +187,7 @@ export function PricingSection() {
 		}
 
 		for (const [planId, plan] of Object.entries(paymentsConfig.plans)) {
-			if (!visiblePaidPlanIds.includes(planId)) {
+			if (!isVisiblePaidPlanId(planId)) {
 				continue;
 			}
 
@@ -204,6 +236,7 @@ export function PricingSection() {
 				recommended: plan.recommended,
 				prices,
 				priceLabel,
+				paymentMethods: getPaymentMethodsForPlan(planId),
 				to: isEnterprise ? (saasUrl ? `${saasUrl}/signup` : "#") : planUrl,
 			});
 		}
@@ -212,7 +245,7 @@ export function PricingSection() {
 	}, [t, saasUrl, interval, marketingPlanCopy]);
 
 	const hasSubscriptions = Object.entries(paymentsConfig.plans).some(([planId, plan]) =>
-		visiblePaidPlanIds.includes(planId) && "prices" in plan
+		isVisiblePaidPlanId(planId) && "prices" in plan
 			? (plan as PaidPlan).prices.some((price) => price.type === "subscription")
 			: false,
 	);
@@ -290,7 +323,11 @@ export function PricingSection() {
 												<h3 className="my-0 font-semibold text-2xl">
 													{plan.title}
 												</h3>
-												{price && <PaymentMethodMarks />}
+												{price && plan.paymentMethods && (
+													<PaymentMethodMarks
+														methods={plan.paymentMethods}
+													/>
+												)}
 											</div>
 											{plan.priceLabel && (
 												<strong
@@ -364,6 +401,25 @@ export function PricingSection() {
 										</div>
 
 										<div>
+											{price && (
+												<div className="mb-3">
+													<RedeemCodePurchaseLink
+														ariaLabel={xianyuRedeemT("ariaLabel")}
+														copyErrorDescription={xianyuRedeemT(
+															"copyErrorDescription",
+														)}
+														copyErrorTitle={xianyuRedeemT(
+															"copyErrorTitle",
+														)}
+														copiedDescription={xianyuRedeemT(
+															"copiedDescription",
+														)}
+														copiedTitle={xianyuRedeemT("copiedTitle")}
+														label={xianyuRedeemT("label")}
+														url={config.xianyuRedeemUrl}
+													/>
+												</div>
+											)}
 											{plan.to.startsWith("/") ? (
 												<Button
 													className="mt-4 w-full"

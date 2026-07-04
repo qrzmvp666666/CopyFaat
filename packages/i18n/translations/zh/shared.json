@@ -43,7 +43,7 @@
 					"telegramAlerts": "Telegram 提醒优先免费使用",
 					"discordAlerts": "Discord 提醒优先免费使用"
 				},
-				"price": "99 USD",
+				"price": "199.99 CNY",
 				"title": "终身版"
 			},
 			"pro": {
@@ -57,8 +57,8 @@
 					"communityNotifications": "专属社区通知"
 				},
 				"price": {
-					"month": "6.6 USD/月",
-					"year": "66 USD/年 · 约 5.5 USD/月"
+					"month": "19.99 CNY/月",
+					"year": "168.88 CNY/年 · 约 14.07 CNY/月"
 				},
 				"title": "Pro"
 			}
@@ -74,6 +74,14 @@
 		"included": "已包含",
 		"paymentMethod": "支付方式",
 		"payNow": "立刻支付",
+		"xianyuRedeem": {
+			"ariaLabel": "复制闲鱼兑换码购买链接",
+			"copyErrorDescription": "请稍后再试，或手动搜索 SignalFast 兑换码。",
+			"copyErrorTitle": "无法复制闲鱼链接",
+			"copiedDescription": "打开闲鱼后粘贴链接即可购买兑换码。",
+			"copiedTitle": "闲鱼链接已复制",
+			"label": "购买兑换码"
+		},
 		"paymentMethods": {
 			"card": "信用卡",
 			"wechat_person": "微信支付",

@@ -1,5 +1,6 @@
 "use client";
 
+import { config } from "@config";
 import { usePlanData } from "@payments/hooks/plan-data";
 import type { PlanId } from "@payments/types";
 import { config as paymentsConfig } from "@repo/payments/config";
@@ -7,6 +8,7 @@ import type { PaidPlan } from "@repo/payments/types";
 import { cn } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
 import { AlipayIcon, StripeIcon, WeChatIcon } from "@repo/ui/components/payment-brand-icons";
+import { RedeemCodePurchaseLink } from "@repo/ui/components/redeem-code-purchase-link";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
 import { toastError } from "@repo/ui/components/toast";
 import { useRouter } from "@shared/hooks/router";
@@ -128,6 +130,7 @@ export function PricingTable({
 	showActivePlanInPricing?: boolean;
 }) {
 	const t = useTranslations();
+	const xianyuRedeemT = useTranslations("pricing.xianyuRedeem");
 	const format = useFormatter();
 	const router = useRouter();
 	const [loading, setLoading] = useState<PlanId | false>(false);
@@ -380,6 +383,23 @@ export function PricingTable({
 								</div>
 
 								<div>
+									{plan.price && (
+										<div className="mb-3">
+											<RedeemCodePurchaseLink
+												ariaLabel={xianyuRedeemT("ariaLabel")}
+												copyErrorDescription={xianyuRedeemT(
+													"copyErrorDescription",
+												)}
+												copyErrorTitle={xianyuRedeemT("copyErrorTitle")}
+												copiedDescription={xianyuRedeemT(
+													"copiedDescription",
+												)}
+												copiedTitle={xianyuRedeemT("copiedTitle")}
+												label={xianyuRedeemT("label")}
+												url={config.xianyuRedeemUrl}
+											/>
+										</div>
+									)}
 									<Button
 										className="mt-4 w-full"
 										variant="primary"

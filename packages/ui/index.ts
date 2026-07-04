@@ -15,6 +15,7 @@ export * from "./components/label";
 export * from "./components/logo";
 export * from "./components/popover";
 export * from "./components/progress";
+export * from "./components/redeem-code-purchase-link";
 export * from "./components/select";
 export * from "./components/sheet";
 export * from "./components/skeleton";

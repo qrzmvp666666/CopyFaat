@@ -13,8 +13,8 @@ export const config: PaymentsConfig = {
 					priceId: (process.env.PRICE_ID_PRO_MONTHLY_CARD ??
 						process.env.PRICE_ID_PRO_MONTHLY) as string,
 					interval: "month",
-					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_PRO_MONTHLY_CARD ?? 6.6),
-					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_PRO_MONTHLY_CARD ?? "USD",
+					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_PRO_MONTHLY_CARD ?? 19.99),
+					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_PRO_MONTHLY_CARD ?? "CNY",
 					seatBased: true,
 					trialPeriodDays: 0,
 				},
@@ -25,8 +25,8 @@ export const config: PaymentsConfig = {
 					priceId: (process.env.PRICE_ID_PRO_YEARLY_CARD ??
 						process.env.PRICE_ID_PRO_YEARLY) as string,
 					interval: "year",
-					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_PRO_YEARLY_CARD ?? 66),
-					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_PRO_YEARLY_CARD ?? "USD",
+					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_PRO_YEARLY_CARD ?? 168.88),
+					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_PRO_YEARLY_CARD ?? "CNY",
 					seatBased: true,
 					trialPeriodDays: 0,
 				},
@@ -41,8 +41,8 @@ export const config: PaymentsConfig = {
 					paymentMethod: "card",
 					priceId: (process.env.PRICE_ID_LIFETIME_CARD ??
 						process.env.PRICE_ID_LIFETIME) as string,
-					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_LIFETIME_CARD ?? 99),
-					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_LIFETIME_CARD ?? "USD",
+					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_LIFETIME_CARD ?? 199.99),
+					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_LIFETIME_CARD ?? "CNY",
 				},
 				// ── Lifetime WeChat (QiXiang) ─────────────────────────────────
 				// priceId is a synthetic internal identifier, not a Stripe price ID.
@@ -51,7 +51,7 @@ export const config: PaymentsConfig = {
 					type: "one-time",
 					paymentMethod: "wechat_person",
 					priceId: process.env.PRICE_ID_LIFETIME_WECHAT as string,
-					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_LIFETIME_WECHAT ?? 5999),
+					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_LIFETIME_WECHAT ?? 199.99),
 					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_LIFETIME_WECHAT ?? "CNY",
 				},
 				// ── Lifetime Alipay (QiXiang) ─────────────────────────────────
@@ -61,7 +61,7 @@ export const config: PaymentsConfig = {
 					type: "one-time",
 					paymentMethod: "alipay_person",
 					priceId: process.env.PRICE_ID_LIFETIME_ALIPAY as string,
-					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_LIFETIME_ALIPAY ?? 5999),
+					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_LIFETIME_ALIPAY ?? 199.99),
 					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_LIFETIME_ALIPAY ?? "CNY",
 				},
 			],

@@ -43,7 +43,7 @@
 					"telegramAlerts": "Priority free Telegram alerts",
 					"discordAlerts": "Priority free Discord alerts"
 				},
-				"price": "99 USD",
+				"price": "199.99 CNY",
 				"title": "Lifetime"
 			},
 			"pro": {
@@ -57,8 +57,8 @@
 					"communityNotifications": "Exclusive community notifications"
 				},
 				"price": {
-					"month": "6.6 USD/mo",
-					"year": "66 USD/yr · about 5.5 USD/mo"
+					"month": "19.99 CNY/mo",
+					"year": "168.88 CNY/yr · about 14.07 CNY/mo"
 				},
 				"title": "Pro"
 			}
@@ -74,6 +74,14 @@
 		"included": "Included",
 		"paymentMethod": "Pay with",
 		"payNow": "Pay now",
+		"xianyuRedeem": {
+			"ariaLabel": "Copy the Xianyu redeem-code purchase link",
+			"copyErrorDescription": "Please try again later, or search SignalFast redeem code manually.",
+			"copyErrorTitle": "Could not copy Xianyu link",
+			"copiedDescription": "Open Xianyu and paste the link to purchase a redeem code.",
+			"copiedTitle": "Xianyu link copied",
+			"label": "Buy redeem code"
+		},
 		"paymentMethods": {
 			"card": "Credit Card",
 			"wechat_person": "WeChat Pay",

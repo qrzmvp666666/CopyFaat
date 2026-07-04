@@ -47,7 +47,7 @@ function generateOrderNo(prefix: string): string {
 interface QiXiangCheckoutOptions {
 	/** "wxpay" for WeChat Pay, "alipay" for Alipay */
 	type: "wxpay" | "alipay";
-	/** Amount in CNY yuan, e.g. 5999 */
+	/** Amount in CNY yuan, e.g. 199.99 */
 	amount: number;
 	/** Product display name (≤127 bytes) */
 	productName: string;
