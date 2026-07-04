@@ -17,7 +17,6 @@ import {
 import { Skeleton } from "@repo/ui/components/skeleton";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
-	BellIcon,
 	ChartCandlestickIcon,
 	CheckCircle2Icon,
 	CheckIcon,
@@ -953,6 +952,7 @@ export function SignalsWorkspace() {
 	const [selectedEntryStatus, setSelectedEntryStatus] = useState<EntryStatus>("all");
 	const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
+	const [isChartFullscreenOpen, setIsChartFullscreenOpen] = useState(false);
 	const [isSignalsLoading, setIsSignalsLoading] = useState(true);
 	const [isKlinesLoading, setIsKlinesLoading] = useState(false);
 	const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false);
@@ -1580,6 +1580,73 @@ export function SignalsWorkspace() {
 					totalSteps={guideSteps.length}
 				/>
 			) : null}
+			<Dialog open={isChartFullscreenOpen} onOpenChange={setIsChartFullscreenOpen}>
+				<DialogContent className="gap-0 border-white/10 p-0 text-white sm:max-w-none [&>button]:right-4 [&>button]:top-4 [&>button]:bg-white/8 [&>button]:p-2 [&>button]:text-white/70 [&>button]:hover:bg-white/14 [&>button]:hover:text-white h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-none overflow-hidden bg-[#141414] shadow-[0_28px_90px_rgba(0,0,0,0.72)] [&>button]:z-50 [&>button]:rounded-full [&>button]:opacity-100">
+					<div className="min-h-0 flex h-full flex-col">
+						<div className="border-white/10 px-4 py-3 pr-14 flex shrink-0 items-center justify-between border-b bg-[#141414]">
+							<div className="gap-3 flex items-center">
+								<ChartCandlestickIcon className="size-4 text-muted-foreground" />
+								<DialogTitle className="font-mono text-sm font-semibold leading-none">
+									{selectedSymbol || t("chart.loadingSymbol")}
+								</DialogTitle>
+								<DialogDescription className="sr-only">
+									{t("actions.expand")}
+								</DialogDescription>
+							</div>
+							<div className="gap-0.5 border-white/10 p-0.5 flex items-center rounded-md border bg-[#141414]">
+								{SUPPORTED_TIMEFRAMES.map((timeframe) => (
+									<button
+										key={timeframe}
+										type="button"
+										onClick={() => setSelectedTimeframe(timeframe)}
+										className={cn(
+											"px-2.5 py-1 text-xs font-semibold rounded-sm transition-colors",
+											selectedTimeframe === timeframe
+												? "bg-foreground text-background"
+												: "hover:bg-white/8 text-muted-foreground hover:text-foreground",
+										)}
+									>
+										{timeframe}
+									</button>
+								))}
+							</div>
+						</div>
+						<div className="min-h-0 flex-1">
+							{canShowChart ? (
+								<TradingViewSignalChart
+									activeSignal={activeSignal}
+									candles={candles}
+									className="min-h-0 h-full"
+									formatPrice={formatPrice}
+									focusedSignalId={activeSignalId}
+									labels={{
+										entry: t("chart.entry"),
+										stopLoss: t("chart.stopLoss"),
+										takeProfit: t("chart.takeProfit"),
+									}}
+									locale={locale}
+									onSelectSignal={focusSignal}
+									pricePrecision={chartPricePrecision}
+									signals={chartSignals}
+									symbol={selectedSymbol}
+									timeframe={selectedTimeframe}
+								/>
+							) : isSignalsLoading || isChartLoading ? (
+								<ChartSkeleton />
+							) : (
+								<div className="h-full min-h-[520px] p-6 flex items-center justify-center bg-[#141414]">
+									<div className="max-w-sm rounded-xl border border-dashed border-white/12 px-6 py-5 text-center">
+										<p className="font-medium">{t("chart.emptyTitle")}</p>
+										<p className="mt-1 text-sm text-muted-foreground">
+											{t("chart.emptyDescription")}
+										</p>
+									</div>
+								</div>
+							)}
+						</div>
+					</div>
+				</DialogContent>
+			</Dialog>
 			<header
 				className="px-4 py-2 backdrop-blur shrink-0 border-b bg-[#141414]/80"
 				data-guide-target="ticker"
@@ -1946,13 +2013,11 @@ export function SignalsWorkspace() {
 										</button>
 									))}
 								</div>
-								<Button size="icon" variant="ghost" aria-label={t("actions.alert")}>
-									<BellIcon className="size-4" />
-								</Button>
 								<Button
 									size="icon"
 									variant="ghost"
 									aria-label={t("actions.expand")}
+									onClick={() => setIsChartFullscreenOpen(true)}
 								>
 									<Maximize2Icon className="size-4" />
 								</Button>
@@ -1966,6 +2031,7 @@ export function SignalsWorkspace() {
 									candles={candles}
 									className="h-full"
 									formatPrice={formatPrice}
+									focusedSignalId={activeSignalId}
 									labels={{
 										entry: t("chart.entry"),
 										stopLoss: t("chart.stopLoss"),

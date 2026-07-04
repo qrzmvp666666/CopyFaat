@@ -25,6 +25,7 @@ interface TradingViewSignalChartProps {
 	candles: SignalChartCandle[];
 	className?: string;
 	formatPrice: (value: number, fractionDigits?: number) => string;
+	focusedSignalId: string | null;
 	labels: PriceLineLabels;
 	locale: string;
 	onSelectSignal: (signal: SignalChartSignal) => void;
@@ -73,6 +74,8 @@ const RISK_COLOR = "#ef5350";
 const ENTRY_COLOR = "#f59e0b";
 const MARKER_STACK_GAP = 72;
 const DESKTOP_CHART_INTERACTION_QUERY = "(min-width: 1280px)";
+const DEFAULT_VISIBLE_CANDLE_COUNT = 72;
+const DEFAULT_RIGHT_OFFSET = 6;
 
 function getStackOffset(index: number) {
 	if (index === 0) {
@@ -223,6 +226,7 @@ export function TradingViewSignalChart({
 	candles,
 	className,
 	formatPrice,
+	focusedSignalId,
 	labels,
 	locale,
 	onSelectSignal,
@@ -412,7 +416,7 @@ export function TradingViewSignalChart({
 			timeScale: {
 				barSpacing: 7,
 				borderColor: "rgba(255, 255, 255, 0.12)",
-				rightOffset: 12,
+				rightOffset: DEFAULT_RIGHT_OFFSET,
 				secondsVisible: false,
 				timeVisible: true,
 			},
@@ -461,10 +465,7 @@ export function TradingViewSignalChart({
 		interactionMediaQuery.addEventListener("change", handleInteractionMediaQueryChange);
 
 		return () => {
-			interactionMediaQuery.removeEventListener(
-				"change",
-				handleInteractionMediaQueryChange,
-			);
+			interactionMediaQuery.removeEventListener("change", handleInteractionMediaQueryChange);
 			chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleRangeChange);
 			resizeObserver.disconnect();
 			chart.remove();
@@ -486,10 +487,6 @@ export function TradingViewSignalChart({
 			localization: {
 				locale,
 				priceFormatter: (price: number) => formatPrice(price, pricePrecision),
-			},
-			timeScale: {
-				barSpacing: 7,
-				rightOffset: 12,
 			},
 		});
 		series.applyOptions({
@@ -529,10 +526,16 @@ export function TradingViewSignalChart({
 		latestViewKeyRef.current = viewKey;
 
 		if (shouldResetView) {
-			const from = Math.max(0, chartData.length - 110);
+			chart.applyOptions({
+				timeScale: {
+					barSpacing: 7,
+					rightOffset: DEFAULT_RIGHT_OFFSET,
+				},
+			});
+			const from = Math.max(0, chartData.length - DEFAULT_VISIBLE_CANDLE_COUNT);
 			chart.timeScale().setVisibleLogicalRange({
 				from,
-				to: chartData.length + 8,
+				to: chartData.length + DEFAULT_RIGHT_OFFSET,
 			});
 		}
 
@@ -549,6 +552,7 @@ export function TradingViewSignalChart({
 		minMove,
 		pricePrecision,
 		symbol,
+		timeframe,
 		scheduleMarkerPositionUpdate,
 	]);
 
@@ -614,7 +618,10 @@ export function TradingViewSignalChart({
 
 			const focusedSignalKey = `${symbol}:${timeframe}:${getChartDataRangeKey(chartData)}:${activeSignal.id}`;
 
-			if (latestFocusedSignalKeyRef.current !== focusedSignalKey) {
+			if (
+				focusedSignalId === activeSignal.id &&
+				latestFocusedSignalKeyRef.current !== focusedSignalKey
+			) {
 				const activeMarkerPosition = latestMarkerPositionsRef.current.find(
 					(position) => position.signal.id === activeSignal.id,
 				);
@@ -644,6 +651,7 @@ export function TradingViewSignalChart({
 		activeSignal,
 		candles,
 		chartData,
+		focusedSignalId,
 		formatPrice,
 		labels.entry,
 		labels.stopLoss,
