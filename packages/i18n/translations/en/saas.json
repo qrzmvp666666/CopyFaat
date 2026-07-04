@@ -641,7 +641,15 @@
 					"unpaid": "Unpaid"
 				},
 				"title": "Your plan",
-				"expiresAt": "Redeem code access ends on {date}."
+				"expiresAt": "Access ends on {date}.",
+				"countdown": {
+					"label": "Entitlement countdown",
+					"signupTrialLabel": "New user 48-hour Pro trial",
+					"expiresAt": "Ends at {date}",
+					"remaining": "{hours}:{minutes}:{seconds}",
+					"remainingWithDays": "{days}d {hours}:{minutes}:{seconds}",
+					"compact": "{time} left"
+				}
 			},
 			"changePlan": {
 				"description": "Choose a plan to subscribe to.",
@@ -748,6 +756,35 @@
 		"filters": {
 			"allSources": "All"
 		},
+		"guide": {
+			"close": "Maybe later",
+			"finish": "Start using",
+			"next": "Next",
+			"replay": "View feature guide",
+			"stepCounter": "Step {current} / {total}",
+			"steps": {
+				"market": {
+					"title": "Start with live markets",
+					"description": "This ticker syncs live prices and moves for major pairs. For steadier market, chart, and signal sync, switch your network or proxy node to Japan or Singapore first."
+				},
+				"traders": {
+					"title": "Choose the traders you follow",
+					"description": "This row filters signal sources. Keep all channels visible, or focus on specific traders to compare strategy views faster."
+				},
+				"filters": {
+					"title": "Narrow the signal set",
+					"description": "Filter by long or short direction, signal time, and entry status so you can remove setups that do not match your trading plan."
+				},
+				"chart": {
+					"title": "Read signals on the K-line chart",
+					"description": "The chart shows the selected pair and signal markers. Click a marker or a signal card to locate the entry level and related setup."
+				},
+				"signalList": {
+					"title": "Review the full signal details",
+					"description": "The right feed shows entry, take profit, stop loss, submitted time, and entry status. Always check the stop loss and whether the signal has entered."
+				}
+			}
+		},
 		"market": {
 			"eyebrow": "Market",
 			"search": "Search markets",
@@ -774,6 +811,13 @@
 		},
 		"ticker": {
 			"live": "Live market"
+		},
+		"trialWelcome": {
+			"benefit": "A 2-day Pro trial has been added to your account. You can check the expiry time on the plan benefits page.",
+			"description": "Welcome to SignalFast. We will show you live markets, trader filters, the aggregated K-line chart, and the signal feed in 5 quick steps.",
+			"skip": "Maybe later",
+			"startGuide": "Start guide",
+			"title": "Your 2-day Pro trial is active"
 		}
 	},
 	"common": {

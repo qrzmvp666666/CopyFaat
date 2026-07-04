@@ -11,6 +11,7 @@ import Link from "next/link";
 import { CustomerPortalButton } from "../../settings/components/CustomerPortalButton";
 import { SubscriptionStatusBadge } from "../../settings/components/SubscriptionStatusBadge";
 import { BILLING_INSET_CLASS } from "./billing-surface-styles";
+import { EntitlementCountdown } from "./EntitlementCountdown";
 
 export function ActivePlan({
 	organizationId,
@@ -23,7 +24,7 @@ export function ActivePlan({
 	const t = useTranslations();
 	const format = useFormatter();
 	const { planData } = usePlanData();
-	const { activePlan } = usePurchases(organizationId);
+	const { activeEntitlementGrant, activePlan } = usePurchases(organizationId);
 
 	if (!activePlan) {
 		return null;
@@ -103,13 +104,23 @@ export function ActivePlan({
 						</strong>
 					)}
 					{"expiresAt" in activePlan && activePlan.expiresAt && (
-						<p className="mt-2 text-sm text-muted-foreground">
-							{t("settings.billing.activePlan.expiresAt", {
-								date: format.dateTime(new Date(activePlan.expiresAt), {
-									dateStyle: "medium",
-								}),
-							})}
-						</p>
+						<>
+							<p className="mt-2 text-sm text-muted-foreground">
+								{t("settings.billing.activePlan.expiresAt", {
+									date: format.dateTime(new Date(activePlan.expiresAt), {
+										dateStyle: "medium",
+									}),
+								})}
+							</p>
+							<EntitlementCountdown
+								expiresAt={activePlan.expiresAt}
+								source={
+									"source" in activePlan
+										? activePlan.source
+										: activeEntitlementGrant?.source
+								}
+							/>
+						</>
 					)}
 				</div>
 

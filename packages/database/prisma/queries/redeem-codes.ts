@@ -287,6 +287,60 @@ export async function getUnexpiredEntitlementGrantsByUserId(userId: string, now 
 	});
 }
 
+export async function grantSignupTrialEntitlement(input: {
+	userId: string;
+	planId?: string;
+	durationDays?: number;
+	now?: Date;
+}) {
+	const planId = input.planId ?? "pro";
+	const durationDays = input.durationDays ?? 2;
+	const now = input.now ?? new Date();
+
+	return db.$transaction(async (tx) => {
+		const existingTrialGrant = await tx.entitlementGrant.findFirst({
+			where: {
+				userId: input.userId,
+				source: "signup_trial",
+			},
+		});
+
+		if (existingTrialGrant) {
+			return existingTrialGrant;
+		}
+
+		const latestGrant = await tx.entitlementGrant.findFirst({
+			where: {
+				userId: input.userId,
+				planId,
+				expiresAt: {
+					gt: now,
+				},
+			},
+			orderBy: {
+				expiresAt: "desc",
+			},
+		});
+
+		const startsAt =
+			latestGrant && latestGrant.expiresAt.getTime() > now.getTime()
+				? latestGrant.expiresAt
+				: now;
+		const expiresAt = new Date(startsAt.getTime() + durationDays * DAY_IN_MS);
+
+		return tx.entitlementGrant.create({
+			data: {
+				userId: input.userId,
+				source: "signup_trial",
+				planId,
+				durationDays,
+				startsAt,
+				expiresAt,
+			},
+		});
+	});
+}
+
 export async function redeemCodeForUser(input: { userId: string; codeHash: string; now?: Date }) {
 	const now = input.now ?? new Date();
 

@@ -13,13 +13,26 @@ export const usePurchases = (organizationId?: string) => {
 
 	const purchases = data?.purchases ?? [];
 	const entitlementGrants = data?.entitlementGrants ?? [];
+	const activeEntitlementGrant =
+		entitlementGrants
+			.filter((grant) => new Date(grant.expiresAt).getTime() > Date.now())
+			.sort((left, right) => {
+				return new Date(right.expiresAt).getTime() - new Date(left.expiresAt).getTime();
+			})[0] ?? null;
 
 	const { activePlan, hasSubscription, hasPurchase } = createPurchasesHelper(
 		purchases,
 		entitlementGrants,
 	);
 
-	return { purchases, entitlementGrants, activePlan, hasSubscription, hasPurchase };
+	return {
+		purchases,
+		entitlementGrants,
+		activeEntitlementGrant,
+		activePlan,
+		hasSubscription,
+		hasPurchase,
+	};
 };
 
 export const useUserPurchases = () => usePurchases();

@@ -641,7 +641,15 @@
 					"unpaid": "未付款"
 				},
 				"title": "您的套餐",
-				"expiresAt": "兑换码权益将于 {date} 到期。"
+				"expiresAt": "权益将于 {date} 到期。",
+				"countdown": {
+					"label": "权益倒计时",
+					"signupTrialLabel": "新用户 48 小时 Pro 试用",
+					"expiresAt": "到期时间：{date}",
+					"remaining": "{hours}:{minutes}:{seconds}",
+					"remainingWithDays": "{days}天 {hours}:{minutes}:{seconds}",
+					"compact": "权益剩余 {time}"
+				}
 			},
 			"changePlan": {
 				"description": "选择要订阅的套餐。",
@@ -748,6 +756,35 @@
 		"filters": {
 			"allSources": "全部"
 		},
+		"guide": {
+			"close": "稍后再看",
+			"finish": "开始使用",
+			"next": "下一步",
+			"replay": "查看功能引导",
+			"stepCounter": "第 {current} / {total} 步",
+			"steps": {
+				"market": {
+					"title": "先看实时行情",
+					"description": "这里会实时同步主流交易对价格和涨跌幅。为了行情、K 线和信号同步更稳定，建议先把网络或代理节点切换至日本或新加坡。"
+				},
+				"traders": {
+					"title": "选择你关注的交易员",
+					"description": "这一排是信号来源筛选。可以只看某几个交易员或频道，也可以保持全部，方便快速对比不同策略观点。"
+				},
+				"filters": {
+					"title": "用筛选缩小范围",
+					"description": "这里可以按做多/做空、信号时间和入场状态筛选，先排除不符合你交易计划的信号。"
+				},
+				"chart": {
+					"title": "在 K 线上看信号位置",
+					"description": "K 线区域会展示当前交易对走势和信号标记。点击标记或右侧信号，可以定位入场价与对应策略。"
+				},
+				"signalList": {
+					"title": "查看完整信号详情",
+					"description": "右侧列表会展示入场价、止盈、止损、委托时间和入场状态。使用前请重点核对止损与信号是否已经入场。"
+				}
+			}
+		},
 		"market": {
 			"eyebrow": "Market",
 			"search": "搜索市场",
@@ -774,6 +811,13 @@
 		},
 		"ticker": {
 			"live": "实时行情"
+		},
+		"trialWelcome": {
+			"benefit": "系统已自动为你的账号开通 2 天 Pro 试用权益，可在套餐权益页面查看到期时间。",
+			"description": "欢迎进入 SignalFast。我们先用 5 个步骤带你熟悉实时行情、交易员筛选、聚合 K 线和信号列表。",
+			"skip": "稍后再看",
+			"startGuide": "开始引导",
+			"title": "已赠送 2 天 Pro 试用"
 		}
 	},
 	"common": {

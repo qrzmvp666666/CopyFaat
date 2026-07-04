@@ -1,6 +1,16 @@
 "use client";
 
+import { EntitlementCountdown } from "@payments/components/EntitlementCountdown";
+import { usePurchases } from "@payments/hooks/purchases";
 import { Button, cn } from "@repo/ui";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@repo/ui/components/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -17,11 +27,14 @@ import {
 	ChevronLeftIcon,
 	ChevronRightIcon,
 	Clock3Icon,
+	CompassIcon,
+	CrownIcon,
 	Maximize2Icon,
 	RadioIcon,
 	RefreshCwIcon,
 	SearchIcon,
 	SlidersHorizontalIcon,
+	SparklesIcon,
 	TargetIcon,
 	TrendingDownIcon,
 	TrendingUpIcon,
@@ -29,6 +42,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import type { CSSProperties } from "react";
 import { useEffect, useMemo, useState } from "react";
 
 import { isBlockedSignalTrader } from "../lib/signal-identity";
@@ -46,12 +60,14 @@ const SIGNAL_DIRECTIONS = ["all", "long", "short"] as const;
 const SIGNAL_STATUSES = ["active", "history"] as const;
 const TIME_RANGES = ["all", "24h", "3d", "7d", "30d"] as const;
 const ENTRY_STATUSES = ["all", "pending", "entered"] as const;
+const SIGNALS_GUIDE_STORAGE_KEY_PREFIX = "signalfast:signals-guide:v2";
 
 type Timeframe = (typeof SUPPORTED_TIMEFRAMES)[number];
 type SignalDirection = (typeof SIGNAL_DIRECTIONS)[number];
 type SignalStatus = (typeof SIGNAL_STATUSES)[number];
 type TimeRange = (typeof TIME_RANGES)[number];
 type EntryStatus = (typeof ENTRY_STATUSES)[number];
+type SignalsGuideTarget = "chart" | "filters" | "signalList" | "ticker" | "traders";
 
 interface Instrument {
 	symbol: string;
@@ -138,6 +154,27 @@ interface SignalStatusPresentation {
 	resultIconClassName: string;
 	resultValueClassName: string;
 	resultLabel: string;
+}
+
+interface SignalsGuideStep {
+	icon: LucideIcon;
+	target: SignalsGuideTarget;
+	title: string;
+	description: string;
+}
+
+interface GuideTargetRect {
+	bottom: number;
+	height: number;
+	left: number;
+	right: number;
+	top: number;
+	width: number;
+}
+
+interface GuideViewportSize {
+	height: number;
+	width: number;
 }
 
 const TIMEFRAME_SECONDS: Record<Timeframe, number> = {
@@ -943,9 +980,116 @@ function matchesSelectedSources(
 	return selectedSourceIds.length === 0 || selectedSourceIds.includes(signal.sourceId);
 }
 
+function clampNumber(value: number, min: number, max: number) {
+	return Math.min(Math.max(value, min), max);
+}
+
+function getGuideTargetRect(element: HTMLElement): GuideTargetRect {
+	const rect = element.getBoundingClientRect();
+	const padding = 8;
+	const viewportWidth = window.innerWidth;
+	const viewportHeight = window.innerHeight;
+	const left = clampNumber(rect.left - padding, 12, viewportWidth - 24);
+	const top = clampNumber(rect.top - padding, 12, viewportHeight - 24);
+	const right = clampNumber(rect.right + padding, left + 24, viewportWidth - 12);
+	const bottom = clampNumber(rect.bottom + padding, top + 24, viewportHeight - 12);
+
+	return {
+		bottom,
+		height: bottom - top,
+		left,
+		right,
+		top,
+		width: right - left,
+	};
+}
+
+function getGuideCardStyle(
+	targetRect: GuideTargetRect | null,
+	viewportSize: GuideViewportSize,
+): CSSProperties {
+	if (!viewportSize.width || !viewportSize.height) {
+		return {
+			bottom: 24,
+			left: "50%",
+			maxWidth: 380,
+			transform: "translateX(-50%)",
+			width: "calc(100vw - 32px)",
+		};
+	}
+
+	const viewportWidth = viewportSize.width;
+	const viewportHeight = viewportSize.height;
+	const cardWidth = Math.min(380, Math.max(240, viewportWidth - 32));
+	const estimatedHeight = 260;
+	const inset = 16;
+	const gap = 16;
+	const maxLeft = Math.max(inset, viewportWidth - cardWidth - inset);
+	const maxTop = Math.max(inset, viewportHeight - estimatedHeight - inset);
+
+	if (!targetRect) {
+		return {
+			bottom: 24,
+			left: "50%",
+			transform: "translateX(-50%)",
+			width: cardWidth,
+		};
+	}
+
+	const centeredLeft = clampNumber(
+		targetRect.left + targetRect.width / 2 - cardWidth / 2,
+		inset,
+		maxLeft,
+	);
+	const belowTop = targetRect.bottom + gap;
+
+	if (belowTop + estimatedHeight <= viewportHeight - inset) {
+		return {
+			left: centeredLeft,
+			top: belowTop,
+			width: cardWidth,
+		};
+	}
+
+	const aboveTop = targetRect.top - gap - estimatedHeight;
+
+	if (aboveTop >= inset) {
+		return {
+			left: centeredLeft,
+			top: aboveTop,
+			width: cardWidth,
+		};
+	}
+
+	const sideTop = clampNumber(targetRect.top, inset, maxTop);
+
+	if (targetRect.right + gap + cardWidth <= viewportWidth - inset) {
+		return {
+			left: targetRect.right + gap,
+			top: sideTop,
+			width: cardWidth,
+		};
+	}
+
+	if (targetRect.left - gap - cardWidth >= inset) {
+		return {
+			left: targetRect.left - gap - cardWidth,
+			top: sideTop,
+			width: cardWidth,
+		};
+	}
+
+	return {
+		left: centeredLeft,
+		top: clampNumber(targetRect.top + 18, inset, maxTop),
+		width: cardWidth,
+	};
+}
+
 export function SignalsWorkspace() {
 	const t = useTranslations("signals");
 	const locale = useLocale();
+	const { activeEntitlementGrant, activePlan } = usePurchases();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
 	const [binanceCandles, setBinanceCandles] = useState<Candle[]>([]);
 	const [instrumentQuotes, setInstrumentQuotes] = useState<Record<string, Partial<Instrument>>>(
@@ -961,6 +1105,21 @@ export function SignalsWorkspace() {
 	const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
 	const [isSignalsLoading, setIsSignalsLoading] = useState(true);
+	const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false);
+	const [guideOpen, setGuideOpen] = useState(false);
+	const [guideStepIndex, setGuideStepIndex] = useState(0);
+	const activePlanEntitlement =
+		activePlan && "expiresAt" in activePlan && activePlan.expiresAt
+			? {
+					expiresAt: activePlan.expiresAt,
+					source:
+						"source" in activePlan ? activePlan.source : activeEntitlementGrant?.source,
+				}
+			: null;
+	const isSignupTrial = activePlanEntitlement?.source === "signup_trial";
+	const guideStorageKey = isSignupTrial
+		? `${SIGNALS_GUIDE_STORAGE_KEY_PREFIX}:${activeEntitlementGrant?.id ?? "current"}`
+		: SIGNALS_GUIDE_STORAGE_KEY_PREFIX;
 
 	const signals = useMemo(
 		() => webhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
@@ -1121,6 +1280,22 @@ export function SignalsWorkspace() {
 			setActiveSignalId(null);
 		}
 	}, [instruments, selectedSymbol]);
+
+	useEffect(() => {
+		if (!isSignupTrial) {
+			return;
+		}
+
+		try {
+			if (window.localStorage.getItem(guideStorageKey)) {
+				return;
+			}
+		} catch {
+			return;
+		}
+
+		setWelcomeDialogOpen(true);
+	}, [guideStorageKey, isSignupTrial]);
 
 	useEffect(() => {
 		const visibleSourceIds = new Set(sourceFilters.map((source) => source.id));
@@ -1340,14 +1515,141 @@ export function SignalsWorkspace() {
 		setActiveSignalId(null);
 	}
 
+	function markGuideSeen() {
+		try {
+			window.localStorage.setItem(guideStorageKey, "seen");
+		} catch {
+			// Ignore private browsing storage failures; the guide is non-critical.
+		}
+	}
+
+	function dismissWelcomeDialog() {
+		markGuideSeen();
+		setWelcomeDialogOpen(false);
+	}
+
+	function startGuide() {
+		markGuideSeen();
+		setWelcomeDialogOpen(false);
+		setIsSignalPanelCollapsed(false);
+		setGuideStepIndex(0);
+		setGuideOpen(true);
+	}
+
+	function replayGuide() {
+		setIsSignalPanelCollapsed(false);
+		setGuideStepIndex(0);
+		setGuideOpen(true);
+	}
+
+	function closeGuide() {
+		setGuideOpen(false);
+	}
+
+	function goToNextGuideStep() {
+		if (guideStepIndex >= guideSteps.length - 1) {
+			closeGuide();
+			return;
+		}
+
+		setGuideStepIndex((currentStep) => currentStep + 1);
+	}
+
+	const guideSteps: SignalsGuideStep[] = [
+		{
+			icon: RadioIcon,
+			target: "ticker",
+			title: t("guide.steps.market.title"),
+			description: t("guide.steps.market.description"),
+		},
+		{
+			icon: CrownIcon,
+			target: "traders",
+			title: t("guide.steps.traders.title"),
+			description: t("guide.steps.traders.description"),
+		},
+		{
+			icon: TargetIcon,
+			target: "filters",
+			title: t("guide.steps.filters.title"),
+			description: t("guide.steps.filters.description"),
+		},
+		{
+			icon: ChartCandlestickIcon,
+			target: "chart",
+			title: t("guide.steps.chart.title"),
+			description: t("guide.steps.chart.description"),
+		},
+		{
+			icon: SlidersHorizontalIcon,
+			target: "signalList",
+			title: t("guide.steps.signalList.title"),
+			description: t("guide.steps.signalList.description"),
+		},
+	];
+
 	return (
-		<div className="min-h-full bg-[#141414] text-foreground xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden">
-			<header className="px-4 py-2 backdrop-blur shrink-0 border-b bg-[#141414]/80">
+		<div className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden min-h-full bg-[#141414] text-foreground">
+			<Dialog
+				open={welcomeDialogOpen}
+				onOpenChange={(open) => {
+					if (open) {
+						setWelcomeDialogOpen(true);
+						return;
+					}
+					dismissWelcomeDialog();
+				}}
+			>
+				<DialogContent className="sm:max-w-[460px] border-white/10 text-white bg-[#151515]">
+					<DialogHeader>
+						<div className="mb-2 size-11 flex items-center justify-center rounded-full bg-primary/15 text-primary">
+							<CrownIcon className="size-5" />
+						</div>
+						<DialogTitle>{t("trialWelcome.title")}</DialogTitle>
+						<DialogDescription className="text-muted-foreground">
+							{t("trialWelcome.description")}
+						</DialogDescription>
+					</DialogHeader>
+					<div className="gap-3 border-white/10 bg-white/5 p-3 text-sm flex rounded-xl border">
+						<SparklesIcon className="mt-0.5 size-4 shrink-0 text-primary" />
+						<p className="text-muted-foreground">{t("trialWelcome.benefit")}</p>
+					</div>
+					<DialogFooter className="gap-2 sm:gap-2">
+						<Button type="button" variant="ghost" onClick={dismissWelcomeDialog}>
+							{t("trialWelcome.skip")}
+						</Button>
+						<Button type="button" variant="primary" onClick={startGuide}>
+							<CompassIcon className="size-4" />
+							{t("trialWelcome.startGuide")}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+			{guideOpen ? (
+				<SignalsGuideOverlay
+					onClose={closeGuide}
+					onNext={goToNextGuideStep}
+					step={guideSteps[guideStepIndex]}
+					stepIndex={guideStepIndex}
+					totalSteps={guideSteps.length}
+				/>
+			) : null}
+			<header
+				className="px-4 py-2 backdrop-blur shrink-0 border-b bg-[#141414]/80"
+				data-guide-target="ticker"
+			>
 				<div className="min-w-0 gap-3 no-scrollbar flex items-center overflow-x-auto">
 					<div className="gap-2 pr-3 text-sm font-semibold flex shrink-0 items-center">
 						<RadioIcon className="size-4 text-emerald-500" />
 						<span>{t("ticker.live")}</span>
 					</div>
+					{activePlanEntitlement ? (
+						<EntitlementCountdown
+							compact
+							expiresAt={activePlanEntitlement.expiresAt}
+							source={activePlanEntitlement.source}
+						/>
+					) : null}
 					{instruments.map((instrument) => (
 						<button
 							key={instrument.symbol}
@@ -1399,7 +1701,7 @@ export function SignalsWorkspace() {
 
 			<div
 				className={cn(
-					"grid grid-cols-1 gap-0 xl:min-h-0 xl:flex-1 xl:overflow-hidden",
+					"gap-0 xl:min-h-0 xl:flex-1 xl:overflow-hidden grid grid-cols-1",
 					isSignalPanelCollapsed
 						? "xl:grid-cols-[minmax(700px,1fr)_0px]"
 						: "xl:grid-cols-[minmax(700px,1fr)_328px]",
@@ -1479,7 +1781,10 @@ export function SignalsWorkspace() {
 				<main className="min-h-0 min-w-0 flex flex-col bg-[#141414]">
 					<section className="px-3 py-3 shrink-0 border-b bg-[#141414]">
 						<div className="gap-3 flex flex-col">
-							<div className="no-scrollbar -mx-3 min-w-0 gap-2 px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 flex flex-nowrap items-center overflow-x-auto">
+							<div
+								className="no-scrollbar -mx-3 min-w-0 gap-2 px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 flex flex-nowrap items-center overflow-x-auto"
+								data-guide-target="traders"
+							>
 								<button
 									type="button"
 									onClick={clearSourceFilters}
@@ -1517,7 +1822,10 @@ export function SignalsWorkspace() {
 								))}
 							</div>
 
-							<div className="gap-2 flex flex-wrap items-center">
+							<div
+								className="gap-2 flex flex-wrap items-center"
+								data-guide-target="filters"
+							>
 								{SIGNAL_DIRECTIONS.map((direction) => (
 									<button
 										key={direction}
@@ -1635,6 +1943,15 @@ export function SignalsWorkspace() {
 								<Button
 									size="icon"
 									variant="ghost"
+									aria-label={t("guide.replay")}
+									title={t("guide.replay")}
+									onClick={replayGuide}
+								>
+									<CompassIcon className="size-4" />
+								</Button>
+								<Button
+									size="icon"
+									variant="ghost"
 									aria-label={t("actions.refresh")}
 								>
 									<RefreshCwIcon className="size-4" />
@@ -1650,7 +1967,10 @@ export function SignalsWorkspace() {
 						</div>
 					</section>
 
-					<section className="flex flex-col xl:min-h-0 xl:flex-1">
+					<section
+						className="xl:min-h-0 xl:flex-1 flex flex-col"
+						data-guide-target="chart"
+					>
 						<div className="px-4 py-3 flex items-center justify-between border-b bg-[#141414]">
 							<div className="gap-3 flex items-center">
 								<ChartCandlestickIcon className="size-4 text-muted-foreground" />
@@ -1689,7 +2009,7 @@ export function SignalsWorkspace() {
 							</div>
 						</div>
 
-						<div className="h-[min(620px,calc(100vh-260px))] min-h-[420px] xl:h-auto xl:min-h-0 xl:flex-1">
+						<div className="xl:h-auto xl:min-h-0 xl:flex-1 h-[min(620px,calc(100vh-260px))] min-h-[420px]">
 							<TradingViewSignalChart
 								activeSignal={activeSignal}
 								candles={candles}
@@ -1713,8 +2033,9 @@ export function SignalsWorkspace() {
 
 				<aside
 					className={cn(
-						"group relative min-h-0 border-t bg-[#141414] xl:flex xl:flex-col xl:overflow-hidden xl:border-l xl:border-t-0",
+						"group min-h-0 xl:flex xl:flex-col xl:overflow-hidden xl:border-l xl:border-t-0 relative border-t bg-[#141414]",
 					)}
+					data-guide-target="signalList"
 				>
 					<button
 						type="button"
@@ -1927,6 +2248,182 @@ function SignalMetric({ label, value, tone }: SignalMetricProps) {
 			>
 				{value}
 			</p>
+		</div>
+	);
+}
+
+interface SignalsGuideOverlayProps {
+	step: SignalsGuideStep;
+	stepIndex: number;
+	totalSteps: number;
+	onClose: () => void;
+	onNext: () => void;
+}
+
+function SignalsGuideOverlay({
+	step,
+	stepIndex,
+	totalSteps,
+	onClose,
+	onNext,
+}: SignalsGuideOverlayProps) {
+	const t = useTranslations("signals.guide");
+	const Icon = step.icon;
+	const isLastStep = stepIndex === totalSteps - 1;
+	const [targetRect, setTargetRect] = useState<GuideTargetRect | null>(null);
+	const [viewportSize, setViewportSize] = useState<GuideViewportSize>({
+		height: 0,
+		width: 0,
+	});
+	const cardStyle = getGuideCardStyle(targetRect, viewportSize);
+
+	useEffect(() => {
+		let frame = 0;
+		let measureTimer = 0;
+
+		function measureTarget() {
+			setViewportSize({
+				height: window.innerHeight,
+				width: window.innerWidth,
+			});
+
+			const targetElement = document.querySelector<HTMLElement>(
+				`[data-guide-target="${step.target}"]`,
+			);
+
+			if (!targetElement) {
+				setTargetRect(null);
+				return;
+			}
+
+			setTargetRect(getGuideTargetRect(targetElement));
+		}
+
+		function scheduleMeasure() {
+			window.cancelAnimationFrame(frame);
+			frame = window.requestAnimationFrame(measureTarget);
+		}
+
+		const targetElement = document.querySelector<HTMLElement>(
+			`[data-guide-target="${step.target}"]`,
+		);
+
+		targetElement?.scrollIntoView({
+			behavior: "smooth",
+			block: "center",
+			inline: "nearest",
+		});
+
+		measureTimer = window.setTimeout(scheduleMeasure, 180);
+		scheduleMeasure();
+
+		window.addEventListener("resize", scheduleMeasure);
+		window.addEventListener("scroll", scheduleMeasure, true);
+
+		return () => {
+			window.clearTimeout(measureTimer);
+			window.cancelAnimationFrame(frame);
+			window.removeEventListener("resize", scheduleMeasure);
+			window.removeEventListener("scroll", scheduleMeasure, true);
+		};
+	}, [step.target]);
+
+	return (
+		<div className="inset-0 pointer-events-none fixed z-50">
+			{targetRect ? (
+				<>
+					<div
+						className="bg-black/76 absolute backdrop-blur-[1px]"
+						style={{
+							height: targetRect.top,
+							left: 0,
+							right: 0,
+							top: 0,
+						}}
+					/>
+					<div
+						className="bg-black/76 absolute backdrop-blur-[1px]"
+						style={{
+							bottom: 0,
+							left: 0,
+							right: 0,
+							top: targetRect.bottom,
+						}}
+					/>
+					<div
+						className="bg-black/76 absolute backdrop-blur-[1px]"
+						style={{
+							bottom: viewportSize.height - targetRect.bottom,
+							left: 0,
+							top: targetRect.top,
+							width: targetRect.left,
+						}}
+					/>
+					<div
+						className="bg-black/76 absolute backdrop-blur-[1px]"
+						style={{
+							bottom: viewportSize.height - targetRect.bottom,
+							left: targetRect.right,
+							right: 0,
+							top: targetRect.top,
+						}}
+					/>
+					<div
+						className="absolute rounded-xl border border-primary/80 bg-primary/8 shadow-[0_0_0_1px_rgba(255,255,255,0.15),0_0_28px_rgba(16,185,129,0.32)]"
+						style={{
+							height: targetRect.height,
+							left: targetRect.left,
+							top: targetRect.top,
+							width: targetRect.width,
+						}}
+					/>
+				</>
+			) : (
+				<div className="inset-0 bg-black/76 absolute backdrop-blur-[1px]" />
+			)}
+			<div
+				className="border-white/10 p-4 text-white shadow-2xl pointer-events-auto absolute rounded-xl border bg-[#172033]/95"
+				style={cardStyle}
+			>
+				<div className="gap-3 flex items-start">
+					<div className="size-10 flex shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+						<Icon className="size-5" />
+					</div>
+					<div className="min-w-0 flex-1">
+						<p className="text-xs font-semibold text-primary uppercase">
+							{t("stepCounter", {
+								current: stepIndex + 1,
+								total: totalSteps,
+							})}
+						</p>
+						<h2 className="mt-1 text-lg font-semibold leading-snug">{step.title}</h2>
+						<p className="mt-2 text-sm leading-6 text-muted-foreground">
+							{step.description}
+						</p>
+					</div>
+				</div>
+
+				<div className="mt-4 gap-1.5 flex">
+					{Array.from({ length: totalSteps }).map((_, index) => (
+						<span
+							key={index}
+							className={cn(
+								"h-1 flex-1 rounded-full",
+								index <= stepIndex ? "bg-primary" : "bg-white/10",
+							)}
+						/>
+					))}
+				</div>
+
+				<div className="mt-4 gap-2 flex justify-end">
+					<Button type="button" variant="ghost" size="sm" onClick={onClose}>
+						{t("close")}
+					</Button>
+					<Button type="button" variant="primary" size="sm" onClick={onNext}>
+						{isLastStep ? t("finish") : t("next")}
+					</Button>
+				</div>
+			</div>
 		</div>
 	);
 }
