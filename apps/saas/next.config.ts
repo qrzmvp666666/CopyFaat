@@ -10,7 +10,19 @@ const allowedDevOrigin = process.env.NEXT_PUBLIC_SAAS_URL
 	: undefined;
 
 const nextConfig: NextConfig = {
-	transpilePackages: ["@repo/api", "@repo/auth", "@repo/database", "@repo/ui"],
+	transpilePackages: [
+		"@repo/api",
+		"@repo/auth",
+		"@repo/database",
+		"@repo/storage",
+		"@repo/ui",
+		"@aws-sdk/client-s3",
+		"@aws-sdk/s3-request-presigner",
+		"@prisma/adapter-pg",
+		"@prisma/client",
+		"pg",
+		"prettier",
+	],
 	allowedDevOrigins: [
 		...(allowedDevOrigin ? [allowedDevOrigin] : []),
 		"192.168.2.20",
