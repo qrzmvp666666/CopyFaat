@@ -744,7 +744,10 @@
 			"refresh": "Refresh"
 		},
 		"chart": {
+			"emptyDescription": "The chart will appear automatically once a pair and K-line data are synced.",
+			"emptyTitle": "No K-line data to show",
 			"entry": "Entry",
+			"loadingSymbol": "Loading",
 			"stopLoss": "Stop",
 			"takeProfit": "Take profit"
 		},
@@ -810,6 +813,7 @@
 			"history": "History"
 		},
 		"ticker": {
+			"empty": "No trading pairs to show",
 			"live": "Live market"
 		},
 		"trialWelcome": {

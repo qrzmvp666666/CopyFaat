@@ -744,7 +744,10 @@
 			"refresh": "刷新"
 		},
 		"chart": {
+			"emptyDescription": "交易对或 K 线数据同步完成后会自动展示。",
+			"emptyTitle": "暂无可展示的 K 线",
 			"entry": "入场价",
+			"loadingSymbol": "加载中",
 			"stopLoss": "止损价",
 			"takeProfit": "止盈价"
 		},
@@ -810,6 +813,7 @@
 			"history": "历史信号"
 		},
 		"ticker": {
+			"empty": "暂无可展示交易对",
 			"live": "实时行情"
 		},
 		"trialWelcome": {

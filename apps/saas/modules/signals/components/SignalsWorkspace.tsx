@@ -16,6 +16,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@repo/ui/components/dropdown-menu";
+import { Skeleton } from "@repo/ui/components/skeleton";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
 	BellIcon,
@@ -82,6 +83,24 @@ const TRIAL_WELCOME_CONFETTI_STYLES = `
 	.trial-confetti-particle {
 		animation: none;
 		opacity: 0.65;
+	}
+}
+`;
+const SIGNALS_SKELETON_STYLES = `
+@keyframes signals-skeleton-shimmer {
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+.signals-skeleton-shimmer {
+	animation: signals-skeleton-shimmer 1.9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.signals-skeleton-shimmer {
+		animation: none;
+		opacity: 0.45;
 	}
 }
 `;
@@ -286,12 +305,11 @@ interface GuideViewportSize {
 	width: number;
 }
 
-const TIMEFRAME_SECONDS: Record<Timeframe, number> = {
-	"15m": 15 * 60,
-	"1h": 60 * 60,
-	"4h": 4 * 60 * 60,
-	"1d": 24 * 60 * 60,
-};
+interface SymbolCandles {
+	candles: Candle[];
+	symbol: string;
+	timeframe: Timeframe;
+}
 
 const INSTRUMENTS: Instrument[] = [
 	{
@@ -326,290 +344,20 @@ const INSTRUMENTS: Instrument[] = [
 const BINANCE_STREAM_BASE_URL = "wss://stream.binance.com:9443";
 const BINANCE_RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000] as const;
 const MIN_CHART_CANDLES = 20;
+const PRIORITY_SYMBOL_BASES = ["BTC", "ETH", "SOL"] as const;
 const TICK_FLASH_MS = 700;
-
-const SIGNALS: TradeSignal[] = [
-	{
-		id: "btc-1",
-		symbol: "BTCUSDT",
-		sourceId: "xinsuo",
-		sourceName: "所长",
-		avatarLabel: "所",
-		avatarUrl: "https://i.pravatar.cc/80?img=11",
-		direction: "long",
-		entryStatus: "entered",
-		status: "active",
-		entry: 69_700,
-		takeProfit: 73_825,
-		stopLoss: 68_700,
-		submittedAt: "03/25 17:10",
-		confidence: 2.2,
-		x: 88,
-		y: 63,
-	},
-	{
-		id: "btc-2",
-		symbol: "BTCUSDT",
-		sourceId: "feiyang",
-		sourceName: "飞扬",
-		avatarLabel: "飞",
-		avatarUrl: "https://i.pravatar.cc/80?img=33",
-		direction: "long",
-		entryStatus: "entered",
-		status: "active",
-		entry: 69_500,
-		takeProfit: 70_300,
-		stopLoss: 68_900,
-		submittedAt: "03/25 14:36",
-		confidence: 1.74,
-		x: 75,
-		y: 68,
-	},
-	{
-		id: "btc-3",
-		symbol: "BTCUSDT",
-		sourceId: "shanzhiwang",
-		sourceName: "山寨之王",
-		avatarLabel: "山",
-		avatarUrl: "https://i.pravatar.cc/80?img=47",
-		direction: "long",
-		entryStatus: "entered",
-		status: "history",
-		entry: 68_324,
-		takeProfit: 70_800,
-		stopLoss: 67_800,
-		submittedAt: "03/23 08:12",
-		confidence: 1.52,
-		x: 52,
-		y: 76,
-		outcome: "TP1",
-	},
-	{
-		id: "btc-4",
-		symbol: "BTCUSDT",
-		sourceId: "xinsuo",
-		sourceName: "所长",
-		avatarLabel: "所",
-		avatarUrl: "https://i.pravatar.cc/80?img=11",
-		direction: "short",
-		entryStatus: "pending",
-		status: "history",
-		entry: 73_350,
-		takeProfit: 70_050,
-		stopLoss: 74_000,
-		submittedAt: "03/25 10:29",
-		confidence: 0.29,
-		x: 82,
-		y: 41,
-		outcome: "未触发",
-	},
-	{
-		id: "eth-1",
-		symbol: "ETHUSDT",
-		sourceId: "xinsuo",
-		sourceName: "所长",
-		avatarLabel: "所",
-		avatarUrl: "https://i.pravatar.cc/80?img=11",
-		direction: "long",
-		entryStatus: "pending",
-		status: "active",
-		entry: 2_876,
-		takeProfit: 3_040,
-		stopLoss: 2_790,
-		submittedAt: "03/25 18:02",
-		confidence: 1.86,
-		x: 77,
-		y: 59,
-	},
-	{
-		id: "eth-2",
-		symbol: "ETHUSDT",
-		sourceId: "wangbot",
-		sourceName: "WG Bot",
-		avatarLabel: "WG",
-		avatarUrl: "https://i.pravatar.cc/80?img=64",
-		direction: "short",
-		entryStatus: "entered",
-		status: "history",
-		entry: 2_945,
-		takeProfit: 2_820,
-		stopLoss: 3_015,
-		submittedAt: "03/24 22:14",
-		confidence: 0.92,
-		x: 58,
-		y: 39,
-		outcome: "SL",
-	},
-	{
-		id: "sol-1",
-		symbol: "SOLUSDT",
-		sourceId: "feiyang",
-		sourceName: "飞扬",
-		avatarLabel: "飞",
-		avatarUrl: "https://i.pravatar.cc/80?img=33",
-		direction: "long",
-		entryStatus: "entered",
-		status: "active",
-		entry: 87.5,
-		takeProfit: 94.2,
-		stopLoss: 84.1,
-		submittedAt: "03/25 16:45",
-		confidence: 2.04,
-		x: 72,
-		y: 61,
-	},
-	{
-		id: "sol-2",
-		symbol: "SOLUSDT",
-		sourceId: "shanzhiwang",
-		sourceName: "山寨之王",
-		avatarLabel: "山",
-		avatarUrl: "https://i.pravatar.cc/80?img=47",
-		direction: "short",
-		entryStatus: "entered",
-		status: "history",
-		entry: 91.8,
-		takeProfit: 86.6,
-		stopLoss: 94.4,
-		submittedAt: "03/24 19:28",
-		confidence: 1.18,
-		x: 48,
-		y: 35,
-		outcome: "TP1",
-	},
-	{
-		id: "btc-5",
-		symbol: "BTCUSDT",
-		sourceId: "chengg",
-		sourceName: "陈哥",
-		avatarLabel: "陈",
-		avatarUrl: "https://i.pravatar.cc/80?img=52",
-		direction: "short",
-		entryStatus: "entered",
-		status: "active",
-		entry: 71_200,
-		takeProfit: 68_500,
-		stopLoss: 72_300,
-		submittedAt: "03/26 09:15",
-		confidence: 1.95,
-		x: 60,
-		y: 44,
-	},
-	{
-		id: "btc-6",
-		symbol: "BTCUSDT",
-		sourceId: "bidaoge",
-		sourceName: "必到哥",
-		avatarLabel: "必",
-		avatarUrl: "https://i.pravatar.cc/80?img=57",
-		direction: "long",
-		entryStatus: "pending",
-		status: "active",
-		entry: 68_900,
-		takeProfit: 72_400,
-		stopLoss: 67_600,
-		submittedAt: "03/26 11:30",
-		confidence: 2.48,
-		x: 92,
-		y: 70,
-	},
-	{
-		id: "btc-7",
-		symbol: "BTCUSDT",
-		sourceId: "shuqin",
-		sourceName: "舒琴",
-		avatarLabel: "舒",
-		avatarUrl: "https://i.pravatar.cc/80?img=25",
-		direction: "long",
-		entryStatus: "pending",
-		status: "active",
-		entry: 69_100,
-		takeProfit: 73_000,
-		stopLoss: 68_200,
-		submittedAt: "03/26 13:45",
-		confidence: 1.62,
-		x: 96,
-		y: 66,
-	},
-	{
-		id: "eth-3",
-		symbol: "ETHUSDT",
-		sourceId: "fengg",
-		sourceName: "峰哥",
-		avatarLabel: "峰",
-		avatarUrl: "https://i.pravatar.cc/80?img=68",
-		direction: "long",
-		entryStatus: "entered",
-		status: "active",
-		entry: 2_830,
-		takeProfit: 3_100,
-		stopLoss: 2_740,
-		submittedAt: "03/26 10:20",
-		confidence: 2.12,
-		x: 83,
-		y: 55,
-	},
-	{
-		id: "eth-4",
-		symbol: "ETHUSDT",
-		sourceId: "bidaoge",
-		sourceName: "必到哥",
-		avatarLabel: "必",
-		avatarUrl: "https://i.pravatar.cc/80?img=57",
-		direction: "short",
-		entryStatus: "pending",
-		status: "active",
-		entry: 2_960,
-		takeProfit: 2_750,
-		stopLoss: 3_060,
-		submittedAt: "03/25 20:55",
-		confidence: 1.38,
-		x: 68,
-		y: 38,
-	},
-	{
-		id: "sol-3",
-		symbol: "SOLUSDT",
-		sourceId: "chengg",
-		sourceName: "陈哥",
-		avatarLabel: "陈",
-		avatarUrl: "https://i.pravatar.cc/80?img=52",
-		direction: "long",
-		entryStatus: "entered",
-		status: "active",
-		entry: 85.6,
-		takeProfit: 92.8,
-		stopLoss: 82.4,
-		submittedAt: "03/26 08:30",
-		confidence: 1.88,
-		x: 65,
-		y: 58,
-	},
-	{
-		id: "sol-4",
-		symbol: "SOLUSDT",
-		sourceId: "wangbot",
-		sourceName: "WG Bot",
-		avatarLabel: "WG",
-		avatarUrl: "https://i.pravatar.cc/80?img=64",
-		direction: "short",
-		entryStatus: "pending",
-		status: "active",
-		entry: 90.2,
-		takeProfit: 84.5,
-		stopLoss: 93.1,
-		submittedAt: "03/26 14:10",
-		confidence: 1.55,
-		x: 88,
-		y: 40,
-	},
-];
-
-const MARKET_SEED: Record<string, number> = {
-	BTCUSDT: 69_300,
-	ETHUSDT: 2_875,
-	SOLUSDT: 87.5,
-};
+const TICKER_SKELETON_WIDTHS = [
+	"w-36",
+	"w-32",
+	"w-[8.5rem]",
+	"w-[7.5rem]",
+	"w-28",
+] as const;
+const CHART_SKELETON_BARS = [
+	32, 48, 38, 54, 44, 62, 51, 68, 57, 72, 64, 58, 76, 69, 61, 80, 73, 66, 71, 59,
+	63, 55, 49, 43, 52, 46, 58, 67, 74, 69, 78, 83, 72, 65, 70, 62, 57, 51, 44, 39,
+	47, 53, 60, 56, 64, 71, 76, 68, 61, 55, 49, 58, 66, 73, 69, 77, 82, 74, 67, 60,
+] as const;
 
 const FALLBACK_LOGOS: Record<string, string> = Object.fromEntries(
 	INSTRUMENTS.map((instrument) => [instrument.symbol, instrument.logo]),
@@ -716,6 +464,26 @@ function getSymbolBase(symbol: string) {
 	const quoteAsset = quoteAssets.find((quote) => symbol.endsWith(quote));
 
 	return quoteAsset ? symbol.slice(0, -quoteAsset.length) : symbol;
+}
+
+function getPrioritySymbolRank(instrument: Pick<Instrument, "base" | "symbol">) {
+	const base = instrument.base || getSymbolBase(instrument.symbol);
+	const priorityIndex = PRIORITY_SYMBOL_BASES.indexOf(
+		base as (typeof PRIORITY_SYMBOL_BASES)[number],
+	);
+
+	return priorityIndex === -1 ? PRIORITY_SYMBOL_BASES.length : priorityIndex;
+}
+
+function sortInstrumentsByPriority(left: Instrument, right: Instrument) {
+	const leftRank = getPrioritySymbolRank(left);
+	const rightRank = getPrioritySymbolRank(right);
+
+	if (leftRank !== rightRank) {
+		return leftRank - rightRank;
+	}
+
+	return left.symbol.localeCompare(right.symbol);
 }
 
 function getSymbolAccent(symbol: string) {
@@ -927,32 +695,6 @@ function upsertWebhookSignal(signals: StoredSignal[], nextSignal: StoredSignal) 
 	}
 
 	return signals.map((signal, index) => (index === existingIndex ? nextSignal : signal));
-}
-
-function buildFallbackCandles(symbol: string, timeframe: Timeframe): Candle[] {
-	const intervalSeconds = TIMEFRAME_SECONDS[timeframe];
-	const now = Math.floor(Date.now() / 1000);
-	const lastCandleTime = now - (now % intervalSeconds);
-	const timeframeFactor = SUPPORTED_TIMEFRAMES.indexOf(timeframe) + 1;
-	const seed = MARKET_SEED[symbol] ?? 100;
-	const volatility = seed * (0.006 + timeframeFactor * 0.0018);
-
-	return Array.from({ length: 52 }, (_, index) => {
-		const time = (lastCandleTime - (51 - index) * intervalSeconds) as UTCTimestamp;
-		const wave = Math.sin(index * 0.42 + timeframeFactor) * volatility;
-		const pull = Math.cos(index * 0.18 + timeframeFactor * 0.7) * volatility * 0.8;
-		const trend = (index - 26) * volatility * 0.07;
-		const open = seed + wave + pull - trend;
-		const close =
-			open +
-			Math.sin(index * 0.87 + timeframeFactor * 1.3) * volatility * 0.74 -
-			(index > 12 && index < 20 ? volatility * 0.72 : 0) +
-			(index > 28 && index < 35 ? volatility * 0.9 : 0);
-		const high = Math.max(open, close) + volatility * (0.45 + (index % 5) * 0.1);
-		const low = Math.min(open, close) - volatility * (0.36 + (index % 4) * 0.1);
-
-		return { close, high, low, open, time };
-	});
 }
 
 function formatCompactVolume(value: number) {
@@ -1200,11 +942,11 @@ export function SignalsWorkspace() {
 	const locale = useLocale();
 	const { activeEntitlementGrant, activePlan } = usePurchases();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
-	const [binanceCandles, setBinanceCandles] = useState<Candle[]>([]);
+	const [binanceCandles, setBinanceCandles] = useState<SymbolCandles | null>(null);
 	const [instrumentQuotes, setInstrumentQuotes] = useState<Record<string, Partial<Instrument>>>(
 		{},
 	);
-	const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
+	const [selectedSymbol, setSelectedSymbol] = useState("");
 	const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("1h");
 	const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
 	const [selectedDirection, setSelectedDirection] = useState<SignalDirection>("all");
@@ -1214,6 +956,7 @@ export function SignalsWorkspace() {
 	const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
 	const [isSignalsLoading, setIsSignalsLoading] = useState(true);
+	const [isKlinesLoading, setIsKlinesLoading] = useState(false);
 	const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false);
 	const [guideOpen, setGuideOpen] = useState(false);
 	const [guideStepIndex, setGuideStepIndex] = useState(0);
@@ -1241,11 +984,9 @@ export function SignalsWorkspace() {
 			symbols.set(signal.tradingSymbol.symbol, signal.tradingSymbol);
 		}
 
-		return (
-			symbols.size
-				? Array.from(symbols.values()).map(createInstrumentFromTradingSymbol)
-				: INSTRUMENTS
-		).sort((a, b) => a.symbol.localeCompare(b.symbol));
+		return Array.from(symbols.values())
+			.map(createInstrumentFromTradingSymbol)
+			.sort(sortInstrumentsByPriority);
 	}, [webhookSignals]);
 	const instruments = useMemo(
 		() =>
@@ -1254,7 +995,7 @@ export function SignalsWorkspace() {
 					...instrument,
 					...instrumentQuotes[instrument.symbol],
 				}))
-				.sort((a, b) => a.symbol.localeCompare(b.symbol)),
+				.sort(sortInstrumentsByPriority),
 		[baseInstruments, instrumentQuotes],
 	);
 	const tickerSymbols = useMemo(
@@ -1287,6 +1028,9 @@ export function SignalsWorkspace() {
 				});
 
 				if (!response.ok) {
+					if (isMounted) {
+						setIsSignalsLoading(false);
+					}
 					return;
 				}
 
@@ -1333,6 +1077,14 @@ export function SignalsWorkspace() {
 		const controller = new AbortController();
 
 		async function loadKlines() {
+			if (!selectedSymbol) {
+				setBinanceCandles(null);
+				setIsKlinesLoading(false);
+				return;
+			}
+
+			setIsKlinesLoading(true);
+
 			try {
 				const params = new URLSearchParams({
 					interval: selectedTimeframe,
@@ -1346,7 +1098,12 @@ export function SignalsWorkspace() {
 
 				if (!response.ok) {
 					if (isMounted) {
-						setBinanceCandles([]);
+						setBinanceCandles({
+							candles: [],
+							symbol: selectedSymbol,
+							timeframe: selectedTimeframe,
+						});
+						setIsKlinesLoading(false);
 					}
 					return;
 				}
@@ -1354,19 +1111,27 @@ export function SignalsWorkspace() {
 				const data = (await response.json()) as SignalKlinesResponse;
 
 				if (isMounted) {
-					setBinanceCandles(
-						data.klines.map((kline) => ({
+					setBinanceCandles({
+						candles: data.klines.map((kline) => ({
 							close: kline.close,
 							high: kline.high,
 							low: kline.low,
 							open: kline.open,
 							time: kline.time as UTCTimestamp,
 						})),
-					);
+						symbol: selectedSymbol,
+						timeframe: selectedTimeframe,
+					});
+					setIsKlinesLoading(false);
 				}
-			} catch (error) {
+			} catch {
 				if (!controller.signal.aborted && isMounted) {
-					setBinanceCandles([]);
+					setBinanceCandles({
+						candles: [],
+						symbol: selectedSymbol,
+						timeframe: selectedTimeframe,
+					});
+					setIsKlinesLoading(false);
 				}
 			}
 		}
@@ -1381,11 +1146,19 @@ export function SignalsWorkspace() {
 
 	useEffect(() => {
 		if (!instruments.length) {
+			if (selectedSymbol) {
+				setSelectedSymbol("");
+				setActiveSignalId(null);
+				setBinanceCandles(null);
+				setIsKlinesLoading(false);
+			}
 			return;
 		}
 
 		if (!instruments.some((instrument) => instrument.symbol === selectedSymbol)) {
-			setSelectedSymbol(instruments[0]?.symbol ?? "BTCUSDT");
+			setIsKlinesLoading(true);
+			setBinanceCandles(null);
+			setSelectedSymbol(instruments[0]?.symbol ?? "");
 			setActiveSignalId(null);
 		}
 	}, [instruments, selectedSymbol]);
@@ -1493,6 +1266,11 @@ export function SignalsWorkspace() {
 	}, [baseInstruments, tickerSymbols]);
 
 	useEffect(() => {
+		if (!selectedSymbol) {
+			setBinanceCandles(null);
+			return;
+		}
+
 		const disconnect = connectBinanceSocket(
 			`${BINANCE_STREAM_BASE_URL}/ws/${selectedSymbol.toLowerCase()}@kline_${selectedTimeframe}`,
 			(eventData) => {
@@ -1502,11 +1280,21 @@ export function SignalsWorkspace() {
 					return;
 				}
 
-				setBinanceCandles((currentCandles) =>
-					currentCandles.length >= MIN_CHART_CANDLES
-						? upsertCandle(currentCandles, candle)
-						: currentCandles,
-				);
+				setBinanceCandles((currentCandles) => {
+					if (
+						!currentCandles ||
+						currentCandles.symbol !== selectedSymbol ||
+						currentCandles.timeframe !== selectedTimeframe ||
+						currentCandles.candles.length < MIN_CHART_CANDLES
+					) {
+						return currentCandles;
+					}
+
+					return {
+						...currentCandles,
+						candles: upsertCandle(currentCandles.candles, candle),
+					};
+				});
 			},
 		);
 
@@ -1570,28 +1358,49 @@ export function SignalsWorkspace() {
 	);
 
 	const candles = useMemo(
-		() =>
-			binanceCandles.length >= MIN_CHART_CANDLES
-				? binanceCandles
-				: buildFallbackCandles(selectedSymbol, selectedTimeframe),
+		() => {
+			if (
+				binanceCandles?.symbol !== selectedSymbol ||
+				binanceCandles.timeframe !== selectedTimeframe ||
+				binanceCandles.candles.length < MIN_CHART_CANDLES
+			) {
+				return [];
+			}
+
+			return binanceCandles.candles;
+		},
 		[binanceCandles, selectedSymbol, selectedTimeframe],
 	);
 
 	const selectedInstrument =
-		instruments.find((instrument) => instrument.symbol === selectedSymbol) ??
-		instruments[0] ??
-		INSTRUMENTS[0];
+		instruments.find((instrument) => instrument.symbol === selectedSymbol) ?? null;
+	const selectedPricePrecision =
+		selectedInstrument?.pricePrecision ?? getDefaultPricePrecision(selectedSymbol);
+	const hasKlineResponseForSelection =
+		!!selectedSymbol &&
+		binanceCandles?.symbol === selectedSymbol &&
+		binanceCandles.timeframe === selectedTimeframe;
 	const chartPricePrecision = getChartPricePrecision(
 		candles,
 		chartSignals,
-		selectedInstrument.pricePrecision ?? 0,
+		selectedPricePrecision,
 	);
-	function formatPrice(value: number, fractionDigits = selectedInstrument.pricePrecision ?? 0) {
+	function formatPrice(value: number, fractionDigits = selectedPricePrecision) {
 		return new Intl.NumberFormat(locale, {
 			maximumFractionDigits: fractionDigits,
 			minimumFractionDigits: fractionDigits,
 		}).format(value);
 	}
+	const isTickerLoading = isSignalsLoading && instruments.length === 0;
+	const isChartLoading =
+		isSignalsLoading ||
+		(instruments.length > 0 && !selectedSymbol) ||
+		(!!selectedSymbol && (isKlinesLoading || !hasKlineResponseForSelection));
+	const canShowChart =
+		!!selectedSymbol &&
+		!!selectedInstrument &&
+		!isChartLoading &&
+		candles.length >= MIN_CHART_CANDLES;
 
 	function focusSignal(signal: SignalChartSignal) {
 		setActiveSignalId(signal.id);
@@ -1699,6 +1508,7 @@ export function SignalsWorkspace() {
 
 	return (
 		<div className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden min-h-full bg-[#141414] text-foreground">
+			<style>{SIGNALS_SKELETON_STYLES}</style>
 			<Dialog
 				open={welcomeDialogOpen}
 				onOpenChange={(open) => {
@@ -1776,58 +1586,69 @@ export function SignalsWorkspace() {
 				className="px-4 py-2 backdrop-blur shrink-0 border-b bg-[#141414]/80"
 				data-guide-target="ticker"
 			>
-				<div className="min-w-0 gap-3 no-scrollbar flex items-center overflow-x-auto">
-					<div className="gap-2 pr-3 text-sm font-semibold flex shrink-0 items-center">
-						<RadioIcon className="size-4 text-emerald-500" />
-						<span>{t("ticker.live")}</span>
+				{isTickerLoading ? (
+					<TickerSkeleton />
+				) : (
+					<div className="min-w-0 gap-3 no-scrollbar flex items-center overflow-x-auto">
+						<div className="gap-2 pr-3 text-sm font-semibold flex shrink-0 items-center">
+							<RadioIcon className="size-4 text-emerald-500" />
+							<span>{t("ticker.live")}</span>
+						</div>
+						{instruments.length === 0 && (
+							<span className="text-sm text-muted-foreground">
+								{t("ticker.empty")}
+							</span>
+						)}
+						{instruments.map((instrument) => (
+							<button
+								key={instrument.symbol}
+								type="button"
+								onClick={() => selectSymbol(instrument.symbol)}
+								className={cn(
+									"gap-2 px-3 py-1.5 text-sm hover:bg-white/8 flex shrink-0 items-center rounded-md border text-left transition-colors duration-200",
+									selectedSymbol === instrument.symbol
+										? "bg-white/8 border-foreground/20"
+										: "border-transparent bg-transparent",
+								)}
+							>
+								<span className="size-5 bg-black font-bold flex shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px]">
+									{instrument.logo ? (
+										<img
+											alt={instrument.base}
+											className="size-6 object-contain"
+											src={instrument.logo}
+										/>
+									) : (
+										instrument.base.slice(0, 2)
+									)}
+								</span>
+								<span className="font-semibold">{instrument.base}</span>
+								<span
+									className={cn(
+										"font-mono text-muted-foreground transition-colors duration-200",
+										instrument.tickDirection === "up" && "text-emerald-400",
+										instrument.tickDirection === "down" && "text-rose-400",
+									)}
+								>
+									{instrument.price > 0
+										? `$${formatPrice(instrument.price, instrument.pricePrecision ?? 0)}`
+										: "--"}
+								</span>
+								<span
+									className={cn(
+										"font-mono text-xs",
+										instrument.change >= 0
+											? "text-emerald-500"
+											: "text-rose-500",
+									)}
+								>
+									{instrument.change >= 0 ? "+" : ""}
+									{instrument.change.toFixed(2)}%
+								</span>
+							</button>
+						))}
 					</div>
-					{instruments.map((instrument) => (
-						<button
-							key={instrument.symbol}
-							type="button"
-							onClick={() => selectSymbol(instrument.symbol)}
-							className={cn(
-								"gap-2 px-3 py-1.5 text-sm hover:bg-white/8 flex shrink-0 items-center rounded-md border text-left transition-colors duration-200",
-								selectedSymbol === instrument.symbol
-									? "bg-white/8 border-foreground/20"
-									: "border-transparent bg-transparent",
-							)}
-						>
-							<span className="size-5 bg-black font-bold flex shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px]">
-								{instrument.logo ? (
-									<img
-										alt={instrument.base}
-										className="size-6 object-contain"
-										src={instrument.logo}
-									/>
-								) : (
-									instrument.base.slice(0, 2)
-								)}
-							</span>
-							<span className="font-semibold">{instrument.base}</span>
-							<span
-								className={cn(
-									"font-mono text-muted-foreground transition-colors duration-200",
-									instrument.tickDirection === "up" && "text-emerald-400",
-									instrument.tickDirection === "down" && "text-rose-400",
-								)}
-							>
-								{instrument.price > 0
-									? `$${formatPrice(instrument.price, instrument.pricePrecision ?? 0)}`
-									: "--"}
-							</span>
-							<span
-								className={cn(
-									"font-mono text-xs",
-									instrument.change >= 0 ? "text-emerald-500" : "text-rose-500",
-								)}
-							>
-								{instrument.change >= 0 ? "+" : ""}
-								{instrument.change.toFixed(2)}%
-							</span>
-						</button>
-					))}
-				</div>
+				)}
 			</header>
 
 			<div
@@ -2106,7 +1927,7 @@ export function SignalsWorkspace() {
 							<div className="gap-3 flex items-center">
 								<ChartCandlestickIcon className="size-4 text-muted-foreground" />
 								<span className="font-mono text-sm font-semibold">
-									{selectedSymbol}
+									{selectedSymbol || t("chart.loadingSymbol")}
 								</span>
 							</div>
 							<div className="gap-2 flex items-center">
@@ -2141,23 +1962,36 @@ export function SignalsWorkspace() {
 						</div>
 
 						<div className="xl:h-auto xl:min-h-0 xl:flex-1 h-[min(620px,calc(100vh-260px))] min-h-[420px]">
-							<TradingViewSignalChart
-								activeSignal={activeSignal}
-								candles={candles}
-								className="h-full"
-								formatPrice={formatPrice}
-								labels={{
-									entry: t("chart.entry"),
-									stopLoss: t("chart.stopLoss"),
-									takeProfit: t("chart.takeProfit"),
-								}}
-								locale={locale}
-								onSelectSignal={focusSignal}
-								pricePrecision={chartPricePrecision}
-								signals={chartSignals}
-								symbol={selectedSymbol}
-								timeframe={selectedTimeframe}
-							/>
+							{canShowChart ? (
+								<TradingViewSignalChart
+									activeSignal={activeSignal}
+									candles={candles}
+									className="h-full"
+									formatPrice={formatPrice}
+									labels={{
+										entry: t("chart.entry"),
+										stopLoss: t("chart.stopLoss"),
+										takeProfit: t("chart.takeProfit"),
+									}}
+									locale={locale}
+									onSelectSignal={focusSignal}
+									pricePrecision={chartPricePrecision}
+									signals={chartSignals}
+									symbol={selectedSymbol}
+									timeframe={selectedTimeframe}
+								/>
+							) : isSignalsLoading || isChartLoading ? (
+								<ChartSkeleton />
+							) : (
+								<div className="h-full min-h-[520px] p-6 flex items-center justify-center bg-[#141414]">
+									<div className="max-w-sm rounded-xl border border-dashed border-white/12 px-6 py-5 text-center">
+										<p className="font-medium">{t("chart.emptyTitle")}</p>
+										<p className="mt-1 text-sm text-muted-foreground">
+											{t("chart.emptyDescription")}
+										</p>
+									</div>
+								</div>
+							)}
 						</div>
 					</section>
 				</main>
@@ -2279,7 +2113,7 @@ export function SignalsWorkspace() {
 														{signal.sourceName}
 													</p>
 													<p className="text-xs truncate text-muted-foreground">
-														{selectedInstrument.symbol} ·{" "}
+														{selectedInstrument?.symbol ?? signal.symbol} ·{" "}
 														{t(`direction.${signal.direction}`)}
 													</p>
 												</div>
@@ -2379,6 +2213,67 @@ function SignalMetric({ label, value, tone }: SignalMetricProps) {
 			>
 				{value}
 			</p>
+		</div>
+	);
+}
+
+function TickerSkeleton() {
+	return (
+		<div className="min-w-0 gap-3 no-scrollbar flex items-center overflow-hidden">
+			<div className="gap-2 pr-3 text-sm font-semibold flex shrink-0 items-center">
+				<RadioIcon className="size-4 text-emerald-500/70" />
+				<Skeleton className="h-5 w-20 bg-white/10" />
+			</div>
+			{TICKER_SKELETON_WIDTHS.map((width, index) => (
+				<div
+					key={`${width}-${index}`}
+					className={cn(
+						"gap-2 px-3 py-1.5 flex shrink-0 items-center rounded-md border border-white/8 bg-white/[0.025]",
+						width,
+					)}
+				>
+					<Skeleton className="size-5 shrink-0 rounded-full bg-white/12" />
+					<Skeleton className="h-4 w-10 bg-white/10" />
+					<Skeleton className="h-4 w-12 bg-white/8" />
+					<Skeleton className="h-3 w-10 bg-emerald-400/15" />
+				</div>
+			))}
+		</div>
+	);
+}
+
+function ChartSkeleton() {
+	return (
+		<div className="relative h-full min-h-[520px] overflow-hidden bg-[#141414]">
+			<div className="left-6 top-5 gap-3 absolute z-10 flex items-center">
+				<Skeleton className="h-6 w-24 bg-white/10" />
+				<Skeleton className="h-5 w-10 bg-white/8" />
+			</div>
+			<div className="absolute inset-x-0 bottom-10 top-20">
+				<div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:72px_64px]" />
+				<div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.045),transparent_42%)]" />
+				<div className="absolute inset-x-8 bottom-0 top-5 flex items-end gap-1.5">
+					{CHART_SKELETON_BARS.map((height, index) => (
+						<div
+							key={`${height}-${index}`}
+							className="relative flex flex-1 items-end justify-center"
+						>
+							<span
+								className="absolute bottom-0 w-px rounded-full bg-white/10"
+								style={{ height: `${Math.min(94, height + 18)}%` }}
+							/>
+							<span
+								className={cn(
+									"w-full min-w-1 max-w-3 rounded-sm",
+									index % 3 === 0 ? "bg-emerald-400/22" : "bg-white/12",
+								)}
+								style={{ height: `${height}%` }}
+							/>
+						</div>
+					))}
+				</div>
+				<div className="signals-skeleton-shimmer absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.055] to-transparent" />
+			</div>
 		</div>
 	);
 }
