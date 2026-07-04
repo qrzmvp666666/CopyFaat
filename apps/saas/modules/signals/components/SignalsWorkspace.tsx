@@ -6,8 +6,6 @@ import {
 	Dialog,
 	DialogContent,
 	DialogDescription,
-	DialogFooter,
-	DialogHeader,
 	DialogTitle,
 } from "@repo/ui/components/dialog";
 import {
@@ -1519,9 +1517,9 @@ export function SignalsWorkspace() {
 					dismissWelcomeDialog();
 				}}
 			>
-				<DialogContent className="w-[min(calc(100vw_-_40px),344px)] gap-0 overflow-hidden border-white/10 bg-[#181818] px-6 pt-7 pb-5 text-white shadow-[0_28px_90px_rgba(0,0,0,0.52)] sm:max-w-[344px] [&>button]:top-4 [&>button]:right-4 [&>button]:rounded-full [&>button]:text-white/58 [&>button]:opacity-100 [&>button]:hover:bg-white/8 [&>button]:hover:text-white">
+				<DialogContent className="w-[min(calc(100vw_-_40px),320px)] max-w-[320px] justify-items-center gap-0 overflow-hidden border-white/10 bg-[#181818] px-7 pt-8 pb-6 text-center text-white shadow-[0_28px_90px_rgba(0,0,0,0.52)] sm:max-w-[320px] md:w-[320px] [&>button]:top-4 [&>button]:right-4 [&>button]:rounded-full [&>button]:text-white/58 [&>button]:opacity-100 [&>button]:hover:bg-white/8 [&>button]:hover:text-white">
 					<style>{TRIAL_WELCOME_CONFETTI_STYLES}</style>
-					<DialogHeader className="items-center gap-4 space-y-0 text-center">
+					<div className="flex w-full flex-col items-center gap-4 text-center">
 						<div className="relative flex size-16 items-center justify-center overflow-visible">
 							{TRIAL_WELCOME_CONFETTI_PARTICLES.map((particle, index) => (
 								<span
@@ -1541,21 +1539,21 @@ export function SignalsWorkspace() {
 								🎉
 							</div>
 						</div>
-						<div className="flex flex-col gap-1.5">
+						<div className="flex w-full flex-col items-center gap-1.5 text-center">
 							<DialogTitle className="text-xl leading-tight">
 								{t("trialWelcome.title")}
 							</DialogTitle>
-							<DialogDescription className="max-w-[248px] text-base font-medium leading-6 text-white/72">
+							<DialogDescription className="mx-auto max-w-[248px] text-center text-base font-medium leading-6 text-white/72">
 								{t("trialWelcome.description")}
 							</DialogDescription>
 						</div>
-					</DialogHeader>
-					<DialogFooter className="mx-auto mt-5 flex w-full max-w-[156px] flex-col items-stretch justify-center gap-2 space-x-0 sm:flex-col sm:space-x-0">
+					</div>
+					<div className="mx-auto mt-6 flex w-full max-w-[180px] flex-col items-stretch justify-center gap-2">
 						<Button
 							type="button"
 							variant="primary"
 							size="sm"
-							className="h-9 w-full border-0 bg-white px-4 text-sm text-black shadow-[0_10px_28px_rgba(255,255,255,0.08)] ring-1 ring-white/15 hover:bg-white/92"
+							className="h-10 w-full gap-2 border-2 border-[#151515] bg-white px-5 text-sm text-black shadow-[0_12px_30px_rgba(255,255,255,0.08)] ring-1 ring-white/14 hover:bg-white/92 [&>svg]:!m-0 [&>svg]:size-4"
 							onClick={startGuide}
 						>
 							<CompassIcon data-icon="inline-start" />
@@ -1570,7 +1568,7 @@ export function SignalsWorkspace() {
 						>
 							{t("trialWelcome.skip")}
 						</Button>
-					</DialogFooter>
+					</div>
 				</DialogContent>
 			</Dialog>
 			{guideOpen ? (
