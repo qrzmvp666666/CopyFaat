@@ -34,6 +34,10 @@ export default async function BillingSettingsPage() {
 		purchasesResult.purchases,
 		purchasesResult.entitlementGrants,
 	);
+	const showActivePlanInPricing =
+		activePlan?.id === "pro" &&
+		"source" in activePlan &&
+		activePlan.source === "signup_trial";
 	const t = await getTranslations("settings.billing");
 
 	return (
@@ -42,7 +46,11 @@ export default async function BillingSettingsPage() {
 
 			<SettingsList>
 				{activePlan && <ActivePlan showRedeemButton />}
-				<ChangePlan userId={session?.user.id} activePlanId={activePlan?.id} />
+				<ChangePlan
+					userId={session?.user.id}
+					activePlanId={activePlan?.id}
+					showActivePlanInPricing={showActivePlanInPricing}
+				/>
 			</SettingsList>
 		</>
 	);

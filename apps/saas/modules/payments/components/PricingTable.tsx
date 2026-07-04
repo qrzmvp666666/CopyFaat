@@ -47,12 +47,12 @@ function getMonthlyEquivalent(price: PaidPlan["prices"][number]): number | undef
 	return price.amount / 12;
 }
 
-function getVisiblePlanIds(activePlanId?: string) {
+function getVisiblePlanIds(activePlanId?: string, showActivePlanInPricing = false) {
 	if (activePlanId === "lifetime") {
 		return [];
 	}
 
-	if (activePlanId === "pro") {
+	if (activePlanId === "pro" && !showActivePlanInPricing) {
 		return ["lifetime"] satisfies VisiblePaidPlanId[];
 	}
 
@@ -119,11 +119,13 @@ export function PricingTable({
 	userId,
 	organizationId,
 	activePlanId,
+	showActivePlanInPricing,
 }: {
 	className?: string;
 	userId?: string;
 	organizationId?: string;
 	activePlanId?: string;
+	showActivePlanInPricing?: boolean;
 }) {
 	const t = useTranslations();
 	const format = useFormatter();
@@ -132,7 +134,7 @@ export function PricingTable({
 	const [interval, setInterval] = useState<"month" | "year">("month");
 
 	const { planData } = usePlanData();
-	const visiblePlanIds = getVisiblePlanIds(activePlanId);
+	const visiblePlanIds = getVisiblePlanIds(activePlanId, showActivePlanInPricing);
 
 	const createCheckoutLinkMutation = useMutation(
 		orpc.payments.createCheckoutLink.mutationOptions(),
@@ -270,7 +272,7 @@ export function PricingTable({
 					return (
 						<div
 							key={plan.id}
-							className={cn("p-6 rounded-3xl border bg-card", {
+							className={cn("p-6 rounded-3xl border-2 bg-card", {
 								"border-primary": plan.recommended,
 							})}
 							data-test="price-table-plan"
