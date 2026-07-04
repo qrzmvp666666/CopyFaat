@@ -15,12 +15,12 @@
 		"subject": "重置您的密码"
 	},
 	"magicLink": {
-		"body": "您好，\n您请求了来自 supastarter 的登录邮件。\n\n点击下方链接登录。",
+		"body": "您好，\n您请求了来自 SignalFast 的登录邮件。\n\n点击下方链接登录。",
 		"login": "登录",
-		"subject": "登录到 supastarter"
+		"subject": "登录到 SignalFast"
 	},
 	"newUser": {
-		"body": "您好，\n感谢注册 supastarter。\n\n请点击下方链接确认您的邮箱地址，开始使用我们的应用。",
+		"body": "您好，\n感谢注册 SignalFast。\n\n请点击下方链接确认您的邮箱地址，开始使用我们的应用。",
 		"confirmEmail": "确认邮箱",
 		"subject": "确认您的邮箱"
 	},

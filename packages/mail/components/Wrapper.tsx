@@ -1,6 +1,14 @@
-import { Container, Font, Head, Html, Section, Tailwind } from "@react-email/components";
-import { Logo } from "@repo/ui";
+import { Container, Font, Head, Html, Img, Section, Tailwind } from "@react-email/components";
 import React, { type PropsWithChildren } from "react";
+
+const BRAND_NAME = "SignalFast";
+
+function getBrandLogoUrl() {
+	const baseUrl =
+		process.env.NEXT_PUBLIC_SAAS_URL?.replace(/\/$/, "") ?? "http://signalfast.localhost:4100";
+
+	return `${baseUrl}/images/brand/signalfast-logo-mark.png`;
+}
 
 export default function Wrapper({ children }: PropsWithChildren) {
 	return (
@@ -72,7 +80,18 @@ export default function Wrapper({ children }: PropsWithChildren) {
 				</Head>
 				<Section className="p-4 bg-background">
 					<Container className="p-6 rounded-lg bg-card text-card-foreground">
-						<Logo />
+						<Section className="mb-6">
+							<Img
+								src={getBrandLogoUrl()}
+								alt={BRAND_NAME}
+								width="40"
+								height="40"
+								className="inline-block align-middle"
+							/>
+							<span className="ml-3 inline-block align-middle font-semibold text-lg text-foreground">
+								{BRAND_NAME}
+							</span>
+						</Section>
 						{children}
 					</Container>
 				</Section>

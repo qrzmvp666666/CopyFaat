@@ -6,18 +6,11 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
-import { Figtree } from "next/font/google";
 
 import "./globals.css";
 import "cropperjs/dist/cropper.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { PropsWithChildren } from "react";
-
-const sansFont = Figtree({
-	weight: ["300", "400", "500", "600", "700"],
-	subsets: ["latin"],
-	variable: "--font-sans",
-});
 
 export const metadata: Metadata = {
 	title: {
@@ -32,7 +25,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 	const messages = await getMessages();
 
 	return (
-		<html lang={locale} suppressHydrationWarning className={sansFont.variable}>
+		<html lang={locale} suppressHydrationWarning>
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
 				<NuqsAdapter>
 					<NextIntlClientProvider messages={messages}>
