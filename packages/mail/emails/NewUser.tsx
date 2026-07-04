@@ -23,7 +23,7 @@ export function NewUser({
 	});
 
 	return (
-		<Wrapper>
+		<Wrapper locale={locale}>
 			<Text>{t("body")}</Text>
 
 			<Text>

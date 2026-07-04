@@ -1,6 +1,6 @@
 {
 	"common": {
-		"openLinkInBrowser": "如果您想在非默认浏览器中打开链接，请复制粘贴此链接：",
+		"openLinkInBrowser": "如果按钮无法打开，请复制以下链接到浏览器：",
 		"otp": "一次性密码",
 		"useLink": "或使用以下链接："
 	},
@@ -31,8 +31,9 @@
 		"subject": "您已被邀请加入一个组织"
 	},
 	"notification": {
-		"openInApp": "在应用中查看此通知：",
+		"kicker": "SignalFast 通知",
+		"openInApp": "进入 SignalFast 查看完整内容：",
 		"subject": "新通知",
-		"view": "查看"
+		"view": "查看通知"
 	}
 }

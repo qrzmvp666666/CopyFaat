@@ -1,5 +1,5 @@
 import { Button } from "@react-email/components";
-import React, { type PropsWithChildren } from "react";
+import React, { type CSSProperties, type PropsWithChildren } from "react";
 
 export default function PrimaryButton({
 	href,
@@ -8,11 +8,22 @@ export default function PrimaryButton({
 	href: string;
 }>) {
 	return (
-		<Button
-			href={href}
-			className="px-4 py-2 text-sm rounded-full bg-primary text-primary-foreground"
-		>
+		<Button href={href} style={buttonStyle}>
 			{children}
 		</Button>
 	);
 }
+
+const buttonStyle: CSSProperties = {
+	display: "inline-block",
+	minWidth: "132px",
+	borderRadius: "999px",
+	backgroundColor: "#111827",
+	color: "#ffffff",
+	fontSize: "15px",
+	fontWeight: 700,
+	lineHeight: "20px",
+	padding: "13px 20px",
+	textAlign: "center",
+	textDecoration: "none",
+};

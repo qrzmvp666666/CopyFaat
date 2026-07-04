@@ -20,7 +20,7 @@ export function MagicLink({
 	});
 
 	return (
-		<Wrapper>
+		<Wrapper locale={locale}>
 			<Text>{t("body")}</Text>
 
 			<Text>{t("common.useLink")}</Text>

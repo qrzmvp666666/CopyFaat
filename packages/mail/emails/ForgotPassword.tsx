@@ -24,7 +24,7 @@ export function ForgotPassword({
 	});
 
 	return (
-		<Wrapper>
+		<Wrapper locale={locale}>
 			<Text>{t("body")}</Text>
 
 			<PrimaryButton href={url}>{t("resetPassword")} &rarr;</PrimaryButton>

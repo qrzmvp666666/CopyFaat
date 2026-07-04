@@ -1,6 +1,6 @@
 {
 	"common": {
-		"openLinkInBrowser": "Si deseas abrir el enlace en un navegador diferente al predeterminado, copia y pega este enlace:",
+		"openLinkInBrowser": "Si el botón no se abre, copia este enlace en tu navegador:",
 		"otp": "Contraseña de un solo uso",
 		"useLink": "o usa el siguiente enlace:"
 	},
@@ -31,8 +31,9 @@
 		"subject": "Has sido invitado a unirte a una organización"
 	},
 	"notification": {
-		"openInApp": "Abre esta notificación en la aplicación:",
+		"kicker": "Notificación de SignalFast",
+		"openInApp": "Ver la notificación completa en SignalFast:",
 		"subject": "Nueva notificación",
-		"view": "Ver"
+		"view": "Ver notificación"
 	}
 }

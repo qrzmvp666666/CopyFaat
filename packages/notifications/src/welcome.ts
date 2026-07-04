@@ -6,8 +6,8 @@ export async function createWelcomeNotification(userId: string) {
 		userId,
 		type: NOTIFICATION_TYPES.WELCOME,
 		data: {
-			title: "Welcome!",
-			message: "This is an example notification.",
+			title: "欢迎使用 SignalFast",
+			message: "账户已准备就绪，你可以开始接收交易信号和重要提醒。",
 		},
 		link: "/",
 	});

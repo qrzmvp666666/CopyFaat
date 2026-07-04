@@ -1,6 +1,6 @@
 {
 	"common": {
-		"openLinkInBrowser": "Si vous souhaitez ouvrir le lien dans un navigateur différent de celui par défaut, copiez et collez ce lien :",
+		"openLinkInBrowser": "Si le bouton ne s'ouvre pas, copiez ce lien dans votre navigateur :",
 		"otp": "Mot de passe à usage unique",
 		"useLink": "ou utilisez le lien suivant :"
 	},
@@ -31,8 +31,9 @@
 		"subject": "Vous avez été invité à rejoindre une organisation"
 	},
 	"notification": {
-		"openInApp": "Ouvrez cette notification dans l'application :",
+		"kicker": "Notification SignalFast",
+		"openInApp": "Voir la notification complète dans SignalFast :",
 		"subject": "Nouvelle notification",
-		"view": "Voir"
+		"view": "Voir la notification"
 	}
 }

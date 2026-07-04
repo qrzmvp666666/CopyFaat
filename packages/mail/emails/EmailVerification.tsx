@@ -24,7 +24,7 @@ export function EmailVerification({
 	});
 
 	return (
-		<Wrapper>
+		<Wrapper locale={locale}>
 			<Text>{t("body")}</Text>
 
 			<PrimaryButton href={url}>{t("confirmEmail")} &rarr;</PrimaryButton>

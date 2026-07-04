@@ -1,6 +1,6 @@
 {
 	"common": {
-		"openLinkInBrowser": "If you want to open the link in a different browser than your default one, copy and paste this link:",
+		"openLinkInBrowser": "If the button does not open, copy this link into your browser:",
 		"otp": "One-time password",
 		"useLink": "or use the following link:"
 	},
@@ -31,8 +31,9 @@
 		"subject": "You have been invited to join an organization"
 	},
 	"notification": {
-		"openInApp": "Open this notification in the app:",
+		"kicker": "SignalFast notification",
+		"openInApp": "View the full notification in SignalFast:",
 		"subject": "New notification",
-		"view": "View"
+		"view": "View notification"
 	}
 }

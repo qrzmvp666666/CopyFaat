@@ -1,7 +1,26 @@
-import { Container, Font, Head, Html, Img, Section, Tailwind } from "@react-email/components";
-import React, { type PropsWithChildren } from "react";
+import {
+	Body,
+	Column,
+	Container,
+	Font,
+	Head,
+	Hr,
+	Html,
+	Img,
+	Preview,
+	Row,
+	Section,
+	Tailwind,
+	Text,
+} from "@react-email/components";
+import React, { type CSSProperties, type PropsWithChildren } from "react";
 
 const BRAND_NAME = "SignalFast";
+
+interface WrapperProps extends PropsWithChildren {
+	locale?: string;
+	preview?: string;
+}
 
 function getBrandLogoUrl() {
 	const baseUrl =
@@ -10,7 +29,9 @@ function getBrandLogoUrl() {
 	return `${baseUrl}/images/brand/signalfast-logo-mark.png`;
 }
 
-export default function Wrapper({ children }: PropsWithChildren) {
+export default function Wrapper({ children, locale = "zh", preview = BRAND_NAME }: WrapperProps) {
+	const isChinese = locale === "zh";
+
 	return (
 		<Tailwind
 			config={{
@@ -69,7 +90,7 @@ export default function Wrapper({ children }: PropsWithChildren) {
 				},
 			}}
 		>
-			<Html lang="en">
+			<Html lang={locale}>
 				<Head>
 					<Font
 						fontFamily="Inter"
@@ -78,24 +99,111 @@ export default function Wrapper({ children }: PropsWithChildren) {
 						fontStyle="normal"
 					/>
 				</Head>
-				<Section className="p-4 bg-background">
-					<Container className="p-6 rounded-lg bg-card text-card-foreground">
-						<Section className="mb-6">
-							<Img
-								src={getBrandLogoUrl()}
-								alt={BRAND_NAME}
-								width="40"
-								height="40"
-								className="inline-block align-middle"
-							/>
-							<span className="ml-3 inline-block align-middle font-semibold text-lg text-foreground">
-								{BRAND_NAME}
-							</span>
-						</Section>
-						{children}
-					</Container>
-				</Section>
+				<Preview>{preview}</Preview>
+				<Body style={bodyStyle}>
+					<Section style={pageStyle}>
+						<Container style={containerStyle}>
+							<Section style={headerStyle}>
+								<Row>
+									<Column style={logoColumnStyle}>
+										<Img
+											src={getBrandLogoUrl()}
+											alt={BRAND_NAME}
+											width="34"
+											height="34"
+											style={logoStyle}
+										/>
+									</Column>
+									<Column>
+										<Text style={brandStyle}>{BRAND_NAME}</Text>
+										<Text style={brandSublineStyle}>
+											{isChinese
+												? "账户与交易信号通知"
+												: "Account and signal notifications"}
+										</Text>
+									</Column>
+								</Row>
+							</Section>
+							<Section style={contentStyle}>{children}</Section>
+							<Hr style={dividerStyle} />
+							<Text style={footerStyle}>
+								{isChinese
+									? "这是一封 SignalFast 自动通知邮件，请勿直接回复。"
+									: "This is an automated SignalFast email. Please do not reply directly."}
+							</Text>
+						</Container>
+					</Section>
+				</Body>
 			</Html>
 		</Tailwind>
 	);
 }
+
+const bodyStyle: CSSProperties = {
+	margin: 0,
+	backgroundColor: "#eef0f3",
+	color: "#111827",
+	fontFamily: "Inter, Arial, sans-serif",
+};
+
+const pageStyle: CSSProperties = {
+	backgroundColor: "#eef0f3",
+	padding: "20px 12px",
+};
+
+const containerStyle: CSSProperties = {
+	width: "100%",
+	maxWidth: "560px",
+	margin: "0 auto",
+	overflow: "hidden",
+	borderRadius: "18px",
+	backgroundColor: "#ffffff",
+	boxShadow: "0 14px 38px rgba(15, 23, 42, 0.08)",
+};
+
+const headerStyle: CSSProperties = {
+	padding: "22px 24px",
+	backgroundColor: "#0b0f19",
+};
+
+const logoColumnStyle: CSSProperties = {
+	width: "46px",
+};
+
+const logoStyle: CSSProperties = {
+	display: "block",
+	borderRadius: "10px",
+	backgroundColor: "#111827",
+};
+
+const brandStyle: CSSProperties = {
+	margin: 0,
+	color: "#ffffff",
+	fontSize: "18px",
+	fontWeight: 700,
+	lineHeight: "24px",
+};
+
+const brandSublineStyle: CSSProperties = {
+	margin: "2px 0 0",
+	color: "#a7f3d0",
+	fontSize: "12px",
+	lineHeight: "18px",
+};
+
+const contentStyle: CSSProperties = {
+	padding: "28px 24px 24px",
+};
+
+const dividerStyle: CSSProperties = {
+	margin: "0 24px",
+	borderColor: "#e5e7eb",
+};
+
+const footerStyle: CSSProperties = {
+	margin: 0,
+	padding: "16px 24px 24px",
+	color: "#6b7280",
+	fontSize: "12px",
+	lineHeight: "18px",
+};

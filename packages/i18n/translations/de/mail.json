@@ -1,6 +1,6 @@
 {
 	"common": {
-		"openLinkInBrowser": "Wenn du den Link in einem anderen Browser als deinem Standardbrowser öffnen möchtest, kopiere diesen und füge ihn in die Adresszeile deines Browsers ein:",
+		"openLinkInBrowser": "Wenn sich der Button nicht öffnet, kopiere diesen Link in deinen Browser:",
 		"otp": "Einmaliges Passwort",
 		"useLink": "oder nutze den folgenden Link:"
 	},
@@ -31,8 +31,9 @@
 		"subject": "Du wurdest eingeladen, einer Organisation beizutreten"
 	},
 	"notification": {
-		"openInApp": "Öffne diese Benachrichtigung in der App:",
+		"kicker": "SignalFast-Benachrichtigung",
+		"openInApp": "Vollständige Benachrichtigung in SignalFast ansehen:",
 		"subject": "Neue Benachrichtigung",
-		"view": "Anzeigen"
+		"view": "Benachrichtigung ansehen"
 	}
 }
