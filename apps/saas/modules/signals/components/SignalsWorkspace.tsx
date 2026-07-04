@@ -30,7 +30,6 @@ import {
 	CompassIcon,
 	CrownIcon,
 	Maximize2Icon,
-	PartyPopperIcon,
 	RadioIcon,
 	RefreshCwIcon,
 	SearchIcon,
@@ -61,6 +60,32 @@ const SIGNAL_STATUSES = ["active", "history"] as const;
 const TIME_RANGES = ["all", "24h", "3d", "7d", "30d"] as const;
 const ENTRY_STATUSES = ["all", "pending", "entered"] as const;
 const SIGNALS_GUIDE_STORAGE_KEY_PREFIX = "signalfast:signals-guide:v2";
+const TRIAL_WELCOME_CONFETTI_STYLES = `
+@keyframes trial-confetti-fall {
+	0% {
+		opacity: 0;
+		transform: translate3d(var(--confetti-x-start), -10px, 0) scale(0.72) rotate(0deg);
+	}
+	18% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		transform: translate3d(var(--confetti-x-end), 34px, 0) scale(1) rotate(150deg);
+	}
+}
+
+.trial-confetti-particle {
+	animation: trial-confetti-fall 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.trial-confetti-particle {
+		animation: none;
+		opacity: 0.65;
+	}
+}
+`;
 
 type Timeframe = (typeof SUPPORTED_TIMEFRAMES)[number];
 type SignalDirection = (typeof SIGNAL_DIRECTIONS)[number];
@@ -68,6 +93,91 @@ type SignalStatus = (typeof SIGNAL_STATUSES)[number];
 type TimeRange = (typeof TIME_RANGES)[number];
 type EntryStatus = (typeof ENTRY_STATUSES)[number];
 type SignalsGuideTarget = "chart" | "filters" | "signalList" | "ticker" | "traders";
+
+interface TrialConfettiStyle extends CSSProperties {
+	"--confetti-x-end": string;
+	"--confetti-x-start": string;
+}
+
+interface TrialConfettiParticle {
+	className: string;
+	style: TrialConfettiStyle;
+}
+
+const TRIAL_WELCOME_CONFETTI_PARTICLES: TrialConfettiParticle[] = [
+	{
+		className: "size-1.5 rounded-full",
+		style: {
+			"--confetti-x-end": "-18px",
+			"--confetti-x-start": "-4px",
+			animationDelay: "0ms",
+			animationDuration: "2.7s",
+			backgroundColor: "#facc15",
+			left: "38%",
+			top: "10%",
+		},
+	},
+	{
+		className: "h-1.5 w-1 rounded-[2px]",
+		style: {
+			"--confetti-x-end": "18px",
+			"--confetti-x-start": "4px",
+			animationDelay: "180ms",
+			animationDuration: "3s",
+			backgroundColor: "#38bdf8",
+			left: "58%",
+			top: "7%",
+		},
+	},
+	{
+		className: "size-1 rounded-full",
+		style: {
+			"--confetti-x-end": "-10px",
+			"--confetti-x-start": "8px",
+			animationDelay: "420ms",
+			animationDuration: "2.5s",
+			backgroundColor: "#fb7185",
+			left: "47%",
+			top: "2%",
+		},
+	},
+	{
+		className: "h-1 w-2 rounded-[2px]",
+		style: {
+			"--confetti-x-end": "12px",
+			"--confetti-x-start": "-10px",
+			animationDelay: "620ms",
+			animationDuration: "3.1s",
+			backgroundColor: "#34d399",
+			left: "32%",
+			top: "28%",
+		},
+	},
+	{
+		className: "size-1.5 rounded-full",
+		style: {
+			"--confetti-x-end": "16px",
+			"--confetti-x-start": "-6px",
+			animationDelay: "840ms",
+			animationDuration: "2.9s",
+			backgroundColor: "#a78bfa",
+			left: "64%",
+			top: "26%",
+		},
+	},
+	{
+		className: "h-1.5 w-1 rounded-[2px]",
+		style: {
+			"--confetti-x-end": "-14px",
+			"--confetti-x-start": "5px",
+			animationDelay: "1120ms",
+			animationDuration: "2.6s",
+			backgroundColor: "#f97316",
+			left: "52%",
+			top: "18%",
+		},
+	},
+];
 
 interface Instrument {
 	symbol: string;
@@ -1600,23 +1710,56 @@ export function SignalsWorkspace() {
 					dismissWelcomeDialog();
 				}}
 			>
-				<DialogContent className="sm:max-w-[380px] border-white/10 p-6 text-white bg-[#151515]">
-					<DialogHeader className="items-center text-center">
-						<div className="mb-2 size-16 flex items-center justify-center rounded-full bg-primary/15 text-primary shadow-[0_0_36px_rgba(16,185,129,0.22)]">
-							<PartyPopperIcon className="size-8" />
+				<DialogContent className="gap-5 border-white/10 px-5 py-6 text-white md:w-[min(calc(100vw_-_48px),320px)] sm:max-w-[320px] w-[min(calc(100vw_-_48px),320px)] max-w-[320px] overflow-hidden bg-[#161616] shadow-[0_24px_70px_rgba(0,0,0,0.48)]">
+					<style>{TRIAL_WELCOME_CONFETTI_STYLES}</style>
+					<DialogHeader className="gap-3 space-y-0 items-center text-center">
+						<div className="h-20 w-24 relative flex items-start justify-center overflow-visible">
+							{TRIAL_WELCOME_CONFETTI_PARTICLES.map((particle, index) => (
+								<span
+									aria-hidden="true"
+									className={cn(
+										"trial-confetti-particle absolute",
+										particle.className,
+									)}
+									key={index}
+									style={particle.style}
+								/>
+							))}
+							<div
+								aria-hidden="true"
+								className="mt-3 size-14 border-white/10 bg-white/[0.06] text-3xl flex items-center justify-center rounded-full border shadow-[0_18px_44px_rgba(0,0,0,0.28)]"
+							>
+								🎉
+							</div>
 						</div>
-						<DialogTitle className="text-xl">{t("trialWelcome.title")}</DialogTitle>
-						<DialogDescription className="text-base font-medium leading-7 text-white/85 max-w-[260px]">
-							{t("trialWelcome.description")}
-						</DialogDescription>
+						<div className="gap-2 flex flex-col">
+							<DialogTitle className="text-xl leading-tight">
+								{t("trialWelcome.title")}
+							</DialogTitle>
+							<DialogDescription className="text-base font-medium leading-6 text-white/78 max-w-[240px]">
+								{t("trialWelcome.description")}
+							</DialogDescription>
+						</div>
 					</DialogHeader>
-					<DialogFooter className="mt-2 gap-2 sm:gap-2">
-						<Button type="button" variant="ghost" onClick={dismissWelcomeDialog}>
-							{t("trialWelcome.skip")}
-						</Button>
-						<Button type="button" variant="primary" onClick={startGuide}>
-							<CompassIcon className="size-4" />
+					<DialogFooter className="gap-1.5 space-x-0 sm:space-x-0 sm:flex-col mx-auto flex w-full max-w-[132px] flex-col items-stretch justify-center">
+						<Button
+							type="button"
+							variant="primary"
+							size="sm"
+							className="h-8 border-white bg-white px-3 text-sm text-black shadow-sm hover:bg-white/90 w-full border"
+							onClick={startGuide}
+						>
+							<CompassIcon data-icon="inline-start" />
 							{t("trialWelcome.startGuide")}
+						</Button>
+						<Button
+							type="button"
+							variant="ghost"
+							size="sm"
+							className="h-6 px-2 text-xs font-medium text-white/58 hover:text-white/82 w-full hover:bg-transparent"
+							onClick={dismissWelcomeDialog}
+						>
+							{t("trialWelcome.skip")}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

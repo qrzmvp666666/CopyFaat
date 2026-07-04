@@ -814,10 +814,10 @@
 		},
 		"trialWelcome": {
 			"benefit": "",
-			"description": "注册成功，已获取 2 天 Pro 会员",
+			"description": "已获取2天Pro会员",
 			"skip": "稍后再看",
 			"startGuide": "开始引导",
-			"title": "恭喜您"
+			"title": "注册成功"
 		}
 	},
 	"common": {

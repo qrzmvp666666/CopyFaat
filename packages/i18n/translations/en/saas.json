@@ -814,10 +814,10 @@
 		},
 		"trialWelcome": {
 			"benefit": "",
-			"description": "Registration complete. You received 2 days of Pro membership.",
+			"description": "2 days of Pro included",
 			"skip": "Maybe later",
 			"startGuide": "Start guide",
-			"title": "Congratulations"
+			"title": "Registration complete"
 		}
 	},
 	"common": {
