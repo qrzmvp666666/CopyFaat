@@ -3,6 +3,8 @@
 import { useSession } from "@auth/hooks/use-session";
 import { config } from "@config";
 import { useActiveOrganization } from "@organizations/hooks/use-active-organization";
+import { EntitlementCountdown } from "@payments/components/EntitlementCountdown";
+import { usePurchases } from "@payments/hooks/purchases";
 import { config as authConfig } from "@repo/auth/config";
 import { config as paymentsConfig } from "@repo/payments/config";
 import {
@@ -304,6 +306,31 @@ function MembershipLinkButton({ href, className }: { href: string; className?: s
 	);
 }
 
+function SidebarEntitlementCountdown() {
+	const { activeEntitlementGrant, activePlan } = usePurchases();
+	const activePlanEntitlement =
+		activePlan && "expiresAt" in activePlan && activePlan.expiresAt
+			? {
+					expiresAt: activePlan.expiresAt,
+					source:
+						"source" in activePlan ? activePlan.source : activeEntitlementGrant?.source,
+				}
+			: null;
+
+	if (!activePlanEntitlement) {
+		return null;
+	}
+
+	return (
+		<EntitlementCountdown
+			compact
+			expiresAt={activePlanEntitlement.expiresAt}
+			source={activePlanEntitlement.source}
+			className="w-fit max-w-full border-white/10 bg-white/[0.06] px-3 py-2 text-muted-foreground"
+		/>
+	);
+}
+
 export function NavBar() {
 	const t = useTranslations();
 	const pathname = usePathname();
@@ -321,6 +348,7 @@ export function NavBar() {
 		paymentsConfig.billingAttachedTo === "organization" && activeOrganization
 			? `${basePath}/settings/billing`
 			: "/settings/billing";
+	const isSignalsWorkspace = pathname === `${basePath}/signals`;
 
 	const menuItems: NavMenuItem[] = useMemo(() => {
 		const accountSubItems: NavSubItem[] = [
@@ -555,6 +583,9 @@ export function NavBar() {
 						isCollapsedEffective && "md:items-center",
 					)}
 				>
+					{isSignalsWorkspace && !isCollapsedEffective ? (
+						<SidebarEntitlementCountdown />
+					) : null}
 					<div
 						className={cn(
 							"min-w-0 w-full flex-1",

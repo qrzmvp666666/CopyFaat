@@ -1,6 +1,5 @@
 "use client";
 
-import { EntitlementCountdown } from "@payments/components/EntitlementCountdown";
 import { usePurchases } from "@payments/hooks/purchases";
 import { Button, cn } from "@repo/ui";
 import {
@@ -1710,10 +1709,10 @@ export function SignalsWorkspace() {
 					dismissWelcomeDialog();
 				}}
 			>
-				<DialogContent className="gap-5 border-white/10 px-5 py-6 text-white md:w-[min(calc(100vw_-_48px),320px)] sm:max-w-[320px] w-[min(calc(100vw_-_48px),320px)] max-w-[320px] overflow-hidden bg-[#161616] shadow-[0_24px_70px_rgba(0,0,0,0.48)]">
+				<DialogContent className="w-[min(calc(100vw_-_40px),344px)] gap-0 overflow-hidden border-white/10 bg-[#181818] px-6 pt-7 pb-5 text-white shadow-[0_28px_90px_rgba(0,0,0,0.52)] sm:max-w-[344px] [&>button]:top-4 [&>button]:right-4 [&>button]:rounded-full [&>button]:text-white/58 [&>button]:opacity-100 [&>button]:hover:bg-white/8 [&>button]:hover:text-white">
 					<style>{TRIAL_WELCOME_CONFETTI_STYLES}</style>
-					<DialogHeader className="gap-3 space-y-0 items-center text-center">
-						<div className="h-20 w-24 relative flex items-start justify-center overflow-visible">
+					<DialogHeader className="items-center gap-4 space-y-0 text-center">
+						<div className="relative flex size-16 items-center justify-center overflow-visible">
 							{TRIAL_WELCOME_CONFETTI_PARTICLES.map((particle, index) => (
 								<span
 									aria-hidden="true"
@@ -1727,26 +1726,26 @@ export function SignalsWorkspace() {
 							))}
 							<div
 								aria-hidden="true"
-								className="mt-3 size-14 border-white/10 bg-white/[0.06] text-3xl flex items-center justify-center rounded-full border shadow-[0_18px_44px_rgba(0,0,0,0.28)]"
+								className="flex size-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.07] text-3xl shadow-[0_16px_36px_rgba(0,0,0,0.32)]"
 							>
 								🎉
 							</div>
 						</div>
-						<div className="gap-2 flex flex-col">
+						<div className="flex flex-col gap-1.5">
 							<DialogTitle className="text-xl leading-tight">
 								{t("trialWelcome.title")}
 							</DialogTitle>
-							<DialogDescription className="text-base font-medium leading-6 text-white/78 max-w-[240px]">
+							<DialogDescription className="max-w-[248px] text-base font-medium leading-6 text-white/72">
 								{t("trialWelcome.description")}
 							</DialogDescription>
 						</div>
 					</DialogHeader>
-					<DialogFooter className="gap-1.5 space-x-0 sm:space-x-0 sm:flex-col mx-auto flex w-full max-w-[132px] flex-col items-stretch justify-center">
+					<DialogFooter className="mx-auto mt-5 flex w-full max-w-[156px] flex-col items-stretch justify-center gap-2 space-x-0 sm:flex-col sm:space-x-0">
 						<Button
 							type="button"
 							variant="primary"
 							size="sm"
-							className="h-8 border-white bg-white px-3 text-sm text-black shadow-sm hover:bg-white/90 w-full border"
+							className="h-9 w-full border-0 bg-white px-4 text-sm text-black shadow-[0_10px_28px_rgba(255,255,255,0.08)] ring-1 ring-white/15 hover:bg-white/92"
 							onClick={startGuide}
 						>
 							<CompassIcon data-icon="inline-start" />
@@ -1756,7 +1755,7 @@ export function SignalsWorkspace() {
 							type="button"
 							variant="ghost"
 							size="sm"
-							className="h-6 px-2 text-xs font-medium text-white/58 hover:text-white/82 w-full hover:bg-transparent"
+							className="h-6 w-full px-2 text-xs font-medium text-white/52 hover:bg-transparent hover:text-white/78"
 							onClick={dismissWelcomeDialog}
 						>
 							{t("trialWelcome.skip")}
@@ -1782,13 +1781,6 @@ export function SignalsWorkspace() {
 						<RadioIcon className="size-4 text-emerald-500" />
 						<span>{t("ticker.live")}</span>
 					</div>
-					{activePlanEntitlement ? (
-						<EntitlementCountdown
-							compact
-							expiresAt={activePlanEntitlement.expiresAt}
-							source={activePlanEntitlement.source}
-						/>
-					) : null}
 					{instruments.map((instrument) => (
 						<button
 							key={instrument.symbol}
