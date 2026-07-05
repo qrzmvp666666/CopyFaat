@@ -16,10 +16,6 @@ export interface SaasConfig {
 	 */
 	marketingUrl?: string;
 	/**
-	 * Xianyu listing or search URL copied from paid pricing cards for redeem-code purchases.
-	 */
-	xianyuRedeemUrl: string;
-	/**
 	 * Theme options exposed in the theme switcher for this app.
 	 */
 	enabledThemes: readonly Theme[];

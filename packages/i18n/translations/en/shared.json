@@ -75,12 +75,11 @@
 		"paymentMethod": "Pay with",
 		"payNow": "Pay now",
 		"xianyuRedeem": {
-			"ariaLabel": "Copy the Xianyu redeem-code purchase link",
-			"copyErrorDescription": "Please try again later, or search SignalFast redeem code manually.",
-			"copyErrorTitle": "Could not copy Xianyu link",
-			"copiedDescription": "Open Xianyu and paste the link to purchase a redeem code.",
-			"copiedTitle": "Xianyu link copied",
-			"label": "Buy redeem code"
+			"ariaLabel": "Open the redeem-code purchase QR image",
+			"description": "Save the image, then open Xianyu Scan to purchase a redeem code manually.",
+			"imageAlt": "SignalFast Xianyu redeem-code purchase QR image",
+			"label": "Buy redeem code",
+			"title": "Scan to buy a redeem code"
 		},
 		"paymentMethods": {
 			"card": "Credit Card",

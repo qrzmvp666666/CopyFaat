@@ -75,12 +75,11 @@
 		"paymentMethod": "支付方式",
 		"payNow": "立刻支付",
 		"xianyuRedeem": {
-			"ariaLabel": "复制闲鱼兑换码购买链接",
-			"copyErrorDescription": "请稍后再试，或手动搜索 SignalFast 兑换码。",
-			"copyErrorTitle": "无法复制闲鱼链接",
-			"copiedDescription": "打开闲鱼后粘贴链接即可购买兑换码。",
-			"copiedTitle": "闲鱼链接已复制",
-			"label": "购买兑换码"
+			"ariaLabel": "打开兑换码购买扫码图片",
+			"description": "保存图片后打开闲鱼扫一扫，即可手动扫码购买兑换码。",
+			"imageAlt": "SignalFast 闲鱼兑换码购买扫码图片",
+			"label": "购买兑换码",
+			"title": "扫码购买兑换码"
 		},
 		"paymentMethods": {
 			"card": "信用卡",

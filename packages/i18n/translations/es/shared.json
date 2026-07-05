@@ -59,6 +59,13 @@
 		"perSeat": "asiento",
 		"paymentMethod": "Pagar con",
 		"payNow": "Pagar ahora",
+		"xianyuRedeem": {
+			"ariaLabel": "Open the redeem-code purchase QR image",
+			"description": "Save the image, then open Xianyu Scan to purchase a redeem code manually.",
+			"imageAlt": "SignalFast Xianyu redeem-code purchase QR image",
+			"label": "Buy redeem code",
+			"title": "Scan to buy a redeem code"
+		},
 		"paymentMethods": {
 			"card": "Tarjeta de crédito",
 			"wechat_person": "WeChat Pay",

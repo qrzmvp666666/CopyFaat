@@ -405,18 +405,10 @@ export function PricingSection() {
 												<div className="mb-3">
 													<RedeemCodePurchaseLink
 														ariaLabel={xianyuRedeemT("ariaLabel")}
-														copyErrorDescription={xianyuRedeemT(
-															"copyErrorDescription",
-														)}
-														copyErrorTitle={xianyuRedeemT(
-															"copyErrorTitle",
-														)}
-														copiedDescription={xianyuRedeemT(
-															"copiedDescription",
-														)}
-														copiedTitle={xianyuRedeemT("copiedTitle")}
+														description={xianyuRedeemT("description")}
+														imageAlt={xianyuRedeemT("imageAlt")}
 														label={xianyuRedeemT("label")}
-														url={config.xianyuRedeemUrl}
+														title={xianyuRedeemT("title")}
 													/>
 												</div>
 											)}
