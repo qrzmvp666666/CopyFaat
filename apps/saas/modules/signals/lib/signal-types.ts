@@ -44,7 +44,9 @@ export interface StoredTradingSymbol {
 	symbol: string;
 }
 
-export interface StoredSignal extends Required<Pick<SignalWebhookRequest, "direction" | "entry" | "source" | "stopLoss" | "symbol">> {
+export interface StoredSignal extends Required<
+	Pick<SignalWebhookRequest, "direction" | "entry" | "source" | "stopLoss" | "symbol">
+> {
 	chartPositionPct: number;
 	createdAt: string;
 	entryStatus: WebhookSignalEntryStatus;
@@ -63,6 +65,8 @@ export interface StoredSignal extends Required<Pick<SignalWebhookRequest, "direc
 }
 
 export interface SignalsListResponse {
+	counts: Record<WebhookSignalStatus, number>;
+	nextCursor: string | null;
 	signals: StoredSignal[];
 }
 

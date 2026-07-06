@@ -2,12 +2,7 @@
 
 import { usePurchases } from "@payments/hooks/purchases";
 import { Button, cn } from "@repo/ui";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogTitle,
-} from "@repo/ui/components/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@repo/ui/components/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -39,7 +34,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { isBlockedSignalTrader } from "../lib/signal-identity";
 import type {
@@ -308,6 +303,15 @@ interface SymbolCandles {
 	timeframe: Timeframe;
 }
 
+interface SignalPageFilters {
+	direction: SignalDirection;
+	entryStatus: EntryStatus;
+	sourceIds: string[];
+	status: SignalStatus;
+	submittedAfter: Date | null;
+	symbol: string;
+}
+
 const INSTRUMENTS: Instrument[] = [
 	{
 		symbol: "BTCUSDT",
@@ -342,18 +346,13 @@ const BINANCE_STREAM_BASE_URL = "wss://stream.binance.com:9443";
 const BINANCE_RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000] as const;
 const MIN_CHART_CANDLES = 20;
 const PRIORITY_SYMBOL_BASES = ["BTC", "ETH", "SOL"] as const;
+const SIGNAL_PAGE_SIZE = 20;
 const TICK_FLASH_MS = 700;
-const TICKER_SKELETON_WIDTHS = [
-	"w-36",
-	"w-32",
-	"w-[8.5rem]",
-	"w-[7.5rem]",
-	"w-28",
-] as const;
+const TICKER_SKELETON_WIDTHS = ["w-36", "w-32", "w-[8.5rem]", "w-[7.5rem]", "w-28"] as const;
 const CHART_SKELETON_BARS = [
-	32, 48, 38, 54, 44, 62, 51, 68, 57, 72, 64, 58, 76, 69, 61, 80, 73, 66, 71, 59,
-	63, 55, 49, 43, 52, 46, 58, 67, 74, 69, 78, 83, 72, 65, 70, 62, 57, 51, 44, 39,
-	47, 53, 60, 56, 64, 71, 76, 68, 61, 55, 49, 58, 66, 73, 69, 77, 82, 74, 67, 60,
+	32, 48, 38, 54, 44, 62, 51, 68, 57, 72, 64, 58, 76, 69, 61, 80, 73, 66, 71, 59, 63, 55, 49, 43,
+	52, 46, 58, 67, 74, 69, 78, 83, 72, 65, 70, 62, 57, 51, 44, 39, 47, 53, 60, 56, 64, 71, 76, 68,
+	61, 55, 49, 58, 66, 73, 69, 77, 82, 74, 67, 60,
 ] as const;
 
 const FALLBACK_LOGOS: Record<string, string> = Object.fromEntries(
@@ -506,7 +505,7 @@ function createInstrumentFromTradingSymbol(symbol: StoredTradingSymbol): Instrum
 
 function createSourceFilterFromSignal(signal: StoredSignal): Source {
 	const name = signal.source.name;
-	const id = normalizeSourceKey(name);
+	const id = signal.source.id ?? normalizeSourceKey(name);
 
 	return {
 		accent: getSymbolAccent(id),
@@ -665,7 +664,7 @@ function mapStoredSignalToTradeSignal(signal: StoredSignal, locale: string): Tra
 		entryStatus: signal.entryStatus,
 		id: signal.id,
 		outcome: signal.outcome,
-		sourceId: normalizeSourceKey(signal.source.name),
+		sourceId: signal.source.id ?? normalizeSourceKey(signal.source.name),
 		sourceName: signal.source.name,
 		status: signal.status,
 		stopLoss: signal.stopLoss,
@@ -828,6 +827,90 @@ function matchesSelectedSources(
 	return selectedSourceIds.length === 0 || selectedSourceIds.includes(signal.sourceId);
 }
 
+function getSubmittedAfterForTimeRange(timeRange: TimeRange) {
+	if (timeRange === "all") {
+		return null;
+	}
+
+	const daysByRange: Record<Exclude<TimeRange, "all">, number> = {
+		"24h": 1,
+		"3d": 3,
+		"7d": 7,
+		"30d": 30,
+	};
+
+	return new Date(Date.now() - daysByRange[timeRange] * 24 * 60 * 60 * 1000);
+}
+
+function doesStoredSignalMatchPageFilters(signal: StoredSignal, filters: SignalPageFilters) {
+	if (filters.symbol && signal.symbol !== filters.symbol) {
+		return false;
+	}
+
+	if (signal.status !== filters.status) {
+		return false;
+	}
+
+	if (filters.sourceIds.length > 0) {
+		const sourceId = signal.source.id ?? normalizeSourceKey(signal.source.name);
+
+		if (!filters.sourceIds.includes(sourceId)) {
+			return false;
+		}
+	}
+
+	if (filters.direction !== "all" && signal.direction !== filters.direction) {
+		return false;
+	}
+
+	if (filters.entryStatus !== "all" && signal.entryStatus !== filters.entryStatus) {
+		return false;
+	}
+
+	if (filters.submittedAfter) {
+		const submittedAt = new Date(signal.submittedAt);
+
+		if (Number.isNaN(submittedAt.getTime()) || submittedAt < filters.submittedAfter) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+function getSignalPageSearchParams(filters: SignalPageFilters, cursor?: string | null) {
+	const params = new URLSearchParams({
+		limit: String(SIGNAL_PAGE_SIZE),
+		status: filters.status,
+	});
+
+	if (cursor) {
+		params.set("cursor", cursor);
+	}
+
+	if (filters.direction !== "all") {
+		params.set("direction", filters.direction);
+	}
+
+	if (filters.entryStatus !== "all") {
+		params.set("entryStatus", filters.entryStatus);
+	}
+
+	if (filters.sourceIds.length > 0) {
+		params.set("sourceIds", filters.sourceIds.join(","));
+	}
+
+	if (filters.submittedAfter) {
+		params.set("submittedAfter", filters.submittedAfter.toISOString());
+	}
+
+	if (filters.symbol) {
+		params.set("symbol", filters.symbol);
+	}
+
+	return params;
+}
+
 function clampNumber(value: number, min: number, max: number) {
 	return Math.min(Math.max(value, min), max);
 }
@@ -939,6 +1022,12 @@ export function SignalsWorkspace() {
 	const locale = useLocale();
 	const { activeEntitlementGrant, activePlan } = usePurchases();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
+	const [signalPageSignals, setSignalPageSignals] = useState<StoredSignal[]>([]);
+	const [signalPageCursor, setSignalPageCursor] = useState<string | null>(null);
+	const [statusCounts, setStatusCounts] = useState<Record<SignalStatus, number>>({
+		active: 0,
+		history: 0,
+	});
 	const [binanceCandles, setBinanceCandles] = useState<SymbolCandles | null>(null);
 	const [instrumentQuotes, setInstrumentQuotes] = useState<Record<string, Partial<Instrument>>>(
 		{},
@@ -954,6 +1043,8 @@ export function SignalsWorkspace() {
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
 	const [isChartFullscreenOpen, setIsChartFullscreenOpen] = useState(false);
 	const [isSignalsLoading, setIsSignalsLoading] = useState(true);
+	const [isSignalPageLoading, setIsSignalPageLoading] = useState(true);
+	const [isSignalPageLoadingMore, setIsSignalPageLoadingMore] = useState(false);
 	const [isKlinesLoading, setIsKlinesLoading] = useState(false);
 	const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false);
 	const [guideOpen, setGuideOpen] = useState(false);
@@ -970,10 +1061,16 @@ export function SignalsWorkspace() {
 	const guideStorageKey = isSignupTrial
 		? `${SIGNALS_GUIDE_STORAGE_KEY_PREFIX}:${activeEntitlementGrant?.id ?? "current"}`
 		: SIGNALS_GUIDE_STORAGE_KEY_PREFIX;
+	const signalPageRequestIdRef = useRef(0);
+	const [signalPageRefreshKey, setSignalPageRefreshKey] = useState(0);
 
 	const signals = useMemo(
 		() => webhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
 		[locale, webhookSignals],
+	);
+	const signalPageTradeSignals = useMemo(
+		() => signalPageSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
+		[locale, signalPageSignals],
 	);
 	const baseInstruments = useMemo(() => {
 		const symbols = new Map<string, StoredTradingSymbol>();
@@ -1015,6 +1112,25 @@ export function SignalsWorkspace() {
 
 		return Array.from(sources.values()).sort((a, b) => a.name.localeCompare(b.name));
 	}, [webhookSignals]);
+	const signalPageFilters = useMemo<SignalPageFilters>(
+		() => ({
+			direction: selectedDirection,
+			entryStatus: selectedEntryStatus,
+			sourceIds: selectedSourceIds,
+			status: selectedStatus,
+			submittedAfter: getSubmittedAfterForTimeRange(selectedTimeRange),
+			symbol: selectedSymbol,
+		}),
+		[
+			selectedDirection,
+			selectedEntryStatus,
+			selectedSourceIds,
+			selectedStatus,
+			selectedSymbol,
+			selectedTimeRange,
+		],
+	);
+	const signalPageFiltersRef = useRef(signalPageFilters);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -1027,6 +1143,7 @@ export function SignalsWorkspace() {
 
 				if (!response.ok) {
 					if (isMounted) {
+						setIsSignalPageLoading(false);
 						setIsSignalsLoading(false);
 					}
 					return;
@@ -1035,9 +1152,10 @@ export function SignalsWorkspace() {
 				const data = (await response.json()) as SignalsListResponse;
 
 				if (isMounted) {
-					setWebhookSignals(
-						data.signals.filter((signal) => !isBlockedSignalTrader(signal.source)),
+					const visibleSignals = data.signals.filter(
+						(signal) => !isBlockedSignalTrader(signal.source),
 					);
+					setWebhookSignals(visibleSignals);
 					setIsSignalsLoading(false);
 				}
 			} catch {
@@ -1058,6 +1176,20 @@ export function SignalsWorkspace() {
 					setWebhookSignals((currentSignals) =>
 						upsertWebhookSignal(currentSignals, signal),
 					);
+					setSignalPageSignals((currentSignals) => {
+						const matchesCurrentPage = doesStoredSignalMatchPageFilters(
+							signal,
+							signalPageFiltersRef.current,
+						);
+
+						if (!matchesCurrentPage) {
+							return currentSignals.filter(
+								(currentSignal) => currentSignal.eventId !== signal.eventId,
+							);
+						}
+
+						return upsertWebhookSignal(currentSignals, signal);
+					});
 				}
 			} catch {
 				// Ignore malformed local dev events and keep the current view intact.
@@ -1069,6 +1201,75 @@ export function SignalsWorkspace() {
 			eventSource.close();
 		};
 	}, []);
+
+	useEffect(() => {
+		signalPageFiltersRef.current = signalPageFilters;
+	}, [signalPageFilters]);
+
+	useEffect(() => {
+		const requestId = signalPageRequestIdRef.current + 1;
+		signalPageRequestIdRef.current = requestId;
+		const controller = new AbortController();
+
+		async function loadSignalPage() {
+			if (!signalPageFilters.symbol) {
+				setSignalPageSignals([]);
+				setSignalPageCursor(null);
+				setStatusCounts({
+					active: 0,
+					history: 0,
+				});
+				setIsSignalPageLoading(false);
+				setIsSignalPageLoadingMore(false);
+				return;
+			}
+
+			setIsSignalPageLoading(true);
+			setIsSignalPageLoadingMore(false);
+
+			try {
+				const response = await fetch(
+					`/api/signals?${getSignalPageSearchParams(signalPageFilters).toString()}`,
+					{
+						cache: "no-store",
+						signal: controller.signal,
+					},
+				);
+
+				if (!response.ok) {
+					if (signalPageRequestIdRef.current === requestId) {
+						setSignalPageSignals([]);
+						setSignalPageCursor(null);
+						setIsSignalPageLoading(false);
+					}
+					return;
+				}
+
+				const data = (await response.json()) as SignalsListResponse;
+
+				if (signalPageRequestIdRef.current === requestId) {
+					setSignalPageSignals(
+						data.signals.filter((signal) => !isBlockedSignalTrader(signal.source)),
+					);
+					setSignalPageCursor(data.nextCursor);
+					setStatusCounts(data.counts);
+					setIsSignalPageLoading(false);
+				}
+			} catch {
+				if (!controller.signal.aborted && signalPageRequestIdRef.current === requestId) {
+					setSignalPageSignals([]);
+					setSignalPageCursor(null);
+					setIsSignalPageLoading(false);
+				}
+			}
+		}
+
+		void loadSignalPage();
+
+		return () => {
+			controller.abort();
+		};
+	}, [signalPageFilters, signalPageRefreshKey]);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -1299,46 +1500,7 @@ export function SignalsWorkspace() {
 		return disconnect;
 	}, [selectedSymbol, selectedTimeframe]);
 
-	const filteredSignals = useMemo(
-		() =>
-			signals.filter((signal) => {
-				return (
-					signal.symbol === selectedSymbol &&
-					signal.status === selectedStatus &&
-					matchesSelectedSources(signal, selectedSourceIds) &&
-					(selectedDirection === "all" || signal.direction === selectedDirection) &&
-					(selectedEntryStatus === "all" || signal.entryStatus === selectedEntryStatus)
-				);
-			}),
-		[
-			selectedDirection,
-			selectedEntryStatus,
-			selectedSourceIds,
-			selectedStatus,
-			selectedSymbol,
-			signals,
-		],
-	);
-
-	const statusCounts = useMemo(
-		() =>
-			Object.fromEntries(
-				SIGNAL_STATUSES.map((status) => [
-					status,
-					signals.filter(
-						(signal) =>
-							signal.symbol === selectedSymbol &&
-							signal.status === status &&
-							matchesSelectedSources(signal, selectedSourceIds) &&
-							(selectedDirection === "all" ||
-								signal.direction === selectedDirection) &&
-							(selectedEntryStatus === "all" ||
-								signal.entryStatus === selectedEntryStatus),
-					).length,
-				]),
-			) as Record<SignalStatus, number>,
-		[selectedDirection, selectedEntryStatus, selectedSourceIds, selectedSymbol, signals],
-	);
+	const filteredSignals = signalPageTradeSignals;
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
 
@@ -1355,20 +1517,17 @@ export function SignalsWorkspace() {
 		[selectedDirection, selectedEntryStatus, selectedSourceIds, selectedSymbol, signals],
 	);
 
-	const candles = useMemo(
-		() => {
-			if (
-				binanceCandles?.symbol !== selectedSymbol ||
-				binanceCandles.timeframe !== selectedTimeframe ||
-				binanceCandles.candles.length < MIN_CHART_CANDLES
-			) {
-				return [];
-			}
+	const candles = useMemo(() => {
+		if (
+			binanceCandles?.symbol !== selectedSymbol ||
+			binanceCandles.timeframe !== selectedTimeframe ||
+			binanceCandles.candles.length < MIN_CHART_CANDLES
+		) {
+			return [];
+		}
 
-			return binanceCandles.candles;
-		},
-		[binanceCandles, selectedSymbol, selectedTimeframe],
-	);
+		return binanceCandles.candles;
+	}, [binanceCandles, selectedSymbol, selectedTimeframe]);
 
 	const selectedInstrument =
 		instruments.find((instrument) => instrument.symbol === selectedSymbol) ?? null;
@@ -1402,6 +1561,61 @@ export function SignalsWorkspace() {
 
 	function focusSignal(signal: SignalChartSignal) {
 		setActiveSignalId(signal.id);
+	}
+
+	async function loadMoreSignals() {
+		if (!selectedSymbol || !signalPageCursor || isSignalPageLoadingMore) {
+			return;
+		}
+
+		const requestId = signalPageRequestIdRef.current;
+		const filters: SignalPageFilters = {
+			direction: selectedDirection,
+			entryStatus: selectedEntryStatus,
+			sourceIds: selectedSourceIds,
+			status: selectedStatus,
+			submittedAfter: getSubmittedAfterForTimeRange(selectedTimeRange),
+			symbol: selectedSymbol,
+		};
+
+		setIsSignalPageLoadingMore(true);
+
+		try {
+			const response = await fetch(
+				`/api/signals?${getSignalPageSearchParams(filters, signalPageCursor).toString()}`,
+				{
+					cache: "no-store",
+				},
+			);
+
+			if (!response.ok) {
+				if (signalPageRequestIdRef.current === requestId) {
+					setIsSignalPageLoadingMore(false);
+				}
+				return;
+			}
+
+			const data = (await response.json()) as SignalsListResponse;
+
+			if (signalPageRequestIdRef.current === requestId) {
+				setSignalPageSignals((currentSignals) => {
+					const seenIds = new Set(currentSignals.map((signal) => signal.id));
+					const nextSignals = data.signals.filter(
+						(signal) =>
+							!seenIds.has(signal.id) && !isBlockedSignalTrader(signal.source),
+					);
+
+					return [...currentSignals, ...nextSignals];
+				});
+				setSignalPageCursor(data.nextCursor);
+				setStatusCounts(data.counts);
+				setIsSignalPageLoadingMore(false);
+			}
+		} catch {
+			if (signalPageRequestIdRef.current === requestId) {
+				setIsSignalPageLoadingMore(false);
+			}
+		}
 	}
 
 	function selectSymbol(symbol: string) {
@@ -1517,10 +1731,10 @@ export function SignalsWorkspace() {
 					dismissWelcomeDialog();
 				}}
 			>
-				<DialogContent className="w-[min(calc(100vw_-_40px),320px)] max-w-[320px] justify-items-center gap-0 overflow-hidden border-white/10 bg-[#181818] px-7 pt-8 pb-6 text-center text-white shadow-[0_28px_90px_rgba(0,0,0,0.52)] sm:max-w-[320px] md:w-[320px] [&>button]:top-4 [&>button]:right-4 [&>button]:rounded-full [&>button]:text-white/58 [&>button]:opacity-100 [&>button]:hover:bg-white/8 [&>button]:hover:text-white">
+				<DialogContent className="gap-0 border-white/10 px-7 pt-8 pb-6 text-white sm:max-w-[320px] md:w-[320px] [&>button]:top-4 [&>button]:right-4 [&>button]:text-white/58 [&>button]:hover:bg-white/8 [&>button]:hover:text-white w-[min(calc(100vw_-_40px),320px)] max-w-[320px] justify-items-center overflow-hidden bg-[#181818] text-center shadow-[0_28px_90px_rgba(0,0,0,0.52)] [&>button]:rounded-full [&>button]:opacity-100">
 					<style>{TRIAL_WELCOME_CONFETTI_STYLES}</style>
-					<div className="flex w-full flex-col items-center gap-4 text-center">
-						<div className="relative flex size-16 items-center justify-center overflow-visible">
+					<div className="gap-4 flex w-full flex-col items-center text-center">
+						<div className="size-16 relative flex items-center justify-center overflow-visible">
 							{TRIAL_WELCOME_CONFETTI_PARTICLES.map((particle, index) => (
 								<span
 									aria-hidden="true"
@@ -1534,26 +1748,26 @@ export function SignalsWorkspace() {
 							))}
 							<div
 								aria-hidden="true"
-								className="flex size-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.07] text-3xl shadow-[0_16px_36px_rgba(0,0,0,0.32)]"
+								className="size-14 border-white/10 bg-white/[0.07] text-3xl flex items-center justify-center rounded-full border shadow-[0_16px_36px_rgba(0,0,0,0.32)]"
 							>
 								🎉
 							</div>
 						</div>
-						<div className="flex w-full flex-col items-center gap-1.5 text-center">
+						<div className="gap-1.5 flex w-full flex-col items-center text-center">
 							<DialogTitle className="text-xl leading-tight">
 								{t("trialWelcome.title")}
 							</DialogTitle>
-							<DialogDescription className="mx-auto max-w-[248px] text-center text-base font-medium leading-6 text-white/72">
+							<DialogDescription className="text-base font-medium leading-6 text-white/72 mx-auto max-w-[248px] text-center">
 								{t("trialWelcome.description")}
 							</DialogDescription>
 						</div>
 					</div>
-					<div className="mx-auto mt-6 flex w-full max-w-[180px] flex-col items-stretch justify-center gap-2">
+					<div className="mt-6 gap-2 mx-auto flex w-full max-w-[180px] flex-col items-stretch justify-center">
 						<Button
 							type="button"
 							variant="primary"
 							size="sm"
-							className="h-10 w-full gap-2 border-2 border-[#151515] bg-white px-5 text-sm text-black shadow-[0_12px_30px_rgba(255,255,255,0.08)] ring-1 ring-white/14 hover:bg-white/92 [&>svg]:!m-0 [&>svg]:size-4"
+							className="h-10 gap-2 bg-white px-5 text-sm text-black ring-white/14 hover:bg-white/92 [&>svg]:!m-0 [&>svg]:size-4 w-full border-2 border-[#151515] shadow-[0_12px_30px_rgba(255,255,255,0.08)] ring-1"
 							onClick={startGuide}
 						>
 							<CompassIcon data-icon="inline-start" />
@@ -1563,7 +1777,7 @@ export function SignalsWorkspace() {
 							type="button"
 							variant="ghost"
 							size="sm"
-							className="h-6 w-full px-2 text-xs font-medium text-white/52 hover:bg-transparent hover:text-white/78"
+							className="h-6 px-2 text-xs font-medium text-white/52 hover:text-white/78 w-full hover:bg-transparent"
 							onClick={dismissWelcomeDialog}
 						>
 							{t("trialWelcome.skip")}
@@ -1634,8 +1848,8 @@ export function SignalsWorkspace() {
 							) : isSignalsLoading || isChartLoading ? (
 								<ChartSkeleton />
 							) : (
-								<div className="h-full min-h-[520px] p-6 flex items-center justify-center bg-[#141414]">
-									<div className="max-w-sm rounded-xl border border-dashed border-white/12 px-6 py-5 text-center">
+								<div className="p-6 flex h-full min-h-[520px] items-center justify-center bg-[#141414]">
+									<div className="max-w-sm border-white/12 px-6 py-5 rounded-xl border border-dashed text-center">
 										<p className="font-medium">{t("chart.emptyTitle")}</p>
 										<p className="mt-1 text-sm text-muted-foreground">
 											{t("chart.emptyDescription")}
@@ -1970,6 +2184,7 @@ export function SignalsWorkspace() {
 									size="icon"
 									variant="ghost"
 									aria-label={t("actions.refresh")}
+									onClick={() => setSignalPageRefreshKey((key) => key + 1)}
 								>
 									<RefreshCwIcon className="size-4" />
 								</Button>
@@ -2047,8 +2262,8 @@ export function SignalsWorkspace() {
 							) : isSignalsLoading || isChartLoading ? (
 								<ChartSkeleton />
 							) : (
-								<div className="h-full min-h-[520px] p-6 flex items-center justify-center bg-[#141414]">
-									<div className="max-w-sm rounded-xl border border-dashed border-white/12 px-6 py-5 text-center">
+								<div className="p-6 flex h-full min-h-[520px] items-center justify-center bg-[#141414]">
+									<div className="max-w-sm border-white/12 px-6 py-5 rounded-xl border border-dashed text-center">
 										<p className="font-medium">{t("chart.emptyTitle")}</p>
 										<p className="mt-1 text-sm text-muted-foreground">
 											{t("chart.emptyDescription")}
@@ -2134,115 +2349,132 @@ export function SignalsWorkspace() {
 							isSignalPanelCollapsed && "xl:hidden",
 						)}
 					>
-						{isSignalsLoading && !filteredSignals.length ? (
+						{isSignalPageLoading && !filteredSignals.length ? (
 							<div className="p-6 rounded-md border border-dashed text-center">
-								<p className="font-medium">正在加载信号</p>
+								<p className="font-medium">{t("signalsPanel.loadingTitle")}</p>
 								<p className="mt-1 text-sm text-muted-foreground">
-									正在同步 KOL 信号与 K 线标记。
+									{t("signalsPanel.loadingDescription")}
 								</p>
 							</div>
 						) : filteredSignals.length ? (
-							filteredSignals.map((signal) => {
-								const statusPresentation = getSignalStatusPresentation(signal, {
-									closed: t("signalsPanel.closed"),
-									entered: t("signalsPanel.entered"),
-									expectedRr: t("signalsPanel.expectedRr"),
-									pending: t("signalsPanel.pending"),
-									result: t("signalsPanel.result"),
-								});
-								const StatusIcon = statusPresentation.icon;
+							<>
+								{filteredSignals.map((signal) => {
+									const statusPresentation = getSignalStatusPresentation(signal, {
+										closed: t("signalsPanel.closed"),
+										entered: t("signalsPanel.entered"),
+										expectedRr: t("signalsPanel.expectedRr"),
+										pending: t("signalsPanel.pending"),
+										result: t("signalsPanel.result"),
+									});
+									const StatusIcon = statusPresentation.icon;
 
-								return (
-									<button
-										key={signal.id}
-										type="button"
-										onClick={() => focusSignal(signal)}
-										className={cn(
-											"p-3 border-white/5 hover:bg-white/5 w-full rounded-xl border bg-[#141414] text-left transition-colors",
-											signal.id === activeSignal?.id &&
-												"border-white/10 bg-white/5",
-										)}
-									>
-										<div className="mb-3 gap-2 grid grid-cols-[minmax(0,1fr)_auto] items-start">
-											<div className="min-w-0 gap-2 flex items-center">
-												<span className="size-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
-													<img
-														alt={signal.sourceName}
-														className="size-8 object-cover"
-														src={signal.avatarUrl}
-													/>
-												</span>
-												<div className="min-w-0 flex-1">
-													<p className="text-sm font-semibold truncate">
-														{signal.sourceName}
-													</p>
-													<p className="text-xs truncate text-muted-foreground">
-														{selectedInstrument?.symbol ?? signal.symbol} ·{" "}
-														{t(`direction.${signal.direction}`)}
-													</p>
+									return (
+										<button
+											key={signal.id}
+											type="button"
+											onClick={() => focusSignal(signal)}
+											className={cn(
+												"p-3 border-white/5 hover:bg-white/5 w-full rounded-xl border bg-[#141414] text-left transition-colors",
+												signal.id === activeSignal?.id &&
+													"border-white/10 bg-white/5",
+											)}
+										>
+											<div className="mb-3 gap-2 grid grid-cols-[minmax(0,1fr)_auto] items-start">
+												<div className="min-w-0 gap-2 flex items-center">
+													<span className="size-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
+														<img
+															alt={signal.sourceName}
+															className="size-8 object-cover"
+															src={signal.avatarUrl}
+														/>
+													</span>
+													<div className="min-w-0 flex-1">
+														<p className="text-sm font-semibold truncate">
+															{signal.sourceName}
+														</p>
+														<p className="text-xs truncate text-muted-foreground">
+															{selectedInstrument?.symbol ??
+																signal.symbol}{" "}
+															· {t(`direction.${signal.direction}`)}
+														</p>
+													</div>
 												</div>
-											</div>
-											<span
-												className={cn(
-													"px-2 py-1 font-semibold leading-tight max-w-[72px] rounded-full border text-center text-[11px]",
-													statusPresentation.badgeClassName,
-												)}
-											>
-												{statusPresentation.label}
-											</span>
-										</div>
-
-										<div className="gap-3 text-xs grid grid-cols-2">
-											<SignalMetric
-												label={t("signalsPanel.entry")}
-												value={formatPrice(signal.entry)}
-											/>
-											<SignalMetric
-												label={t("signalsPanel.submittedAt")}
-												value={signal.submittedAt}
-											/>
-											<SignalMetric
-												label={t("signalsPanel.takeProfit")}
-												value={
-													signal.takeProfit === undefined
-														? "--"
-														: formatPrice(signal.takeProfit)
-												}
-												tone="profit"
-											/>
-											<SignalMetric
-												label={t("signalsPanel.stopLoss")}
-												value={formatPrice(signal.stopLoss)}
-												tone="risk"
-											/>
-										</div>
-
-										<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-[#141414]">
-											<span className="gap-1 flex items-center text-muted-foreground">
-												<StatusIcon
+												<span
 													className={cn(
-														"size-3.5",
-														statusPresentation.resultIconClassName,
+														"px-2 py-1 font-semibold leading-tight max-w-[72px] rounded-full border text-center text-[11px]",
+														statusPresentation.badgeClassName,
 													)}
+												>
+													{statusPresentation.label}
+												</span>
+											</div>
+
+											<div className="gap-3 text-xs grid grid-cols-2">
+												<SignalMetric
+													label={t("signalsPanel.entry")}
+													value={formatPrice(signal.entry)}
 												/>
-												{statusPresentation.resultLabel}
-											</span>
-											<span
-												className={cn(
-													"font-mono font-semibold",
-													statusPresentation.resultValueClassName,
-												)}
-											>
-												{signal.status === "active"
-													? signal.takeProfit === undefined
-														? "--"
-														: signal.confidence.toFixed(2)
-													: statusPresentation.label}
-											</span>
-										</div>
-									</button>
-								);
-							})
+												<SignalMetric
+													label={t("signalsPanel.submittedAt")}
+													value={signal.submittedAt}
+												/>
+												<SignalMetric
+													label={t("signalsPanel.takeProfit")}
+													value={
+														signal.takeProfit === undefined
+															? "--"
+															: formatPrice(signal.takeProfit)
+													}
+													tone="profit"
+												/>
+												<SignalMetric
+													label={t("signalsPanel.stopLoss")}
+													value={formatPrice(signal.stopLoss)}
+													tone="risk"
+												/>
+											</div>
+
+											<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-[#141414]">
+												<span className="gap-1 flex items-center text-muted-foreground">
+													<StatusIcon
+														className={cn(
+															"size-3.5",
+															statusPresentation.resultIconClassName,
+														)}
+													/>
+													{statusPresentation.resultLabel}
+												</span>
+												<span
+													className={cn(
+														"font-mono font-semibold",
+														statusPresentation.resultValueClassName,
+													)}
+												>
+													{signal.status === "active"
+														? signal.takeProfit === undefined
+															? "--"
+															: signal.confidence.toFixed(2)
+														: statusPresentation.label}
+												</span>
+											</div>
+										</button>
+									);
+								})}
+								{signalPageCursor ? (
+									<Button
+										type="button"
+										variant="secondary"
+										size="sm"
+										className="border-white/10 bg-white/5 text-xs text-white hover:bg-white/10 w-full"
+										disabled={isSignalPageLoadingMore}
+										onClick={loadMoreSignals}
+									>
+										{isSignalPageLoadingMore
+											? t("signalsPanel.loadingMore")
+											: t("signalsPanel.loadMore")}
+									</Button>
+								) : null}
+							</>
 						) : (
 							<div className="p-6 rounded-md border border-dashed text-center">
 								<p className="font-medium">{t("signalsPanel.emptyTitle")}</p>
@@ -2292,11 +2524,11 @@ function TickerSkeleton() {
 				<div
 					key={`${width}-${index}`}
 					className={cn(
-						"gap-2 px-3 py-1.5 flex shrink-0 items-center rounded-md border border-white/8 bg-white/[0.025]",
+						"gap-2 px-3 py-1.5 border-white/8 bg-white/[0.025] flex shrink-0 items-center rounded-md border",
 						width,
 					)}
 				>
-					<Skeleton className="size-5 shrink-0 rounded-full bg-white/12" />
+					<Skeleton className="size-5 bg-white/12 shrink-0 rounded-full" />
 					<Skeleton className="h-4 w-10 bg-white/10" />
 					<Skeleton className="h-4 w-12 bg-white/8" />
 					<Skeleton className="h-3 w-10 bg-emerald-400/15" />
@@ -2313,22 +2545,22 @@ function ChartSkeleton() {
 				<Skeleton className="h-6 w-24 bg-white/10" />
 				<Skeleton className="h-5 w-10 bg-white/8" />
 			</div>
-			<div className="absolute inset-x-0 bottom-10 top-20">
-				<div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:72px_64px]" />
-				<div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.045),transparent_42%)]" />
-				<div className="absolute inset-x-8 bottom-0 top-5 flex items-end gap-1.5">
+			<div className="inset-x-0 bottom-10 top-20 absolute">
+				<div className="inset-0 absolute bg-[linear-gradient(to_right,rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.045)_1px,transparent_1px)] bg-[size:72px_64px]" />
+				<div className="inset-0 absolute bg-[radial-gradient(circle_at_50%_40%,rgba(255,255,255,0.045),transparent_42%)]" />
+				<div className="inset-x-8 bottom-0 top-5 gap-1.5 absolute flex items-end">
 					{CHART_SKELETON_BARS.map((height, index) => (
 						<div
 							key={`${height}-${index}`}
 							className="relative flex flex-1 items-end justify-center"
 						>
 							<span
-								className="absolute bottom-0 w-px rounded-full bg-white/10"
+								className="bottom-0 bg-white/10 absolute w-px rounded-full"
 								style={{ height: `${Math.min(94, height + 18)}%` }}
 							/>
 							<span
 								className={cn(
-									"w-full min-w-1 max-w-3 rounded-sm",
+									"min-w-1 max-w-3 w-full rounded-sm",
 									index % 3 === 0 ? "bg-emerald-400/22" : "bg-white/12",
 								)}
 								style={{ height: `${height}%` }}
@@ -2336,7 +2568,7 @@ function ChartSkeleton() {
 						</div>
 					))}
 				</div>
-				<div className="signals-skeleton-shimmer absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.055] to-transparent" />
+				<div className="signals-skeleton-shimmer inset-0 via-white/[0.055] absolute -translate-x-full bg-gradient-to-r from-transparent to-transparent" />
 			</div>
 		</div>
 	);

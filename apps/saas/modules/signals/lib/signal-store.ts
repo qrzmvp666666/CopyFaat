@@ -1,15 +1,22 @@
-import { db } from "@repo/database";
-import type { Prisma } from "@repo/database";
 import { createHash } from "node:crypto";
 
-import type { ParsedSignalWebhookRequest } from "./signal-webhook-schema";
+import { db } from "@repo/database";
+import type { Prisma } from "@repo/database";
+
 import {
+	BLOCKED_TRADER_NAMES,
 	getSignalBusinessKey,
 	getTraderExternalId,
 	isBlockedSignalTrader,
 	normalizeSignalIdentityPart,
 } from "./signal-identity";
-import type { StoredSignal } from "./signal-types";
+import type {
+	StoredSignal,
+	WebhookSignalDirection,
+	WebhookSignalEntryStatus,
+	WebhookSignalStatus,
+} from "./signal-types";
+import type { ParsedSignalWebhookRequest } from "./signal-webhook-schema";
 
 type SignalWithTrader = Prisma.SignalGetPayload<{
 	include: {
@@ -18,7 +25,34 @@ type SignalWithTrader = Prisma.SignalGetPayload<{
 	};
 }>;
 
-function getRiskReward(input: Pick<ParsedSignalWebhookRequest, "direction" | "entry" | "stopLoss" | "takeProfit">) {
+interface ListStoredSignalsInput {
+	cursor?: string;
+	direction?: WebhookSignalDirection;
+	entryStatus?: WebhookSignalEntryStatus;
+	limit?: number;
+	sourceIds?: string[];
+	status?: WebhookSignalStatus;
+	submittedAfter?: Date;
+	symbol?: string;
+}
+
+interface SignalListCursor {
+	id: string;
+	submittedAt: string;
+}
+
+interface ListStoredSignalsResult {
+	counts: Record<WebhookSignalStatus, number>;
+	nextCursor: string | null;
+	signals: StoredSignal[];
+}
+
+const DEFAULT_SIGNALS_LIMIT = 200;
+const SIGNAL_LIST_STATUSES = ["active", "history"] as const;
+
+function getRiskReward(
+	input: Pick<ParsedSignalWebhookRequest, "direction" | "entry" | "stopLoss" | "takeProfit">,
+) {
 	if (input.takeProfit === undefined) {
 		return 0;
 	}
@@ -28,9 +62,7 @@ function getRiskReward(input: Pick<ParsedSignalWebhookRequest, "direction" | "en
 			? input.takeProfit - input.entry
 			: input.entry - input.takeProfit;
 	const risk =
-		input.direction === "long"
-			? input.entry - input.stopLoss
-			: input.stopLoss - input.entry;
+		input.direction === "long" ? input.entry - input.stopLoss : input.stopLoss - input.entry;
 
 	return Number((profit / risk).toFixed(2));
 }
@@ -62,7 +94,10 @@ function getStableEventId(input: ParsedSignalWebhookRequest, traderExternalId: s
 		.digest("hex")
 		.slice(0, 16);
 
-	return `${sourcePlatform}:${traderExternalId}:${input.symbol}:${input.direction}:${digest}`.slice(0, 160);
+	return `${sourcePlatform}:${traderExternalId}:${input.symbol}:${input.direction}:${digest}`.slice(
+		0,
+		160,
+	);
 }
 
 function getStoredSignalBusinessKey(signal: SignalWithTrader) {
@@ -138,22 +173,168 @@ function signalModelToStoredSignal(signal: SignalWithTrader): StoredSignal {
 	};
 }
 
-export async function listStoredSignals(): Promise<StoredSignal[]> {
+function encodeSignalListCursor(signal: Pick<SignalWithTrader, "id" | "submittedAt">) {
+	const cursor: SignalListCursor = {
+		id: signal.id,
+		submittedAt: signal.submittedAt.toISOString(),
+	};
+
+	return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+function decodeSignalListCursor(cursor: string | undefined) {
+	if (!cursor) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(
+			Buffer.from(cursor, "base64url").toString("utf8"),
+		) as Partial<SignalListCursor>;
+		const submittedAt = parsed.submittedAt ? new Date(parsed.submittedAt) : null;
+
+		if (!parsed.id || !submittedAt || Number.isNaN(submittedAt.getTime())) {
+			return null;
+		}
+
+		return {
+			id: parsed.id,
+			submittedAt,
+		};
+	} catch {
+		return null;
+	}
+}
+
+function getVisibleSignalsWhere(input: ListStoredSignalsInput = {}): Prisma.SignalWhereInput {
+	const blockedNames = BLOCKED_TRADER_NAMES.map((name) => ({
+		name: {
+			equals: name,
+			mode: "insensitive" as const,
+		},
+	}));
+	const where: Prisma.SignalWhereInput = {
+		NOT: {
+			trader: {
+				OR: blockedNames,
+			},
+		},
+	};
+
+	if (input.direction) {
+		where.direction = input.direction;
+	}
+
+	if (input.entryStatus) {
+		where.entryStatus = input.entryStatus;
+	}
+
+	if (input.sourceIds?.length) {
+		where.trader = {
+			externalId: {
+				in: input.sourceIds,
+			},
+		};
+	}
+
+	if (input.status) {
+		where.status = input.status;
+	}
+
+	if (input.submittedAfter) {
+		where.submittedAt = {
+			gte: input.submittedAfter,
+		};
+	}
+
+	if (input.symbol) {
+		where.tradingSymbol = {
+			symbol: input.symbol,
+		};
+	}
+
+	return where;
+}
+
+export async function listStoredSignals(
+	input: ListStoredSignalsInput = {},
+): Promise<ListStoredSignalsResult> {
+	const limit = input.limit ?? DEFAULT_SIGNALS_LIMIT;
+	const cursor = decodeSignalListCursor(input.cursor);
+	const cursorWhere: Prisma.SignalWhereInput = cursor
+		? {
+				OR: [
+					{
+						submittedAt: {
+							lt: cursor.submittedAt,
+						},
+					},
+					{
+						id: {
+							lt: cursor.id,
+						},
+						submittedAt: cursor.submittedAt,
+					},
+				],
+			}
+		: {};
+	const visibleWhere = getVisibleSignalsWhere(input);
+	const where: Prisma.SignalWhereInput = {
+		AND: [visibleWhere, cursorWhere],
+	};
 	const signals = await db.signal.findMany({
 		include: {
 			trader: true,
 			tradingSymbol: true,
 		},
-		orderBy: {
-			submittedAt: "desc",
-		},
-		take: 200,
+		orderBy: [
+			{
+				submittedAt: "desc",
+			},
+			{
+				id: "desc",
+			},
+		],
+		take: limit + 1,
+		where,
 	});
+	const countWhere = getVisibleSignalsWhere({
+		...input,
+		cursor: undefined,
+		status: undefined,
+	});
+	const [activeCount, historyCount] = await Promise.all(
+		SIGNAL_LIST_STATUSES.map((status) =>
+			db.signal.count({
+				where: {
+					AND: [
+						countWhere,
+						{
+							status,
+						},
+					],
+				},
+			}),
+		),
+	);
+	const dedupedSignals = dedupeStoredSignals(signals);
+	const pageSignals = dedupedSignals.slice(0, limit);
+	const lastSignal = pageSignals.at(-1);
 
-	return dedupeStoredSignals(signals).map(signalModelToStoredSignal);
+	return {
+		counts: {
+			active: activeCount,
+			history: historyCount,
+		},
+		nextCursor:
+			signals.length > limit && lastSignal ? encodeSignalListCursor(lastSignal) : null,
+		signals: pageSignals.map(signalModelToStoredSignal),
+	};
 }
 
-export async function upsertStoredSignal(input: ParsedSignalWebhookRequest): Promise<StoredSignal | null> {
+export async function upsertStoredSignal(
+	input: ParsedSignalWebhookRequest,
+): Promise<StoredSignal | null> {
 	if (isBlockedSignalTrader(input.source)) {
 		return null;
 	}

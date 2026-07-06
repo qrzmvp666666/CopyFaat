@@ -1,6 +1,6 @@
 import type { ParsedSignalWebhookRequest } from "./signal-webhook-schema";
 
-const BLOCKED_TRADER_NAMES = new Set([
+export const BLOCKED_TRADER_NAMES = [
 	"1",
 	"ai信号",
 	"unknown",
@@ -9,7 +9,9 @@ const BLOCKED_TRADER_NAMES = new Set([
 	"未知交易员",
 	"链云:未知交易员",
 	"链云信号",
-]);
+] as const;
+
+const BLOCKED_TRADER_NAME_SET: ReadonlySet<string> = new Set(BLOCKED_TRADER_NAMES);
 
 export function normalizeSignalIdentityPart(value: string) {
 	return value
@@ -21,7 +23,7 @@ export function normalizeSignalIdentityPart(value: string) {
 }
 
 export function isBlockedSignalTraderName(value: string) {
-	return BLOCKED_TRADER_NAMES.has(normalizeSignalIdentityPart(value));
+	return BLOCKED_TRADER_NAME_SET.has(normalizeSignalIdentityPart(value));
 }
 
 export function isBlockedSignalTrader(source: Pick<ParsedSignalWebhookRequest["source"], "name">) {
@@ -40,7 +42,10 @@ export function normalizeSignalPrice(value: number) {
 }
 
 export function getSignalBusinessKey(
-	input: Pick<ParsedSignalWebhookRequest, "direction" | "entry" | "stopLoss" | "symbol" | "takeProfit">,
+	input: Pick<
+		ParsedSignalWebhookRequest,
+		"direction" | "entry" | "stopLoss" | "symbol" | "takeProfit"
+	>,
 	traderExternalId: string,
 ) {
 	return [
