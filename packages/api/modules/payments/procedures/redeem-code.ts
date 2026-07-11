@@ -1,6 +1,10 @@
 import { ORPCError } from "@orpc/client";
 import { redeemCodeForUser } from "@repo/database";
 import { config as paymentsConfig } from "@repo/payments/config";
+import {
+	recordMembershipAnalyticsEvent,
+	MEMBERSHIP_ANALYTICS_EVENTS,
+} from "@repo/payments/lib/mixpanel";
 import { z } from "zod";
 
 import { protectedProcedure } from "../../../orpc/procedures";
@@ -37,6 +41,10 @@ export const redeemCode = protectedProcedure
 		if (!(result.entitlementGrant.planId in paymentsConfig.plans)) {
 			throw new ORPCError("BAD_REQUEST");
 		}
+
+		await recordMembershipAnalyticsEvent(user.id, MEMBERSHIP_ANALYTICS_EVENTS.REDEEMED, {
+			insertId: `redeem:${result.entitlementGrant.id}`,
+		});
 
 		return result;
 	});

@@ -28,7 +28,7 @@ const nextConfig: NextConfig = {
 
 const withSentry = withSentryConfig(withNextIntl(nextConfig), {
 	org: "qrz-mvp",
-	project: "signalfast-marketing",
+	project: "signalfast-saas",
 	silent: !process.env.CI,
 	webpack: {
 		treeshake: {

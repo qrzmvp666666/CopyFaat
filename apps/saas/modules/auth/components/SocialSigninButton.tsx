@@ -3,10 +3,8 @@
 import { config } from "@config";
 import { authClient } from "@repo/auth/client";
 import { Button } from "@repo/ui/components/button";
-import { useCookieConsent } from "@shared/hooks/cookie-consent";
 import {
 	ANALYTICS_EVENTS,
-	initializeAnalytics,
 	rememberPendingSignupMethod,
 	trackAnalyticsEvent,
 } from "@shared/lib/analytics";
@@ -24,7 +22,6 @@ export function SocialSigninButton({
 	flow: "login" | "signup";
 }) {
 	const [invitationId] = useQueryState("invitationId", parseAsString);
-	const { userHasConsented } = useCookieConsent();
 	const providerData = oAuthProviders[provider];
 
 	const redirectPath = invitationId
@@ -32,8 +29,7 @@ export function SocialSigninButton({
 		: config.redirectAfterSignIn;
 
 	const onSignin = async () => {
-		if (flow === "signup" && userHasConsented) {
-			initializeAnalytics();
+		if (flow === "signup") {
 			trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_SUBMITTED, {
 				invitation: Boolean(invitationId),
 				method: provider,

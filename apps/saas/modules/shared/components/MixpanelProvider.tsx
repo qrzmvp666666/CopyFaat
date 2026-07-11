@@ -1,29 +1,27 @@
 "use client";
 
 import { useSession } from "@auth/hooks/use-session";
-import { useCookieConsent } from "@shared/hooks/cookie-consent";
 import {
 	ANALYTICS_EVENTS,
 	consumePendingSignupMethod,
-	disableAnalytics,
 	identifyAnalyticsUser,
+	identifyNewAnalyticsUser,
 	initializeAnalytics,
 	isAnalyticsEnabled,
-	resetAnalyticsUser,
 	trackAnalyticsEvent,
 } from "@shared/lib/analytics";
-import { useEffect, type PropsWithChildren } from "react";
+import { orpc } from "@shared/lib/orpc-query-utils";
+import { useMutation } from "@tanstack/react-query";
+import { useEffect, useRef, type PropsWithChildren } from "react";
 
 export function MixpanelProvider({ children }: PropsWithChildren) {
 	const { loaded, user } = useSession();
-	const { userHasConsented } = useCookieConsent();
+	const synchronizedUserIdRef = useRef<string | null>(null);
+	const { mutate: syncMembershipProfile } = useMutation(
+		orpc.analytics.syncMembershipProfile.mutationOptions(),
+	);
 
 	useEffect(() => {
-		if (!userHasConsented) {
-			disableAnalytics();
-			return;
-		}
-
 		initializeAnalytics();
 
 		if (!loaded || !isAnalyticsEnabled()) {
@@ -31,19 +29,36 @@ export function MixpanelProvider({ children }: PropsWithChildren) {
 		}
 
 		if (user) {
-			identifyAnalyticsUser(user);
-
 			const pendingSignupMethod = consumePendingSignupMethod();
 			if (pendingSignupMethod && user.onboardingComplete === false) {
+				identifyNewAnalyticsUser(user);
 				trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, {
 					method: pendingSignupMethod,
 				});
+				return;
 			}
+
+			identifyAnalyticsUser(user);
+		}
+	}, [loaded, user]);
+
+	useEffect(() => {
+		if (!loaded) {
 			return;
 		}
 
-		resetAnalyticsUser();
-	}, [loaded, user, userHasConsented]);
+		if (!user) {
+			synchronizedUserIdRef.current = null;
+			return;
+		}
+
+		if (synchronizedUserIdRef.current === user.id) {
+			return;
+		}
+
+		synchronizedUserIdRef.current = user.id;
+		syncMembershipProfile({});
+	}, [loaded, syncMembershipProfile, user]);
 
 	return children;
 }

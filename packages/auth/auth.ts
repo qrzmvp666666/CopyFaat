@@ -13,6 +13,10 @@ import { logger } from "@repo/logs";
 import { sendEmail } from "@repo/mail";
 import { createWelcomeNotification } from "@repo/notifications";
 import { cancelSubscription } from "@repo/payments";
+import {
+	recordMembershipAnalyticsEvent,
+	MEMBERSHIP_ANALYTICS_EVENTS,
+} from "@repo/payments/lib/mixpanel";
 import { getBaseUrl } from "@repo/utils";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -83,15 +87,31 @@ export const auth = betterAuth({
 							userId: createdUser.id,
 						});
 					}
+					let signupTrialGrantId: string | null = null;
 					try {
-						await grantSignupTrialEntitlement({
+						const signupTrialGrant = await grantSignupTrialEntitlement({
 							userId: createdUser.id,
 						});
+						signupTrialGrantId = signupTrialGrant.id;
 					} catch (error) {
 						logger.error(error, {
 							ctx: "grantSignupTrialEntitlement",
 							userId: createdUser.id,
 						});
+					}
+					if (signupTrialGrantId) {
+						try {
+							await recordMembershipAnalyticsEvent(
+								createdUser.id,
+								MEMBERSHIP_ANALYTICS_EVENTS.TRIAL_STARTED,
+								{ insertId: `signup-trial:${signupTrialGrantId}` },
+							);
+						} catch (error) {
+							logger.error(error, {
+								ctx: "recordSignupTrialAnalytics",
+								userId: createdUser.id,
+							});
+						}
 					}
 				},
 			},

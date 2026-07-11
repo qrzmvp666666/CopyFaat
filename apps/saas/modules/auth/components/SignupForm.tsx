@@ -20,11 +20,13 @@ import {
 import { Input } from "@repo/ui/components/input";
 import { passwordSchema } from "@repo/utils";
 import { PasswordInput } from "@shared/components/PasswordInput";
-import { useCookieConsent } from "@shared/hooks/cookie-consent";
 import {
 	ANALYTICS_EVENTS,
+	identifyNewAnalyticsUser,
 	initializeAnalytics,
 	isAnalyticsEnabled,
+	rememberPendingSignupMethod,
+	resetAnalyticsUser,
 	trackAnalyticsEvent,
 } from "@shared/lib/analytics";
 import { AlertTriangleIcon, ArrowRightIcon, MailboxIcon } from "lucide-react";
@@ -50,7 +52,6 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 	const router = useRouter();
 	const { user, loaded: sessionLoaded } = useSession();
 	const { getAuthErrorMessage } = useAuthErrorMessages();
-	const { userHasConsented } = useCookieConsent();
 	const searchParams = useSearchParams();
 
 	const invitationId = searchParams.get("invitationId");
@@ -80,7 +81,7 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 	}, [user, sessionLoaded]); // oxlint-disable-line eslint-plugin-react-hooks/exhaustive-deps
 
 	useEffect(() => {
-		if (!userHasConsented || hasTrackedFormView.current) {
+		if (!sessionLoaded || user || hasTrackedFormView.current) {
 			return;
 		}
 
@@ -89,11 +90,12 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 			return;
 		}
 
+		resetAnalyticsUser();
 		hasTrackedFormView.current = true;
 		trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_FORM_VIEWED, {
 			invitation: Boolean(invitationId),
 		});
-	}, [invitationId, userHasConsented]);
+	}, [invitationId, sessionLoaded, user]);
 
 	const onSubmit = form.handleSubmit(async ({ email, password, name }) => {
 		const method = authConfig.enablePasswordLogin ? "password" : "magic_link";
@@ -104,27 +106,35 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 		});
 
 		try {
-			const { error } = await (authConfig.enablePasswordLogin
-				? await authClient.signUp.email({
-						email,
-						password,
-						name,
-						callbackURL: redirectPath,
-					})
-				: authClient.signIn.magicLink({
-						email,
-						name,
-						callbackURL: redirectPath,
-					}));
+			if (authConfig.enablePasswordLogin) {
+				const { data, error } = await authClient.signUp.email({
+					email,
+					password,
+					name,
+					callbackURL: redirectPath,
+				});
 
-			if (error) {
-				throw error;
+				if (error) {
+					throw error;
+				}
+
+				identifyNewAnalyticsUser(data.user);
+				trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, {
+					invitation: Boolean(invitationId),
+					method,
+				});
+			} else {
+				rememberPendingSignupMethod(method);
+				const { error } = await authClient.signIn.magicLink({
+					email,
+					name,
+					callbackURL: redirectPath,
+				});
+
+				if (error) {
+					throw error;
+				}
 			}
-
-			trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, {
-				invitation: Boolean(invitationId),
-				method,
-			});
 
 			if (invitationOnlyMode) {
 				const { error } = await authClient.organization.acceptInvitation({

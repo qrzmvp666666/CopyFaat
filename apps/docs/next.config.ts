@@ -18,7 +18,7 @@ const config: NextConfig = {
 
 export default withSentryConfig(withMDX(config), {
 	org: "qrz-mvp",
-	project: "signalfast-docs",
+	project: "signalfast-saas",
 	silent: !process.env.CI,
 	webpack: {
 		treeshake: {

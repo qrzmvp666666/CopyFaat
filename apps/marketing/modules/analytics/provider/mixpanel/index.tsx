@@ -5,10 +5,16 @@ import mixpanel from "mixpanel-browser";
 import { useEffect } from "react";
 
 const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN as string;
+const mixpanelApiHost = process.env.NEXT_PUBLIC_MIXPANEL_API_HOST;
 
 export function AnalyticsScript() {
 	useEffect(() => {
+		if (!mixpanelToken) {
+			return;
+		}
+
 		mixpanel.init(mixpanelToken, {
+			api_host: mixpanelApiHost ?? "https://api-eu.mixpanel.com",
 			debug: true,
 			track_pageview: true,
 			persistence: "localStorage",

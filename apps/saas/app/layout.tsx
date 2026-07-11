@@ -26,13 +26,13 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: PropsWithChildren) {
 	const locale = await getLocale();
 	const messages = await getMessages();
-	const consent = (await cookies()).get("analytics-consent")?.value;
+	const analyticsNotice = (await cookies()).get("analytics-notice")?.value;
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
 				<NuqsAdapter>
-					<ConsentProvider initialConsent={consent}>
+					<ConsentProvider initialNotice={analyticsNotice}>
 						<NextIntlClientProvider messages={messages}>
 							<ThemeProvider
 								attribute="class"

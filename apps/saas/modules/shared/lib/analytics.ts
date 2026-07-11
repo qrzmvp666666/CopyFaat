@@ -11,7 +11,7 @@ interface AnalyticsUser {
 	email: string;
 	id: string;
 	name?: string | null;
-	onboardingComplete?: boolean;
+	onboardingComplete?: boolean | null;
 }
 
 export type AnalyticsSignupMethod = "github" | "google" | "magic_link" | "password";
@@ -35,7 +35,7 @@ export function isAnalyticsEnabled() {
 }
 
 export function initializeAnalytics() {
-	if (!MIXPANEL_TOKEN) {
+	if (!MIXPANEL_TOKEN || isAnalyticsInitialized) {
 		return;
 	}
 
@@ -44,10 +44,13 @@ export function initializeAnalytics() {
 		persistence: "localStorage",
 		track_pageview: true,
 	});
+	mixpanel.clear_opt_in_out_tracking();
 	isAnalyticsInitialized = true;
 }
 
 export function identifyAnalyticsUser(user: AnalyticsUser) {
+	initializeAnalytics();
+
 	if (!isAnalyticsEnabled()) {
 		return;
 	}
@@ -59,20 +62,35 @@ export function identifyAnalyticsUser(user: AnalyticsUser) {
 	});
 }
 
-export function resetAnalyticsUser() {
+export function identifyNewAnalyticsUser(user: AnalyticsUser) {
+	initializeAnalytics();
+
 	if (!isAnalyticsEnabled()) {
 		return;
 	}
 
-	mixpanel.reset();
+	const anonymousDistinctId = mixpanel.get_distinct_id();
+	if (anonymousDistinctId && anonymousDistinctId !== user.id) {
+		mixpanel.track(
+			"$create_alias",
+			{
+				alias: user.id,
+				distinct_id: anonymousDistinctId,
+			},
+			{ send_immediately: true },
+		);
+	}
+
+	identifyAnalyticsUser(user);
 }
 
-export function disableAnalytics() {
+export function resetAnalyticsUser() {
+	initializeAnalytics();
+
 	if (!isAnalyticsEnabled()) {
 		return;
 	}
 
-	mixpanel.opt_out_tracking();
 	mixpanel.reset();
 }
 
@@ -80,6 +98,8 @@ export function trackAnalyticsEvent(
 	event: (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS],
 	properties?: AnalyticsEventProperties,
 ) {
+	initializeAnalytics();
+
 	if (!isAnalyticsEnabled()) {
 		return;
 	}
@@ -88,7 +108,7 @@ export function trackAnalyticsEvent(
 }
 
 export function rememberPendingSignupMethod(method: AnalyticsSignupMethod) {
-	if (!isAnalyticsEnabled()) {
+	if (typeof window === "undefined") {
 		return;
 	}
 
@@ -96,6 +116,10 @@ export function rememberPendingSignupMethod(method: AnalyticsSignupMethod) {
 }
 
 export function consumePendingSignupMethod(): AnalyticsSignupMethod | null {
+	if (typeof window === "undefined") {
+		return null;
+	}
+
 	const method = window.sessionStorage.getItem(PENDING_SIGNUP_METHOD_KEY);
 	window.sessionStorage.removeItem(PENDING_SIGNUP_METHOD_KEY);
 

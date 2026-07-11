@@ -3,50 +3,34 @@
 import Cookies from "js-cookie";
 import { createContext, useState } from "react";
 
-type ConsentStatus = "accepted" | "declined" | "pending";
+type ConsentStatus = "acknowledged" | "pending";
 
 export const ConsentContext = createContext<{
 	consentStatus: ConsentStatus;
-	userHasConsented: boolean;
-	allowCookies: () => void;
-	declineCookies: () => void;
+	acknowledgeCookies: () => void;
 }>({
 	consentStatus: "pending",
-	userHasConsented: false,
-	allowCookies: () => {},
-	declineCookies: () => {},
+	acknowledgeCookies: () => {},
 });
 
 export function ConsentProvider({
 	children,
-	initialConsent,
+	initialNotice,
 }: {
 	children: React.ReactNode;
-	initialConsent?: string;
+	initialNotice?: string;
 }) {
 	const [consentStatus, setConsentStatus] = useState<ConsentStatus>(
-		initialConsent === "true"
-			? "accepted"
-			: initialConsent === "false"
-				? "declined"
-				: "pending",
+		initialNotice === "true" ? "acknowledged" : "pending",
 	);
-	const userHasConsented = consentStatus === "accepted";
 
-	const allowCookies = () => {
-		Cookies.set("analytics-consent", "true", { expires: 180, sameSite: "lax" });
-		setConsentStatus("accepted");
-	};
-
-	const declineCookies = () => {
-		Cookies.set("analytics-consent", "false", { expires: 180, sameSite: "lax" });
-		setConsentStatus("declined");
+	const acknowledgeCookies = () => {
+		Cookies.set("analytics-notice", "true", { expires: 180, sameSite: "lax" });
+		setConsentStatus("acknowledged");
 	};
 
 	return (
-		<ConsentContext.Provider
-			value={{ consentStatus, userHasConsented, allowCookies, declineCookies }}
-		>
+		<ConsentContext.Provider value={{ consentStatus, acknowledgeCookies }}>
 			{children}
 		</ConsentContext.Provider>
 	);

@@ -42,7 +42,7 @@ export default async function MarketingLayout({
 	const messages = await getMessages();
 
 	const cookieStore = await cookies();
-	const consentCookie = cookieStore.get("analytics-consent");
+	const analyticsNotice = cookieStore.get("analytics-notice");
 
 	return (
 		<html
@@ -51,7 +51,7 @@ export default async function MarketingLayout({
 			className={cn(sansFont.variable, config.defaultTheme)}
 		>
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
-				<ConsentProvider initialConsent={consentCookie?.value}>
+				<ConsentProvider initialNotice={analyticsNotice?.value}>
 					<NextIntlClientProvider locale={locale} messages={messages}>
 						<ClientProviders>
 							<ThemeProvider

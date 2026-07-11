@@ -11,7 +11,7 @@ interface ConsentBannerProps {
 }
 
 export function ConsentBanner({ privacyPolicyUrl = "/legal/privacy-policy" }: ConsentBannerProps) {
-	const { consentStatus, allowCookies, declineCookies } = useCookieConsent();
+	const { consentStatus, acknowledgeCookies } = useCookieConsent();
 	const [mounted, setMounted] = useState(false);
 	useEffect(() => {
 		setMounted(true);
@@ -31,24 +31,16 @@ export function ConsentBanner({ privacyPolicyUrl = "/legal/privacy-policy" }: Co
 				<CookieIcon className="size-6 text-5xl mt-1 block shrink-0 text-primary/60" />
 				<div>
 					<p className="text-sm leading-normal">
-						We use essential cookies and, with your permission, Mixpanel analytics to
-						understand product usage. Analytics may process device, usage, and logged-in
-						account information. Read our{" "}
+						我们使用必要 Cookie 和 Mixpanel
+						产品分析来了解产品使用情况。分析数据可能包含设备、使用行为以及已登录账户信息。详情请查看
 						<Link className="underline" href={privacyPolicyUrl}>
-							privacy policy
+							隐私政策
 						</Link>
-						.
+						。
 					</p>
-					<div className="mt-4 gap-2 flex">
-						<Button
-							variant="secondary"
-							className="flex-1"
-							onClick={() => declineCookies()}
-						>
-							Decline
-						</Button>
-						<Button className="flex-1" onClick={() => allowCookies()}>
-							Allow
+					<div className="mt-4 flex justify-end">
+						<Button className="flex-1" onClick={() => acknowledgeCookies()}>
+							知道了
 						</Button>
 					</div>
 				</div>
