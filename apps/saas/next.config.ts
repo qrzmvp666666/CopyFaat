@@ -1,5 +1,6 @@
 // @ts-expect-error - PrismaPlugin is not typed
 import { PrismaPlugin } from "@prisma/nextjs-monorepo-workaround-plugin";
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 import nextIntlPlugin from "next-intl/plugin";
 
@@ -20,7 +21,6 @@ const nextConfig: NextConfig = {
 		"@aws-sdk/s3-request-presigner",
 		"@prisma/adapter-pg",
 		"@prisma/client",
-		"pg",
 		"prettier",
 	],
 	allowedDevOrigins: [
@@ -80,4 +80,13 @@ const nextConfig: NextConfig = {
 	},
 };
 
-export default withNextIntl(nextConfig);
+export default withSentryConfig(withNextIntl(nextConfig), {
+	org: "qrz-mvp",
+	project: "signalfast-saas",
+	silent: !process.env.CI,
+	webpack: {
+		treeshake: {
+			removeDebugLogging: true,
+		},
+	},
+});

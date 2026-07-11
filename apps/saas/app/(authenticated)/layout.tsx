@@ -7,6 +7,7 @@ import { listPurchases } from "@payments/lib/server";
 import { config as authConfig } from "@repo/auth/config";
 import { config as paymentsConfig } from "@repo/payments/config";
 import { ConfirmationAlertProvider } from "@shared/components/ConfirmationAlertProvider";
+import { MixpanelProvider } from "@shared/components/MixpanelProvider";
 import { orpc } from "@shared/lib/orpc-query-utils";
 import { getServerQueryClient } from "@shared/lib/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
@@ -49,9 +50,11 @@ export default async function AuthenticatedLayout({ children }: PropsWithChildre
 	return (
 		<HydrationBoundary state={dehydrate(queryClient)}>
 			<SessionProvider>
-				<ActiveOrganizationProvider>
-					<ConfirmationAlertProvider>{children}</ConfirmationAlertProvider>
-				</ActiveOrganizationProvider>
+				<MixpanelProvider>
+					<ActiveOrganizationProvider>
+						<ConfirmationAlertProvider>{children}</ConfirmationAlertProvider>
+					</ActiveOrganizationProvider>
+				</MixpanelProvider>
 			</SessionProvider>
 		</HydrationBoundary>
 	);

@@ -20,11 +20,18 @@ import {
 import { Input } from "@repo/ui/components/input";
 import { passwordSchema } from "@repo/utils";
 import { PasswordInput } from "@shared/components/PasswordInput";
+import { useCookieConsent } from "@shared/hooks/cookie-consent";
+import {
+	ANALYTICS_EVENTS,
+	initializeAnalytics,
+	isAnalyticsEnabled,
+	trackAnalyticsEvent,
+} from "@shared/lib/analytics";
 import { AlertTriangleIcon, ArrowRightIcon, MailboxIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { withQuery } from "ufo";
 import { z } from "zod";
@@ -43,6 +50,7 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 	const router = useRouter();
 	const { user, loaded: sessionLoaded } = useSession();
 	const { getAuthErrorMessage } = useAuthErrorMessages();
+	const { userHasConsented } = useCookieConsent();
 	const searchParams = useSearchParams();
 
 	const invitationId = searchParams.get("invitationId");
@@ -59,6 +67,7 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 	});
 
 	const invitationOnlyMode = !authConfig.enableSignup && invitationId;
+	const hasTrackedFormView = useRef(false);
 
 	const redirectPath = invitationId
 		? `/organization-invitation/${invitationId}`
@@ -70,7 +79,30 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 		}
 	}, [user, sessionLoaded]); // oxlint-disable-line eslint-plugin-react-hooks/exhaustive-deps
 
+	useEffect(() => {
+		if (!userHasConsented || hasTrackedFormView.current) {
+			return;
+		}
+
+		initializeAnalytics();
+		if (!isAnalyticsEnabled()) {
+			return;
+		}
+
+		hasTrackedFormView.current = true;
+		trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_FORM_VIEWED, {
+			invitation: Boolean(invitationId),
+		});
+	}, [invitationId, userHasConsented]);
+
 	const onSubmit = form.handleSubmit(async ({ email, password, name }) => {
+		const method = authConfig.enablePasswordLogin ? "password" : "magic_link";
+
+		trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_SUBMITTED, {
+			invitation: Boolean(invitationId),
+			method,
+		});
+
 		try {
 			const { error } = await (authConfig.enablePasswordLogin
 				? await authClient.signUp.email({
@@ -88,6 +120,11 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 			if (error) {
 				throw error;
 			}
+
+			trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, {
+				invitation: Boolean(invitationId),
+				method,
+			});
 
 			if (invitationOnlyMode) {
 				const { error } = await authClient.organization.acceptInvitation({
@@ -205,6 +242,7 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 							<div className="gap-2 sm:grid-cols-2 grid grid-cols-1 items-stretch">
 								{Object.keys(oAuthProviders).map((providerId) => (
 									<SocialSigninButton
+										flow="signup"
 										key={providerId}
 										provider={providerId as OAuthProvider}
 									/>

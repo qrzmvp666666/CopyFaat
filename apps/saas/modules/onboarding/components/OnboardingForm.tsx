@@ -2,6 +2,7 @@
 import { authClient } from "@repo/auth/client";
 import { Progress } from "@repo/ui/components/progress";
 import { useRouter } from "@shared/hooks/router";
+import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@shared/lib/analytics";
 import { clearCache } from "@shared/lib/cache";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -32,6 +33,8 @@ export function OnboardingForm() {
 		await authClient.updateUser({
 			onboardingComplete: true,
 		});
+
+		trackAnalyticsEvent(ANALYTICS_EVENTS.ONBOARDING_COMPLETED);
 
 		await clearCache();
 		router.replace(redirectTo ?? "/");

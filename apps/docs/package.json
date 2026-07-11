@@ -15,6 +15,7 @@
 	"dependencies": {
 		"@repo/tailwind-config": "workspace:*",
 		"@repo/ui": "workspace:*",
+		"@sentry/nextjs": "^10.65.0",
 		"fumadocs-core": "16.7.7",
 		"fumadocs-mdx": "14.2.11",
 		"fumadocs-ui": "16.7.7",

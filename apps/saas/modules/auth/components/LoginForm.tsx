@@ -254,6 +254,7 @@ export function LoginForm() {
 									authConfig.enableSocialLogin &&
 									Object.keys(oAuthProviders).map((providerId) => (
 										<SocialSigninButton
+											flow="login"
 											key={providerId}
 											provider={providerId as OAuthProvider}
 										/>

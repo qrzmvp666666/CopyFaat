@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs";
 import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
 
@@ -15,4 +16,13 @@ const config: NextConfig = {
 	},
 };
 
-export default withMDX(config);
+export default withSentryConfig(withMDX(config), {
+	org: "qrz-mvp",
+	project: "signalfast-docs",
+	silent: !process.env.CI,
+	webpack: {
+		treeshake: {
+			removeDebugLogging: true,
+		},
+	},
+});

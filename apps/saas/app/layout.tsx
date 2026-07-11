@@ -2,10 +2,13 @@ import { config } from "@config";
 import { cn, Toaster } from "@repo/ui";
 import { ApiClientProvider } from "@shared/components/ApiClientProvider";
 import { ClientProviders } from "@shared/components/ClientProviders";
+import { ConsentBanner } from "@shared/components/ConsentBanner";
+import { ConsentProvider } from "@shared/components/ConsentProvider";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
+import { cookies } from "next/headers";
 
 import "./globals.css";
 import "cropperjs/dist/cropper.css";
@@ -23,28 +26,39 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: PropsWithChildren) {
 	const locale = await getLocale();
 	const messages = await getMessages();
+	const consent = (await cookies()).get("analytics-consent")?.value;
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
 				<NuqsAdapter>
-					<NextIntlClientProvider messages={messages}>
-						<ThemeProvider
-							attribute="class"
-							disableTransitionOnChange
-							enableSystem
-							defaultTheme={config.defaultTheme}
-							themes={Array.from(config.enabledThemes)}
-						>
-							<ApiClientProvider>
-								<ClientProviders>
-									{children}
+					<ConsentProvider initialConsent={consent}>
+						<NextIntlClientProvider messages={messages}>
+							<ThemeProvider
+								attribute="class"
+								disableTransitionOnChange
+								enableSystem
+								defaultTheme={config.defaultTheme}
+								themes={Array.from(config.enabledThemes)}
+							>
+								<ApiClientProvider>
+									<ClientProviders>
+										{children}
 
-									<Toaster position="top-right" />
-								</ClientProviders>
-							</ApiClientProvider>
-						</ThemeProvider>
-					</NextIntlClientProvider>
+										<Toaster position="top-right" />
+
+										<ConsentBanner
+											privacyPolicyUrl={
+												config.marketingUrl
+													? `${config.marketingUrl}/legal/privacy-policy`
+													: undefined
+											}
+										/>
+									</ClientProviders>
+								</ApiClientProvider>
+							</ThemeProvider>
+						</NextIntlClientProvider>
+					</ConsentProvider>
 				</NuqsAdapter>
 			</body>
 		</html>
