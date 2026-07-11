@@ -503,6 +503,34 @@ function createInstrumentFromTradingSymbol(symbol: StoredTradingSymbol): Instrum
 	};
 }
 
+function isBinanceTradingSymbol(symbol: StoredTradingSymbol) {
+	return symbol.exchange.trim().toLowerCase() === "binance";
+}
+
+async function canDisplaySymbolChart(symbol: string, signal?: AbortSignal) {
+	try {
+		const params = new URLSearchParams({
+			interval: "1h",
+			limit: String(MIN_CHART_CANDLES),
+			symbol,
+		});
+		const response = await fetch(`/api/signals/klines?${params.toString()}`, {
+			cache: "no-store",
+			signal,
+		});
+
+		if (!response.ok) {
+			return false;
+		}
+
+		const data = (await response.json()) as SignalKlinesResponse;
+
+		return data.klines.length >= MIN_CHART_CANDLES;
+	} catch {
+		return false;
+	}
+}
+
 function createSourceFilterFromSignal(signal: StoredSignal): Source {
 	const name = signal.source.name;
 	const id = signal.source.id ?? normalizeSourceKey(name);
@@ -1063,26 +1091,44 @@ export function SignalsWorkspace() {
 		: SIGNALS_GUIDE_STORAGE_KEY_PREFIX;
 	const signalPageRequestIdRef = useRef(0);
 	const [signalPageRefreshKey, setSignalPageRefreshKey] = useState(0);
+	const [supportedSymbols, setSupportedSymbols] = useState<Set<string> | null>(null);
+	const symbolAvailabilityRef = useRef(new Map<string, boolean>());
+
+	const visibleWebhookSignals = useMemo(() => {
+		if (!supportedSymbols) {
+			return [];
+		}
+
+		return webhookSignals.filter((signal) => supportedSymbols.has(signal.symbol));
+	}, [supportedSymbols, webhookSignals]);
+	const visibleSignalPageSignals = useMemo(() => {
+		if (!supportedSymbols) {
+			return [];
+		}
+
+		return signalPageSignals.filter((signal) => supportedSymbols.has(signal.symbol));
+	}, [signalPageSignals, supportedSymbols]);
 
 	const signals = useMemo(
-		() => webhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
-		[locale, webhookSignals],
+		() => visibleWebhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
+		[locale, visibleWebhookSignals],
 	);
 	const signalPageTradeSignals = useMemo(
-		() => signalPageSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
-		[locale, signalPageSignals],
+		() =>
+			visibleSignalPageSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
+		[locale, visibleSignalPageSignals],
 	);
 	const baseInstruments = useMemo(() => {
 		const symbols = new Map<string, StoredTradingSymbol>();
 
-		for (const signal of webhookSignals) {
+		for (const signal of visibleWebhookSignals) {
 			symbols.set(signal.tradingSymbol.symbol, signal.tradingSymbol);
 		}
 
 		return Array.from(symbols.values())
 			.map(createInstrumentFromTradingSymbol)
 			.sort(sortInstrumentsByPriority);
-	}, [webhookSignals]);
+	}, [visibleWebhookSignals]);
 	const instruments = useMemo(
 		() =>
 			baseInstruments
@@ -1100,7 +1146,7 @@ export function SignalsWorkspace() {
 	const sourceFilters = useMemo(() => {
 		const sources = new Map<string, Source>();
 
-		for (const signal of webhookSignals) {
+		for (const signal of visibleWebhookSignals) {
 			const source = createSourceFilterFromSignal(signal);
 			const existingSource = sources.get(source.id);
 			sources.set(source.id, {
@@ -1111,7 +1157,7 @@ export function SignalsWorkspace() {
 		}
 
 		return Array.from(sources.values()).sort((a, b) => a.name.localeCompare(b.name));
-	}, [webhookSignals]);
+	}, [visibleWebhookSignals]);
 	const signalPageFilters = useMemo<SignalPageFilters>(
 		() => ({
 			direction: selectedDirection,
@@ -1131,6 +1177,63 @@ export function SignalsWorkspace() {
 		],
 	);
 	const signalPageFiltersRef = useRef(signalPageFilters);
+
+	useEffect(() => {
+		if (isSignalsLoading) {
+			return;
+		}
+
+		const controller = new AbortController();
+		const tradingSymbols = new Map<string, StoredTradingSymbol>();
+
+		for (const signal of webhookSignals) {
+			tradingSymbols.set(signal.symbol, signal.tradingSymbol);
+		}
+
+		for (const symbol of tradingSymbols.values()) {
+			if (!isBinanceTradingSymbol(symbol)) {
+				symbolAvailabilityRef.current.set(symbol.symbol, false);
+			}
+		}
+
+		const symbolsToCheck = Array.from(tradingSymbols.values()).filter(
+			(symbol) =>
+				isBinanceTradingSymbol(symbol) && !symbolAvailabilityRef.current.has(symbol.symbol),
+		);
+
+		async function loadSymbolAvailability() {
+			await Promise.all(
+				symbolsToCheck.map(async (symbol) => {
+					const canDisplay = await canDisplaySymbolChart(
+						symbol.symbol,
+						controller.signal,
+					);
+
+					if (!controller.signal.aborted) {
+						symbolAvailabilityRef.current.set(symbol.symbol, canDisplay);
+					}
+				}),
+			);
+
+			if (controller.signal.aborted) {
+				return;
+			}
+
+			setSupportedSymbols(
+				new Set(
+					Array.from(tradingSymbols.keys()).filter((symbol) =>
+						symbolAvailabilityRef.current.get(symbol),
+					),
+				),
+			);
+		}
+
+		void loadSymbolAvailability();
+
+		return () => {
+			controller.abort();
+		};
+	}, [isSignalsLoading, webhookSignals]);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -1548,9 +1651,11 @@ export function SignalsWorkspace() {
 			minimumFractionDigits: fractionDigits,
 		}).format(value);
 	}
-	const isTickerLoading = isSignalsLoading && instruments.length === 0;
+	const isTickerLoading =
+		(isSignalsLoading || supportedSymbols === null) && instruments.length === 0;
 	const isChartLoading =
 		isSignalsLoading ||
+		supportedSymbols === null ||
 		(instruments.length > 0 && !selectedSymbol) ||
 		(!!selectedSymbol && (isKlinesLoading || !hasKlineResponseForSelection));
 	const canShowChart =
