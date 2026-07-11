@@ -45,7 +45,11 @@ describe("Mixpanel membership synchronization", () => {
 	});
 
 	it("sends only the approved profile fields to Mixpanel EU", async () => {
-		const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+		const fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			status: 200,
+			text: vi.fn().mockResolvedValue('{"status":1}'),
+		});
 		vi.stubGlobal("fetch", fetchMock);
 		const { syncMembershipAnalyticsProfile } = await import("@repo/payments/lib/mixpanel");
 
@@ -90,7 +94,11 @@ describe("Mixpanel membership synchronization", () => {
 	});
 
 	it("keeps backfilled membership events idempotent and historically timed", async () => {
-		const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200 });
+		const fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			status: 200,
+			text: vi.fn().mockResolvedValue('{"status":1}'),
+		});
 		vi.stubGlobal("fetch", fetchMock);
 		const { MEMBERSHIP_ANALYTICS_EVENTS, recordMembershipAnalyticsEvent } =
 			await import("@repo/payments/lib/mixpanel");
@@ -102,9 +110,8 @@ describe("Mixpanel membership synchronization", () => {
 
 		const trackCall = fetchMock.mock.calls.find(([url]) => String(url).includes("/track?"));
 		expect(trackCall).toBeDefined();
-		const payload = JSON.parse(
-			(trackCall?.[1].body as URLSearchParams).get("data") ?? "[]",
-		) as {
+		const [, trackOptions] = trackCall as [string, RequestInit];
+		const payload = JSON.parse((trackOptions.body as URLSearchParams).get("data") ?? "[]") as {
 			properties: Record<string, unknown>;
 		}[];
 
@@ -114,11 +121,11 @@ describe("Mixpanel membership synchronization", () => {
 				properties: {
 					$insert_id: "signup-trial:grant_1",
 					$time: 1783728000,
-					$token: "server-token",
 					billing_type: "entitlement",
 					distinct_id: "user_1",
 					membership_status: "trial",
 					plan_id: "pro",
+					token: "server-token",
 				},
 			},
 		]);

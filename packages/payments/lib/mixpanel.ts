@@ -157,7 +157,7 @@ async function sendMixpanelEvent(
 				plan_id: profile.plan_id,
 				...(options.insertId ? { $insert_id: options.insertId } : {}),
 				...(eventTimestamp ? { $time: eventTimestamp } : {}),
-				$token: config.token,
+				token: config.token,
 			},
 		},
 	]);
@@ -186,9 +186,12 @@ async function postToMixpanel(
 			method: "POST",
 		});
 
-		if (!response.ok) {
+		const responseBody = await response.text();
+
+		if (!response.ok || !isMixpanelSuccessResponse(responseBody)) {
 			logger.warn("Mixpanel membership analytics request failed", {
 				path,
+				responseBody,
 				status: response.status,
 			});
 		}
@@ -197,6 +200,19 @@ async function postToMixpanel(
 			error,
 			path,
 		});
+	}
+}
+
+function isMixpanelSuccessResponse(responseBody: string) {
+	if (!responseBody) {
+		return true;
+	}
+
+	try {
+		const payload = JSON.parse(responseBody) as number | { status?: number };
+		return typeof payload === "number" ? payload === 1 : payload.status === 1;
+	} catch {
+		return responseBody.trim() === "1";
 	}
 }
 

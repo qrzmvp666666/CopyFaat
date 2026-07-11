@@ -99,7 +99,7 @@ async function createCheckoutSession(
 		return await stripeClient.checkout.sessions.create(params);
 	} catch (error) {
 		if (params.customer && isMissingCustomerError(error)) {
-			const { customer, ...retryParams } = params;
+			const { customer: _customer, ...retryParams } = params;
 
 			return stripeClient.checkout.sessions.create({
 				...retryParams,
