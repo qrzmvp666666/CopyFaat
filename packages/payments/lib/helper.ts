@@ -9,6 +9,7 @@ import { getPlanIdByProviderPriceId, getPlanPriceByProviderPriceId } from "./pro
 type PurchaseWithoutTimestamps = Omit<z.infer<typeof PurchaseSchema>, "createdAt" | "updatedAt">;
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
+const SIGNALS_ENTITLEMENT_SOURCES = new Set(["redeem_code", "signup_trial"]);
 
 export interface ResolvedPurchase extends PurchaseWithoutTimestamps {
 	planId?: PlanId | null;
@@ -125,6 +126,40 @@ function getActiveGrantFromEntitlements(entitlementGrants?: ResolvedEntitlementG
 		expiresAt: new Date(activeGrant.expiresAt),
 		source: activeGrant.source,
 	};
+}
+
+export function hasPaidSignalsAccess(
+	purchases: ResolvedPurchase[],
+	entitlementGrants: ResolvedEntitlementGrant[] = [],
+	now = Date.now(),
+) {
+	const hasEligiblePurchase = purchases.some((purchase) => {
+		const resolvedPrice = resolvePurchasePlan(purchase);
+
+		if (!resolvedPrice || !(resolvedPrice.planId in config.plans)) {
+			return false;
+		}
+
+		return (
+			(purchase.type === "SUBSCRIPTION" &&
+				resolvedPrice.price.type === "subscription" &&
+				isActiveSubscriptionPurchase(purchase)) ||
+			(purchase.type === "ONE_TIME" &&
+				resolvedPrice.planId === "lifetime" &&
+				resolvedPrice.price.type === "one-time")
+		);
+	});
+
+	if (hasEligiblePurchase) {
+		return true;
+	}
+
+	return entitlementGrants.some(
+		(grant) =>
+			SIGNALS_ENTITLEMENT_SOURCES.has(grant.source) &&
+			new Date(grant.expiresAt).getTime() > now &&
+			grant.planId in config.plans,
+	);
 }
 
 export function createPurchasesHelper(

@@ -793,6 +793,11 @@
 			"search": "搜索市场",
 			"title": "市场"
 		},
+		"paywall": {
+			"action": "查看会员套餐",
+			"description": "开通会员后即可查看 KOL 信号和聚合 K 线。",
+			"title": "聚合 K 线为会员专享"
+		},
 		"signalsPanel": {
 			"closed": "已平仓",
 			"emptyDescription": "换一个 KOL、方向或状态筛选看看。",

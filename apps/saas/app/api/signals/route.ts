@@ -1,3 +1,4 @@
+import { getCurrentSignalsAccess, SIGNALS_ACCESS } from "@signals/lib/access";
 import { listStoredSignals } from "@signals/lib/signal-store";
 import type { SignalsListResponse } from "@signals/lib/signal-types";
 import { NextResponse } from "next/server";
@@ -24,6 +25,17 @@ const searchParamsSchema = z.object({
 });
 
 export async function GET(request: Request) {
+	const access = await getCurrentSignalsAccess();
+	if (access !== SIGNALS_ACCESS.allowed) {
+		return NextResponse.json(
+			{
+				error: "A paid membership is required to access signals.",
+				ok: false,
+			},
+			{ status: access === SIGNALS_ACCESS.unauthenticated ? 401 : 403 },
+		);
+	}
+
 	const searchParams = new URL(request.url).searchParams;
 	const sourceIds = searchParams
 		.getAll("sourceIds")

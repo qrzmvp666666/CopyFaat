@@ -793,6 +793,11 @@
 			"search": "Search markets",
 			"title": "Markets"
 		},
+		"paywall": {
+			"action": "View membership plans",
+			"description": "Upgrade to view KOL signals and aggregated K-line charts.",
+			"title": "Aggregated K-lines are a member feature"
+		},
 		"signalsPanel": {
 			"closed": "Closed",
 			"emptyDescription": "Try another KOL, direction, or status filter.",

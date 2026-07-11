@@ -1,9 +1,5 @@
 import { getOrganizationList, getSession } from "@auth/lib/server";
-import { listPurchases } from "@repo/api/modules/payments/procedures/list-purchases";
 import { config as authConfig } from "@repo/auth/config";
-import { config as paymentsConfig } from "@repo/payments/config";
-import { createPurchasesHelper } from "@repo/payments/lib/helper";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { PropsWithChildren } from "react";
 
@@ -27,27 +23,6 @@ export default async function MainLayout({ children }: PropsWithChildren) {
 
 		if (!organization) {
 			redirect("/new-organization");
-		}
-	}
-
-	if (paymentsConfig.requireActiveSubscription) {
-		const organizationId = authConfig.organizations.enable
-			? session?.session.activeOrganizationId || organizations?.at(0)?.id
-			: undefined;
-
-		const purchasesResult = await listPurchases.callable({
-			context: { headers: await headers() },
-		})({
-			organizationId,
-		});
-
-		const { activePlan } = createPurchasesHelper(
-			purchasesResult.purchases,
-			purchasesResult.entitlementGrants,
-		);
-
-		if (!activePlan) {
-			redirect("/choose-plan");
 		}
 	}
 

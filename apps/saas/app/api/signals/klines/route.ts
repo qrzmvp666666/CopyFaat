@@ -1,3 +1,4 @@
+import { getCurrentSignalsAccess, SIGNALS_ACCESS } from "@signals/lib/access";
 import type { SignalKline, SignalKlinesResponse } from "@signals/lib/signal-types";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -61,6 +62,17 @@ function parseKline(value: unknown): SignalKline | null {
 }
 
 export async function GET(request: Request) {
+	const access = await getCurrentSignalsAccess();
+	if (access !== SIGNALS_ACCESS.allowed) {
+		return NextResponse.json(
+			{
+				error: "A paid membership is required to access signals.",
+				ok: false,
+			},
+			{ status: access === SIGNALS_ACCESS.unauthenticated ? 401 : 403 },
+		);
+	}
+
 	const parsed = searchParamsSchema.safeParse(
 		Object.fromEntries(new URL(request.url).searchParams),
 	);
