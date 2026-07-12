@@ -34,7 +34,6 @@
 			"@parcel/watcher",
 			"@prisma/client",
 			"@prisma/engines",
-			"@sentry/cli",
 			"@swc/core",
 			"esbuild",
 			"prisma",

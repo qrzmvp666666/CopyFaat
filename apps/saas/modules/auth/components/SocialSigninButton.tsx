@@ -3,11 +3,6 @@
 import { config } from "@config";
 import { authClient } from "@repo/auth/client";
 import { Button } from "@repo/ui/components/button";
-import {
-	ANALYTICS_EVENTS,
-	rememberPendingSignupMethod,
-	trackAnalyticsEvent,
-} from "@shared/lib/analytics";
 import { parseAsString, useQueryState } from "nuqs";
 
 import { oAuthProviders } from "../constants/oauth-providers";
@@ -15,11 +10,9 @@ import { oAuthProviders } from "../constants/oauth-providers";
 export function SocialSigninButton({
 	provider,
 	className,
-	flow,
 }: {
 	provider: keyof typeof oAuthProviders;
 	className?: string;
-	flow: "login" | "signup";
 }) {
 	const [invitationId] = useQueryState("invitationId", parseAsString);
 	const providerData = oAuthProviders[provider];
@@ -29,14 +22,6 @@ export function SocialSigninButton({
 		: config.redirectAfterSignIn;
 
 	const onSignin = async () => {
-		if (flow === "signup") {
-			trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_SUBMITTED, {
-				invitation: Boolean(invitationId),
-				method: provider,
-			});
-			rememberPendingSignupMethod(provider);
-		}
-
 		const callbackURL = new URL(redirectPath, window.location.origin);
 		await authClient.signIn.social({
 			provider,

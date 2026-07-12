@@ -10,7 +10,6 @@ import {
 	DropdownMenuTrigger,
 } from "@repo/ui/components/dropdown-menu";
 import { Skeleton } from "@repo/ui/components/skeleton";
-import { ANALYTICS_EVENTS, trackAnalyticsEvent } from "@shared/lib/analytics";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
 	ChartCandlestickIcon,
@@ -1094,18 +1093,6 @@ export function SignalsWorkspace() {
 	const [signalPageRefreshKey, setSignalPageRefreshKey] = useState(0);
 	const [supportedSymbols, setSupportedSymbols] = useState<Set<string> | null>(null);
 	const symbolAvailabilityRef = useRef(new Map<string, boolean>());
-	const hasTrackedSignalFeedView = useRef(false);
-
-	useEffect(() => {
-		if (isSignalsLoading || hasTrackedSignalFeedView.current) {
-			return;
-		}
-
-		hasTrackedSignalFeedView.current = true;
-		trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNAL_FEED_VIEWED, {
-			status: webhookSignals.length ? "loaded" : "empty",
-		});
-	}, [isSignalsLoading, webhookSignals.length]);
 
 	const visibleWebhookSignals = useMemo(() => {
 		if (!supportedSymbols) {
@@ -1837,10 +1824,7 @@ export function SignalsWorkspace() {
 	];
 
 	return (
-		<div
-			className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden min-h-full bg-[#141414] text-foreground"
-			data-mixpanel-replay-unmask
-		>
+		<div className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden min-h-full bg-[#141414] text-foreground">
 			<style>{SIGNALS_SKELETON_STYLES}</style>
 			<Dialog
 				open={welcomeDialogOpen}

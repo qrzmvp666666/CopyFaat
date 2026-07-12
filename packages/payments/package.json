@@ -10,11 +10,9 @@
 		},
 		"./config": "./config.ts",
 		"./types": "./types.ts",
-		"./lib/helper": "./lib/helper.ts",
-		"./lib/mixpanel": "./lib/mixpanel.ts"
+		"./lib/helper": "./lib/helper.ts"
 	},
 	"scripts": {
-		"backfill:mixpanel-memberships": "tsx ./scripts/backfill-mixpanel-memberships.ts",
 		"clean": "git clean -xdf .cache .turbo dist node_modules",
 		"type-check": "tsc --noEmit"
 	},

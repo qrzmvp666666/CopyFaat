@@ -1,4 +1,3 @@
-import { withSentryConfig } from "@sentry/nextjs";
 import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
 
@@ -6,11 +5,6 @@ const withMDX = createMDX();
 
 const config: NextConfig = {
 	reactStrictMode: true,
-	transpilePackages: [
-		"@opentelemetry/instrumentation",
-		"import-in-the-middle",
-		"require-in-the-middle",
-	],
 	async rewrites() {
 		return [
 			{
@@ -21,13 +15,4 @@ const config: NextConfig = {
 	},
 };
 
-export default withSentryConfig(withMDX(config), {
-	org: "qrz-mvp",
-	project: "signalfast",
-	silent: !process.env.CI,
-	webpack: {
-		treeshake: {
-			removeDebugLogging: true,
-		},
-	},
-});
+export default withMDX(config);

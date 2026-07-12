@@ -20,20 +20,11 @@ import {
 import { Input } from "@repo/ui/components/input";
 import { passwordSchema } from "@repo/utils";
 import { PasswordInput } from "@shared/components/PasswordInput";
-import {
-	ANALYTICS_EVENTS,
-	identifyNewAnalyticsUser,
-	initializeAnalytics,
-	isAnalyticsEnabled,
-	rememberPendingSignupMethod,
-	resetAnalyticsUser,
-	trackAnalyticsEvent,
-} from "@shared/lib/analytics";
 import { AlertTriangleIcon, ArrowRightIcon, MailboxIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { withQuery } from "ufo";
 import { z } from "zod";
@@ -68,7 +59,6 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 	});
 
 	const invitationOnlyMode = !authConfig.enableSignup && invitationId;
-	const hasTrackedFormView = useRef(false);
 
 	const redirectPath = invitationId
 		? `/organization-invitation/${invitationId}`
@@ -80,56 +70,23 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 		}
 	}, [user, sessionLoaded]); // oxlint-disable-line eslint-plugin-react-hooks/exhaustive-deps
 
-	useEffect(() => {
-		if (!sessionLoaded || user || hasTrackedFormView.current) {
-			return;
-		}
-
-		initializeAnalytics();
-		if (!isAnalyticsEnabled()) {
-			return;
-		}
-
-		resetAnalyticsUser();
-		hasTrackedFormView.current = true;
-		trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_FORM_VIEWED, {
-			invitation: Boolean(invitationId),
-		});
-	}, [invitationId, sessionLoaded, user]);
-
 	const onSubmit = form.handleSubmit(async ({ email, password, name }) => {
-		const method = authConfig.enablePasswordLogin ? "password" : "magic_link";
-
-		trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_SUBMITTED, {
-			invitation: Boolean(invitationId),
-			method,
-		});
-
 		try {
-			if (authConfig.enablePasswordLogin) {
-				const { data, error } = await authClient.signUp.email({
-					email,
-					password,
-					name,
-					callbackURL: redirectPath,
-				});
+			const { error } = await (authConfig.enablePasswordLogin
+				? await authClient.signUp.email({
+						email,
+						password,
+						name,
+						callbackURL: redirectPath,
+					})
+				: authClient.signIn.magicLink({
+						email,
+						name,
+						callbackURL: redirectPath,
+					}));
 
-				if (error) {
-					throw error;
-				}
-
-				identifyNewAnalyticsUser(data.user);
-			} else {
-				rememberPendingSignupMethod(method);
-				const { error } = await authClient.signIn.magicLink({
-					email,
-					name,
-					callbackURL: redirectPath,
-				});
-
-				if (error) {
-					throw error;
-				}
+			if (error) {
+				throw error;
 			}
 
 			if (invitationOnlyMode) {
@@ -248,7 +205,6 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 							<div className="gap-2 sm:grid-cols-2 grid grid-cols-1 items-stretch">
 								{Object.keys(oAuthProviders).map((providerId) => (
 									<SocialSigninButton
-										flow="signup"
 										key={providerId}
 										provider={providerId as OAuthProvider}
 									/>

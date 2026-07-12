@@ -3,7 +3,6 @@ import crypto from "node:crypto";
 import { createPurchase } from "@repo/database";
 import { logger } from "@repo/logs";
 
-import { recordMembershipAnalyticsEvent, MEMBERSHIP_ANALYTICS_EVENTS } from "../../lib/mixpanel";
 import { getPlanIdByProviderPriceId } from "../../lib/provider-price-ids";
 
 interface QiXiangConfig {
@@ -188,7 +187,7 @@ export async function qixiangWebhookHandler(req: Request): Promise<Response> {
 			return new Response("fail", { status: 400 });
 		}
 
-		const purchase = await createPurchase({
+		await createPurchase({
 			organizationId: organizationId ?? null,
 			userId: userId ?? null,
 			// Use the QiXiang trade number as the internal customer identifier.
@@ -197,14 +196,6 @@ export async function qixiangWebhookHandler(req: Request): Promise<Response> {
 			type: "ONE_TIME",
 			priceId,
 		});
-
-		if (purchase?.userId) {
-			await recordMembershipAnalyticsEvent(
-				purchase.userId,
-				MEMBERSHIP_ANALYTICS_EVENTS.PAID,
-				{ insertId: `qixiang:${outTradeNo}` },
-			);
-		}
 
 		logger.log("QiXiang purchase created", { outTradeNo, planId, userId, organizationId });
 

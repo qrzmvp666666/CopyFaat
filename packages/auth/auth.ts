@@ -13,10 +13,6 @@ import { logger } from "@repo/logs";
 import { sendEmail } from "@repo/mail";
 import { createWelcomeNotification } from "@repo/notifications";
 import { cancelSubscription } from "@repo/payments";
-import {
-	recordMembershipAnalyticsEvent,
-	MEMBERSHIP_ANALYTICS_EVENTS,
-} from "@repo/payments/lib/mixpanel";
 import { getBaseUrl } from "@repo/utils";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
@@ -87,41 +83,13 @@ export const auth = betterAuth({
 							userId: createdUser.id,
 						});
 					}
-					let signupTrialGrantId: string | null = null;
 					try {
-						const signupTrialGrant = await grantSignupTrialEntitlement({
+						await grantSignupTrialEntitlement({
 							userId: createdUser.id,
 						});
-						signupTrialGrantId = signupTrialGrant.id;
 					} catch (error) {
 						logger.error(error, {
 							ctx: "grantSignupTrialEntitlement",
-							userId: createdUser.id,
-						});
-					}
-					if (signupTrialGrantId) {
-						try {
-							await recordMembershipAnalyticsEvent(
-								createdUser.id,
-								MEMBERSHIP_ANALYTICS_EVENTS.TRIAL_STARTED,
-								{ insertId: `signup-trial:${signupTrialGrantId}` },
-							);
-						} catch (error) {
-							logger.error(error, {
-								ctx: "recordSignupTrialAnalytics",
-								userId: createdUser.id,
-							});
-						}
-					}
-					try {
-						await recordMembershipAnalyticsEvent(
-							createdUser.id,
-							MEMBERSHIP_ANALYTICS_EVENTS.SIGNUP_COMPLETED,
-							{ insertId: `signup:${createdUser.id}` },
-						);
-					} catch (error) {
-						logger.error(error, {
-							ctx: "recordSignupCompletedAnalytics",
 							userId: createdUser.id,
 						});
 					}
@@ -279,7 +247,6 @@ export const auth = betterAuth({
 		passkey(),
 		magicLink({
 			disableSignUp: false,
-			expiresIn: 30 * 60,
 			sendMagicLink: async ({ email, url }, ctx) => {
 				const request = ctx?.request as Request;
 

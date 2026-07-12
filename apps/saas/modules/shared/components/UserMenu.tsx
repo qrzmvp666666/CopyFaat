@@ -12,7 +12,6 @@ import {
 	DropdownMenuTrigger,
 } from "@repo/ui";
 import { UserAvatar } from "@shared/components/UserAvatar";
-import { resetAnalyticsUser } from "@shared/lib/analytics";
 import { BookIcon, HomeIcon, LogOutIcon, MoreVerticalIcon, SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -25,7 +24,6 @@ export function UserMenu({ showUserName }: { showUserName?: boolean }) {
 		await authClient.signOut({
 			fetchOptions: {
 				onSuccess: async () => {
-					resetAnalyticsUser();
 					window.location.href = new URL(
 						config.redirectAfterLogout,
 						window.location.origin,

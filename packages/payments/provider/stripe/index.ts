@@ -8,11 +8,6 @@ import { logger } from "@repo/logs";
 import Stripe from "stripe";
 
 import { setCustomerIdToEntity } from "../../lib/customer";
-import {
-	recordMembershipAnalyticsEvent,
-	MEMBERSHIP_ANALYTICS_EVENTS,
-	syncMembershipAnalyticsProfile,
-} from "../../lib/mixpanel";
 import { getPlanIdByProviderPriceId } from "../../lib/provider-price-ids";
 import type {
 	CancelSubscription,
@@ -99,7 +94,7 @@ async function createCheckoutSession(
 		return await stripeClient.checkout.sessions.create(params);
 	} catch (error) {
 		if (params.customer && isMissingCustomerError(error)) {
-			const { customer: _customer, ...retryParams } = params;
+			const { customer, ...retryParams } = params;
 
 			return stripeClient.checkout.sessions.create({
 				...retryParams,
@@ -208,21 +203,13 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					});
 				}
 
-				const purchase = await createPurchase({
+				await createPurchase({
 					organizationId: metadata?.organization_id || null,
 					userId: metadata?.user_id || null,
 					customerId: customer as string,
 					type: "ONE_TIME",
 					priceId,
 				});
-
-				if (purchase?.userId) {
-					await recordMembershipAnalyticsEvent(
-						purchase.userId,
-						MEMBERSHIP_ANALYTICS_EVENTS.PAID,
-						{ insertId: `stripe-checkout:${id}` },
-					);
-				}
 
 				await setCustomerIdToEntity(customer as string, {
 					organizationId: metadata?.organization_id,
@@ -243,7 +230,7 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					});
 				}
 
-				const purchase = await createPurchase({
+				await createPurchase({
 					subscriptionId: id,
 					organizationId: metadata?.organization_id || null,
 					userId: metadata?.user_id || null,
@@ -252,24 +239,6 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					priceId,
 					status: event.data.object.status,
 				});
-
-				if (purchase?.userId) {
-					if (purchase.status === "active") {
-						await recordMembershipAnalyticsEvent(
-							purchase.userId,
-							MEMBERSHIP_ANALYTICS_EVENTS.PAID,
-							{ insertId: `stripe-subscription:${id}:paid` },
-						);
-					} else if (purchase.status === "trialing") {
-						await recordMembershipAnalyticsEvent(
-							purchase.userId,
-							MEMBERSHIP_ANALYTICS_EVENTS.TRIAL_STARTED,
-							{ insertId: `stripe-subscription:${id}:trial` },
-						);
-					} else {
-						await syncMembershipAnalyticsProfile(purchase.userId);
-					}
-				}
 
 				await setCustomerIdToEntity(customer as string, {
 					organizationId: metadata?.organization_id,
@@ -285,37 +254,18 @@ export const webhookHandler: WebhookHandler = async (req) => {
 
 				if (existingPurchase) {
 					const priceId = event.data.object.items?.data[0].price?.id;
-					const previousStatus = existingPurchase.status;
 
 					await updatePurchase({
 						id: existingPurchase.id,
 						status: event.data.object.status,
 						...(priceId ? { priceId } : {}),
 					});
-
-					if (existingPurchase.userId) {
-						if (event.data.object.status === "active" && previousStatus !== "active") {
-							await recordMembershipAnalyticsEvent(
-								existingPurchase.userId,
-								MEMBERSHIP_ANALYTICS_EVENTS.PAID,
-								{ insertId: `stripe-subscription:${subscriptionId}:paid` },
-							);
-						} else {
-							await syncMembershipAnalyticsProfile(existingPurchase.userId);
-						}
-					}
 				}
 
 				break;
 			}
 			case "customer.subscription.deleted": {
-				const existingPurchase = await getPurchaseBySubscriptionId(event.data.object.id);
-
 				await deletePurchaseBySubscriptionId(event.data.object.id);
-
-				if (existingPurchase?.userId) {
-					await syncMembershipAnalyticsProfile(existingPurchase.userId);
-				}
 
 				break;
 			}
