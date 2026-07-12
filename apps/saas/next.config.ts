@@ -21,7 +21,10 @@ const nextConfig: NextConfig = {
 		"@aws-sdk/s3-request-presigner",
 		"@prisma/adapter-pg",
 		"@prisma/client",
+		"@opentelemetry/instrumentation",
+		"import-in-the-middle",
 		"prettier",
+		"require-in-the-middle",
 	],
 	allowedDevOrigins: [
 		...(allowedDevOrigin ? [allowedDevOrigin] : []),

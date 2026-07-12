@@ -3,7 +3,7 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"build": "dotenv -e ../../.env -- next build --webpack",
+		"build": "dotenv -e ../../.env -- next build",
 		"clean": "git clean -xdf .cache .turbo dist node_modules .next .source",
 		"dev": "dotenv -e ../../.env -- next dev --port 4102",
 		"start": "dotenv -e ../../.env -- next start",

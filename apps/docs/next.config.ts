@@ -6,6 +6,11 @@ const withMDX = createMDX();
 
 const config: NextConfig = {
 	reactStrictMode: true,
+	transpilePackages: [
+		"@opentelemetry/instrumentation",
+		"import-in-the-middle",
+		"require-in-the-middle",
+	],
 	async rewrites() {
 		return [
 			{

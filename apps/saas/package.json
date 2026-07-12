@@ -3,7 +3,7 @@
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {
-		"build": "dotenv -e ../../.env -- next build --webpack",
+		"build": "dotenv -e ../../.env -- next build",
 		"clean": "git clean -xdf .cache .turbo dist node_modules .next .content-collections",
 		"dev": "dotenv -e ../../.env -- next dev --webpack --hostname 0.0.0.0 --port 4100",
 		"e2e": "pnpm exec playwright test --ui",
