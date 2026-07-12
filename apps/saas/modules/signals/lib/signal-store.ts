@@ -317,9 +317,10 @@ export async function listStoredSignals(
 			}),
 		),
 	);
-	const dedupedSignals = dedupeStoredSignals(signals);
+	const pageSourceSignals = signals.slice(0, limit);
+	const dedupedSignals = dedupeStoredSignals(pageSourceSignals);
 	const pageSignals = dedupedSignals.slice(0, limit);
-	const lastSignal = pageSignals.at(-1);
+	const lastSourceSignal = pageSourceSignals.at(-1);
 
 	return {
 		counts: {
@@ -327,7 +328,9 @@ export async function listStoredSignals(
 			history: historyCount,
 		},
 		nextCursor:
-			signals.length > limit && lastSignal ? encodeSignalListCursor(lastSignal) : null,
+			signals.length > limit && lastSourceSignal
+				? encodeSignalListCursor(lastSourceSignal)
+				: null,
 		signals: pageSignals.map(signalModelToStoredSignal),
 	};
 }

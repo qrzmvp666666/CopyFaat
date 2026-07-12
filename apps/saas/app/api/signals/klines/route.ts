@@ -35,6 +35,14 @@ type BinanceKline = [
 	string,
 ];
 
+function isBinanceUnknownSymbolError(value: unknown) {
+	if (!value || typeof value !== "object") {
+		return false;
+	}
+
+	return (value as { code?: unknown }).code === -1121;
+}
+
 function parseKline(value: unknown): SignalKline | null {
 	if (!Array.isArray(value) || value.length < 5 || typeof value[0] !== "number") {
 		return null;
@@ -104,6 +112,18 @@ export async function GET(request: Request) {
 	});
 
 	if (!response.ok) {
+		const responseBody = await response.json().catch(() => null);
+
+		if (isBinanceUnknownSymbolError(responseBody)) {
+			return NextResponse.json(
+				{
+					error: "This symbol is unavailable on Binance.",
+					ok: false,
+				},
+				{ status: 404 },
+			);
+		}
+
 		return NextResponse.json(
 			{
 				error: "Failed to load Binance klines.",

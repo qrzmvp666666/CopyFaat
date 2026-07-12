@@ -346,7 +346,7 @@ const BINANCE_STREAM_BASE_URL = "wss://stream.binance.com:9443";
 const BINANCE_RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000] as const;
 const MIN_CHART_CANDLES = 20;
 const PRIORITY_SYMBOL_BASES = ["BTC", "ETH", "SOL"] as const;
-const SIGNAL_PAGE_SIZE = 20;
+const SIGNALS_API_PAGE_SIZE = 200;
 const TICK_FLASH_MS = 700;
 const TICKER_SKELETON_WIDTHS = ["w-36", "w-32", "w-[8.5rem]", "w-[7.5rem]", "w-28"] as const;
 const CHART_SKELETON_BARS = [
@@ -507,7 +507,10 @@ function isBinanceTradingSymbol(symbol: StoredTradingSymbol) {
 	return symbol.exchange.trim().toLowerCase() === "binance";
 }
 
-async function canDisplaySymbolChart(symbol: string, signal?: AbortSignal) {
+async function canDisplaySymbolChart(
+	symbol: string,
+	signal?: AbortSignal,
+): Promise<boolean | null> {
 	try {
 		const params = new URLSearchParams({
 			interval: "1h",
@@ -519,15 +522,19 @@ async function canDisplaySymbolChart(symbol: string, signal?: AbortSignal) {
 			signal,
 		});
 
-		if (!response.ok) {
+		if (response.status === 404) {
 			return false;
+		}
+
+		if (!response.ok) {
+			return null;
 		}
 
 		const data = (await response.json()) as SignalKlinesResponse;
 
 		return data.klines.length >= MIN_CHART_CANDLES;
 	} catch {
-		return false;
+		return null;
 	}
 }
 
@@ -908,7 +915,7 @@ function doesStoredSignalMatchPageFilters(signal: StoredSignal, filters: SignalP
 
 function getSignalPageSearchParams(filters: SignalPageFilters, cursor?: string | null) {
 	const params = new URLSearchParams({
-		limit: String(SIGNAL_PAGE_SIZE),
+		limit: String(SIGNALS_API_PAGE_SIZE),
 		status: filters.status,
 	});
 
@@ -937,6 +944,98 @@ function getSignalPageSearchParams(filters: SignalPageFilters, cursor?: string |
 	}
 
 	return params;
+}
+
+function getStoredSignalBusinessKey(signal: StoredSignal) {
+	return [
+		signal.source.id ?? normalizeSourceKey(signal.source.name),
+		signal.symbol,
+		signal.direction,
+		signal.entry,
+		signal.takeProfit ?? "no-tp",
+		signal.stopLoss,
+	].join("|");
+}
+
+async function fetchAllStoredSignals(
+	params: URLSearchParams,
+	signal?: AbortSignal,
+): Promise<SignalsListResponse> {
+	const signals: StoredSignal[] = [];
+	const seenBusinessKeys = new Set<string>();
+	let cursor: string | null = null;
+	let counts: SignalsListResponse["counts"] = {
+		active: 0,
+		history: 0,
+	};
+
+	do {
+		const pageParams = new URLSearchParams(params);
+		pageParams.set("limit", String(SIGNALS_API_PAGE_SIZE));
+
+		if (cursor) {
+			pageParams.set("cursor", cursor);
+		}
+
+		const response = await fetch(`/api/signals?${pageParams.toString()}`, {
+			cache: "no-store",
+			signal,
+		});
+
+		if (!response.ok) {
+			throw new Error("Failed to load signals.");
+		}
+
+		const page = (await response.json()) as SignalsListResponse;
+		counts = page.counts;
+
+		for (const nextSignal of page.signals) {
+			const businessKey = getStoredSignalBusinessKey(nextSignal);
+
+			if (!seenBusinessKeys.has(businessKey)) {
+				seenBusinessKeys.add(businessKey);
+				signals.push(nextSignal);
+			}
+		}
+
+		cursor = page.nextCursor;
+	} while (cursor);
+
+	return {
+		counts,
+		nextCursor: null,
+		signals,
+	};
+}
+
+function doesTradeSignalMatchFilters(signal: TradeSignal, filters: SignalPageFilters) {
+	if (signal.symbol !== filters.symbol || signal.status !== filters.status) {
+		return false;
+	}
+
+	if (!matchesSelectedSources(signal, filters.sourceIds)) {
+		return false;
+	}
+
+	if (filters.direction !== "all" && signal.direction !== filters.direction) {
+		return false;
+	}
+
+	if (filters.entryStatus !== "all" && signal.entryStatus !== filters.entryStatus) {
+		return false;
+	}
+
+	if (filters.submittedAfter) {
+		const submittedAt = signal.submittedAtTime
+			? new Date(Number(signal.submittedAtTime) * 1000)
+			: null;
+
+		if (!submittedAt || submittedAt < filters.submittedAfter) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 function clampNumber(value: number, min: number, max: number) {
@@ -1051,7 +1150,6 @@ export function SignalsWorkspace() {
 	const { activeEntitlementGrant, activePlan } = usePurchases();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
 	const [signalPageSignals, setSignalPageSignals] = useState<StoredSignal[]>([]);
-	const [signalPageCursor, setSignalPageCursor] = useState<string | null>(null);
 	const [statusCounts, setStatusCounts] = useState<Record<SignalStatus, number>>({
 		active: 0,
 		history: 0,
@@ -1072,7 +1170,6 @@ export function SignalsWorkspace() {
 	const [isChartFullscreenOpen, setIsChartFullscreenOpen] = useState(false);
 	const [isSignalsLoading, setIsSignalsLoading] = useState(true);
 	const [isSignalPageLoading, setIsSignalPageLoading] = useState(true);
-	const [isSignalPageLoadingMore, setIsSignalPageLoadingMore] = useState(false);
 	const [isKlinesLoading, setIsKlinesLoading] = useState(false);
 	const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false);
 	const [guideOpen, setGuideOpen] = useState(false);
@@ -1093,6 +1190,7 @@ export function SignalsWorkspace() {
 	const [signalPageRefreshKey, setSignalPageRefreshKey] = useState(0);
 	const [supportedSymbols, setSupportedSymbols] = useState<Set<string> | null>(null);
 	const symbolAvailabilityRef = useRef(new Map<string, boolean>());
+	const [symbolAvailabilityRetryVersion, setSymbolAvailabilityRetryVersion] = useState(0);
 
 	const visibleWebhookSignals = useMemo(() => {
 		if (!supportedSymbols) {
@@ -1147,6 +1245,10 @@ export function SignalsWorkspace() {
 		const sources = new Map<string, Source>();
 
 		for (const signal of visibleWebhookSignals) {
+			if (signal.symbol !== selectedSymbol) {
+				continue;
+			}
+
 			const source = createSourceFilterFromSignal(signal);
 			const existingSource = sources.get(source.id);
 			sources.set(source.id, {
@@ -1157,7 +1259,7 @@ export function SignalsWorkspace() {
 		}
 
 		return Array.from(sources.values()).sort((a, b) => a.name.localeCompare(b.name));
-	}, [visibleWebhookSignals]);
+	}, [selectedSymbol, visibleWebhookSignals]);
 	const signalPageFilters = useMemo<SignalPageFilters>(
 		() => ({
 			direction: selectedDirection,
@@ -1201,17 +1303,21 @@ export function SignalsWorkspace() {
 				isBinanceTradingSymbol(symbol) && !symbolAvailabilityRef.current.has(symbol.symbol),
 		);
 
+		let retryTimer: number | undefined;
+
 		async function loadSymbolAvailability() {
-			await Promise.all(
+			const availability = await Promise.all(
 				symbolsToCheck.map(async (symbol) => {
 					const canDisplay = await canDisplaySymbolChart(
 						symbol.symbol,
 						controller.signal,
 					);
 
-					if (!controller.signal.aborted) {
+					if (!controller.signal.aborted && canDisplay !== null) {
 						symbolAvailabilityRef.current.set(symbol.symbol, canDisplay);
 					}
+
+					return canDisplay;
 				}),
 			);
 
@@ -1226,33 +1332,32 @@ export function SignalsWorkspace() {
 					),
 				),
 			);
+
+			if (availability.some((canDisplay) => canDisplay === null)) {
+				retryTimer = window.setTimeout(() => {
+					setSymbolAvailabilityRetryVersion((version) => version + 1);
+				}, 5_000);
+			}
 		}
 
 		void loadSymbolAvailability();
 
 		return () => {
 			controller.abort();
+
+			if (retryTimer) {
+				window.clearTimeout(retryTimer);
+			}
 		};
-	}, [isSignalsLoading, webhookSignals]);
+	}, [isSignalsLoading, symbolAvailabilityRetryVersion, webhookSignals]);
 
 	useEffect(() => {
 		let isMounted = true;
+		const controller = new AbortController();
 
 		async function loadWebhookSignals() {
 			try {
-				const response = await fetch("/api/signals", {
-					cache: "no-store",
-				});
-
-				if (!response.ok) {
-					if (isMounted) {
-						setIsSignalPageLoading(false);
-						setIsSignalsLoading(false);
-					}
-					return;
-				}
-
-				const data = (await response.json()) as SignalsListResponse;
+				const data = await fetchAllStoredSignals(new URLSearchParams(), controller.signal);
 
 				if (isMounted) {
 					const visibleSignals = data.signals.filter(
@@ -1262,7 +1367,7 @@ export function SignalsWorkspace() {
 					setIsSignalsLoading(false);
 				}
 			} catch {
-				if (isMounted) {
+				if (!controller.signal.aborted && isMounted) {
 					setIsSignalsLoading(false);
 				}
 			}
@@ -1301,6 +1406,7 @@ export function SignalsWorkspace() {
 
 		return () => {
 			isMounted = false;
+			controller.abort();
 			eventSource.close();
 		};
 	}, []);
@@ -1317,51 +1423,32 @@ export function SignalsWorkspace() {
 		async function loadSignalPage() {
 			if (!signalPageFilters.symbol) {
 				setSignalPageSignals([]);
-				setSignalPageCursor(null);
 				setStatusCounts({
 					active: 0,
 					history: 0,
 				});
 				setIsSignalPageLoading(false);
-				setIsSignalPageLoadingMore(false);
 				return;
 			}
 
 			setIsSignalPageLoading(true);
-			setIsSignalPageLoadingMore(false);
 
 			try {
-				const response = await fetch(
-					`/api/signals?${getSignalPageSearchParams(signalPageFilters).toString()}`,
-					{
-						cache: "no-store",
-						signal: controller.signal,
-					},
+				const data = await fetchAllStoredSignals(
+					getSignalPageSearchParams(signalPageFilters),
+					controller.signal,
 				);
-
-				if (!response.ok) {
-					if (signalPageRequestIdRef.current === requestId) {
-						setSignalPageSignals([]);
-						setSignalPageCursor(null);
-						setIsSignalPageLoading(false);
-					}
-					return;
-				}
-
-				const data = (await response.json()) as SignalsListResponse;
 
 				if (signalPageRequestIdRef.current === requestId) {
 					setSignalPageSignals(
 						data.signals.filter((signal) => !isBlockedSignalTrader(signal.source)),
 					);
-					setSignalPageCursor(data.nextCursor);
 					setStatusCounts(data.counts);
 					setIsSignalPageLoading(false);
 				}
 			} catch {
 				if (!controller.signal.aborted && signalPageRequestIdRef.current === requestId) {
 					setSignalPageSignals([]);
-					setSignalPageCursor(null);
 					setIsSignalPageLoading(false);
 				}
 			}
@@ -1606,19 +1693,7 @@ export function SignalsWorkspace() {
 	const filteredSignals = signalPageTradeSignals;
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
-
-	const chartSignals = useMemo(
-		() =>
-			signals.filter(
-				(signal) =>
-					signal.symbol === selectedSymbol &&
-					signal.status === "active" &&
-					matchesSelectedSources(signal, selectedSourceIds) &&
-					(selectedDirection === "all" || signal.direction === selectedDirection) &&
-					(selectedEntryStatus === "all" || signal.entryStatus === selectedEntryStatus),
-			),
-		[selectedDirection, selectedEntryStatus, selectedSourceIds, selectedSymbol, signals],
-	);
+	const chartSignals = filteredSignals;
 
 	const candles = useMemo(() => {
 		if (
@@ -1668,71 +1743,15 @@ export function SignalsWorkspace() {
 		setActiveSignalId(signal.id);
 	}
 
-	async function loadMoreSignals() {
-		if (!selectedSymbol || !signalPageCursor || isSignalPageLoadingMore) {
-			return;
-		}
-
-		const requestId = signalPageRequestIdRef.current;
-		const filters: SignalPageFilters = {
-			direction: selectedDirection,
-			entryStatus: selectedEntryStatus,
-			sourceIds: selectedSourceIds,
-			status: selectedStatus,
-			submittedAfter: getSubmittedAfterForTimeRange(selectedTimeRange),
-			symbol: selectedSymbol,
-		};
-
-		setIsSignalPageLoadingMore(true);
-
-		try {
-			const response = await fetch(
-				`/api/signals?${getSignalPageSearchParams(filters, signalPageCursor).toString()}`,
-				{
-					cache: "no-store",
-				},
-			);
-
-			if (!response.ok) {
-				if (signalPageRequestIdRef.current === requestId) {
-					setIsSignalPageLoadingMore(false);
-				}
-				return;
-			}
-
-			const data = (await response.json()) as SignalsListResponse;
-
-			if (signalPageRequestIdRef.current === requestId) {
-				setSignalPageSignals((currentSignals) => {
-					const seenIds = new Set(currentSignals.map((signal) => signal.id));
-					const nextSignals = data.signals.filter(
-						(signal) =>
-							!seenIds.has(signal.id) && !isBlockedSignalTrader(signal.source),
-					);
-
-					return [...currentSignals, ...nextSignals];
-				});
-				setSignalPageCursor(data.nextCursor);
-				setStatusCounts(data.counts);
-				setIsSignalPageLoadingMore(false);
-			}
-		} catch {
-			if (signalPageRequestIdRef.current === requestId) {
-				setIsSignalPageLoadingMore(false);
-			}
-		}
-	}
-
 	function selectSymbol(symbol: string) {
 		setSelectedSymbol(symbol);
-		const nextSignal = signals.find(
-			(signal) =>
-				signal.symbol === symbol &&
-				signal.status === selectedStatus &&
-				matchesSelectedSources(signal, selectedSourceIds) &&
-				(selectedDirection === "all" || signal.direction === selectedDirection) &&
-				(selectedEntryStatus === "all" || signal.entryStatus === selectedEntryStatus),
-		);
+		setSelectedSourceIds([]);
+		const filters: SignalPageFilters = {
+			...signalPageFilters,
+			sourceIds: [],
+			symbol,
+		};
+		const nextSignal = signals.find((signal) => doesTradeSignalMatchFilters(signal, filters));
 		setActiveSignalId(nextSignal?.id ?? null);
 	}
 
@@ -2418,15 +2437,12 @@ export function SignalsWorkspace() {
 									type="button"
 									onClick={() => {
 										setSelectedStatus(status);
-										const nextSignal = signals.find(
-											(signal) =>
-												signal.symbol === selectedSymbol &&
-												signal.status === status &&
-												matchesSelectedSources(signal, selectedSourceIds) &&
-												(selectedDirection === "all" ||
-													signal.direction === selectedDirection) &&
-												(selectedEntryStatus === "all" ||
-													signal.entryStatus === selectedEntryStatus),
+										const filters: SignalPageFilters = {
+											...signalPageFilters,
+											status,
+										};
+										const nextSignal = signals.find((signal) =>
+											doesTradeSignalMatchFilters(signal, filters),
 										);
 										setActiveSignalId(nextSignal?.id ?? null);
 									}}
@@ -2565,20 +2581,6 @@ export function SignalsWorkspace() {
 										</button>
 									);
 								})}
-								{signalPageCursor ? (
-									<Button
-										type="button"
-										variant="secondary"
-										size="sm"
-										className="border-white/10 bg-white/5 text-xs text-white hover:bg-white/10 w-full"
-										disabled={isSignalPageLoadingMore}
-										onClick={loadMoreSignals}
-									>
-										{isSignalPageLoadingMore
-											? t("signalsPanel.loadingMore")
-											: t("signalsPanel.loadMore")}
-									</Button>
-								) : null}
 							</>
 						) : (
 							<div className="p-6 rounded-md border border-dashed text-center">
