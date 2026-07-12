@@ -113,6 +113,18 @@ export const auth = betterAuth({
 							});
 						}
 					}
+					try {
+						await recordMembershipAnalyticsEvent(
+							createdUser.id,
+							MEMBERSHIP_ANALYTICS_EVENTS.SIGNUP_COMPLETED,
+							{ insertId: `signup:${createdUser.id}` },
+						);
+					} catch (error) {
+						logger.error(error, {
+							ctx: "recordSignupCompletedAnalytics",
+							userId: createdUser.id,
+						});
+					}
 				},
 			},
 		},
@@ -267,6 +279,7 @@ export const auth = betterAuth({
 		passkey(),
 		magicLink({
 			disableSignUp: false,
+			expiresIn: 30 * 60,
 			sendMagicLink: async ({ email, url }, ctx) => {
 				const request = ctx?.request as Request;
 

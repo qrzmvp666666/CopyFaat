@@ -8,6 +8,7 @@ const DEFAULT_MIXPANEL_API_HOST = "https://api-eu.mixpanel.com";
 export const MEMBERSHIP_ANALYTICS_EVENTS = {
 	PAID: "membership_paid",
 	REDEEMED: "membership_redeemed",
+	SIGNUP_COMPLETED: "signup_completed",
 	TRIAL_STARTED: "membership_trial_started",
 } as const;
 
@@ -52,8 +53,8 @@ export async function syncMembershipAnalyticsProfile(userId: string) {
 }
 
 /**
- * Records a membership lifecycle event and writes the corresponding profile
- * snapshot together so funnels and current-state cohorts agree.
+ * Records a membership or account lifecycle event and writes the corresponding
+ * profile snapshot together so funnels and current-state cohorts agree.
  */
 export async function recordMembershipAnalyticsEvent(
 	userId: string,

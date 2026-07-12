@@ -130,4 +130,38 @@ describe("Mixpanel membership synchronization", () => {
 			},
 		]);
 	});
+
+	it("records account creation as a server-authoritative signup event", async () => {
+		const fetchMock = vi.fn().mockResolvedValue({
+			ok: true,
+			status: 200,
+			text: vi.fn().mockResolvedValue('{"status":1}'),
+		});
+		vi.stubGlobal("fetch", fetchMock);
+		const { MEMBERSHIP_ANALYTICS_EVENTS, recordMembershipAnalyticsEvent } =
+			await import("@repo/payments/lib/mixpanel");
+
+		await recordMembershipAnalyticsEvent(
+			"user_1",
+			MEMBERSHIP_ANALYTICS_EVENTS.SIGNUP_COMPLETED,
+			{ insertId: "signup:user_1" },
+		);
+
+		const trackCall = fetchMock.mock.calls.find(([url]) => String(url).includes("/track?"));
+		expect(trackCall).toBeDefined();
+		const [, trackOptions] = trackCall as [string, RequestInit];
+		const payload = JSON.parse((trackOptions.body as URLSearchParams).get("data") ?? "[]") as {
+			event: string;
+			properties: Record<string, unknown>;
+		}[];
+
+		expect(payload[0]).toMatchObject({
+			event: "signup_completed",
+			properties: {
+				$insert_id: "signup:user_1",
+				distinct_id: "user_1",
+				token: "server-token",
+			},
+		});
+	});
 });

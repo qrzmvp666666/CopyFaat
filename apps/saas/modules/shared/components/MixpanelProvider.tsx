@@ -2,13 +2,11 @@
 
 import { useSession } from "@auth/hooks/use-session";
 import {
-	ANALYTICS_EVENTS,
 	consumePendingSignupMethod,
 	identifyAnalyticsUser,
 	identifyNewAnalyticsUser,
 	initializeAnalytics,
 	isAnalyticsEnabled,
-	trackAnalyticsEvent,
 } from "@shared/lib/analytics";
 import { orpc } from "@shared/lib/orpc-query-utils";
 import { useMutation } from "@tanstack/react-query";
@@ -32,9 +30,6 @@ export function MixpanelProvider({ children }: PropsWithChildren) {
 			const pendingSignupMethod = consumePendingSignupMethod();
 			if (pendingSignupMethod && user.onboardingComplete === false) {
 				identifyNewAnalyticsUser(user);
-				trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, {
-					method: pendingSignupMethod,
-				});
 				return;
 			}
 

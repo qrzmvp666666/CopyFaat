@@ -4,7 +4,12 @@ import mixpanel from "mixpanel-browser";
 
 const MIXPANEL_TOKEN = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
 const MIXPANEL_API_HOST = process.env.NEXT_PUBLIC_MIXPANEL_API_HOST;
+const SESSION_REPLAY_PERCENT = parseSessionReplayPercent(
+	process.env.NEXT_PUBLIC_MIXPANEL_SESSION_REPLAY_PERCENT,
+);
+const SESSION_REPLAY_VISIBLE_CONTENT_SELECTOR = "[data-mixpanel-replay-unmask]";
 const PENDING_SIGNUP_METHOD_KEY = "signalfast:analytics:pending-signup-method";
+const IMMEDIATE_TRACK_OPTIONS = { send_immediately: true };
 let isAnalyticsInitialized = false;
 
 interface AnalyticsUser {
@@ -19,7 +24,6 @@ export type AnalyticsSignupMethod = "github" | "google" | "magic_link" | "passwo
 export const ANALYTICS_EVENTS = {
 	ONBOARDING_COMPLETED: "onboarding_completed",
 	SIGNAL_FEED_VIEWED: "signal_feed_viewed",
-	SIGNUP_COMPLETED: "signup_completed",
 	SIGNUP_FORM_VIEWED: "signup_form_viewed",
 	SIGNUP_SUBMITTED: "signup_submitted",
 } as const;
@@ -42,6 +46,8 @@ export function initializeAnalytics() {
 	mixpanel.init(MIXPANEL_TOKEN, {
 		api_host: MIXPANEL_API_HOST ?? "https://api-eu.mixpanel.com",
 		persistence: "localStorage",
+		record_sessions_percent: SESSION_REPLAY_PERCENT,
+		record_unmask_text_selector: SESSION_REPLAY_VISIBLE_CONTENT_SELECTOR,
 		track_pageview: true,
 	});
 	mixpanel.clear_opt_in_out_tracking();
@@ -104,7 +110,7 @@ export function trackAnalyticsEvent(
 		return;
 	}
 
-	mixpanel.track(event, properties);
+	mixpanel.track(event, properties, IMMEDIATE_TRACK_OPTIONS);
 }
 
 export function rememberPendingSignupMethod(method: AnalyticsSignupMethod) {
@@ -129,4 +135,14 @@ export function consumePendingSignupMethod(): AnalyticsSignupMethod | null {
 		method === "password"
 		? method
 		: null;
+}
+
+function parseSessionReplayPercent(value: string | undefined) {
+	const percent = Number(value);
+
+	if (!Number.isFinite(percent)) {
+		return 0;
+	}
+
+	return Math.max(0, Math.min(100, percent));
 }

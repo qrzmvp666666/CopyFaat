@@ -119,10 +119,6 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 				}
 
 				identifyNewAnalyticsUser(data.user);
-				trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_COMPLETED, {
-					invitation: Boolean(invitationId),
-					method,
-				});
 			} else {
 				rememberPendingSignupMethod(method);
 				const { error } = await authClient.signIn.magicLink({

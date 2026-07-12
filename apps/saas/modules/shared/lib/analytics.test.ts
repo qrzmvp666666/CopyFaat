@@ -39,11 +39,37 @@ describe("analytics", () => {
 		trackAnalyticsEvent(ANALYTICS_EVENTS.SIGNUP_SUBMITTED, { method: "password" });
 
 		expect(mixpanelMock.init).toHaveBeenCalledTimes(1);
+		expect(mixpanelMock.init).toHaveBeenCalledWith(
+			"test-token",
+			expect.objectContaining({
+				record_sessions_percent: 0,
+				record_unmask_text_selector: "[data-mixpanel-replay-unmask]",
+			}),
+		);
 		expect(mixpanelMock.clear_opt_in_out_tracking).toHaveBeenCalledTimes(1);
-		expect(mixpanelMock.track).toHaveBeenNthCalledWith(1, "signup_form_viewed", undefined);
-		expect(mixpanelMock.track).toHaveBeenNthCalledWith(2, "signup_submitted", {
-			method: "password",
+		expect(mixpanelMock.track).toHaveBeenNthCalledWith(1, "signup_form_viewed", undefined, {
+			send_immediately: true,
 		});
+		expect(mixpanelMock.track).toHaveBeenNthCalledWith(
+			2,
+			"signup_submitted",
+			{
+				method: "password",
+			},
+			{ send_immediately: true },
+		);
+	});
+
+	it("enables the configured session replay sample rate", async () => {
+		vi.stubEnv("NEXT_PUBLIC_MIXPANEL_SESSION_REPLAY_PERCENT", "100");
+		const { initializeAnalytics } = await import("./analytics");
+
+		initializeAnalytics();
+
+		expect(mixpanelMock.init).toHaveBeenCalledWith(
+			"test-token",
+			expect.objectContaining({ record_sessions_percent: 100 }),
+		);
 	});
 
 	it("aliases a new account to the anonymous device before identifying it", async () => {

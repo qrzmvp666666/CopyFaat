@@ -1837,7 +1837,10 @@ export function SignalsWorkspace() {
 	];
 
 	return (
-		<div className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden min-h-full bg-[#141414] text-foreground">
+		<div
+			className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden min-h-full bg-[#141414] text-foreground"
+			data-mixpanel-replay-unmask
+		>
 			<style>{SIGNALS_SKELETON_STYLES}</style>
 			<Dialog
 				open={welcomeDialogOpen}
