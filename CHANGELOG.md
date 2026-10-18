@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-10-19
+
+### Added
+
+- DataFast page analytics across the marketing and SaaS apps.
+- Stripe Checkout revenue attribution using DataFast visitor and session cookies, with metadata also passed to payment intents and subscriptions.
+
 ## 2026-03-30 v3.3.0
 
 ### Added

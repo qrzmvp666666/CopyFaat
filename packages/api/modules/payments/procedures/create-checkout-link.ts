@@ -10,6 +10,7 @@ import {
 	type PlanId,
 } from "@repo/payments";
 import { getBaseUrl } from "@repo/utils";
+import { parse as parseCookies } from "cookie";
 import { z } from "zod";
 
 import { localeMiddleware } from "../../../orpc/middleware/locale-middleware";
@@ -44,7 +45,7 @@ export const createCheckoutLink = protectedProcedure
 	.handler(
 		async ({
 			input: { planId, redirectUrl, type, interval, organizationId, paymentMethod },
-			context: { user },
+			context: { headers, user },
 		}) => {
 			const normalizedType = type === "subscription" ? "subscription" : "one-time";
 			const price = findPriceByPlanId(planId as PlanId, {
@@ -117,6 +118,7 @@ export const createCheckoutLink = protectedProcedure
 				organization && price && "seatBased" in price && price.seatBased
 					? organization.members.length
 					: undefined;
+			const cookies = parseCookies(headers.get("cookie") ?? "");
 
 			try {
 				const checkoutLink = await createCheckoutLinkFn({
@@ -129,6 +131,8 @@ export const createCheckoutLink = protectedProcedure
 					trialPeriodDays,
 					seats,
 					customerId: customerId ?? undefined,
+					datafastVisitorId: cookies.datafast_visitor_id,
+					datafastSessionId: cookies.datafast_session_id,
 				});
 
 				if (!checkoutLink) {

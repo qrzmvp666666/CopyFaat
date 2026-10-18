@@ -47,11 +47,15 @@ export const createCheckoutLink: CreateCheckoutLink = async (options) => {
 		trialPeriodDays,
 		seats,
 		email,
+		datafastVisitorId,
+		datafastSessionId,
 	} = options;
 
 	const metadata = {
 		organization_id: organizationId || null,
 		user_id: userId || null,
+		...(datafastVisitorId ? { datafast_visitor_id: datafastVisitorId } : {}),
+		...(datafastSessionId ? { datafast_session_id: datafastSessionId } : {}),
 	};
 
 	const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -94,7 +98,7 @@ async function createCheckoutSession(
 		return await stripeClient.checkout.sessions.create(params);
 	} catch (error) {
 		if (params.customer && isMissingCustomerError(error)) {
-			const { customer, ...retryParams } = params;
+			const { customer: _customer, ...retryParams } = params;
 
 			return stripeClient.checkout.sessions.create({
 				...retryParams,

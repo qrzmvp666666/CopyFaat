@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
+import Script from "next/script";
 
 import "./globals.css";
 import "cropperjs/dist/cropper.css";
@@ -27,6 +28,12 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 	return (
 		<html lang={locale} suppressHydrationWarning>
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
+				<Script
+					src="https://datafa.st/js/script.js"
+					data-website-id="dfid_fb2tp0jNLHKxFdogSJxxe"
+					data-domain="www.signalfast.cn"
+					strategy="afterInteractive"
+				/>
 				<NuqsAdapter>
 					<NextIntlClientProvider messages={messages}>
 						<ThemeProvider

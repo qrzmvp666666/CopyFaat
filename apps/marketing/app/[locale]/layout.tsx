@@ -13,6 +13,7 @@ import { ThemeProvider } from "next-themes";
 import { Figtree } from "next/font/google";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
+import Script from "next/script";
 import type { PropsWithChildren } from "react";
 
 const sansFont = Figtree({
@@ -51,6 +52,12 @@ export default async function MarketingLayout({
 			className={cn(sansFont.variable, config.defaultTheme)}
 		>
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
+				<Script
+					src="https://datafa.st/js/script.js"
+					data-website-id="dfid_fb2tp0jNLHKxFdogSJxxe"
+					data-domain="www.signalfast.cn"
+					strategy="afterInteractive"
+				/>
 				<ConsentProvider initialConsent={consentCookie?.value === "true"}>
 					<NextIntlClientProvider locale={locale} messages={messages}>
 						<ClientProviders>
