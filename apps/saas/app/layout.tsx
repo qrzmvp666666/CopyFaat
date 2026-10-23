@@ -34,6 +34,13 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 					data-domain="www.signalfast.cn"
 					strategy="afterInteractive"
 				/>
+				<Script
+					src="https://talivia.com/script.js"
+					data-website-id="46cfdef2-8ed5-4a66-957e-b5e7b85f2295"
+					data-domain="www.signalfast.cn"
+					data-cross-domain-domains="www.signalfast.cn,signalfast.cn"
+					strategy="afterInteractive"
+				/>
 				<NuqsAdapter>
 					<NextIntlClientProvider messages={messages}>
 						<ThemeProvider

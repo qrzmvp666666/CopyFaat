@@ -2,9 +2,11 @@
 import { sessionQueryKey, useSessionQuery } from "@auth/lib/api";
 import { authClient } from "@repo/auth/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
+import { useSession } from "../hooks/use-session";
 import { SessionContext } from "../lib/session-context";
+import { trackPendingTaliviaSignup } from "../lib/talivia";
 
 export function SessionProvider({ children }: { children: ReactNode }) {
 	const queryClient = useQueryClient();
@@ -32,7 +34,20 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 				},
 			}}
 		>
+			<TaliviaSignupTracker />
 			{children}
 		</SessionContext.Provider>
 	);
+}
+
+function TaliviaSignupTracker() {
+	const { user, loaded } = useSession();
+
+	useEffect(() => {
+		if (loaded && user) {
+			trackPendingTaliviaSignup(user.createdAt);
+		}
+	}, [loaded, user]);
+
+	return null;
 }

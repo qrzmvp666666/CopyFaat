@@ -30,6 +30,11 @@ import { withQuery } from "ufo";
 import { z } from "zod";
 
 import { type OAuthProvider, oAuthProviders } from "../constants/oauth-providers";
+import {
+	clearTaliviaSignupPending,
+	markTaliviaSignupPending,
+	trackTaliviaSignup,
+} from "../lib/talivia";
 import { SocialSigninButton } from "./SocialSigninButton";
 
 const formSchema = z.object({
@@ -71,8 +76,14 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 	}, [user, sessionLoaded]); // oxlint-disable-line eslint-plugin-react-hooks/exhaustive-deps
 
 	const onSubmit = form.handleSubmit(async ({ email, password, name }) => {
+		const isPasswordSignup = authConfig.enablePasswordLogin;
+
+		if (!isPasswordSignup) {
+			markTaliviaSignupPending();
+		}
+
 		try {
-			const { error } = await (authConfig.enablePasswordLogin
+			const { error } = await (isPasswordSignup
 				? await authClient.signUp.email({
 						email,
 						password,
@@ -89,6 +100,10 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 				throw error;
 			}
 
+			if (isPasswordSignup) {
+				trackTaliviaSignup();
+			}
+
 			if (invitationOnlyMode) {
 				const { error } = await authClient.organization.acceptInvitation({
 					invitationId,
@@ -101,6 +116,10 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 				router.push(redirectPath);
 			}
 		} catch (e) {
+			if (!isPasswordSignup) {
+				clearTaliviaSignupPending();
+			}
+
 			form.setError("root", {
 				message: getAuthErrorMessage(
 					e && typeof e === "object" && "code" in e ? (e.code as string) : undefined,
@@ -207,6 +226,7 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 									<SocialSigninButton
 										key={providerId}
 										provider={providerId as OAuthProvider}
+										isSignup
 									/>
 								))}
 							</div>

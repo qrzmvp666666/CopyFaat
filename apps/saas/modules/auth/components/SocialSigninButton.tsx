@@ -6,13 +6,16 @@ import { Button } from "@repo/ui/components/button";
 import { parseAsString, useQueryState } from "nuqs";
 
 import { oAuthProviders } from "../constants/oauth-providers";
+import { clearTaliviaSignupPending, markTaliviaSignupPending } from "../lib/talivia";
 
 export function SocialSigninButton({
 	provider,
 	className,
+	isSignup = false,
 }: {
 	provider: keyof typeof oAuthProviders;
 	className?: string;
+	isSignup?: boolean;
 }) {
 	const [invitationId] = useQueryState("invitationId", parseAsString);
 	const providerData = oAuthProviders[provider];
@@ -23,10 +26,27 @@ export function SocialSigninButton({
 
 	const onSignin = async () => {
 		const callbackURL = new URL(redirectPath, window.location.origin);
-		await authClient.signIn.social({
-			provider,
-			callbackURL: callbackURL.toString(),
-		});
+
+		if (isSignup) {
+			markTaliviaSignupPending();
+		}
+
+		try {
+			const { error } = await authClient.signIn.social({
+				provider,
+				callbackURL: callbackURL.toString(),
+			});
+
+			if (error) {
+				throw error;
+			}
+		} catch (error) {
+			if (isSignup) {
+				clearTaliviaSignupPending();
+			}
+
+			throw error;
+		}
 	};
 
 	return (
