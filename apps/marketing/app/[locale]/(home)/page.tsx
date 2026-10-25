@@ -3,6 +3,7 @@ import { FaqSection } from "@home/components/FaqSection";
 import { HeroSection } from "@home/components/HeroSection";
 import { PricingSection } from "@home/components/PricingSection";
 import { TestimonialsSection } from "@home/components/TestimonialsSection";
+import { ValuePillarsSection } from "@home/components/ValuePillarsSection";
 import { setRequestLocale } from "next-intl/server";
 
 export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
@@ -12,6 +13,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 	return (
 		<>
 			<HeroSection />
+			<ValuePillarsSection />
 			<PricingSection />
 			<TestimonialsSection />
 			<FaqSection />
