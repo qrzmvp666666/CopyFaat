@@ -4,7 +4,7 @@ import Image from "next/image";
 export interface ContactMethod {
 	account: string;
 	href: string;
-	icon: "telegram" | "x" | "qq" | "discord";
+	icon: "telegram" | "discord";
 	label: string;
 }
 
@@ -16,22 +16,10 @@ export const CONTACT_METHODS: ContactMethod[] = [
 		label: "电报",
 	},
 	{
-		account: "1934416232",
-		href: "tencent://message/?uin=1934416232&Site=SignalFast&Menu=yes",
-		icon: "qq",
-		label: "QQ",
-	},
-	{
 		account: "SignalFast",
 		href: "https://discord.gg/signalfast",
 		icon: "discord",
 		label: "Discord",
-	},
-	{
-		account: "@Michael_RunZe",
-		href: "https://x.com/Michael_RunZe",
-		icon: "x",
-		label: "X",
 	},
 ];
 
@@ -98,42 +86,6 @@ function ContactIcon({ compact, icon }: { compact: boolean; icon: ContactMethod[
 					height={225}
 					className={
 						compact ? "size-7 object-contain" : "size-10 sm:size-11 object-contain"
-					}
-				/>
-			</span>
-		);
-	}
-
-	if (icon === "x") {
-		return (
-			<span
-				className={`${tileClassName} bg-black text-white shadow-lg shadow-black/20 flex shrink-0 items-center justify-center`}
-			>
-				<span
-					className={
-						compact
-							? "font-semibold text-2xl leading-none"
-							: "font-semibold text-4xl leading-none"
-					}
-				>
-					𝕏
-				</span>
-			</span>
-		);
-	}
-
-	if (icon === "qq") {
-		return (
-			<span
-				className={`${tileClassName} bg-white shadow-lg shadow-black/10 flex shrink-0 items-center justify-center`}
-			>
-				<Image
-					src="/images/contact/qq-icon.png"
-					alt="QQ"
-					width={225}
-					height={225}
-					className={
-						compact ? "size-8 object-contain" : "size-11 sm:size-12 object-contain"
 					}
 				/>
 			</span>

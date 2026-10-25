@@ -29,7 +29,7 @@ import { useForm } from "react-hook-form";
 import { withQuery } from "ufo";
 import { z } from "zod";
 
-import { type OAuthProvider, oAuthProviders } from "../constants/oauth-providers";
+import { visibleOAuthProviderIds } from "../constants/oauth-providers";
 import { useSession } from "../hooks/use-session";
 import { LoginModeSwitch } from "./LoginModeSwitch";
 import { SocialSigninButton } from "./SocialSigninButton";
@@ -249,13 +249,13 @@ export function LoginForm() {
 								</p>
 							</div>
 
-							<div className="gap-2 sm:grid-cols-2 grid grid-cols-1 items-stretch">
+							<div className="gap-2 grid grid-cols-1 items-stretch">
 								{authConfig.enableSignup &&
 									authConfig.enableSocialLogin &&
-									Object.keys(oAuthProviders).map((providerId) => (
+									visibleOAuthProviderIds.map((providerId) => (
 										<SocialSigninButton
 											key={providerId}
-											provider={providerId as OAuthProvider}
+											provider={providerId}
 										/>
 									))}
 

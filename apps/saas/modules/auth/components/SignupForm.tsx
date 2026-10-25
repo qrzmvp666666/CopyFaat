@@ -29,7 +29,7 @@ import { useForm } from "react-hook-form";
 import { withQuery } from "ufo";
 import { z } from "zod";
 
-import { type OAuthProvider, oAuthProviders } from "../constants/oauth-providers";
+import { visibleOAuthProviderIds } from "../constants/oauth-providers";
 import {
 	clearTaliviaSignupPending,
 	markTaliviaSignupPending,
@@ -221,11 +221,11 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 								</p>
 							</div>
 
-							<div className="gap-2 sm:grid-cols-2 grid grid-cols-1 items-stretch">
-								{Object.keys(oAuthProviders).map((providerId) => (
+							<div className="gap-2 grid grid-cols-1 items-stretch">
+								{visibleOAuthProviderIds.map((providerId) => (
 									<SocialSigninButton
 										key={providerId}
-										provider={providerId as OAuthProvider}
+										provider={providerId}
 										isSignup
 									/>
 								))}

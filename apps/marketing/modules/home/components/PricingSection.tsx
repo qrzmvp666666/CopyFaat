@@ -6,10 +6,16 @@ import { config as paymentsConfig } from "@repo/payments/config";
 import type { PaidPlan } from "@repo/payments/types";
 import { cn } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
-import { AlipayIcon, StripeIcon, WeChatIcon } from "@repo/ui/components/payment-brand-icons";
 import { RedeemCodePurchaseLink } from "@repo/ui/components/redeem-code-purchase-link";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
-import { ArrowRightIcon, BadgePercentIcon, CheckIcon, GiftIcon, StarIcon } from "lucide-react";
+import {
+	ArrowRightIcon,
+	BadgePercentIcon,
+	CheckIcon,
+	CreditCardIcon,
+	GiftIcon,
+	StarIcon,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import type { ComponentType, SVGProps } from "react";
@@ -18,17 +24,13 @@ import { useMemo, useState } from "react";
 const visiblePaidPlanIds = ["pro", "lifetime"] as const;
 
 type VisiblePaidPlanId = (typeof visiblePaidPlanIds)[number];
-type PaymentMethodMark = "card" | "alipay_person" | "wechat_person" | "redeem";
+type PaymentMethodMark = "card" | "redeem";
 
 function isVisiblePaidPlanId(planId: string): planId is VisiblePaidPlanId {
 	return visiblePaidPlanIds.includes(planId as VisiblePaidPlanId);
 }
 
-function getPaymentMethodsForPlan(planId: VisiblePaidPlanId): PaymentMethodMark[] {
-	if (planId === "lifetime") {
-		return ["card", "alipay_person", "wechat_person", "redeem"];
-	}
-
+function getPaymentMethodsForPlan(): PaymentMethodMark[] {
 	return ["card", "redeem"];
 }
 
@@ -42,19 +44,9 @@ function PaymentMethodMarks({ methods }: { methods: PaymentMethodMark[] }) {
 		}
 	> = {
 		card: {
-			label: "Stripe",
-			icon: StripeIcon,
-			className: "h-5 w-7 text-[#635BFF]",
-		},
-		alipay_person: {
-			label: "支付宝",
-			icon: AlipayIcon,
-			className: "size-5 text-[#1677FF]",
-		},
-		wechat_person: {
-			label: "微信",
-			icon: WeChatIcon,
-			className: "size-5 text-[#07C160]",
+			label: "银行卡/信用卡",
+			icon: CreditCardIcon,
+			className: "size-5 text-foreground/70",
 		},
 		redeem: {
 			label: "兑换码",
@@ -236,7 +228,7 @@ export function PricingSection() {
 				recommended: plan.recommended,
 				prices,
 				priceLabel,
-				paymentMethods: getPaymentMethodsForPlan(planId),
+				paymentMethods: getPaymentMethodsForPlan(),
 				to: isEnterprise ? (saasUrl ? `${saasUrl}/signup` : "#") : planUrl,
 			});
 		}

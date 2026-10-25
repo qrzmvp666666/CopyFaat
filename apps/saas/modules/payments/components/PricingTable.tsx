@@ -6,14 +6,20 @@ import { config as paymentsConfig } from "@repo/payments/config";
 import type { PaidPlan } from "@repo/payments/types";
 import { cn } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
-import { AlipayIcon, StripeIcon, WeChatIcon } from "@repo/ui/components/payment-brand-icons";
 import { RedeemCodePurchaseLink } from "@repo/ui/components/redeem-code-purchase-link";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
 import { toastError } from "@repo/ui/components/toast";
 import { useRouter } from "@shared/hooks/router";
 import { orpc } from "@shared/lib/orpc-query-utils";
 import { useMutation } from "@tanstack/react-query";
-import { ArrowRightIcon, BadgePercentIcon, CheckIcon, GiftIcon, StarIcon } from "lucide-react";
+import {
+	ArrowRightIcon,
+	BadgePercentIcon,
+	CheckIcon,
+	CreditCardIcon,
+	GiftIcon,
+	StarIcon,
+} from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useState } from "react";
@@ -22,7 +28,7 @@ const plans = paymentsConfig.plans;
 const visiblePaidPlanIds = ["pro", "lifetime"] as const;
 
 type VisiblePaidPlanId = (typeof visiblePaidPlanIds)[number];
-type PaymentMethodMark = "card" | "alipay_person" | "wechat_person" | "redeem";
+type PaymentMethodMark = "card" | "redeem";
 
 interface PlanSelection {
 	type: "one-time" | "subscription";
@@ -60,11 +66,7 @@ function getVisiblePlanIds(activePlanId?: string, showActivePlanInPricing = fals
 	return ["pro", "lifetime"] satisfies VisiblePaidPlanId[];
 }
 
-function getPaymentMethodsForPlan(planId: VisiblePaidPlanId): PaymentMethodMark[] {
-	if (planId === "lifetime") {
-		return ["card", "alipay_person", "wechat_person", "redeem"];
-	}
-
+function getPaymentMethodsForPlan(): PaymentMethodMark[] {
 	return ["card", "redeem"];
 }
 
@@ -78,19 +80,9 @@ function PaymentMethodMarks({ methods }: { methods: PaymentMethodMark[] }) {
 		}
 	> = {
 		card: {
-			label: "Stripe",
-			icon: StripeIcon,
-			className: "h-5 w-7 text-[#635BFF]",
-		},
-		alipay_person: {
-			label: "支付宝",
-			icon: AlipayIcon,
-			className: "size-5 text-[#1677FF]",
-		},
-		wechat_person: {
-			label: "微信",
-			icon: WeChatIcon,
-			className: "size-5 text-[#07C160]",
+			label: "银行卡/信用卡",
+			icon: CreditCardIcon,
+			className: "size-5 text-foreground/70",
 		},
 		redeem: {
 			label: "兑换码",
@@ -216,7 +208,7 @@ export function PricingTable({
 					price,
 					priceLabel,
 					recommended: typedPlan.recommended,
-					paymentMethods: getPaymentMethodsForPlan(visiblePlanId),
+					paymentMethods: getPaymentMethodsForPlan(),
 				},
 			];
 		}),

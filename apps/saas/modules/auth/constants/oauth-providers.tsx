@@ -38,3 +38,5 @@ export const oAuthProviders = {
 >;
 
 export type OAuthProvider = keyof typeof oAuthProviders;
+
+export const visibleOAuthProviderIds = ["google"] as const satisfies readonly OAuthProvider[];
