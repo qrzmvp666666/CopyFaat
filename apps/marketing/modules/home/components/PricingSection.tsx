@@ -6,63 +6,73 @@ import { config as paymentsConfig } from "@repo/payments/config";
 import type { PaidPlan } from "@repo/payments/types";
 import { cn } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
-import { RedeemCodePurchaseLink } from "@repo/ui/components/redeem-code-purchase-link";
-import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
 import {
 	ArrowRightIcon,
 	BadgePercentIcon,
 	CheckIcon,
 	CreditCardIcon,
-	GiftIcon,
 	StarIcon,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
-import type { ComponentType, SVGProps } from "react";
+import type { ComponentType } from "react";
 import { useMemo, useState } from "react";
 
-const visiblePaidPlanIds = ["pro", "lifetime"] as const;
+import tetherTokenLogo from "../../../public/images/tether-usdt.png";
+
+const visiblePaidPlanIds = ["pro"] as const;
 
 type VisiblePaidPlanId = (typeof visiblePaidPlanIds)[number];
-type PaymentMethodMark = "card" | "redeem";
+type PaymentMethodMark = "card" | "crypto";
+type SubscriptionPlanPrice = Extract<PaidPlan["prices"][number], { type: "subscription" }>;
 
 function isVisiblePaidPlanId(planId: string): planId is VisiblePaidPlanId {
 	return visiblePaidPlanIds.includes(planId as VisiblePaidPlanId);
 }
 
 function getPaymentMethodsForPlan(): PaymentMethodMark[] {
-	return ["card", "redeem"];
+	return ["card", "crypto"];
 }
 
-function PaymentMethodMarks({ methods }: { methods: PaymentMethodMark[] }) {
+function PaymentMethodMarks({ methods, locale }: { methods: PaymentMethodMark[]; locale: string }) {
 	const paymentMethods: Record<
 		PaymentMethodMark,
 		{
 			label: string;
-			icon: ComponentType<SVGProps<SVGSVGElement>>;
+			icon: ComponentType<{ className?: string }>;
 			className: string;
 		}
 	> = {
 		card: {
-			label: "银行卡/信用卡",
+			label: locale === "zh" ? "信用卡支付" : "Card payments",
 			icon: CreditCardIcon,
 			className: "size-5 text-foreground/70",
 		},
-		redeem: {
-			label: "兑换码",
-			icon: GiftIcon,
-			className: "size-5 text-foreground/45",
+		crypto: {
+			label: locale === "zh" ? "加密支付" : "Pay Crypto",
+			icon: TetherTokenIcon,
+			className: "size-5",
 		},
 	};
 
 	return (
-		<div className="gap-3 flex shrink-0 items-center" aria-label="支持的支付与兑换方式">
+		<div
+			className="gap-2 flex shrink-0 items-center"
+			role="group"
+			aria-label={locale === "zh" ? "支持的支付方式" : "Accepted payment methods"}
+		>
 			{methods.map((method) => {
 				const paymentMethod = paymentMethods[method];
 				const Icon = paymentMethod.icon;
 
 				return (
-					<span key={method} className="inline-flex" title={paymentMethod.label}>
+					<span
+						key={method}
+						className="gap-1.5 px-2 py-1 inline-flex items-center rounded-full border border-foreground/10"
+						title={paymentMethod.label}
+						role="img"
+						aria-label={paymentMethod.label}
+					>
 						<Icon className={paymentMethod.className} aria-hidden="true" />
 					</span>
 				);
@@ -71,13 +81,12 @@ function PaymentMethodMarks({ methods }: { methods: PaymentMethodMark[] }) {
 	);
 }
 
+function TetherTokenIcon({ className }: { className?: string }) {
+	return <Image src={tetherTokenLogo} alt="" width={32} height={32} className={className} />;
+}
+
 const MARKETING_PLAN_COPY = {
 	zh: {
-		free: {
-			title: "免费",
-			description: "前200名用户限时领取：注册成功后，即可领取 48 小时 Pro 会员",
-			features: ["0 USD 免费体验", "注册成功即可领取 48 小时 Pro 会员"],
-		},
 		pro: {
 			title: "Pro",
 			description: "适合需要实时行情、KOL 信号和专属支持的加密交易用户",
@@ -104,12 +113,6 @@ const MARKETING_PLAN_COPY = {
 		},
 	},
 	en: {
-		free: {
-			title: "Free",
-			description:
-				"Limited offer for the first 200 users: sign up to claim 48 hours of Pro membership",
-			features: ["0 USD free access", "Claim 48 hours of Pro after signup"],
-		},
 		pro: {
 			title: "Pro",
 			description:
@@ -140,9 +143,10 @@ const MARKETING_PLAN_COPY = {
 
 export function PricingSection() {
 	const t = useTranslations();
-	const xianyuRedeemT = useTranslations("pricing.xianyuRedeem");
+	const format = useFormatter();
 	const locale = useLocale();
-	const [interval, setBillingInterval] = useState<"month" | "year">("month");
+	const [selectedInterval, setSelectedInterval] = useState<"year" | "week">("year");
+	const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodMark>("card");
 
 	const saasUrl = useMemo(
 		() => config.saasUrl && `${String(config.saasUrl).replace(/\/$/, "")}`,
@@ -160,23 +164,10 @@ export function PricingSection() {
 			cta: string;
 			recommended?: boolean;
 			prices?: PaidPlan["prices"];
-			priceLabel?: string;
+			price?: PaidPlan["prices"][number];
 			paymentMethods?: PaymentMethodMark[];
 			to: string;
 		}> = [];
-
-		if (!paymentsConfig.requireActiveSubscription) {
-			const freeCopy = marketingPlanCopy.free;
-			result.push({
-				id: "free",
-				title: freeCopy.title,
-				description: freeCopy.description,
-				features: [...freeCopy.features],
-				cta: t("pricing.getStarted") ?? "",
-				priceLabel: t.raw("pricing.products.free.price") as string,
-				to: saasUrl ? `${saasUrl}/signup` : "#",
-			});
-		}
 
 		for (const [planId, plan] of Object.entries(paymentsConfig.plans)) {
 			if (!isVisiblePaidPlanId(planId)) {
@@ -185,13 +176,17 @@ export function PricingSection() {
 
 			const isEnterprise = "isEnterprise" in plan;
 			if (isEnterprise) continue;
-			const prices = "prices" in plan ? (plan as PaidPlan).prices : undefined;
-			const price = prices?.find(
-				(price) =>
-					!plan.hidden &&
-					(price.type === "one-time" || price.interval === interval) &&
-					(price.paymentMethod ?? "card") === "card",
+			if (plan.hidden) continue;
+
+			const prices = (plan as PaidPlan).prices.filter(
+				(price) => (price.paymentMethod ?? "card") === "card",
 			);
+			const price =
+				prices.find((price) => price.type === "one-time") ??
+				prices.find(
+					(price) => price.type === "subscription" && price.interval === "week",
+				) ??
+				prices[0];
 
 			if (!price) {
 				continue;
@@ -203,16 +198,7 @@ export function PricingSection() {
 					: planId === "lifetime"
 						? marketingPlanCopy.lifetime
 						: undefined;
-			const rawPrice = t.raw(`pricing.products.${planId}.price`) as
-				| string
-				| Record<string, string>;
-			const priceLabel = typeof rawPrice === "string" ? rawPrice : rawPrice[interval];
-
-			// Point directly to /choose-plan on the saas app with planId+interval.
-			// The saas app redirects to /login if not authenticated, preserving the query params.
-			const planUrl = saasUrl
-				? `${saasUrl}/choose-plan?planId=${planId}&interval=${interval}`
-				: "#";
+			const planUrl = saasUrl ? `${saasUrl}/choose-plan?planId=${planId}` : "#";
 
 			result.push({
 				id: planId,
@@ -227,20 +213,14 @@ export function PricingSection() {
 				cta: t("pricing.getStarted") ?? "",
 				recommended: plan.recommended,
 				prices,
-				priceLabel,
+				price,
 				paymentMethods: getPaymentMethodsForPlan(),
 				to: isEnterprise ? (saasUrl ? `${saasUrl}/signup` : "#") : planUrl,
 			});
 		}
 
 		return result;
-	}, [t, saasUrl, interval, marketingPlanCopy]);
-
-	const hasSubscriptions = Object.entries(paymentsConfig.plans).some(([planId, plan]) =>
-		isVisiblePaidPlanId(planId) && "prices" in plan
-			? (plan as PaidPlan).prices.some((price) => price.type === "subscription")
-			: false,
-	);
+	}, [t, saasUrl, marketingPlanCopy]);
 
 	return (
 		<section id="pricing" className="scroll-mt-16 pt-6 pb-10 lg:pt-8 lg:pb-14">
@@ -255,43 +235,24 @@ export function PricingSection() {
 				</div>
 
 				<div className="@container">
-					{hasSubscriptions && (
-						<div className="mb-6 flex justify-center">
-							<Tabs
-								value={interval}
-								onValueChange={(value) =>
-									setBillingInterval(value as "month" | "year")
-								}
-								data-test="price-table-interval-tabs"
-							>
-								<TabsList className="border-foreground/10">
-									<TabsTrigger value="month">{t("pricing.monthly")}</TabsTrigger>
-									<TabsTrigger value="year">{t("pricing.yearly")}</TabsTrigger>
-								</TabsList>
-							</Tabs>
-						</div>
-					)}
-					<div
-						className={cn(
-							"gap-4 mx-auto grid grid-cols-1",
-							plans.length <= 2 ? "max-w-4xl" : "max-w-7xl",
-							plans.length >= 2 && "@xl:grid-cols-2",
-							plans.length >= 3 && "@3xl:grid-cols-3",
-							plans.length >= 4 && "@4xl:grid-cols-4",
-						)}
-					>
+					<div className={cn("gap-4 max-w-4xl @xl:grid-cols-2 mx-auto grid grid-cols-1")}>
 						{plans.map((plan) => {
-							const isFree = !plan.prices;
-							const price = isFree
-								? undefined
-								: plan.prices?.find(
-										(p) =>
-											(p.type === "one-time" || p.interval === interval) &&
-											(p.paymentMethod ?? "card") === "card",
-									);
+							const weeklyPrice = plan.prices?.find(
+								(price): price is SubscriptionPlanPrice =>
+									price.type === "subscription" && price.interval === "week",
+							);
+							const yearlyPrice = plan.prices?.find(
+								(price): price is SubscriptionPlanPrice =>
+									price.type === "subscription" && price.interval === "year",
+							);
+							const hasBillingOptions =
+								plan.id === "pro" && weeklyPrice && yearlyPrice;
+							const yearlySavingsPercent = 86;
 							const trialPeriodDays =
-								price && "trialPeriodDays" in price && price.trialPeriodDays
-									? price.trialPeriodDays
+								plan.price &&
+								"trialPeriodDays" in plan.price &&
+								plan.price.trialPeriodDays
+									? plan.price.trialPeriodDays
 									: undefined;
 
 							return (
@@ -315,36 +276,28 @@ export function PricingSection() {
 												<h3 className="my-0 font-semibold text-2xl">
 													{plan.title}
 												</h3>
-												{price && plan.paymentMethods && (
+												{plan.price && plan.paymentMethods && (
 													<PaymentMethodMarks
 														methods={plan.paymentMethods}
+														locale={locale}
 													/>
 												)}
 											</div>
-											{plan.priceLabel && (
+											{plan.price && !hasBillingOptions && (
 												<strong
 													className="font-medium text-2xl mt-2 block whitespace-nowrap"
 													data-test="price-table-plan-price"
 												>
-													{plan.priceLabel}
-												</strong>
-											)}
-											{price && !plan.priceLabel && (
-												<strong
-													className="font-medium text-2xl mt-2 block whitespace-nowrap"
-													data-test="price-table-plan-price"
-												>
-													{price.amount} USDT
-													{price.type === "subscription" && (
+													{format.number(plan.price.amount, {
+														style: "currency",
+														currency: "USD",
+													})}
+													{plan.price.type === "subscription" && (
 														<span className="font-normal text-xs opacity-60">
 															/
-															{price.interval === "year"
-																? t("pricing.year", {
-																		count: 1,
-																	})
-																: t("pricing.month", {
-																		count: 1,
-																	})}
+															{plan.price.interval === "year"
+																? t("pricing.yearUnit")
+																: t("pricing.weekUnit")}
 														</span>
 													)}
 												</strong>
@@ -378,60 +331,203 @@ export function PricingSection() {
 														})}
 													</div>
 												)}
+											{hasBillingOptions && (
+												<div className="mt-5 gap-2 grid">
+													{[yearlyPrice, weeklyPrice].map(
+														(optionPrice) => {
+															if (!optionPrice) return null;
 
-											{isFree && (
-												<div className="mt-4 flex justify-start">
-													<Image
-														src="/images/qq-qrcode.png"
-														alt="QQ 二维码"
-														width={140}
-														height={140}
-														className="size-[140px] rounded-lg object-contain"
-													/>
+															const billingInterval =
+																optionPrice.interval;
+															const optionAmount =
+																billingInterval === "year"
+																	? 49.99
+																	: 6.99;
+															const isYearly =
+																billingInterval === "year";
+															const isSelected =
+																selectedInterval ===
+																billingInterval;
+
+															return (
+																<button
+																	key={billingInterval}
+																	type="button"
+																	aria-pressed={isSelected}
+																	onClick={() =>
+																		setSelectedInterval(
+																			billingInterval,
+																		)
+																	}
+																	className={cn(
+																		"px-5 py-4 min-w-0 focus-visible:ring-white/70 relative flex h-auto min-h-[104px] w-full items-stretch justify-start overflow-visible rounded-2xl border-2 text-left whitespace-normal transition-colors focus-visible:ring-2 focus-visible:outline-none",
+																		isSelected
+																			? "border-white bg-card text-foreground"
+																			: "border-white/20 hover:border-white/45 hover:bg-white/5 bg-card text-foreground",
+																	)}
+																>
+																	<span className="gap-x-4 gap-y-2 min-w-0 grid min-h-[72px] w-full grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_auto] items-center">
+																		<span className="min-w-0 text-sm font-medium row-start-1 text-left">
+																			{isYearly
+																				? t(
+																						"pricing.yearly",
+																					)
+																				: t(
+																						"pricing.weekly",
+																					)}
+																		</span>
+																		<span className="col-start-2 row-start-1 flex justify-end">
+																			{isYearly &&
+																			yearlySavingsPercent ? (
+																				<span className="bg-blue-600 px-3 py-1 text-xs font-medium text-white top-0 absolute left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full">
+																					{t(
+																						"pricing.savePercent",
+																						{
+																							percent:
+																								yearlySavingsPercent,
+																						},
+																					)}
+																				</span>
+																			) : null}
+																		</span>
+																		<span className="contents">
+																			<strong className="text-xl col-start-1 row-start-2">
+																				{format.number(
+																					optionAmount,
+																					{
+																						minimumFractionDigits: 2,
+																						maximumFractionDigits: 2,
+																					},
+																				)}
+																				u
+																				{billingInterval ===
+																					"year" && (
+																					<span className="ml-2 text-sm font-normal line-through opacity-60">
+																						{format.number(
+																							6.99 *
+																								52,
+																							{
+																								minimumFractionDigits: 2,
+																								maximumFractionDigits: 2,
+																							},
+																						)}
+																						u
+																					</span>
+																				)}
+																			</strong>
+																			<span className="contents">
+																				<strong className="text-base col-start-2 row-start-1 text-right">
+																					{format.number(
+																						billingInterval ===
+																							"year"
+																							? 49.99 /
+																									52
+																							: 6.99,
+																						{
+																							minimumFractionDigits: 2,
+																							maximumFractionDigits: 2,
+																						},
+																					)}
+																					u
+																				</strong>
+																				<span className="text-xs col-start-2 row-start-2 text-right opacity-70">
+																					{t(
+																						"pricing.weekly",
+																					)}
+																				</span>
+																			</span>
+																		</span>
+																	</span>
+																</button>
+															);
+														},
+													)}
+												</div>
+											)}
+											{hasBillingOptions && (
+												<div className="mt-4 gap-3 grid grid-cols-2">
+													<button
+														type="button"
+														aria-pressed={
+															selectedPaymentMethod === "card"
+														}
+														onClick={() =>
+															setSelectedPaymentMethod("card")
+														}
+														className={cn(
+															"px-4 py-3 min-h-14 gap-2.5 text-sm font-semibold focus-visible:ring-white/70 flex items-center justify-center rounded-xl border transition-[background-color,border-color,transform] focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98]",
+															selectedPaymentMethod === "card"
+																? "border-white bg-white text-black hover:bg-white/90"
+																: "border-white/25 bg-white/[0.04] hover:border-white/45 hover:bg-white/[0.08] text-foreground",
+														)}
+													>
+														<CreditCardIcon
+															className="size-5"
+															aria-hidden="true"
+														/>
+														{locale === "zh"
+															? "信用卡支付"
+															: "Pay by card"}
+													</button>
+													<button
+														type="button"
+														aria-pressed={
+															selectedPaymentMethod === "crypto"
+														}
+														onClick={() =>
+															setSelectedPaymentMethod("crypto")
+														}
+														className={cn(
+															"px-4 py-3 min-h-14 gap-2.5 text-sm font-semibold focus-visible:ring-white/70 flex items-center justify-center rounded-xl border transition-[background-color,border-color,transform] focus-visible:ring-2 focus-visible:outline-none active:scale-[0.98]",
+															selectedPaymentMethod === "crypto"
+																? "border-white bg-white text-black hover:bg-white/90"
+																: "border-white/25 bg-white/[0.04] hover:border-white/45 hover:bg-white/[0.08] text-foreground",
+														)}
+													>
+														<TetherTokenIcon className="size-5" />
+														{locale === "zh"
+															? "加密支付"
+															: "Pay Crypto"}
+													</button>
 												</div>
 											)}
 										</div>
 
-										<div>
-											{price && (
-												<div className="mb-3">
-													<RedeemCodePurchaseLink
-														ariaLabel={xianyuRedeemT("ariaLabel")}
-														description={xianyuRedeemT("description")}
-														imageAlt={xianyuRedeemT("imageAlt")}
-														label={xianyuRedeemT("label")}
-														title={xianyuRedeemT("title")}
-													/>
-												</div>
-											)}
-											{plan.to.startsWith("/") ? (
-												<Button
-													className="mt-4 w-full"
-													variant={
-														plan.recommended ? "primary" : "secondary"
-													}
-													asChild
-												>
-													<LocaleLink href={plan.to}>
-														{plan.cta}
-														<ArrowRightIcon className="ml-2 size-4" />
-													</LocaleLink>
-												</Button>
-											) : (
-												<Button
-													className="mt-4 w-full"
-													variant={
-														plan.recommended ? "primary" : "secondary"
-													}
-													asChild
-												>
-													<a href={plan.to}>
-														{plan.cta}
-														<ArrowRightIcon className="ml-2 size-4" />
-													</a>
-												</Button>
-											)}
-										</div>
+										{!hasBillingOptions && (
+											<div>
+												{plan.to.startsWith("/") ? (
+													<Button
+														className="mt-4 w-full"
+														variant={
+															plan.recommended
+																? "primary"
+																: "secondary"
+														}
+														asChild
+													>
+														<LocaleLink href={plan.to}>
+															{plan.cta}
+															<ArrowRightIcon className="ml-2 size-4" />
+														</LocaleLink>
+													</Button>
+												) : (
+													<Button
+														className="mt-4 w-full"
+														variant={
+															plan.recommended
+																? "primary"
+																: "secondary"
+														}
+														asChild
+													>
+														<a href={plan.to}>
+															{plan.cta}
+															<ArrowRightIcon className="ml-2 size-4" />
+														</a>
+													</Button>
+												)}
+											</div>
+										)}
 									</div>
 								</div>
 							);

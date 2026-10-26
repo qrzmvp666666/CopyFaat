@@ -34,7 +34,7 @@ export interface SubscriptionPrice {
 	/**
 	 * Billing cadence for the subscription.
 	 */
-	interval: "month" | "year";
+	interval: "week" | "year";
 	/**
 	 * Indicates whether the subscription scales with seat count.
 	 */

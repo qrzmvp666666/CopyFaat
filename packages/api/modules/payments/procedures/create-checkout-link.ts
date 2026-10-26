@@ -29,7 +29,7 @@ export const createCheckoutLink = protectedProcedure
 		z.object({
 			planId: z.string(),
 			type: z.enum(["one-time", "subscription"]),
-			interval: z.enum(["month", "year"]).optional(),
+			interval: z.enum(["week", "year"]).optional(),
 			redirectUrl: z.string().optional(),
 			organizationId: z.string().optional(),
 			/**

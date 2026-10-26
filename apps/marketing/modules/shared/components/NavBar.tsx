@@ -10,7 +10,6 @@ import { MenuIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import NextLink from "next/link";
 import { Suspense, useEffect, useState } from "react";
-import { useDebounceCallback } from "usehooks-ts";
 
 export function NavBar() {
 	const t = useTranslations();
@@ -18,28 +17,48 @@ export function NavBar() {
 
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [isTop, setIsTop] = useState(true);
+	const [isMobileNavVisible, setIsMobileNavVisible] = useState(true);
 
 	const handleMobileMenuClose = () => {
 		setMobileMenuOpen(false);
 	};
 
-	const debouncedScrollHandler = useDebounceCallback(
-		() => {
-			setIsTop(window.scrollY <= 10);
-		},
-		150,
-		{
-			maxWait: 150,
-		},
-	);
+	useEffect(() => {
+		let frameId = 0;
+
+		const handleScroll = () => {
+			if (frameId) {
+				return;
+			}
+
+			frameId = window.requestAnimationFrame(() => {
+				const currentScrollY = Math.max(
+					window.scrollY,
+					document.scrollingElement?.scrollTop ?? 0,
+				);
+
+				setIsTop(currentScrollY <= 10);
+				setIsMobileNavVisible((visible) =>
+					visible ? currentScrollY <= 80 : currentScrollY <= 40,
+				);
+				frameId = 0;
+			});
+		};
+
+		window.addEventListener("scroll", handleScroll, { passive: true });
+		document.addEventListener("scroll", handleScroll, { passive: true, capture: true });
+		return () => {
+			window.removeEventListener("scroll", handleScroll);
+			document.removeEventListener("scroll", handleScroll, true);
+			window.cancelAnimationFrame(frameId);
+		};
+	}, []);
 
 	useEffect(() => {
-		window.addEventListener("scroll", debouncedScrollHandler);
-		debouncedScrollHandler();
-		return () => {
-			window.removeEventListener("scroll", debouncedScrollHandler);
-		};
-	}, [debouncedScrollHandler]);
+		if (mobileMenuOpen) {
+			setIsMobileNavVisible(true);
+		}
+	}, [mobileMenuOpen]);
 
 	useEffect(() => {
 		handleMobileMenuClose();
@@ -77,9 +96,15 @@ export function NavBar() {
 
 	return (
 		<nav
-			className={cn("top-0 sticky z-50 w-full bg-background transition-shadow duration-200", {
-				"border-b": !isTop,
-			})}
+			aria-hidden={!isMobileNavVisible && !mobileMenuOpen}
+			className={cn(
+				"top-0 sticky z-50 w-full bg-background transition-[transform,box-shadow,visibility] duration-300 motion-reduce:transition-none",
+				{
+					"border-b": !isTop,
+					"pointer-events-none invisible -translate-y-full":
+						!isMobileNavVisible && !mobileMenuOpen,
+				},
+			)}
 			data-test="navigation"
 		>
 			<div className="container">

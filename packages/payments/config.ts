@@ -6,15 +6,15 @@ export const config: PaymentsConfig = {
 	plans: {
 		pro: {
 			prices: [
-				// ── Pro Monthly (card only — WeChat/Alipay are lifetime-only) ─
+				// ── Pro Weekly (card only — WeChat/Alipay are lifetime-only) ─
 				{
 					type: "subscription",
 					paymentMethod: "card",
-					priceId: (process.env.PRICE_ID_PRO_MONTHLY_CARD ??
-						process.env.PRICE_ID_PRO_MONTHLY) as string,
-					interval: "month",
-					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_PRO_MONTHLY_CARD ?? 19.99),
-					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_PRO_MONTHLY_CARD ?? "CNY",
+					priceId: (process.env.PRICE_ID_PRO_WEEKLY_CARD ??
+						process.env.PRICE_ID_PRO_WEEKLY) as string,
+					interval: "week",
+					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_PRO_WEEKLY_CARD ?? 6.99),
+					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_PRO_WEEKLY_CARD ?? "USD",
 					seatBased: true,
 					trialPeriodDays: 0,
 				},
@@ -25,8 +25,8 @@ export const config: PaymentsConfig = {
 					priceId: (process.env.PRICE_ID_PRO_YEARLY_CARD ??
 						process.env.PRICE_ID_PRO_YEARLY) as string,
 					interval: "year",
-					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_PRO_YEARLY_CARD ?? 168.88),
-					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_PRO_YEARLY_CARD ?? "CNY",
+					amount: Number(process.env.NEXT_PUBLIC_PRICE_AMOUNT_PRO_YEARLY_CARD ?? 49.99),
+					currency: process.env.NEXT_PUBLIC_PRICE_CURRENCY_PRO_YEARLY_CARD ?? "USD",
 					seatBased: true,
 					trialPeriodDays: 0,
 				},

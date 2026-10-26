@@ -2,25 +2,16 @@
 
 import { usePlanData } from "@payments/hooks/plan-data";
 import { usePurchases } from "@payments/hooks/purchases";
-import { Button } from "@repo/ui/components/button";
 import { SettingsItem } from "@shared/components/SettingsItem";
-import { BadgeCheckIcon, CheckIcon, TicketCheckIcon } from "lucide-react";
+import { BadgeCheckIcon, CheckIcon } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
-import Link from "next/link";
 
 import { CustomerPortalButton } from "../../settings/components/CustomerPortalButton";
 import { SubscriptionStatusBadge } from "../../settings/components/SubscriptionStatusBadge";
 import { BILLING_INSET_CLASS } from "./billing-surface-styles";
 import { EntitlementCountdown } from "./EntitlementCountdown";
 
-export function ActivePlan({
-	organizationId,
-	showRedeemButton = false,
-}: {
-	organizationId?: string;
-	seats?: number;
-	showRedeemButton?: boolean;
-}) {
+export function ActivePlan({ organizationId }: { organizationId?: string; seats?: number }) {
 	const t = useTranslations();
 	const format = useFormatter();
 	const { planData } = usePlanData();
@@ -52,15 +43,6 @@ export function ActivePlan({
 								<SubscriptionStatusBadge status={activePlan.status} />
 							)}
 						</div>
-
-						{showRedeemButton && (
-							<Button asChild variant="primary" className="sm:w-auto w-full">
-								<Link href="/redeem">
-									<TicketCheckIcon className="size-4" />
-									{t("settings.billing.redeemCode.submit")}
-								</Link>
-							</Button>
-						)}
 					</div>
 
 					{!!activePlanData.features?.length && (
@@ -86,13 +68,9 @@ export function ActivePlan({
 							{"interval" in price && (
 								<span className="font-normal text-xs opacity-60">
 									{" / "}
-									{price.interval === "month"
-										? t("pricing.month", {
-												count: 1,
-											})
-										: t("pricing.year", {
-												count: 1,
-											})}
+									{price.interval === "week"
+										? t("pricing.weekUnit")
+										: t("pricing.yearUnit")}
 								</span>
 							)}
 							{organizationId && "seatBased" in price && price.seatBased && (

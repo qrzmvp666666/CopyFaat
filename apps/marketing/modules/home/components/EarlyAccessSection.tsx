@@ -7,7 +7,7 @@ export function EarlyAccessSection() {
 	const t = useTranslations();
 
 	return (
-		<section className="py-8 lg:py-12">
+		<section className="py-8 md:block lg:py-12 hidden">
 			<div className="container">
 				<div className="max-w-4xl px-8 py-10 shadow-sm md:px-14 md:py-12 mx-auto rounded-2xl border bg-card text-center">
 					<h2 className="font-bold text-2xl leading-snug md:text-3xl text-balance text-foreground">

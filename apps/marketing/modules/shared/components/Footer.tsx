@@ -12,7 +12,7 @@ export function Footer() {
 	return (
 		<footer className="text-sm border-t bg-background text-muted-foreground">
 			{/* Main grid */}
-			<div className="pt-10 pb-6 container">
+			<div className="pt-10 pb-6 lg:block container hidden">
 				<div className="gap-8 lg:grid-cols-[2fr_1fr_1fr_1fr] grid grid-cols-1">
 					{/* Brand */}
 					<div>
@@ -108,7 +108,7 @@ export function Footer() {
 
 			{/* Built with + controls */}
 			<div className="py-2 container flex items-center justify-between">
-				<div className="gap-4 flex items-center">
+				<div className="gap-4 lg:flex hidden items-center">
 					<a
 						href="https://supastarter.dev"
 						className="gap-2 px-4 py-2 text-sm inline-flex items-center rounded-full border bg-background text-foreground transition-colors hover:bg-muted"

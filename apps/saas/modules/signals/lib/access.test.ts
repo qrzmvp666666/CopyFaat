@@ -16,7 +16,7 @@ function createPurchase(overrides: Partial<ResolvedPurchase> = {}): ResolvedPurc
 		planPrice: {
 			amount: 19.99,
 			currency: "CNY",
-			interval: "month",
+			interval: "week",
 			type: "subscription",
 		},
 		priceId: "price_pro_monthly",

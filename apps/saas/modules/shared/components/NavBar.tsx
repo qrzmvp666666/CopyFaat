@@ -36,7 +36,6 @@ import {
 	ChartCandlestickIcon,
 	ChevronRightIcon,
 	CrownIcon,
-	GiftIcon,
 	MenuIcon,
 	PanelLeftCloseIcon,
 	PanelLeftOpenIcon,
@@ -326,7 +325,7 @@ function SidebarEntitlementCountdown() {
 			compact
 			expiresAt={activePlanEntitlement.expiresAt}
 			source={activePlanEntitlement.source}
-			className="w-fit max-w-full border-white/10 bg-white/[0.06] px-3 py-2 text-muted-foreground"
+			className="border-white/10 bg-white/[0.06] px-3 py-2 w-fit max-w-full text-muted-foreground"
 		/>
 	);
 }
@@ -425,12 +424,6 @@ export function NavBar() {
 							href: "/settings/billing",
 							icon: BadgeCheckIcon,
 							isActive: pathname.startsWith("/settings/billing"),
-						},
-						{
-							label: t("app.menu.redeemCode"),
-							href: "/redeem",
-							icon: GiftIcon,
-							isActive: pathname.startsWith("/redeem"),
 						},
 					]
 				: []),

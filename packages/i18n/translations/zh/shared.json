@@ -5,8 +5,13 @@
 		"description": "选择最适合您的套餐。",
 		"getStarted": "立即开始",
 		"month": "{count, plural, one {个月} other {{count} 个月}}",
+		"monthUnit": "/月",
 		"monthly": "按月付费",
+		"weekly": "按周付费",
 		"monthlyEquivalent": "约 {price}/月",
+		"weekUnit": "/周",
+		"savePercent": "省 {percent}%",
+		"weeklyEquivalent": "折合 {price}/周",
 		"products": {
 			"basic": {
 				"description": "适合小型团队。",
@@ -57,8 +62,8 @@
 					"communityNotifications": "专属社区通知"
 				},
 				"price": {
-					"month": "19.99 CNY/月",
-					"year": "168.88 CNY/年 · 约 14.07 CNY/月"
+					"month": "6.99 USD/周",
+					"year": "49.99 USD/年 · 折合约 0.96 USD/周"
 				},
 				"title": "Pro"
 			}
@@ -69,6 +74,7 @@
 		"title": "定价",
 		"trialPeriod": "48小时免费试用",
 		"year": "{count, plural, one {年} other {{count} 年}}",
+		"yearUnit": "/年",
 		"yearly": "按年付费",
 		"perSeat": "席位",
 		"included": "已包含",

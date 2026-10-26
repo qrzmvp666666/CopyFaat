@@ -71,7 +71,7 @@ export default async function ChoosePlanPage({
 
 	// If planId is provided, skip the plan selection page and go directly to checkout
 	if (planId) {
-		const normalizedInterval = interval === "year" ? "year" : "month";
+		const normalizedInterval = interval === "year" ? "year" : "week";
 		const price =
 			findPriceByPlanId(planId as PlanId, {
 				type: "subscription",

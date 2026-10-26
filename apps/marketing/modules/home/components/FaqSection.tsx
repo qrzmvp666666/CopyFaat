@@ -35,22 +35,6 @@ const FAQ_COPY = {
 				question: "平台会保证收益或者代替我做交易决策吗？",
 				answer: "不会。SignalFast 不承诺任何收益，也不替代用户的风险判断。平台提供的是信号整理、历史表现和行情位置分析，帮助你减少盲目跟单和只看盈利截图的风险。",
 			},
-			{
-				question: "如果多个 KOL 在同一位置发出信号，应该怎么看？",
-				answer: "多来源共振值得关注，但不代表一定正确。建议同时看这些来源是否独立、信号是否发生在行情大幅波动之后、历史上类似信号表现如何，以及是否有明确止损或失效条件。",
-			},
-			{
-				question: "信号推送会不会有延迟？",
-				answer: "平台会尽量提升信号采集、整理和推送速度，但任何跨平台聚合都可能受到来源发布时间、网络状态和第三方平台限制影响。短线用户建议结合实时行情和风险控制一起判断。",
-			},
-			{
-				question: "免费版与专业版套餐有什么区别？",
-				answer: "免费版适合体验基础功能；专业版会提供更完整的实时行情、KOL 聚合 K线跟踪、实时信号推送和专属客服支持。",
-			},
-			{
-				question: "平台有提供终身买断套餐吗？",
-				answer: "有。终身版适合长期使用的用户，一次购买即可长期获得对应权益，无需每月续费。",
-			},
 		],
 	},
 	en: {
@@ -76,22 +60,6 @@ const FAQ_COPY = {
 			{
 				question: "Does SignalFast guarantee profit or make trading decisions for me?",
 				answer: "No. SignalFast does not guarantee returns or replace your risk judgment. It organizes signals, historical performance, and chart context so you can make more informed decisions.",
-			},
-			{
-				question: "How should I read multiple KOLs giving signals in the same area?",
-				answer: "Multi-source alignment is worth attention, but it is not certainty. Check whether sources are independent, whether the signal is late after a strong move, and how similar signals performed historically.",
-			},
-			{
-				question: "Can signal pushes be delayed?",
-				answer: "SignalFast works to keep collection, organization, and pushes fast, but third-party platforms, source timing, and network conditions can still introduce delay. Short-term traders should always combine signals with real-time market context.",
-			},
-			{
-				question: "What is the difference between the Free and Pro plans?",
-				answer: "The Free plan is for trying the basic experience. Pro includes more complete real-time market data, aggregated KOL K-line tracking, real-time signal pushes, and dedicated support.",
-			},
-			{
-				question: "Does the platform offer a lifetime plan?",
-				answer: "Yes. The Lifetime plan is designed for long-term users. Pay once and keep the corresponding benefits without monthly renewal.",
 			},
 		],
 	},

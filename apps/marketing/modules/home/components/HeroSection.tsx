@@ -1,6 +1,5 @@
 "use client";
 
-import { config } from "@config";
 import { Button } from "@repo/ui/components/button";
 import type { MotionValue } from "framer-motion";
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "framer-motion";
@@ -75,15 +74,13 @@ export function HeroSection() {
 		? {
 				new: "🎇 新年快乐",
 				badge: "2026 特价优惠",
-				getStarted: "免费开始",
-				documentation: "查看引导",
+				getStarted: "立即开始",
 				socialProof: "999+ 用户使用 SignalFast 构建策略",
 			}
 		: {
 				new: "🎇 Happy New Year",
 				badge: "2026 Special Offer",
-				getStarted: "Start Free",
-				documentation: "View Guide",
+				getStarted: "Get Started",
 				socialProof: "999+ users build strategies with SignalFast",
 			};
 
@@ -104,13 +101,10 @@ export function HeroSection() {
 
 				<div className="mt-4 gap-2 flex items-center justify-center">
 					<Button size="lg" variant="primary" asChild>
-						<a href={config.saasUrl}>
+						<a href="#pricing">
 							{heroCopy.getStarted}
 							<ArrowRightIcon className="ml-2 size-4" />
 						</a>
-					</Button>
-					<Button variant="ghost" size="lg" asChild>
-						<a href="#hero-image-area">{heroCopy.documentation}</a>
 					</Button>
 				</div>
 

@@ -68,6 +68,18 @@
 }
 
 @layer components {
+	@media (max-width: 767px) {
+		.mobile-motion-visible {
+			opacity: 1 !important;
+			transform: none !important;
+		}
+
+		path.mobile-motion-visible {
+			stroke-dasharray: none !important;
+			stroke-dashoffset: 0 !important;
+		}
+	}
+
 	.hero-floating-icon {
 		animation: hero-float 10s ease-in-out infinite;
 		will-change: transform;

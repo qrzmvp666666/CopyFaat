@@ -6,8 +6,6 @@ import { config as paymentsConfig } from "@repo/payments/config";
 import type { PaidPlan } from "@repo/payments/types";
 import { cn } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
-import { RedeemCodePurchaseLink } from "@repo/ui/components/redeem-code-purchase-link";
-import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/tabs";
 import { toastError } from "@repo/ui/components/toast";
 import { useRouter } from "@shared/hooks/router";
 import { orpc } from "@shared/lib/orpc-query-utils";
@@ -17,7 +15,6 @@ import {
 	BadgePercentIcon,
 	CheckIcon,
 	CreditCardIcon,
-	GiftIcon,
 	StarIcon,
 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
@@ -28,11 +25,12 @@ const plans = paymentsConfig.plans;
 const visiblePaidPlanIds = ["pro", "lifetime"] as const;
 
 type VisiblePaidPlanId = (typeof visiblePaidPlanIds)[number];
-type PaymentMethodMark = "card" | "redeem";
+type PaymentMethodMark = "card";
+type SubscriptionPlanPrice = Extract<PaidPlan["prices"][number], { type: "subscription" }>;
 
 interface PlanSelection {
 	type: "one-time" | "subscription";
-	interval?: "month" | "year";
+	interval?: "week" | "year";
 }
 
 interface DisplayPlan {
@@ -41,17 +39,10 @@ interface DisplayPlan {
 	description: ReactNode;
 	features: ReactNode[];
 	price?: PaidPlan["prices"][number];
-	priceLabel?: string;
+	weeklyPrice?: SubscriptionPlanPrice;
+	yearlyPrice?: SubscriptionPlanPrice;
 	recommended?: boolean;
 	paymentMethods: PaymentMethodMark[];
-}
-
-function getMonthlyEquivalent(price: PaidPlan["prices"][number]): number | undefined {
-	if (price.type !== "subscription" || price.interval !== "year") {
-		return undefined;
-	}
-
-	return price.amount / 12;
 }
 
 function getVisiblePlanIds(activePlanId?: string, showActivePlanInPricing = false) {
@@ -67,7 +58,7 @@ function getVisiblePlanIds(activePlanId?: string, showActivePlanInPricing = fals
 }
 
 function getPaymentMethodsForPlan(): PaymentMethodMark[] {
-	return ["card", "redeem"];
+	return ["card"];
 }
 
 function PaymentMethodMarks({ methods }: { methods: PaymentMethodMark[] }) {
@@ -84,15 +75,10 @@ function PaymentMethodMarks({ methods }: { methods: PaymentMethodMark[] }) {
 			icon: CreditCardIcon,
 			className: "size-5 text-foreground/70",
 		},
-		redeem: {
-			label: "兑换码",
-			icon: GiftIcon,
-			className: "size-5 text-foreground/45",
-		},
 	};
 
 	return (
-		<div className="gap-3 flex shrink-0 items-center" aria-label="支持的支付与兑换方式">
+		<div className="gap-3 flex shrink-0 items-center" aria-label="支持的支付方式">
 			{methods.map((method) => {
 				const paymentMethod = paymentMethods[method];
 				const Icon = paymentMethod.icon;
@@ -121,11 +107,9 @@ export function PricingTable({
 	showActivePlanInPricing?: boolean;
 }) {
 	const t = useTranslations();
-	const xianyuRedeemT = useTranslations("pricing.xianyuRedeem");
 	const format = useFormatter();
 	const router = useRouter();
 	const [loading, setLoading] = useState<PlanId | false>(false);
-	const [interval, setInterval] = useState<"month" | "year">("month");
 
 	const { planData } = usePlanData();
 	const visiblePlanIds = getVisiblePlanIds(activePlanId, showActivePlanInPricing);
@@ -184,20 +168,25 @@ export function PricingTable({
 				return [];
 			}
 
-			const price = typedPlan.prices.find(
-				(price) =>
-					(price.type === "one-time" || price.interval === interval) &&
-					(price.paymentMethod ?? "card") === "card",
+			const cardPrices = typedPlan.prices.filter(
+				(price) => (price.paymentMethod ?? "card") === "card",
 			);
+			const weeklyPrice = cardPrices.find(
+				(price): price is SubscriptionPlanPrice =>
+					price.type === "subscription" && price.interval === "week",
+			);
+			const yearlyPrice = cardPrices.find(
+				(price): price is SubscriptionPlanPrice =>
+					price.type === "subscription" && price.interval === "year",
+			);
+			const price =
+				cardPrices.find((price) => price.type === "one-time") ??
+				weeklyPrice ??
+				cardPrices[0];
 
 			if (!price) {
 				return [];
 			}
-
-			const rawPrice = t.raw(`pricing.products.${planId}.price`) as
-				| string
-				| Record<string, string>;
-			const priceLabel = typeof rawPrice === "string" ? rawPrice : rawPrice[interval];
 
 			return [
 				{
@@ -206,14 +195,14 @@ export function PricingTable({
 					description: planDataEntry.description,
 					features: planDataEntry.features,
 					price,
-					priceLabel,
+					weeklyPrice,
+					yearlyPrice,
 					recommended: typedPlan.recommended,
 					paymentMethods: getPaymentMethodsForPlan(),
 				},
 			];
 		}),
 	];
-	const hasSubscriptions = displayPlans.some((plan) => plan.price?.type === "subscription");
 
 	if (displayPlans.length === 0) {
 		return null;
@@ -221,21 +210,6 @@ export function PricingTable({
 
 	return (
 		<div className={cn("@container", className)}>
-			{hasSubscriptions && (
-				<div className="mb-6 flex justify-center">
-					<Tabs
-						value={interval}
-						onValueChange={(value) => setInterval(value as typeof interval)}
-						data-test="price-table-interval-tabs"
-					>
-						<TabsList className="border-foreground/10">
-							<TabsTrigger value="month">{t("pricing.monthly")}</TabsTrigger>
-							<TabsTrigger value="year">{t("pricing.yearly")}</TabsTrigger>
-						</TabsList>
-					</Tabs>
-				</div>
-			)}
-
 			<div
 				className={cn(
 					"gap-4 mx-auto grid grid-cols-1",
@@ -245,19 +219,9 @@ export function PricingTable({
 				)}
 			>
 				{displayPlans.map((plan) => {
-					const monthlyEquivalent = plan.price
-						? getMonthlyEquivalent(plan.price)
-						: undefined;
-					const intervalLabel =
-						plan.price && "interval" in plan.price
-							? interval === "month"
-								? t("pricing.month", {
-										count: 1,
-									})
-								: t("pricing.year", {
-										count: 1,
-									})
-							: undefined;
+					const hasBillingOptions =
+						plan.id === "pro" && plan.weeklyPrice && plan.yearlyPrice;
+					const yearlySavingsPercent = 86;
 					const trialPeriodDays =
 						plan.price && "trialPeriodDays" in plan.price
 							? plan.price.trialPeriodDays
@@ -294,16 +258,7 @@ export function PricingTable({
 										)}
 									</div>
 
-									{plan.priceLabel && (
-										<strong
-											className="font-medium text-2xl mt-2 block whitespace-nowrap"
-											data-test="price-table-plan-price"
-										>
-											{plan.priceLabel}
-										</strong>
-									)}
-
-									{!plan.priceLabel && plan.price && (
+									{plan.price && !hasBillingOptions && (
 										<div className="mt-2">
 											<strong
 												className="font-medium text-2xl block whitespace-nowrap"
@@ -311,12 +266,12 @@ export function PricingTable({
 											>
 												{format.number(plan.price.amount, {
 													style: "currency",
-													currency: plan.price.currency,
+													currency: "USD",
 												})}
-												{intervalLabel && (
+												{plan.price.type === "subscription" && (
 													<span className="font-normal text-xs opacity-60">
 														{" / "}
-														{intervalLabel}
+														{t("pricing.weekUnit")}
 													</span>
 												)}
 												{organizationId &&
@@ -328,18 +283,6 @@ export function PricingTable({
 														</span>
 													)}
 											</strong>
-
-											{monthlyEquivalent !== undefined && (
-												<p className="mt-1 text-sm text-primary">
-													{t("pricing.monthlyEquivalent", {
-														price: format.number(monthlyEquivalent, {
-															style: "currency",
-															currency: plan.price.currency,
-															maximumFractionDigits: 1,
-														}),
-													})}
-												</p>
-											)}
 										</div>
 									)}
 
@@ -373,46 +316,113 @@ export function PricingTable({
 									)}
 								</div>
 
-								<div>
-									{plan.price && (
-										<div className="mb-3">
-											<RedeemCodePurchaseLink
-												ariaLabel={xianyuRedeemT("ariaLabel")}
-												description={xianyuRedeemT("description")}
-												imageAlt={xianyuRedeemT("imageAlt")}
-												label={xianyuRedeemT("label")}
-												title={xianyuRedeemT("title")}
-											/>
-										</div>
+								<div className="gap-2 grid">
+									{hasBillingOptions && plan.weeklyPrice && plan.yearlyPrice ? (
+										[plan.yearlyPrice, plan.weeklyPrice].map((optionPrice) => {
+											const billingInterval = optionPrice.interval;
+											const isYearly = billingInterval === "year";
+											const optionAmount = isYearly ? 49.99 : 6.99;
+
+											return (
+												<Button
+													key={billingInterval}
+													className={cn(
+														"px-5 py-4 min-w-0 relative h-auto min-h-[104px] w-full items-stretch justify-start overflow-visible rounded-2xl border-2 text-left whitespace-normal",
+														isYearly
+															? "border-white bg-card text-foreground hover:bg-card"
+															: "border-white/20 hover:bg-white/5 bg-card text-foreground",
+													)}
+													variant="secondary"
+													onClick={() =>
+														onSelectPlan(plan.id as PlanId, {
+															type: "subscription",
+															interval: billingInterval,
+														})
+													}
+													loading={loading === plan.id}
+												>
+													<span className="gap-x-4 gap-y-2 relative grid min-h-[72px] w-full grid-cols-[minmax(0,1fr)_minmax(82px,auto)] grid-rows-[auto_1fr] items-center">
+														{isYearly && (
+															<span className="-top-3 bg-blue-600 px-3 py-1 text-xs font-medium text-white absolute left-1/2 -translate-x-1/2 rounded-full">
+																{t("pricing.savePercent", {
+																	percent: yearlySavingsPercent,
+																})}
+															</span>
+														)}
+														<span className="text-sm font-medium row-start-1 text-left">
+															{isYearly
+																? t("pricing.yearly")
+																: t("pricing.weekly")}
+														</span>
+														<span className="gap-x-2 col-start-1 row-start-2 flex flex-wrap items-baseline text-left">
+															<strong className="text-xl">
+																{format.number(optionAmount, {
+																	minimumFractionDigits: 2,
+																	maximumFractionDigits: 2,
+																})}
+																u
+															</strong>
+															{isYearly && (
+																<span className="text-sm line-through opacity-60">
+																	{format.number(6.99 * 52, {
+																		minimumFractionDigits: 2,
+																		maximumFractionDigits: 2,
+																	})}
+																	u
+																</span>
+															)}
+														</span>
+														<span className="contents">
+															<strong className="col-start-2 row-start-1 text-right">
+																{format.number(
+																	isYearly ? 49.99 / 52 : 6.99,
+																	{
+																		minimumFractionDigits: 2,
+																		maximumFractionDigits: 2,
+																	},
+																)}
+																u
+															</strong>
+															<span className="text-xs col-start-2 row-start-2 text-right opacity-70">
+																{t("pricing.weekly")}
+															</span>
+														</span>
+													</span>
+												</Button>
+											);
+										})
+									) : (
+										<Button
+											className="mt-4 w-full"
+											variant="primary"
+											onClick={() =>
+												plan.price &&
+												onSelectPlan(plan.id as PlanId, {
+													type:
+														plan.price.type === "one-time"
+															? "one-time"
+															: "subscription",
+													interval:
+														plan.price.type === "subscription"
+															? plan.price.interval
+															: undefined,
+												})
+											}
+											disabled={!plan.price}
+											loading={loading === plan.id}
+										>
+											{plan.price
+												? userId || organizationId
+													? plan.id === "pro"
+														? t("pricing.payNow")
+														: t("pricing.choosePlan")
+													: t("pricing.getStarted")
+												: t("pricing.included")}
+											{plan.price && (
+												<ArrowRightIcon className="ml-2 size-4" />
+											)}
+										</Button>
 									)}
-									<Button
-										className="mt-4 w-full"
-										variant="primary"
-										onClick={() =>
-											plan.price &&
-											onSelectPlan(plan.id as PlanId, {
-												type:
-													plan.price.type === "one-time"
-														? "one-time"
-														: "subscription",
-												interval:
-													plan.price.type === "subscription"
-														? plan.price.interval
-														: undefined,
-											})
-										}
-										disabled={!plan.price}
-										loading={loading === plan.id}
-									>
-										{plan.price
-											? userId || organizationId
-												? plan.id === "pro"
-													? t("pricing.payNow")
-													: t("pricing.choosePlan")
-												: t("pricing.getStarted")
-											: t("pricing.included")}
-										{plan.price && <ArrowRightIcon className="ml-2 size-4" />}
-									</Button>
 								</div>
 							</div>
 						</div>

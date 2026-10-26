@@ -5,8 +5,13 @@
 		"description": "Choose the plan that works best for you.",
 		"getStarted": "Get started",
 		"month": "{count, plural, one {month} other {{count} months}}",
+		"monthUnit": "/month",
 		"monthly": "Monthly",
+		"weekly": "Weekly",
 		"monthlyEquivalent": "About {price}/mo",
+		"weekUnit": "/week",
+		"savePercent": "Save {percent}%",
+		"weeklyEquivalent": "About {price}/week",
 		"products": {
 			"basic": {
 				"description": "Perfect to small teams.",
@@ -57,8 +62,8 @@
 					"communityNotifications": "Exclusive community notifications"
 				},
 				"price": {
-					"month": "19.99 CNY/mo",
-					"year": "168.88 CNY/yr · about 14.07 CNY/mo"
+					"month": "6.99 USD/week",
+					"year": "49.99 USD/year · about 0.96 USD/week"
 				},
 				"title": "Pro"
 			}
@@ -69,6 +74,7 @@
 		"title": "Pricing",
 		"trialPeriod": "48-hour free trial",
 		"year": "{count, plural, one {year} other {{count} years}}",
+		"yearUnit": "/year",
 		"yearly": "Yearly",
 		"perSeat": "seat",
 		"included": "Included",
