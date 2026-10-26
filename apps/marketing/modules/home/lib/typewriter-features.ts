@@ -12,7 +12,7 @@ export const TYPEWRITER_DATA: Record<string, LocaleFeatures> = {
 zh: {
 prefix: "",
 features: [
-{ title: "实时最新 KOL 交易信号", subtitle: "一站追踪 KOL 信号、市场数据与历史表现。" },
+{ title: "实时KOL 交易信号", subtitle: "一站追踪 KOL 信号、市场数据与历史表现。" },
 ],
 },
 en: {

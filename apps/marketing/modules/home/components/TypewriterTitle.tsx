@@ -66,7 +66,7 @@ export function TypewriterTitle() {
 	return (
 		<>
 			<h1
-				className={`font-medium text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight max-w-3xl mx-auto text-foreground ${titleMinHeight}`}
+				className={`font-medium text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight max-w-3xl mx-auto text-balance text-foreground ${titleMinHeight}`}
 			>
 				{prefix && <span className="block">{prefix}</span>}
 				<span className="block text-primary">
