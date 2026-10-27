@@ -2325,7 +2325,7 @@ export function SignalsWorkspace() {
 
 				<main className="min-h-0 min-w-0 flex flex-col bg-[#141414]">
 					<section
-						className="px-3 py-3 shrink-0 border-b bg-[#141414]"
+						className="px-3 py-3 shrink-0 bg-[#141414]"
 						data-guide-target="filters"
 					>
 						<div className="gap-3 flex flex-col">
@@ -2892,7 +2892,7 @@ export function SignalsWorkspace() {
 						className="xl:min-h-0 xl:flex-1 flex flex-col"
 						data-guide-target="chart"
 					>
-						<div className="px-3 py-2 md:px-4 md:py-3 flex items-center justify-between border-b bg-[#141414]">
+						<div className="px-3 py-2 md:px-4 md:py-3 flex items-center justify-between bg-[#141414]">
 							<div className="gap-2 md:gap-3 min-w-0 flex items-center">
 								<ChartCandlestickIcon className="size-4 md:block hidden text-muted-foreground" />
 								<span className="font-mono md:text-sm font-semibold text-[15px]">
@@ -2967,7 +2967,7 @@ export function SignalsWorkspace() {
 
 				<aside
 					className={cn(
-						"group min-h-0 xl:flex xl:flex-col xl:overflow-hidden xl:border-l xl:border-t-0 relative border-t bg-[#141414]",
+						"group min-h-0 xl:flex xl:flex-col xl:overflow-hidden xl:border-l xl:border-t-0 relative bg-[#141414]",
 					)}
 					data-guide-target="signalList"
 				>
@@ -2990,7 +2990,7 @@ export function SignalsWorkspace() {
 						)}
 					</button>
 
-					<div className={cn("shrink-0 border-b", isSignalPanelCollapsed && "xl:hidden")}>
+					<div className={cn("shrink-0", isSignalPanelCollapsed && "xl:hidden")}>
 						<div
 							className={cn(
 								"min-w-0 grid grid-cols-2",
@@ -3013,10 +3013,10 @@ export function SignalsWorkspace() {
 										setActiveSignalId(nextSignal?.id ?? null);
 									}}
 									className={cn(
-										"gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors",
+										"gap-1.5 px-4 py-2.5 text-sm font-medium after:h-0.5 after:w-9 relative transition-colors after:absolute after:bottom-[-1px] after:left-1/2 after:-translate-x-1/2 after:content-['']",
 										selectedStatus === status
-											? "border-white text-white"
-											: "hover:text-white/75 text-white/45 border-transparent",
+											? "text-white after:bg-white"
+											: "hover:text-white/75 text-white/45 after:bg-transparent",
 									)}
 								>
 									<span>{t(`status.${status}`)}</span>
