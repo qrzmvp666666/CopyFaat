@@ -2,6 +2,12 @@
 
 import { usePurchases } from "@payments/hooks/purchases";
 import { Button, cn } from "@repo/ui";
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "@repo/ui/components/accordion";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@repo/ui/components/dialog";
 import {
 	DropdownMenu,
@@ -9,7 +15,15 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@repo/ui/components/dropdown-menu";
+import {
+	Sheet,
+	SheetContent,
+	SheetDescription,
+	SheetHeader,
+	SheetTitle,
+} from "@repo/ui/components/sheet";
 import { Skeleton } from "@repo/ui/components/skeleton";
+import { getProfileAvatarUrlForSeed } from "@repo/utils";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
 	ChartCandlestickIcon,
@@ -26,6 +40,7 @@ import {
 	RefreshCwIcon,
 	SearchIcon,
 	SlidersHorizontalIcon,
+	StarIcon,
 	TargetIcon,
 	TrendingDownIcon,
 	TrendingUpIcon,
@@ -51,7 +66,9 @@ const SIGNAL_DIRECTIONS = ["all", "long", "short"] as const;
 const SIGNAL_STATUSES = ["active", "history"] as const;
 const TIME_RANGES = ["all", "24h", "3d", "7d", "30d"] as const;
 const ENTRY_STATUSES = ["all", "pending", "entered"] as const;
+const SOURCE_PICKER_CATEGORIES = ["watchlist", "contract"] as const;
 const SIGNALS_GUIDE_STORAGE_KEY_PREFIX = "signalfast:signals-guide:v2";
+const SOURCE_FOLLOW_STORAGE_KEY = "signalfast:followed-sources:v1";
 const TRIAL_WELCOME_CONFETTI_STYLES = `
 @keyframes trial-confetti-fall {
 	0% {
@@ -410,6 +427,55 @@ function getAvatarLabel(sourceName: string) {
 	return sourceName.trim().slice(0, 2).toUpperCase();
 }
 
+function createLocalPreviewSignals(baseSignal: StoredSignal | undefined): StoredSignal[] {
+	if (process.env.NODE_ENV === "production" || !baseSignal) {
+		return [];
+	}
+
+	const traders = [
+		{ id: "preview-kol-01", name: "量化策略 01" },
+		{ id: "preview-kol-02", name: "趋势交易 02" },
+		{ id: "preview-kol-03", name: "波段分析 03" },
+		{ id: "preview-kol-04", name: "合约观察 04" },
+		{ id: "preview-kol-05", name: "动量策略 05" },
+		{ id: "preview-kol-06", name: "市场研究 06" },
+	] as const;
+	const basePrice = baseSignal.entry;
+	const now = Date.now();
+
+	return traders.map((trader, index) => {
+		const direction = index % 2 === 0 ? "long" : "short";
+		const entry = Number((basePrice * (1 + (index - 2) * 0.0012)).toFixed(2));
+		const risk = entry * 0.006;
+		const submittedAt = new Date(now - (index + 1) * 12 * 60 * 1000).toISOString();
+
+		return {
+			...baseSignal,
+			chartPositionPct: 24 + index * 10,
+			createdAt: submittedAt,
+			direction,
+			entry,
+			entryStatus: index % 3 === 0 ? "entered" : "pending",
+			eventId: `local-preview:${trader.id}:${baseSignal.symbol}`,
+			id: `local-preview:${trader.id}:${baseSignal.symbol}`,
+			riskReward: 2,
+			source: {
+				id: trader.id,
+				name: trader.name,
+				avatarUrl: getProfileAvatarUrlForSeed(trader.id, 80),
+				platform: "local-demo",
+			},
+			status: "active",
+			stopLoss: Number((direction === "long" ? entry - risk : entry + risk).toFixed(2)),
+			submittedAt,
+			takeProfit: Number(
+				(direction === "long" ? entry + risk * 2 : entry - risk * 2).toFixed(2),
+			),
+			updatedAt: submittedAt,
+		};
+	});
+}
+
 function getDefaultPricePrecision(symbol: string) {
 	if (symbol.includes("BTC") || symbol.includes("ETH")) {
 		return 0;
@@ -544,7 +610,7 @@ function createSourceFilterFromSignal(signal: StoredSignal): Source {
 
 	return {
 		accent: getSymbolAccent(id),
-		avatar: signal.source.avatarUrl ?? getGeneratedSvgDataUrl(id, name, "trader"),
+		avatar: signal.source.avatarUrl ?? getProfileAvatarUrlForSeed(id, 80),
 		handle: signal.source.handle ?? signal.source.platform ?? "",
 		id,
 		initials: getAvatarLabel(name),
@@ -688,11 +754,7 @@ function mapStoredSignalToTradeSignal(signal: StoredSignal, locale: string): Tra
 		avatarLabel: getAvatarLabel(signal.source.name),
 		avatarUrl:
 			signal.source.avatarUrl ??
-			getGeneratedSvgDataUrl(
-				signal.source.id ?? signal.source.name,
-				signal.source.name,
-				"trader",
-			),
+			getProfileAvatarUrlForSeed(signal.source.id ?? signal.source.name, 80),
 		confidence: signal.riskReward,
 		direction: signal.direction,
 		entry: signal.entry,
@@ -1146,6 +1208,7 @@ function getGuideCardStyle(
 
 export function SignalsWorkspace() {
 	const t = useTranslations("signals");
+	const sourcePickerT = useTranslations("signals.sourcePicker");
 	const locale = useLocale();
 	const { activeEntitlementGrant, activePlan } = usePurchases();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
@@ -1165,6 +1228,15 @@ export function SignalsWorkspace() {
 	const [selectedStatus, setSelectedStatus] = useState<SignalStatus>("active");
 	const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("30d");
 	const [selectedEntryStatus, setSelectedEntryStatus] = useState<EntryStatus>("all");
+	const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+	const [isSourcePickerOpen, setIsSourcePickerOpen] = useState(false);
+	const [sourcePickerQuery, setSourcePickerQuery] = useState("");
+	const [followedSourceIds, setFollowedSourceIds] = useState<string[] | null>(null);
+	const [sourcePickerCategory, setSourcePickerCategory] =
+		useState<(typeof SOURCE_PICKER_CATEGORIES)[number]>("contract");
+	const [draftDirection, setDraftDirection] = useState<SignalDirection>("all");
+	const [draftTimeRange, setDraftTimeRange] = useState<TimeRange>("30d");
+	const [draftEntryStatus, setDraftEntryStatus] = useState<EntryStatus>("all");
 	const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
 	const [isChartFullscreenOpen, setIsChartFullscreenOpen] = useState(false);
@@ -1192,20 +1264,50 @@ export function SignalsWorkspace() {
 	const symbolAvailabilityRef = useRef(new Map<string, boolean>());
 	const [symbolAvailabilityRetryVersion, setSymbolAvailabilityRetryVersion] = useState(0);
 
+	const localPreviewSignals = useMemo(() => {
+		const baseSignal = webhookSignals.find((signal) => signal.symbol === selectedSymbol);
+
+		return createLocalPreviewSignals(baseSignal);
+	}, [selectedSymbol, webhookSignals]);
+	const localPreviewPageSignals = useMemo(
+		() =>
+			selectedStatus === "active"
+				? localPreviewSignals.filter(
+						(signal) =>
+							(selectedDirection === "all" ||
+								signal.direction === selectedDirection) &&
+							(selectedEntryStatus === "all" ||
+								signal.entryStatus === selectedEntryStatus) &&
+							(selectedSourceIds.length === 0 ||
+								selectedSourceIds.includes(signal.source.id ?? "")),
+					)
+				: [],
+		[
+			localPreviewSignals,
+			selectedDirection,
+			selectedEntryStatus,
+			selectedSourceIds,
+			selectedStatus,
+		],
+	);
 	const visibleWebhookSignals = useMemo(() => {
 		if (!supportedSymbols) {
 			return [];
 		}
 
-		return webhookSignals.filter((signal) => supportedSymbols.has(signal.symbol));
-	}, [supportedSymbols, webhookSignals]);
+		return [...webhookSignals, ...localPreviewSignals].filter((signal) =>
+			supportedSymbols.has(signal.symbol),
+		);
+	}, [localPreviewSignals, supportedSymbols, webhookSignals]);
 	const visibleSignalPageSignals = useMemo(() => {
 		if (!supportedSymbols) {
 			return [];
 		}
 
-		return signalPageSignals.filter((signal) => supportedSymbols.has(signal.symbol));
-	}, [signalPageSignals, supportedSymbols]);
+		return [...signalPageSignals, ...localPreviewPageSignals].filter((signal) =>
+			supportedSymbols.has(signal.symbol),
+		);
+	}, [localPreviewPageSignals, signalPageSignals, supportedSymbols]);
 
 	const signals = useMemo(
 		() => visibleWebhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
@@ -1245,10 +1347,6 @@ export function SignalsWorkspace() {
 		const sources = new Map<string, Source>();
 
 		for (const signal of visibleWebhookSignals) {
-			if (signal.symbol !== selectedSymbol) {
-				continue;
-			}
-
 			const source = createSourceFilterFromSignal(signal);
 			const existingSource = sources.get(source.id);
 			sources.set(source.id, {
@@ -1259,7 +1357,22 @@ export function SignalsWorkspace() {
 		}
 
 		return Array.from(sources.values()).sort((a, b) => a.name.localeCompare(b.name));
-	}, [selectedSymbol, visibleWebhookSignals]);
+	}, [visibleWebhookSignals]);
+	const filteredSourcePickerSources = useMemo(() => {
+		const query = sourcePickerQuery.trim().toLocaleLowerCase();
+		const categorySources =
+			sourcePickerCategory === "contract"
+				? sourceFilters
+				: sourcePickerCategory === "watchlist"
+					? sourceFilters.filter((source) =>
+							(followedSourceIds ?? []).includes(source.id),
+						)
+					: [];
+
+		return categorySources.filter((source) =>
+			`${source.name} ${source.handle}`.toLocaleLowerCase().includes(query),
+		);
+	}, [followedSourceIds, sourceFilters, sourcePickerCategory, sourcePickerQuery]);
 	const signalPageFilters = useMemo<SignalPageFilters>(
 		() => ({
 			direction: selectedDirection,
@@ -1553,6 +1666,38 @@ export function SignalsWorkspace() {
 	}, [instruments, selectedSymbol]);
 
 	useEffect(() => {
+		try {
+			const storedSourceIds = window.localStorage.getItem(SOURCE_FOLLOW_STORAGE_KEY);
+			const parsedSourceIds: unknown = storedSourceIds ? JSON.parse(storedSourceIds) : [];
+
+			setFollowedSourceIds(
+				Array.isArray(parsedSourceIds)
+					? parsedSourceIds.filter(
+							(sourceId): sourceId is string => typeof sourceId === "string",
+						)
+					: [],
+			);
+		} catch {
+			setFollowedSourceIds([]);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (followedSourceIds === null) {
+			return;
+		}
+
+		try {
+			window.localStorage.setItem(
+				SOURCE_FOLLOW_STORAGE_KEY,
+				JSON.stringify(followedSourceIds),
+			);
+		} catch {
+			// Keep the follow control usable when browser storage is unavailable.
+		}
+	}, [followedSourceIds]);
+
+	useEffect(() => {
 		if (!isSignupTrial) {
 			return;
 		}
@@ -1728,6 +1873,15 @@ export function SignalsWorkspace() {
 	}
 	const isTickerLoading =
 		(isSignalsLoading || supportedSymbols === null) && instruments.length === 0;
+	const displayedStatusCounts = {
+		...statusCounts,
+		active: statusCounts.active + localPreviewPageSignals.length,
+	};
+	const activeMobileFilterCount =
+		selectedSourceIds.length +
+		Number(selectedDirection !== "all") +
+		Number(selectedTimeRange !== "30d") +
+		Number(selectedEntryStatus !== "all");
 	const isChartLoading =
 		isSignalsLoading ||
 		supportedSymbols === null ||
@@ -1767,6 +1921,39 @@ export function SignalsWorkspace() {
 	function clearSourceFilters() {
 		setSelectedSourceIds([]);
 		setActiveSignalId(null);
+	}
+
+	function toggleSourceFollow(sourceId: string) {
+		setFollowedSourceIds((currentSourceIds) => {
+			const sourceIds = currentSourceIds ?? [];
+
+			return sourceIds.includes(sourceId)
+				? sourceIds.filter((currentSourceId) => currentSourceId !== sourceId)
+				: [...sourceIds, sourceId];
+		});
+	}
+
+	function openMobileFilters(open: boolean) {
+		if (open) {
+			setDraftDirection(selectedDirection);
+			setDraftTimeRange(selectedTimeRange);
+			setDraftEntryStatus(selectedEntryStatus);
+		}
+		setIsMobileFiltersOpen(open);
+	}
+
+	function applyMobileFilters() {
+		setSelectedDirection(draftDirection);
+		setSelectedTimeRange(draftTimeRange);
+		setSelectedEntryStatus(draftEntryStatus);
+		setActiveSignalId(null);
+		setIsMobileFiltersOpen(false);
+	}
+
+	function resetMobileFilters() {
+		setDraftDirection("all");
+		setDraftTimeRange("30d");
+		setDraftEntryStatus("all");
 	}
 
 	function markGuideSeen() {
@@ -1843,7 +2030,10 @@ export function SignalsWorkspace() {
 	];
 
 	return (
-		<div className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden min-h-full bg-[#141414] text-foreground">
+		<div
+			data-pwa-theme-surface="signals"
+			className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden min-h-full bg-[#141414] pt-[env(safe-area-inset-top)] text-foreground"
+		>
 			<style>{SIGNALS_SKELETON_STYLES}</style>
 			<Dialog
 				open={welcomeDialogOpen}
@@ -1986,7 +2176,7 @@ export function SignalsWorkspace() {
 				</DialogContent>
 			</Dialog>
 			<header
-				className="px-4 py-2 backdrop-blur shrink-0 border-b bg-[#141414]/80"
+				className="px-4 py-2 backdrop-blur md:block hidden shrink-0 border-b bg-[#141414]/80"
 				data-guide-target="ticker"
 			>
 				{isTickerLoading ? (
@@ -2134,53 +2324,305 @@ export function SignalsWorkspace() {
 				</aside>
 
 				<main className="min-h-0 min-w-0 flex flex-col bg-[#141414]">
-					<section className="px-3 py-3 shrink-0 border-b bg-[#141414]">
+					<section
+						className="px-3 py-3 shrink-0 border-b bg-[#141414]"
+						data-guide-target="filters"
+					>
 						<div className="gap-3 flex flex-col">
-							<div
-								className="no-scrollbar -mx-3 min-w-0 gap-2 px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 flex flex-nowrap items-center overflow-x-auto"
-								data-guide-target="traders"
-							>
-								<button
-									type="button"
-									onClick={clearSourceFilters}
-									className={cn(
-										"px-2.5 py-1.5 text-xs font-medium min-w-[52px] shrink-0 rounded-md border text-center transition-colors",
-										selectedSourceIds.length === 0
-											? "border-foreground/20 bg-foreground text-background"
-											: "hover:bg-white/8 bg-[#141414]",
-									)}
-								>
-									{t("filters.allSources")}
-								</button>
-								{sourceFilters.map((source) => (
+							<div data-guide-target="traders">
+								<div className="md:flex md:flex-wrap md:items-start md:gap-2 hidden">
 									<button
-										key={source.id}
 										type="button"
-										onClick={() => toggleSourceFilter(source.id)}
+										onClick={clearSourceFilters}
+										aria-pressed={selectedSourceIds.length === 0}
 										className={cn(
-											"gap-1.5 px-2 py-1 text-xs flex shrink-0 items-center rounded-md border transition-colors",
-											selectedSourceIds.includes(source.id)
-												? "border-foreground/20 bg-foreground text-background"
-												: "hover:bg-white/8 bg-[#141414]",
+											"md:size-auto md:min-w-[52px] md:px-2.5 md:py-1.5 md:text-xs font-medium gap-1 md:gap-0 md:rounded-md flex size-[52px] shrink-0 flex-col items-center justify-center rounded-lg border text-center text-[10px] transition-colors",
+											selectedSourceIds.length === 0
+												? "md:bg-foreground border-foreground/20 bg-foreground text-background"
+												: "hover:bg-white/8 md:bg-[#141414] bg-[#141414]",
 										)}
-										aria-pressed={selectedSourceIds.includes(source.id)}
 									>
-										<span className="size-5 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
-											<img
-												alt={source.name}
-												className="size-5 object-cover"
-												src={source.avatar}
-											/>
+										<span className="size-10 md:hidden border-white/15 bg-white/8 font-bold flex items-center justify-center rounded-full border text-[11px]">
+											{t("filters.allSources").slice(0, 1)}
 										</span>
-										<span className="max-w-32 truncate">{source.name}</span>
+										<span>{t("filters.allSources")}</span>
 									</button>
-								))}
+									{sourceFilters.map((source) => (
+										<button
+											key={source.id}
+											type="button"
+											onClick={() => toggleSourceFilter(source.id)}
+											title={source.name}
+											className={cn(
+												"md:w-auto md:min-h-0 gap-1 md:gap-1.5 px-0 md:px-2 py-0 md:py-1 md:text-xs md:flex-row md:items-center md:rounded-md md:border flex min-h-[68px] w-[64px] shrink-0 flex-col items-center rounded-lg border border-transparent text-[10px] transition-colors",
+												selectedSourceIds.includes(source.id)
+													? "bg-white/8 md:border-foreground/20 md:bg-foreground md:text-background text-foreground"
+													: "hover:bg-white/8 md:bg-[#141414]",
+											)}
+											aria-pressed={selectedSourceIds.includes(source.id)}
+										>
+											<span
+												className={cn(
+													"size-11 md:size-5 flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 ring-offset-2 ring-offset-[#141414] transition-colors",
+													selectedSourceIds.includes(source.id)
+														? "md:ring-transparent ring-foreground"
+														: "ring-white/10 md:ring-transparent",
+												)}
+											>
+												<img
+													alt={source.name}
+													className="size-full object-cover"
+													src={source.avatar}
+												/>
+											</span>
+											<span className="md:w-auto md:max-w-32 md:text-left w-full truncate text-center">
+												{source.name}
+											</span>
+										</button>
+									))}
+								</div>
+								<div className="min-w-0 gap-2 md:hidden flex items-start">
+									<div className="no-scrollbar min-w-0 gap-3 flex min-h-[76px] flex-1 items-start overflow-x-auto overflow-y-hidden">
+										{sourceFilters.map((source) => (
+											<button
+												key={source.id}
+												type="button"
+												onClick={() => toggleSourceFilter(source.id)}
+												title={source.name}
+												aria-pressed={selectedSourceIds.includes(source.id)}
+												className="gap-1 px-0 pt-1 pb-0 flex min-h-[72px] w-[64px] shrink-0 flex-col items-center rounded-lg border border-transparent text-[10px] text-foreground transition-colors"
+											>
+												<span
+													className={cn(
+														"size-11 box-border flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2",
+														selectedSourceIds.includes(source.id)
+															? "border-white"
+															: "border-white/10",
+													)}
+												>
+													<img
+														alt={source.name}
+														className="size-full object-cover"
+														src={source.avatar}
+													/>
+												</span>
+												<span className="w-full truncate text-center">
+													{source.name}
+												</span>
+											</button>
+										))}
+									</div>
+									<Sheet
+										open={isSourcePickerOpen}
+										onOpenChange={setIsSourcePickerOpen}
+									>
+										<Button
+											type="button"
+											size="icon"
+											variant="ghost"
+											aria-label={sourcePickerT("open")}
+											title={sourcePickerT("open")}
+											className="size-9 text-white/60 hover:bg-white/5 hover:text-white shrink-0"
+											onClick={() => setIsSourcePickerOpen(true)}
+										>
+											<ChevronRightIcon className="size-5" />
+										</Button>
+										<SheetContent
+											side="bottom"
+											showCloseButton={false}
+											className="md:hidden gap-0 border-white/10 !p-0 text-white flex h-[82dvh] max-h-[88dvh] flex-col overflow-hidden rounded-t-2xl bg-[#151515]"
+										>
+											<div className="mt-1 h-1 w-10 bg-white/20 mx-auto rounded-full" />
+											<div className="gap-1 px-4 pt-1 pb-0 flex flex-col">
+												<div className="gap-3 flex items-center">
+													<div className="relative flex-1">
+														<SearchIcon className="left-3 size-4 text-white/45 pointer-events-none absolute top-1/2 -translate-y-1/2" />
+														<input
+															value={sourcePickerQuery}
+															onChange={(event) =>
+																setSourcePickerQuery(
+																	event.target.value,
+																)
+															}
+															placeholder={sourcePickerT("search")}
+															className="h-11 bg-white/10 py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus-visible:ring-white/35 w-full rounded-full outline-none focus-visible:ring-1"
+														/>
+													</div>
+												</div>
+												<div className="no-scrollbar gap-2 flex overflow-x-auto">
+													{SOURCE_PICKER_CATEGORIES.map((category) => (
+														<button
+															key={category}
+															type="button"
+															onClick={() =>
+																setSourcePickerCategory(category)
+															}
+															className={cn(
+																"py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+																sourcePickerCategory === category
+																	? "border-white text-white border-b-2"
+																	: "text-white/45 border-b-2 border-transparent",
+															)}
+														>
+															{sourcePickerT(
+																`categories.${category}`,
+															)}
+														</button>
+													))}
+												</div>
+											</div>
+											<div className="min-h-0 px-4 pb-2 flex-1 overflow-y-auto">
+												<div className="gap-1 flex flex-col">
+													{filteredSourcePickerSources.map((source) => {
+														const isSelected =
+															selectedSourceIds.length === 0 ||
+															selectedSourceIds.includes(source.id);
+														const isFollowed = (
+															followedSourceIds ?? []
+														).includes(source.id);
+														const sourceSignalCount =
+															visibleWebhookSignals.filter(
+																(signal) =>
+																	(signal.source.id ??
+																		normalizeSourceKey(
+																			signal.source.name,
+																		)) === source.id &&
+																	signal.symbol ===
+																		selectedSymbol,
+															).length;
+
+														return (
+															<div
+																key={source.id}
+																className="gap-2 px-1 flex min-h-[56px] items-center rounded-lg"
+															>
+																<button
+																	type="button"
+																	onClick={() =>
+																		toggleSourceFilter(
+																			source.id,
+																		)
+																	}
+																	aria-pressed={isSelected}
+																	className="min-w-0 gap-3 py-1 flex flex-1 items-center text-left"
+																>
+																	<img
+																		alt=""
+																		className="size-10 shrink-0 rounded-full object-cover"
+																		src={source.avatar}
+																	/>
+																	<span className="min-w-0 flex-1">
+																		<span className="text-sm font-medium block truncate">
+																			{source.name}
+																		</span>
+																		<span className="text-xs text-white/45 block">
+																			{sourcePickerT(
+																				"signalCount",
+																				{
+																					count: sourceSignalCount,
+																				},
+																			)}
+																		</span>
+																	</span>
+																</button>
+																<Button
+																	type="button"
+																	variant="ghost"
+																	size="icon"
+																	aria-label={sourcePickerT(
+																		isFollowed
+																			? "unfollow"
+																			: "follow",
+																		{
+																			name: source.name,
+																		},
+																	)}
+																	className={cn(
+																		"size-10 shrink-0",
+																		isFollowed
+																			? "text-amber-400 hover:text-amber-300"
+																			: "text-white/35 hover:text-amber-300",
+																	)}
+																	onClick={() =>
+																		toggleSourceFollow(
+																			source.id,
+																		)
+																	}
+																>
+																	<StarIcon
+																		className="size-5"
+																		fill={
+																			isFollowed
+																				? "currentColor"
+																				: "none"
+																		}
+																	/>
+																</Button>
+															</div>
+														);
+													})}
+													{filteredSourcePickerSources.length === 0 && (
+														<p className="py-12 text-sm text-white/45 text-center">
+															{sourcePickerT("noMatches")}
+														</p>
+													)}
+												</div>
+											</div>
+											<div className="px-4 pt-2 pb-[max(env(safe-area-inset-bottom),8px)]">
+												<Button
+													type="button"
+													className="h-11 bg-white text-black hover:bg-white/90 w-full"
+													onClick={() => setIsSourcePickerOpen(false)}
+												>
+													{sourcePickerT("done")}
+												</Button>
+											</div>
+										</SheetContent>
+									</Sheet>
+								</div>
+							</div>
+							<div className="md:hidden flex items-center">
+								<Button
+									type="button"
+									size="icon"
+									variant="ghost"
+									aria-label={t("actions.filters")}
+									title={t("actions.filters")}
+									className="size-9 text-white/55 hover:bg-white/5 hover:text-white relative shrink-0"
+									onClick={() => openMobileFilters(true)}
+								>
+									<SlidersHorizontalIcon className="size-4" />
+									{activeMobileFilterCount > 0 && (
+										<span className="right-0 top-0 size-4 font-semibold absolute flex items-center justify-center rounded-full bg-foreground text-[9px] text-background">
+											{activeMobileFilterCount}
+										</span>
+									)}
+								</Button>
+								<Button
+									type="button"
+									size="icon"
+									variant="ghost"
+									aria-label={t("actions.refresh")}
+									title={t("actions.refresh")}
+									className="size-9 text-white/55 hover:bg-white/5 hover:text-white"
+									onClick={() => setSignalPageRefreshKey((key) => key + 1)}
+								>
+									<RefreshCwIcon className="size-4" />
+								</Button>
+								<Button
+									type="button"
+									size="icon"
+									variant="ghost"
+									aria-label={t("guide.replay")}
+									title={t("guide.replay")}
+									className="size-9 text-white/55 hover:bg-white/5 hover:text-white"
+									onClick={replayGuide}
+								>
+									<CompassIcon className="size-4" />
+								</Button>
 							</div>
 
-							<div
-								className="gap-2 flex flex-wrap items-center"
-								data-guide-target="filters"
-							>
+							<div className="gap-2 md:flex md:flex-wrap md:items-center hidden">
 								{SIGNAL_DIRECTIONS.map((direction) => (
 									<button
 										key={direction}
@@ -2312,14 +2754,137 @@ export function SignalsWorkspace() {
 								>
 									<RefreshCwIcon className="size-4" />
 								</Button>
-								<Button
-									size="icon"
-									variant="ghost"
-									aria-label={t("actions.filters")}
-								>
-									<SlidersHorizontalIcon className="size-4" />
-								</Button>
 							</div>
+							<Sheet open={isMobileFiltersOpen} onOpenChange={openMobileFilters}>
+								<SheetContent
+									side="bottom"
+									className="md:hidden gap-0 border-white/10 p-0 text-white flex h-[80dvh] max-h-[85dvh] flex-col overflow-hidden rounded-t-2xl bg-[#181818]"
+								>
+									<SheetHeader className="px-5 pt-5 pb-3 pr-14 text-left">
+										<SheetTitle className="text-white text-left">
+											{t("filters.mobileTitle")}
+										</SheetTitle>
+										<SheetDescription className="text-white/55 text-left">
+											{t("filters.mobileDescription")}
+										</SheetDescription>
+									</SheetHeader>
+									<Accordion
+										type="multiple"
+										defaultValue={["direction"]}
+										className="min-h-0 px-5 flex-1 overflow-y-auto"
+									>
+										<AccordionItem
+											value="direction"
+											className="border-white/10"
+										>
+											<AccordionTrigger className="py-4 text-sm hover:no-underline">
+												{t("filters.direction")}
+											</AccordionTrigger>
+											<AccordionContent className="pb-4">
+												<div className="gap-2 flex flex-wrap">
+													{SIGNAL_DIRECTIONS.map((direction) => (
+														<button
+															key={direction}
+															type="button"
+															aria-pressed={
+																draftDirection === direction
+															}
+															onClick={() =>
+																setDraftDirection(direction)
+															}
+															className={cn(
+																"min-h-10 px-4 text-sm rounded-lg border transition-colors",
+																draftDirection === direction
+																	? "border-white bg-white text-black"
+																	: "border-white/10 bg-white/[0.04] text-white/70",
+															)}
+														>
+															{t(`direction.${direction}`)}
+														</button>
+													))}
+												</div>
+											</AccordionContent>
+										</AccordionItem>
+										<AccordionItem
+											value="timeRange"
+											className="border-white/10"
+										>
+											<AccordionTrigger className="py-4 text-sm hover:no-underline">
+												{t("filters.timeRange")}
+											</AccordionTrigger>
+											<AccordionContent className="pb-4">
+												<div className="gap-2 flex flex-wrap">
+													{TIME_RANGES.map((range) => (
+														<button
+															key={range}
+															type="button"
+															aria-pressed={draftTimeRange === range}
+															onClick={() => setDraftTimeRange(range)}
+															className={cn(
+																"min-h-10 px-4 text-sm rounded-lg border transition-colors",
+																draftTimeRange === range
+																	? "border-white bg-white text-black"
+																	: "border-white/10 bg-white/[0.04] text-white/70",
+															)}
+														>
+															{t(`filters.timeRanges.${range}`)}
+														</button>
+													))}
+												</div>
+											</AccordionContent>
+										</AccordionItem>
+										<AccordionItem
+											value="entryStatus"
+											className="border-white/10"
+										>
+											<AccordionTrigger className="py-4 text-sm hover:no-underline">
+												{t("filters.entryStatus")}
+											</AccordionTrigger>
+											<AccordionContent className="pb-4">
+												<div className="gap-2 flex flex-wrap">
+													{ENTRY_STATUSES.map((status) => (
+														<button
+															key={status}
+															type="button"
+															aria-pressed={
+																draftEntryStatus === status
+															}
+															onClick={() =>
+																setDraftEntryStatus(status)
+															}
+															className={cn(
+																"min-h-10 px-4 text-sm rounded-lg border transition-colors",
+																draftEntryStatus === status
+																	? "border-white bg-white text-black"
+																	: "border-white/10 bg-white/[0.04] text-white/70",
+															)}
+														>
+															{t(`filters.entryStatuses.${status}`)}
+														</button>
+													))}
+												</div>
+											</AccordionContent>
+										</AccordionItem>
+									</Accordion>
+									<div className="gap-3 border-white/10 px-5 pt-3 grid grid-cols-2 border-t bg-[#181818] pb-[max(env(safe-area-inset-bottom),16px)]">
+										<Button
+											type="button"
+											variant="outline"
+											className="h-11 border-white/15 text-white bg-transparent"
+											onClick={resetMobileFilters}
+										>
+											{t("filters.reset")}
+										</Button>
+										<Button
+											type="button"
+											className="h-11 bg-white text-black hover:bg-white/90"
+											onClick={applyMobileFilters}
+										>
+											{t("filters.apply")}
+										</Button>
+									</div>
+								</SheetContent>
+							</Sheet>
 						</div>
 					</section>
 
@@ -2327,25 +2892,25 @@ export function SignalsWorkspace() {
 						className="xl:min-h-0 xl:flex-1 flex flex-col"
 						data-guide-target="chart"
 					>
-						<div className="px-4 py-3 flex items-center justify-between border-b bg-[#141414]">
-							<div className="gap-3 flex items-center">
-								<ChartCandlestickIcon className="size-4 text-muted-foreground" />
-								<span className="font-mono text-sm font-semibold">
+						<div className="px-3 py-2 md:px-4 md:py-3 flex items-center justify-between border-b bg-[#141414]">
+							<div className="gap-2 md:gap-3 min-w-0 flex items-center">
+								<ChartCandlestickIcon className="size-4 md:block hidden text-muted-foreground" />
+								<span className="font-mono md:text-sm font-semibold text-[15px]">
 									{selectedSymbol || t("chart.loadingSymbol")}
 								</span>
 							</div>
-							<div className="gap-2 flex items-center">
-								<div className="gap-0.5 p-0.5 flex items-center rounded-md border bg-[#141414]">
+							<div className="gap-1 md:gap-2 flex shrink-0 items-center">
+								<div className="gap-0.5 md:p-0.5 md:rounded-md md:border md:bg-[#141414] flex items-center">
 									{SUPPORTED_TIMEFRAMES.map((timeframe) => (
 										<button
 											key={timeframe}
 											type="button"
 											onClick={() => setSelectedTimeframe(timeframe)}
 											className={cn(
-												"px-2.5 py-1 text-xs font-semibold rounded-sm transition-colors",
+												"min-w-8 px-1.5 py-1.5 text-xs font-semibold md:min-w-0 md:border-0 md:px-2.5 md:py-1 md:rounded-sm border-b-2 border-transparent transition-colors",
 												selectedTimeframe === timeframe
-													? "bg-foreground text-background"
-													: "hover:bg-white/8 text-muted-foreground hover:text-foreground",
+													? "md:bg-foreground md:text-background border-foreground text-foreground"
+													: "md:hover:bg-white/8 text-muted-foreground hover:text-foreground",
 											)}
 										>
 											{timeframe}
@@ -2356,6 +2921,7 @@ export function SignalsWorkspace() {
 									size="icon"
 									variant="ghost"
 									aria-label={t("actions.expand")}
+									className="size-8 text-white/55 hover:bg-white/5 hover:text-white md:size-9"
 									onClick={() => setIsChartFullscreenOpen(true)}
 								>
 									<Maximize2Icon className="size-4" />
@@ -2363,7 +2929,7 @@ export function SignalsWorkspace() {
 							</div>
 						</div>
 
-						<div className="xl:h-auto xl:min-h-0 xl:flex-1 h-[min(620px,calc(100vh-260px))] min-h-[420px]">
+						<div className="md:h-[min(620px,calc(100vh-260px))] md:min-h-[420px] xl:h-auto xl:min-h-0 xl:flex-1 h-[min(280px,34dvh)] min-h-[240px]">
 							{canShowChart ? (
 								<TradingViewSignalChart
 									activeSignal={activeSignal}
@@ -2386,7 +2952,7 @@ export function SignalsWorkspace() {
 							) : isSignalsLoading || isChartLoading ? (
 								<ChartSkeleton />
 							) : (
-								<div className="p-6 flex h-full min-h-[520px] items-center justify-center bg-[#141414]">
+								<div className="p-4 md:p-6 md:min-h-[520px] flex h-full min-h-[240px] items-center justify-center bg-[#141414]">
 									<div className="max-w-sm border-white/12 px-6 py-5 rounded-xl border border-dashed text-center">
 										<p className="font-medium">{t("chart.emptyTitle")}</p>
 										<p className="mt-1 text-sm text-muted-foreground">
@@ -2447,16 +3013,16 @@ export function SignalsWorkspace() {
 										setActiveSignalId(nextSignal?.id ?? null);
 									}}
 									className={cn(
-										"px-4 py-3 text-xs font-medium border-b-2 transition-colors",
+										"gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors",
 										selectedStatus === status
-											? "border-white text-white bg-[#222222]"
-											: "hover:text-white border-transparent bg-transparent text-muted-foreground",
+											? "border-white text-white"
+											: "hover:text-white/75 text-white/45 border-transparent",
 									)}
 								>
 									<span>{t(`status.${status}`)}</span>
-									{statusCounts[status] > 0 && (
+									{displayedStatusCounts[status] > 0 && (
 										<span className="ml-1.5 text-xs font-semibold opacity-60">
-											{statusCounts[status]}
+											{displayedStatusCounts[status]}
 										</span>
 									)}
 								</button>

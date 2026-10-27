@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@repo/ui/components/button";
+import { getProfileAvatarUrl } from "@repo/utils";
 import { ArrowRightIcon, MaximizeIcon, PlayIcon, StarIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
@@ -113,7 +114,7 @@ export function HeroSection() {
 								className={`size-9 overflow-hidden rounded-full border-2 border-background ${i > 0 ? "-ml-3" : ""}`}
 							>
 								<Image
-									src={`https://i.pravatar.cc/72?img=${AVATAR_PHOTO_IDS[key]}`}
+									src={getProfileAvatarUrl(AVATAR_PHOTO_IDS[key], 72)}
 									alt={key}
 									width={36}
 									height={36}

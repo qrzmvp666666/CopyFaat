@@ -1,5 +1,6 @@
 "use client";
 
+import { getProfileAvatarUrl } from "@repo/utils";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -96,7 +97,10 @@ export function TestimonialsSection() {
 									<div className="mb-2 gap-2 flex items-center">
 										<div className="size-8 border-white/10 overflow-hidden rounded-full border">
 											<Image
-												src={`https://i.pravatar.cc/80?img=${AVATAR_PHOTO_IDS[activeItem.key]}`}
+												src={getProfileAvatarUrl(
+													AVATAR_PHOTO_IDS[activeItem.key],
+													80,
+												)}
 												alt=""
 												width={32}
 												height={32}

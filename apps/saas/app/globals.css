@@ -23,6 +23,11 @@
 }
 
 @layer base {
+	html:has([data-pwa-theme-surface="signals"]),
+	body:has([data-pwa-theme-surface="signals"]) {
+		background-color: #141414;
+	}
+
 	.auth-dark-shell.dark {
 		--color-background: var(--background);
 		--color-foreground: var(--foreground);

@@ -19,6 +19,7 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { createAuthMiddleware } from "better-auth/api";
 import { admin, magicLink, openAPI, organization, twoFactor, username } from "better-auth/plugins";
 import { parse as parseCookies } from "cookie";
+import { networkInterfaces } from "node:os";
 
 import { config } from "./config";
 import { updateSeatsInOrganizationSubscription } from "./lib/organization";
@@ -30,13 +31,34 @@ const getLocaleFromRequest = (request?: Request) => {
 };
 
 const appUrl = getBaseUrl(process.env.NEXT_PUBLIC_SAAS_URL, 4100, "signalfast.localhost");
+const localDevPort = process.env.PORT ?? "4100";
+const localNetworkTrustedOrigins =
+	process.env.NODE_ENV === "production"
+		? []
+		: Object.values(networkInterfaces())
+				.flatMap((interfaces) => interfaces ?? [])
+				.filter(({ address, family, internal }) => {
+					if (family !== "IPv4" || internal) {
+						return false;
+					}
+
+					const [first, second, third] = address.split(".").map(Number);
+					return (
+						first === 10 ||
+						(first === 192 && second === 168) ||
+						(first === 172 && second >= 16 && second <= 31) ||
+						(first === 169 && second === 254 && third !== undefined)
+					);
+				})
+				.map(({ address }) => `http://${address}:${localDevPort}`);
 const localDevTrustedOrigins =
 	process.env.NODE_ENV === "production"
 		? []
 		: [
-				`http://localhost:${process.env.PORT ?? 4100}`,
-				`http://127.0.0.1:${process.env.PORT ?? 4100}`,
-				`http://0.0.0.0:${process.env.PORT ?? 4100}`,
+				`http://localhost:${localDevPort}`,
+				`http://127.0.0.1:${localDevPort}`,
+				`http://0.0.0.0:${localDevPort}`,
+				...localNetworkTrustedOrigins,
 			];
 const trustedOrigins = Array.from(new Set([appUrl, ...localDevTrustedOrigins]));
 

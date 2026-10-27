@@ -452,6 +452,7 @@ export function NavBar() {
 		<nav
 			className={cn(
 				"md:fixed md:top-0 md:left-0 md:h-full md:w-[280px] w-full",
+				isSignalsWorkspace && "md:block hidden",
 				isCollapsedEffective && "md:w-[80px]",
 			)}
 		>

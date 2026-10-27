@@ -1,7 +1,7 @@
-import { getSession } from "@auth/lib/server";
-import { PricingTable } from "@payments/components/PricingTable";
-import { ChartCandlestickIcon, RadioIcon } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { config } from "@config";
+import { Button } from "@repo/ui/components/button";
+import { ArrowRightIcon, ChartCandlestickIcon, LockKeyholeIcon, RadioIcon } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 
 const PREVIEW_CANDLES = [
 	{
@@ -112,12 +112,16 @@ const PREVIEW_CANDLES = [
 
 export async function SignalsPaywall() {
 	const t = await getTranslations("signals");
-	const choosePlanT = await getTranslations("choosePlan");
-	const session = await getSession();
+	const locale = await getLocale();
+	const marketingUrl = config.marketingUrl?.replace(/\/$/, "") ?? "";
+	const pricingUrl = `${marketingUrl}/${locale}#pricing`;
 
 	return (
-		<section className="text-white relative h-full min-h-full overflow-hidden bg-[#141414]">
-			<div aria-hidden="true" className="inset-0 pointer-events-none absolute">
+		<section
+			data-pwa-theme-surface="signals"
+			className="text-white relative h-full min-h-full overflow-hidden bg-[#141414]"
+		>
+			<div aria-hidden="true" className="inset-0 pointer-events-none absolute select-none">
 				<div className="flex h-full min-h-[680px] flex-col bg-[#141414]">
 					<header className="min-h-14 gap-3 border-white/10 px-4 flex shrink-0 items-center border-b">
 						<div className="gap-2 pr-2 text-sm font-semibold flex shrink-0 items-center">
@@ -271,20 +275,24 @@ export async function SignalsPaywall() {
 				</div>
 			</div>
 
-			<div className="inset-0 bg-black/45 pointer-events-none absolute backdrop-blur-[5px]" />
-			<div className="inset-0 p-4 sm:p-6 pointer-events-none absolute overflow-y-auto">
-				<div className="py-4 flex min-h-full items-center justify-center">
-					<div className="max-w-5xl border-white/15 px-5 py-7 backdrop-blur-xl sm:px-8 sm:py-8 pointer-events-auto w-full rounded-lg border bg-[#171615]/75 shadow-[0_24px_72px_rgba(0,0,0,0.5)]">
-						<div className="mb-6 text-center">
-							<h1 className="text-2xl font-bold text-white sm:text-3xl">
-								{choosePlanT("title")}
-							</h1>
-							<p className="mt-2 text-sm text-white/65 sm:text-base">
-								{choosePlanT("description")}
-							</p>
-						</div>
-						<PricingTable className="max-w-4xl mx-auto" userId={session?.user.id} />
+			<div className="inset-0 bg-black/35 pointer-events-none absolute backdrop-blur-[5px]" />
+			<div className="inset-0 p-4 sm:p-6 pointer-events-none absolute grid place-items-center">
+				<div className="max-w-md border-white/15 px-6 py-7 sm:px-8 backdrop-blur-xl pointer-events-auto w-full rounded-xl border bg-[#171615]/80 text-center shadow-[0_24px_72px_rgba(0,0,0,0.5)]">
+					<div className="mb-4 size-11 border-white/15 bg-white/[0.06] mx-auto grid place-items-center rounded-full border">
+						<LockKeyholeIcon className="size-5 text-white/80" aria-hidden="true" />
 					</div>
+					<h1 className="text-xl font-semibold text-white sm:text-2xl">
+						{t("paywall.preview.title")}
+					</h1>
+					<p className="mt-2 text-sm leading-6 text-white/65">
+						{t("paywall.preview.description")}
+					</p>
+					<Button asChild className="mt-6 sm:w-auto w-full" size="lg" variant="primary">
+						<a href={pricingUrl}>
+							{t("paywall.preview.action")}
+							<ArrowRightIcon className="ml-2 size-4" aria-hidden="true" />
+						</a>
+					</Button>
 				</div>
 			</div>
 		</section>

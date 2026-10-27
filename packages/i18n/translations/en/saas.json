@@ -757,7 +757,45 @@
 			"short": "Short"
 		},
 		"filters": {
-			"allSources": "All"
+			"allSources": "All",
+			"apply": "Show results",
+			"direction": "Direction",
+			"entryStatus": "Entry status",
+			"entryStatuses": {
+				"all": "All statuses",
+				"entered": "Entered",
+				"pending": "Pending"
+			},
+			"mobileDescription": "Narrow signals by direction, time, and entry status",
+			"mobileTitle": "Filters",
+			"reset": "Reset",
+			"timeRange": "Signal time",
+			"viewSources": "View",
+			"timeRanges": {
+				"24h": "Past 24 hours",
+				"3d": "Past 3 days",
+				"7d": "Past 7 days",
+				"30d": "Past 30 days",
+				"all": "Any time"
+			}
+		},
+		"sourcePicker": {
+			"allTraders": "All KOLs",
+			"categories": {
+				"contract": "Contracts",
+				"onchain": "On-chain",
+				"options": "Options",
+				"spot": "Spot",
+				"watchlist": "Selected"
+			},
+			"contractOnly": "Only contract signals are currently available",
+			"done": "Done",
+			"follow": "Follow {name}",
+			"noMatches": "No matching KOLs",
+			"open": "View all KOLs",
+			"search": "Search KOLs or traders",
+			"signalCount": "{count} signals",
+			"unfollow": "Unfollow {name}"
 		},
 		"guide": {
 			"close": "Maybe later",
@@ -796,7 +834,12 @@
 		"paywall": {
 			"action": "View membership plans",
 			"description": "Upgrade to view KOL signals and aggregated K-line charts.",
-			"title": "Aggregated K-lines are a member feature"
+			"title": "Aggregated K-lines are a member feature",
+			"preview": {
+				"action": "View plans",
+				"description": "You are signed in. Choose a plan to unlock full signals, market data, and chart analysis.",
+				"title": "Signals workspace preview"
+			}
 		},
 		"signalsPanel": {
 			"closed": "Closed",

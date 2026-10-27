@@ -1,3 +1,5 @@
+import { networkInterfaces } from "node:os";
+
 // @ts-expect-error - PrismaPlugin is not typed
 import { PrismaPlugin } from "@prisma/nextjs-monorepo-workaround-plugin";
 import type { NextConfig } from "next";
@@ -8,6 +10,30 @@ const withNextIntl = nextIntlPlugin("./modules/i18n/request.ts");
 const allowedDevOrigin = process.env.NEXT_PUBLIC_SAAS_URL
 	? new URL(process.env.NEXT_PUBLIC_SAAS_URL).hostname
 	: undefined;
+const localNetworkOrigins = Object.values(networkInterfaces())
+	.flatMap((interfaces) => interfaces ?? [])
+	.filter(({ address, family, internal }) => {
+		if (family !== "IPv4" || internal) {
+			return false;
+		}
+
+		const [first, second, third] = address.split(".").map(Number);
+		return (
+			first === 10 ||
+			(first === 192 && second === 168) ||
+			(first === 172 && second >= 16 && second <= 31) ||
+			(first === 169 && second === 254 && third !== undefined)
+		);
+	})
+	.map(({ address }) => address);
+const allowedDevOrigins = new Set([
+	...(allowedDevOrigin ? [allowedDevOrigin] : []),
+	"localhost",
+	"signalfast.localhost",
+	...localNetworkOrigins,
+	"*.ngrok-free.dev",
+	"*.ngrok-free.app",
+]);
 
 const nextConfig: NextConfig = {
 	transpilePackages: [
@@ -23,15 +49,7 @@ const nextConfig: NextConfig = {
 		"pg",
 		"prettier",
 	],
-	allowedDevOrigins: [
-		...(allowedDevOrigin ? [allowedDevOrigin] : []),
-		"192.168.2.20",
-		"192.168.2.20:4100",
-		"http://192.168.2.20:4100",
-		"https://unwandering-paradisaical-marietta.ngrok-free.dev",
-		"*.ngrok-free.dev",
-		"*.ngrok-free.app",
-	],
+	allowedDevOrigins: [...allowedDevOrigins],
 	images: {
 		remotePatterns: [
 			{
@@ -62,6 +80,19 @@ const nextConfig: NextConfig = {
 				source: "/admin",
 				destination: "/admin/users",
 				permanent: true,
+			},
+		];
+	},
+	async headers() {
+		return [
+			{
+				source: "/sw.js",
+				headers: [
+					{
+						key: "Cache-Control",
+						value: "no-cache, no-store, must-revalidate",
+					},
+				],
 			},
 		];
 	},

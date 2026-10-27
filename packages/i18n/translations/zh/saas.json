@@ -757,7 +757,45 @@
 			"short": "做空"
 		},
 		"filters": {
-			"allSources": "全部"
+			"allSources": "全部",
+			"apply": "查看结果",
+			"direction": "方向",
+			"entryStatus": "入场状态",
+			"entryStatuses": {
+				"all": "全部状态",
+				"entered": "已入场",
+				"pending": "待入场"
+			},
+			"mobileDescription": "按方向、时间和入场状态缩小信号范围",
+			"mobileTitle": "筛选",
+			"reset": "重置",
+			"timeRange": "信号时间",
+			"viewSources": "查看",
+			"timeRanges": {
+				"24h": "24小时内",
+				"3d": "3天内",
+				"7d": "7天内",
+				"30d": "30天内",
+				"all": "全部时间"
+			}
+		},
+		"sourcePicker": {
+			"allTraders": "全部 KOL",
+			"categories": {
+				"contract": "合约",
+				"onchain": "链上",
+				"options": "期权",
+				"spot": "现货",
+				"watchlist": "自选"
+			},
+			"contractOnly": "当前信号列表提供合约交易信号",
+			"done": "完成",
+			"follow": "关注 {name}",
+			"noMatches": "没有匹配的 KOL",
+			"open": "查看所有 KOL",
+			"search": "搜索 KOL 或交易员",
+			"signalCount": "{count} 条信号",
+			"unfollow": "取消关注 {name}"
 		},
 		"guide": {
 			"close": "稍后再看",
@@ -796,7 +834,12 @@
 		"paywall": {
 			"action": "查看会员套餐",
 			"description": "开通会员后即可查看 KOL 信号和聚合 K 线。",
-			"title": "聚合 K 线为会员专享"
+			"title": "聚合 K 线为会员专享",
+			"preview": {
+				"action": "立即查看",
+				"description": "登录成功。开通会员后即可查看完整信号、行情和 K 线分析。",
+				"title": "信号工作区预览"
+			}
 		},
 		"signalsPanel": {
 			"closed": "已平仓",

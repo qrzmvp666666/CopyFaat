@@ -72,7 +72,8 @@ const DOWN_COLOR = "#51a59b";
 const PROFIT_COLOR = "#26a69a";
 const RISK_COLOR = "#ef5350";
 const ENTRY_COLOR = "#f59e0b";
-const MARKER_STACK_GAP = 72;
+const MARKER_STACK_GAP = 32;
+const COMPACT_CHART_LABEL_QUERY = "(max-width: 767px)";
 const DESKTOP_CHART_INTERACTION_QUERY = "(min-width: 1280px)";
 const DEFAULT_VISIBLE_CANDLE_COUNT = 72;
 const DEFAULT_RIGHT_OFFSET = 6;
@@ -251,7 +252,20 @@ export function TradingViewSignalChart({
 	const markerRetryCountRef = useRef(0);
 	const markerRetryTimeoutRef = useRef<number | null>(null);
 	const [markerPositions, setMarkerPositions] = useState<MarkerPosition[]>([]);
+	const [isCompactLayout, setIsCompactLayout] = useState(false);
 	const minMove = getMinMove(pricePrecision);
+
+	useEffect(() => {
+		const mediaQuery = window.matchMedia(COMPACT_CHART_LABEL_QUERY);
+		const updateCompactLayout = (event: MediaQueryList | MediaQueryListEvent) => {
+			setIsCompactLayout(event.matches);
+		};
+
+		updateCompactLayout(mediaQuery);
+		mediaQuery.addEventListener("change", updateCompactLayout);
+
+		return () => mediaQuery.removeEventListener("change", updateCompactLayout);
+	}, []);
 
 	const autoscaleInfoProvider = useCallback<AutoscaleInfoProvider>(
 		(original) => {
@@ -374,6 +388,7 @@ export function TradingViewSignalChart({
 		}
 
 		const interactionMediaQuery = window.matchMedia(DESKTOP_CHART_INTERACTION_QUERY);
+		const compactMediaQuery = window.matchMedia(COMPACT_CHART_LABEL_QUERY);
 		const chart = createChart(container, {
 			height: Math.max(520, Math.round(container.getBoundingClientRect().height)),
 			width: Math.max(1, Math.round(container.getBoundingClientRect().width)),
@@ -397,7 +412,7 @@ export function TradingViewSignalChart({
 				},
 				fontFamily:
 					"var(--font-sans), Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-				fontSize: 13,
+				fontSize: compactMediaQuery.matches ? 11 : 13,
 				textColor: CHART_TEXT,
 			},
 			localization: {
@@ -462,10 +477,15 @@ export function TradingViewSignalChart({
 		const handleInteractionMediaQueryChange = (event: MediaQueryListEvent) => {
 			chart.applyOptions(getChartInteractionOptions(event.matches));
 		};
+		const handleCompactMediaQueryChange = (event: MediaQueryListEvent) => {
+			chart.applyOptions({ layout: { fontSize: event.matches ? 11 : 13 } });
+		};
 		interactionMediaQuery.addEventListener("change", handleInteractionMediaQueryChange);
+		compactMediaQuery.addEventListener("change", handleCompactMediaQueryChange);
 
 		return () => {
 			interactionMediaQuery.removeEventListener("change", handleInteractionMediaQueryChange);
+			compactMediaQuery.removeEventListener("change", handleCompactMediaQueryChange);
 			chart.timeScale().unsubscribeVisibleLogicalRangeChange(handleRangeChange);
 			resizeObserver.disconnect();
 			chart.remove();
@@ -581,7 +601,9 @@ export function TradingViewSignalChart({
 					lineVisible: true,
 					lineWidth: 1,
 					price: activeSignal.entry,
-					title: `${labels.entry} ${formatPrice(activeSignal.entry, pricePrecision)}`,
+					title: isCompactLayout
+						? "Entry"
+						: `${labels.entry} ${formatPrice(activeSignal.entry, pricePrecision)}`,
 				}),
 				series.createPriceLine({
 					axisLabelColor: RISK_COLOR,
@@ -592,7 +614,9 @@ export function TradingViewSignalChart({
 					lineVisible: true,
 					lineWidth: 1,
 					price: getRiskPrice(activeSignal),
-					title: `${labels.stopLoss} ${formatPrice(getRiskPrice(activeSignal), pricePrecision)}`,
+					title: isCompactLayout
+						? "SL"
+						: `${labels.stopLoss} ${formatPrice(getRiskPrice(activeSignal), pricePrecision)}`,
 				}),
 			];
 
@@ -609,7 +633,9 @@ export function TradingViewSignalChart({
 						lineVisible: true,
 						lineWidth: 1,
 						price: activeSignal.takeProfit,
-						title: `${labels.takeProfit} ${formatPrice(activeSignal.takeProfit, pricePrecision)}`,
+						title: isCompactLayout
+							? "TP"
+							: `${labels.takeProfit} ${formatPrice(activeSignal.takeProfit, pricePrecision)}`,
 					}),
 				);
 			}
@@ -653,6 +679,7 @@ export function TradingViewSignalChart({
 		chartData,
 		focusedSignalId,
 		formatPrice,
+		isCompactLayout,
 		labels.entry,
 		labels.stopLoss,
 		labels.takeProfit,
@@ -671,13 +698,18 @@ export function TradingViewSignalChart({
 	}, []);
 
 	return (
-		<div className={cn("relative min-h-[520px] overflow-hidden bg-[#141414]", className)}>
-			<div className="left-6 top-5 gap-3 pointer-events-none absolute z-20 flex items-baseline">
+		<div
+			className={cn(
+				"md:min-h-[420px] relative min-h-[240px] overflow-hidden bg-[#141414]",
+				className,
+			)}
+		>
+			<div className="left-6 top-5 gap-3 md:flex pointer-events-none absolute z-20 hidden items-baseline">
 				<span className="text-xl font-semibold tracking-normal text-white">{symbol}</span>
 				<span className="text-lg font-semibold text-white/55">{timeframe}</span>
 			</div>
 
-			<div ref={containerRef} className="h-full min-h-[520px] w-full" />
+			<div ref={containerRef} className="md:min-h-[420px] h-full min-h-[240px] w-full" />
 
 			<div className="inset-0 pointer-events-none absolute z-30">
 				{markerPositions.map(({ left, signal, top }) => {
@@ -689,37 +721,36 @@ export function TradingViewSignalChart({
 							key={signal.id}
 							type="button"
 							onClick={() => onSelectSignal(signal)}
+							aria-label={`${signal.sourceName}: ${signal.direction === "long" ? "long" : "short"} ${symbol}`}
+							title={signal.sourceName}
 							className={cn(
-								"gap-1.5 py-0.5 pl-0.5 pr-1.5 font-semibold text-white shadow-lg pointer-events-auto absolute isolate flex -translate-x-1/2 -translate-y-1/2 items-center rounded-full border bg-[#141414]/95 text-[11px] transition-colors",
+								"size-7 p-0 pointer-events-auto absolute isolate flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-0 bg-transparent shadow-none transition-transform hover:scale-110",
 								isEntered
-									? "border-emerald-400 shadow-[0_0_18px_rgba(16,185,129,0.36)]"
+									? "shadow-[0_0_12px_rgba(16,185,129,0.36)]"
 									: isActive
-										? "border-emerald-400 shadow-[0_0_0_6px_rgba(34,229,141,0.14)]"
-										: "border-white/15 hover:border-white/35",
+										? "shadow-[0_0_0_3px_rgba(34,229,141,0.18)]"
+										: "",
 							)}
 							style={{ left, top } satisfies CSSProperties}
 						>
 							{isEntered && (
 								<>
-									<span className="-inset-1.5 border-emerald-400/35 pointer-events-none absolute -z-10 rounded-full border" />
-									<span className="-inset-2 bg-emerald-500/18 blur-md pointer-events-none absolute -z-10 rounded-full" />
+									<span className="-inset-1 border-emerald-400/35 pointer-events-none absolute -z-10 rounded-full border" />
+									<span className="-inset-1.5 bg-emerald-500/18 blur-sm pointer-events-none absolute -z-10 rounded-full" />
 								</>
 							)}
 							<span
 								className={cn(
-									"flex size-[22px] shrink-0 items-center justify-center overflow-hidden rounded-full",
+									"size-6 border-white/35 flex shrink-0 items-center justify-center overflow-hidden rounded-full border bg-[#141414]",
 								)}
 							>
 								<img
 									alt={signal.sourceName}
-									className="size-[22px] object-cover"
+									className="size-full object-cover"
 									src={signal.avatarUrl}
 								/>
 							</span>
-							<span className="max-w-24 truncate whitespace-nowrap">
-								{signal.sourceName}
-							</span>
-							{isActive && (
+							{isActive && focusedSignalId && !isCompactLayout && (
 								<span
 									className={cn(
 										"ml-0.5 rounded px-1.5 py-0.5 font-bold text-white text-[10px] whitespace-nowrap",

@@ -2,23 +2,36 @@ import { config } from "@config";
 import { cn, Toaster } from "@repo/ui";
 import { ApiClientProvider } from "@shared/components/ApiClientProvider";
 import { ClientProviders } from "@shared/components/ClientProviders";
-import type { Metadata } from "next";
+import { PwaServiceWorkerRegistration } from "@shared/components/PwaServiceWorkerRegistration";
+import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
 import Script from "next/script";
-
-import "./globals.css";
-import "cropperjs/dist/cropper.css";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { PropsWithChildren } from "react";
 
+import "./globals.css";
+import "cropperjs/dist/cropper.css";
+
 export const metadata: Metadata = {
+	applicationName: config.appName,
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: "black-translucent",
+		title: config.appName,
+	},
+	manifest: "/manifest.webmanifest",
 	title: {
 		absolute: config.appName,
 		default: config.appName,
 		template: `%s | ${config.appName}`,
 	},
+};
+
+export const viewport: Viewport = {
+	themeColor: "#141414",
+	viewportFit: "cover",
 };
 
 export default async function RootLayout({ children }: PropsWithChildren) {
@@ -28,6 +41,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 	return (
 		<html lang={locale} suppressHydrationWarning>
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
+				<PwaServiceWorkerRegistration />
 				<Script
 					src="https://datafa.st/js/script.js"
 					data-website-id="dfid_fb2tp0jNLHKxFdogSJxxe"

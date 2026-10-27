@@ -48,18 +48,28 @@ const sheetVariants = cva(
 	},
 );
 
-type SheetContentProps = {} & React.ComponentProps<typeof SheetPrimitive.Content> &
+type SheetContentProps = {
+	showCloseButton?: boolean;
+} & React.ComponentProps<typeof SheetPrimitive.Content> &
 	VariantProps<typeof sheetVariants>;
 
-const SheetContent = ({ side = "right", className, children, ...props }: SheetContentProps) => (
+const SheetContent = ({
+	side = "right",
+	className,
+	children,
+	showCloseButton = true,
+	...props
+}: SheetContentProps) => (
 	<SheetPortal>
 		<SheetOverlay />
 		<SheetPrimitive.Content className={sheetVariants({ side, className })} {...props}>
 			{children}
-			<SheetPrimitive.Close className="top-4 right-4 absolute rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-secondary">
-				<XIcon className="size-4" />
-				<span className="sr-only">Close</span>
-			</SheetPrimitive.Close>
+			{showCloseButton && (
+				<SheetPrimitive.Close className="top-4 right-4 absolute rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none data-[state=open]:bg-secondary">
+					<XIcon className="size-4" />
+					<span className="sr-only">Close</span>
+				</SheetPrimitive.Close>
+			)}
 		</SheetPrimitive.Content>
 	</SheetPortal>
 );
