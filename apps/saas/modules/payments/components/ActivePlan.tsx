@@ -15,7 +15,7 @@ export function ActivePlan({ organizationId }: { organizationId?: string; seats?
 	const t = useTranslations();
 	const format = useFormatter();
 	const { planData } = usePlanData();
-	const { activeEntitlementGrant, activePlan } = usePurchases(organizationId);
+	const { activePlan } = usePurchases(organizationId);
 
 	if (!activePlan) {
 		return null;
@@ -90,14 +90,7 @@ export function ActivePlan({ organizationId }: { organizationId?: string; seats?
 									}),
 								})}
 							</p>
-							<EntitlementCountdown
-								expiresAt={activePlan.expiresAt}
-								source={
-									"source" in activePlan
-										? activePlan.source
-										: activeEntitlementGrant?.source
-								}
-							/>
+							<EntitlementCountdown expiresAt={activePlan.expiresAt} />
 						</>
 					)}
 				</div>

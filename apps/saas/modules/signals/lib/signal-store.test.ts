@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { getSignalBusinessKey, isBlockedSignalTraderName } from "./signal-identity";
+import {
+	getSignalBusinessKey,
+	isBlockedSignalTraderName,
+	isDemoStrategyTrader,
+} from "./signal-identity";
 import { signalWebhookRequestSchema } from "./signal-webhook-schema";
 
 describe("getSignalBusinessKey", () => {
@@ -128,4 +132,15 @@ describe("isBlockedSignalTraderName", () => {
 		expect(isBlockedSignalTraderName("AI 分析")).toBe(false);
 		expect(isBlockedSignalTraderName("分析师 Nick")).toBe(false);
 	});
+});
+
+describe("isDemoStrategyTrader", () => {
+	it.each(["演示策略 01", "演示策略08", "演示策略 ０３"])(
+		"recognizes hidden demo KOL %s",
+		(name) => expect(isDemoStrategyTrader({ name })).toBe(true),
+	);
+
+	it.each(["演示策略 09", "波段分析 03", "飞扬"])("keeps regular KOL %s visible", (name) =>
+		expect(isDemoStrategyTrader({ name })).toBe(false),
+	);
 });

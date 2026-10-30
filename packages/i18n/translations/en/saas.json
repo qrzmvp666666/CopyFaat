@@ -644,7 +644,6 @@
 				"expiresAt": "Access ends on {date}.",
 				"countdown": {
 					"label": "Entitlement countdown",
-					"signupTrialLabel": "New user 48-hour Pro trial",
 					"expiresAt": "Ends at {date}",
 					"remaining": "{hours}:{minutes}:{seconds}",
 					"remainingWithDays": "{days}d {hours}:{minutes}:{seconds}",
@@ -739,7 +738,9 @@
 	"signals": {
 		"actions": {
 			"alert": "Create alert",
+			"collapseChart": "Collapse chart",
 			"expand": "Expand chart",
+			"expandChart": "Expand chart",
 			"filters": "Filters",
 			"refresh": "Refresh"
 		},
@@ -800,6 +801,11 @@
 		"guide": {
 			"close": "Maybe later",
 			"finish": "Start using",
+			"login": "Already have an account? Log in",
+			"viewPlans": "View membership plans",
+			"preview": "Live market preview. Pro membership unlocks complete signals.",
+			"lockedSignalsTitle": "Signal details",
+			"lockedSignalsDescription": "With Pro, entry, take-profit, stop-loss, and entry status appear here.",
 			"next": "Next",
 			"replay": "View feature guide",
 			"stepCounter": "Step {current} / {total}",
@@ -814,7 +820,8 @@
 				},
 				"filters": {
 					"title": "Narrow the signal set",
-					"description": "Filter by long or short direction, signal time, and entry status so you can remove setups that do not match your trading plan."
+					"mobileDescription": "This is the filter button. With Pro, narrow signals by direction (long or short), time (24 hours, 3, 7, or 30 days), and entry status (pending or entered).",
+					"description": "Narrow signals by direction (long or short), time (24 hours, 3, 7, or 30 days), and entry status (pending or entered)."
 				},
 				"chart": {
 					"title": "Read signals on the K-line chart",
@@ -822,7 +829,7 @@
 				},
 				"signalList": {
 					"title": "Review the full signal details",
-					"description": "The right feed shows entry, take profit, stop loss, submitted time, and entry status. Always check the stop loss and whether the signal has entered."
+					"description": "With Pro, this area shows entry, take-profit, stop-loss, submission time, and entry status. Check the stop-loss and whether the trade has entered before acting."
 				}
 			}
 		},
@@ -867,13 +874,6 @@
 		"ticker": {
 			"empty": "No trading pairs to show",
 			"live": "Live market"
-		},
-		"trialWelcome": {
-			"benefit": "",
-			"description": "2 days of Pro included",
-			"skip": "Maybe later",
-			"startGuide": "Start guide",
-			"title": "Registration complete"
 		}
 	},
 	"common": {

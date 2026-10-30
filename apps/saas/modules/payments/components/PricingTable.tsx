@@ -99,12 +99,14 @@ export function PricingTable({
 	organizationId,
 	activePlanId,
 	showActivePlanInPricing,
+	planIds,
 }: {
 	className?: string;
 	userId?: string;
 	organizationId?: string;
 	activePlanId?: string;
 	showActivePlanInPricing?: boolean;
+	planIds?: readonly VisiblePaidPlanId[];
 }) {
 	const t = useTranslations();
 	const format = useFormatter();
@@ -159,6 +161,7 @@ export function PricingTable({
 			const visiblePlanId = planId as VisiblePaidPlanId;
 
 			if (!visiblePlanIds.includes(visiblePlanId)) return [];
+			if (planIds && !planIds.includes(visiblePlanId)) return [];
 			if (!("prices" in plan)) return [];
 
 			const typedPlan = plan as PaidPlan;
@@ -213,9 +216,11 @@ export function PricingTable({
 			<div
 				className={cn(
 					"gap-4 mx-auto grid grid-cols-1",
-					displayPlans.length <= 2
-						? "max-w-4xl md:grid-cols-2"
-						: "max-w-6xl md:grid-cols-2 lg:grid-cols-3",
+					displayPlans.length === 1
+						? "max-w-2xl"
+						: displayPlans.length === 2
+							? "max-w-4xl md:grid-cols-2"
+							: "max-w-6xl md:grid-cols-2 lg:grid-cols-3",
 				)}
 			>
 				{displayPlans.map((plan) => {

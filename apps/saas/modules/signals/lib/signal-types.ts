@@ -70,6 +70,19 @@ export interface SignalsListResponse {
 	signals: StoredSignal[];
 }
 
+export interface SignalsPreviewResponse {
+	signals: {
+		avatarUrl?: string;
+		direction: WebhookSignalDirection;
+		sourceName: string;
+		status: WebhookSignalStatus;
+		submittedAt: string;
+		symbol: string;
+	}[];
+	sources: Pick<SignalWebhookSource, "id" | "name" | "avatarUrl" | "handle" | "platform">[];
+	tradingSymbols: StoredTradingSymbol[];
+}
+
 export interface SignalKline {
 	close: number;
 	high: number;

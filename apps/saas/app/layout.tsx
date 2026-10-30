@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-	themeColor: "#141414",
+	themeColor: "#121212",
 	viewportFit: "cover",
 };
 
@@ -40,7 +40,11 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
-			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
+			<body
+				className={cn(
+					"min-h-screen bg-background text-foreground antialiased",
+				)}
+			>
 				<PwaServiceWorkerRegistration />
 				<Script
 					src="https://datafa.st/js/script.js"

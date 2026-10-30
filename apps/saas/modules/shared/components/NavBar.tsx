@@ -306,13 +306,11 @@ function MembershipLinkButton({ href, className }: { href: string; className?: s
 }
 
 function SidebarEntitlementCountdown() {
-	const { activeEntitlementGrant, activePlan } = usePurchases();
+	const { activePlan } = usePurchases();
 	const activePlanEntitlement =
 		activePlan && "expiresAt" in activePlan && activePlan.expiresAt
 			? {
 					expiresAt: activePlan.expiresAt,
-					source:
-						"source" in activePlan ? activePlan.source : activeEntitlementGrant?.source,
 				}
 			: null;
 
@@ -324,7 +322,6 @@ function SidebarEntitlementCountdown() {
 		<EntitlementCountdown
 			compact
 			expiresAt={activePlanEntitlement.expiresAt}
-			source={activePlanEntitlement.source}
 			className="border-white/10 bg-white/[0.06] px-3 py-2 w-fit max-w-full text-muted-foreground"
 		/>
 	);

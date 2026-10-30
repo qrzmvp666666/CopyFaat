@@ -8,10 +8,12 @@ import {
 	getSignalBusinessKey,
 	getTraderExternalId,
 	isBlockedSignalTrader,
+	isDemoStrategyTrader,
 	normalizeSignalIdentityPart,
 } from "./signal-identity";
 import type {
 	StoredSignal,
+	SignalsPreviewResponse,
 	WebhookSignalDirection,
 	WebhookSignalEntryStatus,
 	WebhookSignalStatus,
@@ -254,6 +256,39 @@ function getVisibleSignalsWhere(input: ListStoredSignalsInput = {}): Prisma.Sign
 	}
 
 	return where;
+}
+
+export async function listSignalPreviewTraders(): Promise<SignalsPreviewResponse["sources"]> {
+	const traders = await db.trader.findMany({
+		where: {
+			isActive: true,
+			signals: { some: {} },
+		},
+		select: {
+			avatarUrl: true,
+			displayName: true,
+			externalId: true,
+			handle: true,
+			name: true,
+			platform: true,
+		},
+		orderBy: { displayName: "asc" },
+		take: 50,
+	});
+
+	return traders
+		.filter((trader) => {
+			const source = { name: trader.displayName ?? trader.name };
+			return !isBlockedSignalTrader(source) && !isDemoStrategyTrader(source);
+		})
+		.map((trader) => ({
+			avatarUrl: trader.avatarUrl ?? undefined,
+			handle: trader.handle ?? undefined,
+			id: trader.externalId,
+			name: trader.displayName ?? trader.name,
+			platform: trader.platform ?? undefined,
+		}))
+		.slice(0, 8);
 }
 
 export async function listStoredSignals(

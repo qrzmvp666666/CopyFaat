@@ -11,7 +11,7 @@ interface ProviderPriceMappingEntry {
 }
 
 function getProviderPriceMappings(): ProviderPriceMappingEntry[] {
-	return Object.entries(config.plans).flatMap(([planId, plan]) => {
+	const configuredMappings = Object.entries(config.plans).flatMap(([planId, plan]) => {
 		if (!("prices" in plan)) {
 			return [];
 		}
@@ -24,6 +24,37 @@ function getProviderPriceMappings(): ProviderPriceMappingEntry[] {
 			priceId: price.priceId,
 		}));
 	});
+	return [
+		...configuredMappings,
+		{
+			planId: "pro",
+			type: "subscription",
+			interval: "week",
+			paymentMethod: "card",
+			priceId: "stripe_pro_weekly",
+		},
+		{
+			planId: "pro",
+			type: "subscription",
+			interval: "year",
+			paymentMethod: "card",
+			priceId: "stripe_pro_yearly",
+		},
+		{
+			planId: "pro",
+			type: "subscription",
+			interval: "week",
+			paymentMethod: "card",
+			priceId: "yolfi_pro_weekly",
+		},
+		{
+			planId: "pro",
+			type: "subscription",
+			interval: "year",
+			paymentMethod: "card",
+			priceId: "yolfi_pro_yearly",
+		},
+	];
 }
 
 export function getProviderPriceIdByPlanId(

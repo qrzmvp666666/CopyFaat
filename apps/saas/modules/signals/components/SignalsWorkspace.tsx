@@ -1,6 +1,7 @@
 "use client";
 
-import { usePurchases } from "@payments/hooks/purchases";
+import { useSession } from "@auth/hooks/use-session";
+import { PricingTable } from "@payments/components/PricingTable";
 import { Button, cn } from "@repo/ui";
 import {
 	Accordion,
@@ -24,6 +25,7 @@ import {
 } from "@repo/ui/components/sheet";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { getProfileAvatarUrlForSeed } from "@repo/utils";
+import { SignalsMobilePaywall } from "@signals/components/SignalsMobilePaywall";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
 	ChartCandlestickIcon,
@@ -32,6 +34,7 @@ import {
 	ChevronDownIcon,
 	ChevronLeftIcon,
 	ChevronRightIcon,
+	ChevronUpIcon,
 	Clock3Icon,
 	CompassIcon,
 	CrownIcon,
@@ -48,13 +51,15 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import Link from "next/link";
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { isBlockedSignalTrader } from "../lib/signal-identity";
+import { isBlockedSignalTrader, isDemoStrategyTrader } from "../lib/signal-identity";
 import type {
 	SignalKlinesResponse,
 	SignalsListResponse,
+	SignalsPreviewResponse,
 	StoredSignal,
 	StoredTradingSymbol,
 } from "../lib/signal-types";
@@ -67,34 +72,7 @@ const SIGNAL_STATUSES = ["active", "history"] as const;
 const TIME_RANGES = ["all", "24h", "3d", "7d", "30d"] as const;
 const ENTRY_STATUSES = ["all", "pending", "entered"] as const;
 const SOURCE_PICKER_CATEGORIES = ["watchlist", "contract"] as const;
-const SIGNALS_GUIDE_STORAGE_KEY_PREFIX = "signalfast:signals-guide:v2";
 const SOURCE_FOLLOW_STORAGE_KEY = "signalfast:followed-sources:v1";
-const TRIAL_WELCOME_CONFETTI_STYLES = `
-@keyframes trial-confetti-fall {
-	0% {
-		opacity: 0;
-		transform: translate3d(var(--confetti-x-start), -10px, 0) scale(0.72) rotate(0deg);
-	}
-	18% {
-		opacity: 1;
-	}
-	100% {
-		opacity: 0;
-		transform: translate3d(var(--confetti-x-end), 34px, 0) scale(1) rotate(150deg);
-	}
-}
-
-.trial-confetti-particle {
-	animation: trial-confetti-fall 2.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.trial-confetti-particle {
-		animation: none;
-		opacity: 0.65;
-	}
-}
-`;
 const SIGNALS_SKELETON_STYLES = `
 @keyframes signals-skeleton-shimmer {
 	100% {
@@ -114,97 +92,47 @@ const SIGNALS_SKELETON_STYLES = `
 }
 `;
 
+const CHART_FULLSCREEN_STYLES = `
+@media (orientation: portrait) and (max-width: 768px) {
+	[data-chart-landscape-dialog="true"] {
+		position: fixed !important;
+		top: 0 !important;
+		left: 0 !important;
+		width: 100vw !important;
+		height: 100dvh !important;
+		max-width: none !important;
+		max-height: none !important;
+		transform: none !important;
+		translate: 0 0 !important;
+		border-radius: 0 !important;
+	}
+	[data-chart-landscape-dialog="true"] > button {
+		top: calc(env(safe-area-inset-top) + 8px) !important;
+		right: calc(env(safe-area-inset-right) + 8px) !important;
+	}
+	[data-chart-landscape-toolbar="true"] {
+		padding-top: calc(env(safe-area-inset-top) + 12px) !important;
+	}
+
+	[data-chart-landscape-stage="true"] {
+		position: absolute !important;
+		top: calc(env(safe-area-inset-top) + 48px) !important;
+		left: 100vw !important;
+		width: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 48px) !important;
+		height: 100vw !important;
+		max-width: none !important;
+		transform: rotate(90deg) !important;
+		transform-origin: top left !important;
+	}
+}
+`;
+
 type Timeframe = (typeof SUPPORTED_TIMEFRAMES)[number];
 type SignalDirection = (typeof SIGNAL_DIRECTIONS)[number];
 type SignalStatus = (typeof SIGNAL_STATUSES)[number];
 type TimeRange = (typeof TIME_RANGES)[number];
 type EntryStatus = (typeof ENTRY_STATUSES)[number];
 type SignalsGuideTarget = "chart" | "filters" | "signalList" | "ticker" | "traders";
-
-interface TrialConfettiStyle extends CSSProperties {
-	"--confetti-x-end": string;
-	"--confetti-x-start": string;
-}
-
-interface TrialConfettiParticle {
-	className: string;
-	style: TrialConfettiStyle;
-}
-
-const TRIAL_WELCOME_CONFETTI_PARTICLES: TrialConfettiParticle[] = [
-	{
-		className: "size-1.5 rounded-full",
-		style: {
-			"--confetti-x-end": "-18px",
-			"--confetti-x-start": "-4px",
-			animationDelay: "0ms",
-			animationDuration: "2.7s",
-			backgroundColor: "#facc15",
-			left: "38%",
-			top: "10%",
-		},
-	},
-	{
-		className: "h-1.5 w-1 rounded-[2px]",
-		style: {
-			"--confetti-x-end": "18px",
-			"--confetti-x-start": "4px",
-			animationDelay: "180ms",
-			animationDuration: "3s",
-			backgroundColor: "#38bdf8",
-			left: "58%",
-			top: "7%",
-		},
-	},
-	{
-		className: "size-1 rounded-full",
-		style: {
-			"--confetti-x-end": "-10px",
-			"--confetti-x-start": "8px",
-			animationDelay: "420ms",
-			animationDuration: "2.5s",
-			backgroundColor: "#fb7185",
-			left: "47%",
-			top: "2%",
-		},
-	},
-	{
-		className: "h-1 w-2 rounded-[2px]",
-		style: {
-			"--confetti-x-end": "12px",
-			"--confetti-x-start": "-10px",
-			animationDelay: "620ms",
-			animationDuration: "3.1s",
-			backgroundColor: "#34d399",
-			left: "32%",
-			top: "28%",
-		},
-	},
-	{
-		className: "size-1.5 rounded-full",
-		style: {
-			"--confetti-x-end": "16px",
-			"--confetti-x-start": "-6px",
-			animationDelay: "840ms",
-			animationDuration: "2.9s",
-			backgroundColor: "#a78bfa",
-			left: "64%",
-			top: "26%",
-		},
-	},
-	{
-		className: "h-1.5 w-1 rounded-[2px]",
-		style: {
-			"--confetti-x-end": "-14px",
-			"--confetti-x-start": "5px",
-			animationDelay: "1120ms",
-			animationDuration: "2.6s",
-			backgroundColor: "#f97316",
-			left: "52%",
-			top: "18%",
-		},
-	},
-];
 
 interface Instrument {
 	symbol: string;
@@ -427,55 +355,6 @@ function getAvatarLabel(sourceName: string) {
 	return sourceName.trim().slice(0, 2).toUpperCase();
 }
 
-function createLocalPreviewSignals(baseSignal: StoredSignal | undefined): StoredSignal[] {
-	if (process.env.NODE_ENV === "production" || !baseSignal) {
-		return [];
-	}
-
-	const traders = [
-		{ id: "preview-kol-01", name: "量化策略 01" },
-		{ id: "preview-kol-02", name: "趋势交易 02" },
-		{ id: "preview-kol-03", name: "波段分析 03" },
-		{ id: "preview-kol-04", name: "合约观察 04" },
-		{ id: "preview-kol-05", name: "动量策略 05" },
-		{ id: "preview-kol-06", name: "市场研究 06" },
-	] as const;
-	const basePrice = baseSignal.entry;
-	const now = Date.now();
-
-	return traders.map((trader, index) => {
-		const direction = index % 2 === 0 ? "long" : "short";
-		const entry = Number((basePrice * (1 + (index - 2) * 0.0012)).toFixed(2));
-		const risk = entry * 0.006;
-		const submittedAt = new Date(now - (index + 1) * 12 * 60 * 1000).toISOString();
-
-		return {
-			...baseSignal,
-			chartPositionPct: 24 + index * 10,
-			createdAt: submittedAt,
-			direction,
-			entry,
-			entryStatus: index % 3 === 0 ? "entered" : "pending",
-			eventId: `local-preview:${trader.id}:${baseSignal.symbol}`,
-			id: `local-preview:${trader.id}:${baseSignal.symbol}`,
-			riskReward: 2,
-			source: {
-				id: trader.id,
-				name: trader.name,
-				avatarUrl: getProfileAvatarUrlForSeed(trader.id, 80),
-				platform: "local-demo",
-			},
-			status: "active",
-			stopLoss: Number((direction === "long" ? entry - risk : entry + risk).toFixed(2)),
-			submittedAt,
-			takeProfit: Number(
-				(direction === "long" ? entry + risk * 2 : entry - risk * 2).toFixed(2),
-			),
-			updatedAt: submittedAt,
-		};
-	});
-}
-
 function getDefaultPricePrecision(symbol: string) {
 	if (symbol.includes("BTC") || symbol.includes("ETH")) {
 		return 0;
@@ -604,14 +483,14 @@ async function canDisplaySymbolChart(
 	}
 }
 
-function createSourceFilterFromSignal(signal: StoredSignal): Source {
-	const name = signal.source.name;
-	const id = signal.source.id ?? normalizeSourceKey(name);
+function createSourceFilter(source: SignalsPreviewResponse["sources"][number]): Source {
+	const name = source.name;
+	const id = source.id ?? normalizeSourceKey(name);
 
 	return {
 		accent: getSymbolAccent(id),
-		avatar: signal.source.avatarUrl ?? getProfileAvatarUrlForSeed(id, 80),
-		handle: signal.source.handle ?? signal.source.platform ?? "",
+		avatar: source.avatarUrl ?? getProfileAvatarUrlForSeed(id, 80),
+		handle: source.handle ?? source.platform ?? "",
 		id,
 		initials: getAvatarLabel(name),
 		name,
@@ -914,7 +793,7 @@ function connectBinanceSocket(url: string, onMessage: (eventData: string) => voi
 }
 
 function getSelectedSignal(signals: TradeSignal[], activeSignalId: string | null) {
-	return signals.find((signal) => signal.id === activeSignalId) ?? signals[0] ?? null;
+	return signals.find((signal) => signal.id === activeSignalId) ?? null;
 }
 
 function matchesSelectedSources(
@@ -1104,11 +983,28 @@ function clampNumber(value: number, min: number, max: number) {
 	return Math.min(Math.max(value, min), max);
 }
 
-function getGuideTargetRect(element: HTMLElement): GuideTargetRect {
+function getGuideTargetElement(target: SignalsGuideStep["target"]) {
+	return Array.from(
+		document.querySelectorAll<HTMLElement>(`[data-guide-target="${target}"]`),
+	).find((element) => {
+		const rect = element.getBoundingClientRect();
+		return (
+			rect.width > 0 && rect.height > 0 && getComputedStyle(element).visibility !== "hidden"
+		);
+	});
+}
+
+function getGuideTargetRect(element: HTMLElement): GuideTargetRect | null {
 	const rect = element.getBoundingClientRect();
 	const padding = 8;
 	const viewportWidth = window.innerWidth;
-	const viewportHeight = window.innerHeight;
+	const previewRect = document
+		.querySelector<HTMLElement>("[data-guide-viewport]")
+		?.getBoundingClientRect();
+	const viewportHeight = Math.min(window.innerHeight, previewRect?.bottom ?? window.innerHeight);
+	if (!rect.width || !rect.height || rect.bottom <= 0 || rect.top >= viewportHeight) {
+		return null;
+	}
 	const left = clampNumber(rect.left - padding, 12, viewportWidth - 24);
 	const top = clampNumber(rect.top - padding, 12, viewportHeight - 24);
 	const right = clampNumber(rect.right + padding, left + 24, viewportWidth - 12);
@@ -1124,93 +1020,16 @@ function getGuideTargetRect(element: HTMLElement): GuideTargetRect {
 	};
 }
 
-function getGuideCardStyle(
-	targetRect: GuideTargetRect | null,
-	viewportSize: GuideViewportSize,
-): CSSProperties {
-	if (!viewportSize.width || !viewportSize.height) {
-		return {
-			bottom: 24,
-			left: "50%",
-			maxWidth: 380,
-			transform: "translateX(-50%)",
-			width: "calc(100vw - 32px)",
-		};
-	}
-
-	const viewportWidth = viewportSize.width;
-	const viewportHeight = viewportSize.height;
-	const cardWidth = Math.min(380, Math.max(240, viewportWidth - 32));
-	const estimatedHeight = 260;
-	const inset = 16;
-	const gap = 16;
-	const maxLeft = Math.max(inset, viewportWidth - cardWidth - inset);
-	const maxTop = Math.max(inset, viewportHeight - estimatedHeight - inset);
-
-	if (!targetRect) {
-		return {
-			bottom: 24,
-			left: "50%",
-			transform: "translateX(-50%)",
-			width: cardWidth,
-		};
-	}
-
-	const centeredLeft = clampNumber(
-		targetRect.left + targetRect.width / 2 - cardWidth / 2,
-		inset,
-		maxLeft,
-	);
-	const belowTop = targetRect.bottom + gap;
-
-	if (belowTop + estimatedHeight <= viewportHeight - inset) {
-		return {
-			left: centeredLeft,
-			top: belowTop,
-			width: cardWidth,
-		};
-	}
-
-	const aboveTop = targetRect.top - gap - estimatedHeight;
-
-	if (aboveTop >= inset) {
-		return {
-			left: centeredLeft,
-			top: aboveTop,
-			width: cardWidth,
-		};
-	}
-
-	const sideTop = clampNumber(targetRect.top, inset, maxTop);
-
-	if (targetRect.right + gap + cardWidth <= viewportWidth - inset) {
-		return {
-			left: targetRect.right + gap,
-			top: sideTop,
-			width: cardWidth,
-		};
-	}
-
-	if (targetRect.left - gap - cardWidth >= inset) {
-		return {
-			left: targetRect.left - gap - cardWidth,
-			top: sideTop,
-			width: cardWidth,
-		};
-	}
-
-	return {
-		left: centeredLeft,
-		top: clampNumber(targetRect.top + 18, inset, maxTop),
-		width: cardWidth,
-	};
+interface SignalsWorkspaceProps {
+	isAuthenticated: boolean;
+	hasProAccess: boolean;
 }
 
-export function SignalsWorkspace() {
+export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorkspaceProps) {
+	const { user } = useSession();
 	const t = useTranslations("signals");
 	const sourcePickerT = useTranslations("signals.sourcePicker");
 	const locale = useLocale();
-	const { activeEntitlementGrant, activePlan } = usePurchases();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
 	const [signalPageSignals, setSignalPageSignals] = useState<StoredSignal[]>([]);
 	const [statusCounts, setStatusCounts] = useState<Record<SignalStatus, number>>({
@@ -1224,6 +1043,9 @@ export function SignalsWorkspace() {
 	const [selectedSymbol, setSelectedSymbol] = useState("");
 	const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("1h");
 	const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
+	const defaultSourcesInitializedRef = useRef(false);
+	const defaultSignalInitializedRef = useRef(false);
+	const defaultSourceIdRef = useRef<string | null>(null);
 	const [selectedDirection, setSelectedDirection] = useState<SignalDirection>("all");
 	const [selectedStatus, setSelectedStatus] = useState<SignalStatus>("active");
 	const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("30d");
@@ -1239,75 +1061,84 @@ export function SignalsWorkspace() {
 	const [draftEntryStatus, setDraftEntryStatus] = useState<EntryStatus>("all");
 	const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
+	const [isChartCollapsed, setIsChartCollapsed] = useState(false);
 	const [isChartFullscreenOpen, setIsChartFullscreenOpen] = useState(false);
 	const [isSignalsLoading, setIsSignalsLoading] = useState(true);
+	const [preview, setPreview] = useState<SignalsPreviewResponse>({
+		signals: [],
+		sources: [],
+		tradingSymbols: [
+			{
+				id: "BTCUSDT",
+				symbol: "BTCUSDT",
+				baseAsset: "BTC",
+				quoteAsset: "USDT",
+				exchange: "binance",
+				pricePrecision: 2,
+			},
+		],
+	});
 	const [isSignalPageLoading, setIsSignalPageLoading] = useState(true);
 	const [isKlinesLoading, setIsKlinesLoading] = useState(false);
-	const [welcomeDialogOpen, setWelcomeDialogOpen] = useState(false);
-	const [guideOpen, setGuideOpen] = useState(false);
+	const [guideOpen, setGuideOpen] = useState(!hasProAccess);
+	const [guideCardHeight, setGuideCardHeight] = useState(300);
+	const [paywallOpen, setPaywallOpen] = useState(false);
+	const [isMobilePaywall, setIsMobilePaywall] = useState(false);
 	const [guideStepIndex, setGuideStepIndex] = useState(0);
-	const activePlanEntitlement =
-		activePlan && "expiresAt" in activePlan && activePlan.expiresAt
-			? {
-					expiresAt: activePlan.expiresAt,
-					source:
-						"source" in activePlan ? activePlan.source : activeEntitlementGrant?.source,
-				}
-			: null;
-	const isSignupTrial = activePlanEntitlement?.source === "signup_trial";
-	const guideStorageKey = isSignupTrial
-		? `${SIGNALS_GUIDE_STORAGE_KEY_PREFIX}:${activeEntitlementGrant?.id ?? "current"}`
-		: SIGNALS_GUIDE_STORAGE_KEY_PREFIX;
 	const signalPageRequestIdRef = useRef(0);
 	const [signalPageRefreshKey, setSignalPageRefreshKey] = useState(0);
 	const [supportedSymbols, setSupportedSymbols] = useState<Set<string> | null>(null);
 	const symbolAvailabilityRef = useRef(new Map<string, boolean>());
 	const [symbolAvailabilityRetryVersion, setSymbolAvailabilityRetryVersion] = useState(0);
 
-	const localPreviewSignals = useMemo(() => {
-		const baseSignal = webhookSignals.find((signal) => signal.symbol === selectedSymbol);
+	useEffect(() => {
+		const mediaQuery = window.matchMedia("(max-width: 767px)");
+		const updateMobileState = () => setIsMobilePaywall(mediaQuery.matches);
+		updateMobileState();
+		mediaQuery.addEventListener("change", updateMobileState);
+		return () => mediaQuery.removeEventListener("change", updateMobileState);
+	}, []);
 
-		return createLocalPreviewSignals(baseSignal);
-	}, [selectedSymbol, webhookSignals]);
-	const localPreviewPageSignals = useMemo(
-		() =>
-			selectedStatus === "active"
-				? localPreviewSignals.filter(
-						(signal) =>
-							(selectedDirection === "all" ||
-								signal.direction === selectedDirection) &&
-							(selectedEntryStatus === "all" ||
-								signal.entryStatus === selectedEntryStatus) &&
-							(selectedSourceIds.length === 0 ||
-								selectedSourceIds.includes(signal.source.id ?? "")),
-					)
-				: [],
-		[
-			localPreviewSignals,
-			selectedDirection,
-			selectedEntryStatus,
-			selectedSourceIds,
-			selectedStatus,
-		],
-	);
+	useEffect(() => {
+		if (hasProAccess) return;
+		const controller = new AbortController();
+		async function loadPreview() {
+			try {
+				const response = await fetch("/api/signals/preview", { signal: controller.signal });
+				if (!response.ok) return;
+				const data = (await response.json()) as SignalsPreviewResponse;
+				setPreview((current) => ({
+					signals: data.signals.slice(0, 3),
+					sources: data.sources,
+					tradingSymbols: data.tradingSymbols.length
+						? data.tradingSymbols
+						: current.tradingSymbols,
+				}));
+			} catch {
+				// Keep public exchange markets visible if workspace metadata is unavailable.
+			}
+		}
+		void loadPreview();
+		return () => controller.abort();
+	}, [hasProAccess]);
 	const visibleWebhookSignals = useMemo(() => {
 		if (!supportedSymbols) {
 			return [];
 		}
 
-		return [...webhookSignals, ...localPreviewSignals].filter((signal) =>
-			supportedSymbols.has(signal.symbol),
+		return webhookSignals.filter(
+			(signal) => !isDemoStrategyTrader(signal.source) && supportedSymbols.has(signal.symbol),
 		);
-	}, [localPreviewSignals, supportedSymbols, webhookSignals]);
+	}, [supportedSymbols, webhookSignals]);
 	const visibleSignalPageSignals = useMemo(() => {
 		if (!supportedSymbols) {
 			return [];
 		}
 
-		return [...signalPageSignals, ...localPreviewPageSignals].filter((signal) =>
-			supportedSymbols.has(signal.symbol),
+		return signalPageSignals.filter(
+			(signal) => !isDemoStrategyTrader(signal.source) && supportedSymbols.has(signal.symbol),
 		);
-	}, [localPreviewPageSignals, signalPageSignals, supportedSymbols]);
+	}, [signalPageSignals, supportedSymbols]);
 
 	const signals = useMemo(
 		() => visibleWebhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
@@ -1320,6 +1151,9 @@ export function SignalsWorkspace() {
 	);
 	const baseInstruments = useMemo(() => {
 		const symbols = new Map<string, StoredTradingSymbol>();
+		if (!hasProAccess) {
+			for (const symbol of preview.tradingSymbols) symbols.set(symbol.symbol, symbol);
+		}
 
 		for (const signal of visibleWebhookSignals) {
 			symbols.set(signal.tradingSymbol.symbol, signal.tradingSymbol);
@@ -1328,7 +1162,7 @@ export function SignalsWorkspace() {
 		return Array.from(symbols.values())
 			.map(createInstrumentFromTradingSymbol)
 			.sort(sortInstrumentsByPriority);
-	}, [visibleWebhookSignals]);
+	}, [hasProAccess, preview.tradingSymbols, visibleWebhookSignals]);
 	const instruments = useMemo(
 		() =>
 			baseInstruments
@@ -1345,9 +1179,15 @@ export function SignalsWorkspace() {
 	);
 	const sourceFilters = useMemo(() => {
 		const sources = new Map<string, Source>();
+		if (!hasProAccess) {
+			for (const source of preview.sources) {
+				const filter = createSourceFilter(source);
+				sources.set(filter.id, filter);
+			}
+		}
 
 		for (const signal of visibleWebhookSignals) {
-			const source = createSourceFilterFromSignal(signal);
+			const source = createSourceFilter(signal.source);
 			const existingSource = sources.get(source.id);
 			sources.set(source.id, {
 				...source,
@@ -1357,7 +1197,7 @@ export function SignalsWorkspace() {
 		}
 
 		return Array.from(sources.values()).sort((a, b) => a.name.localeCompare(b.name));
-	}, [visibleWebhookSignals]);
+	}, [hasProAccess, preview.sources, visibleWebhookSignals]);
 	const filteredSourcePickerSources = useMemo(() => {
 		const query = sourcePickerQuery.trim().toLocaleLowerCase();
 		const categorySources =
@@ -1395,6 +1235,11 @@ export function SignalsWorkspace() {
 
 	useEffect(() => {
 		if (isSignalsLoading) {
+			return;
+		}
+
+		if (!hasProAccess) {
+			setSupportedSymbols(new Set(preview.tradingSymbols.map((symbol) => symbol.symbol)));
 			return;
 		}
 
@@ -1462,9 +1307,20 @@ export function SignalsWorkspace() {
 				window.clearTimeout(retryTimer);
 			}
 		};
-	}, [isSignalsLoading, symbolAvailabilityRetryVersion, webhookSignals]);
+	}, [
+		hasProAccess,
+		isSignalsLoading,
+		preview.tradingSymbols,
+		symbolAvailabilityRetryVersion,
+		webhookSignals,
+	]);
 
 	useEffect(() => {
+		if (!hasProAccess) {
+			setWebhookSignals([]);
+			setIsSignalsLoading(false);
+			return;
+		}
 		let isMounted = true;
 		const controller = new AbortController();
 
@@ -1492,6 +1348,9 @@ export function SignalsWorkspace() {
 		eventSource.addEventListener("signal", (event) => {
 			try {
 				const signal = JSON.parse((event as MessageEvent<string>).data) as StoredSignal;
+				if (isBlockedSignalTrader(signal.source) || isDemoStrategyTrader(signal.source)) {
+					return;
+				}
 
 				if (isMounted) {
 					setWebhookSignals((currentSignals) =>
@@ -1522,7 +1381,7 @@ export function SignalsWorkspace() {
 			controller.abort();
 			eventSource.close();
 		};
-	}, []);
+	}, [hasProAccess]);
 
 	useEffect(() => {
 		signalPageFiltersRef.current = signalPageFilters;
@@ -1534,7 +1393,7 @@ export function SignalsWorkspace() {
 		const controller = new AbortController();
 
 		async function loadSignalPage() {
-			if (!signalPageFilters.symbol) {
+			if (!hasProAccess || !signalPageFilters.symbol) {
 				setSignalPageSignals([]);
 				setStatusCounts({
 					active: 0,
@@ -1553,10 +1412,18 @@ export function SignalsWorkspace() {
 				);
 
 				if (signalPageRequestIdRef.current === requestId) {
-					setSignalPageSignals(
-						data.signals.filter((signal) => !isBlockedSignalTrader(signal.source)),
+					const visibleSignals = data.signals.filter(
+						(signal) =>
+							!isBlockedSignalTrader(signal.source) &&
+							!isDemoStrategyTrader(signal.source),
 					);
-					setStatusCounts(data.counts);
+					setSignalPageSignals(visibleSignals);
+					setStatusCounts({
+						active: visibleSignals.filter((signal) => signal.status === "active")
+							.length,
+						history: visibleSignals.filter((signal) => signal.status === "history")
+							.length,
+					});
 					setIsSignalPageLoading(false);
 				}
 			} catch {
@@ -1572,7 +1439,7 @@ export function SignalsWorkspace() {
 		return () => {
 			controller.abort();
 		};
-	}, [signalPageFilters, signalPageRefreshKey]);
+	}, [hasProAccess, signalPageFilters, signalPageRefreshKey]);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -1593,7 +1460,8 @@ export function SignalsWorkspace() {
 					limit: "180",
 					symbol: selectedSymbol,
 				});
-				const response = await fetch(`/api/signals/klines?${params.toString()}`, {
+				const endpoint = hasProAccess ? "/api/signals/klines" : "/api/market/klines";
+				const response = await fetch(`${endpoint}?${params.toString()}`, {
 					cache: "no-store",
 					signal: controller.signal,
 				});
@@ -1644,7 +1512,7 @@ export function SignalsWorkspace() {
 			isMounted = false;
 			controller.abort();
 		};
-	}, [selectedSymbol, selectedTimeframe]);
+	}, [hasProAccess, selectedSymbol, selectedTimeframe]);
 
 	useEffect(() => {
 		if (!instruments.length) {
@@ -1698,20 +1566,19 @@ export function SignalsWorkspace() {
 	}, [followedSourceIds]);
 
 	useEffect(() => {
-		if (!isSignupTrial) {
+		if (
+			defaultSourcesInitializedRef.current ||
+			!sourceFilters.length ||
+			(process.env.NODE_ENV !== "production" && !selectedSymbol)
+		) {
 			return;
 		}
 
-		try {
-			if (window.localStorage.getItem(guideStorageKey)) {
-				return;
-			}
-		} catch {
-			return;
-		}
-
-		setWelcomeDialogOpen(true);
-	}, [guideStorageKey, isSignupTrial]);
+		const firstSourceId = sourceFilters[0].id;
+		defaultSourcesInitializedRef.current = true;
+		defaultSourceIdRef.current = firstSourceId;
+		setSelectedSourceIds([firstSourceId]);
+	}, [selectedSymbol, sourceFilters]);
 
 	useEffect(() => {
 		const visibleSourceIds = new Set(sourceFilters.map((source) => source.id));
@@ -1797,7 +1664,7 @@ export function SignalsWorkspace() {
 		);
 
 		return disconnect;
-	}, [baseInstruments, tickerSymbols]);
+	}, [hasProAccess, baseInstruments, tickerSymbols]);
 
 	useEffect(() => {
 		if (!selectedSymbol) {
@@ -1833,12 +1700,30 @@ export function SignalsWorkspace() {
 		);
 
 		return disconnect;
-	}, [selectedSymbol, selectedTimeframe]);
+	}, [hasProAccess, selectedSymbol, selectedTimeframe]);
 
 	const filteredSignals = signalPageTradeSignals;
+	useEffect(() => {
+		if (
+			!defaultSourcesInitializedRef.current ||
+			defaultSignalInitializedRef.current ||
+			!filteredSignals.length
+		) {
+			return;
+		}
+
+		const firstSourceSignal = filteredSignals.find(
+			(signal) => signal.sourceId === defaultSourceIdRef.current,
+		);
+
+		if (firstSourceSignal) {
+			defaultSignalInitializedRef.current = true;
+			setActiveSignalId(firstSourceSignal.id);
+		}
+	}, [filteredSignals]);
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
-	const chartSignals = filteredSignals;
+	const chartSignals = activeSignal ? [activeSignal] : filteredSignals;
 
 	const candles = useMemo(() => {
 		if (
@@ -1875,7 +1760,7 @@ export function SignalsWorkspace() {
 		(isSignalsLoading || supportedSymbols === null) && instruments.length === 0;
 	const displayedStatusCounts = {
 		...statusCounts,
-		active: statusCounts.active + localPreviewPageSignals.length,
+		active: statusCounts.active,
 	};
 	const activeMobileFilterCount =
 		selectedSourceIds.length +
@@ -1956,27 +1841,6 @@ export function SignalsWorkspace() {
 		setDraftEntryStatus("all");
 	}
 
-	function markGuideSeen() {
-		try {
-			window.localStorage.setItem(guideStorageKey, "seen");
-		} catch {
-			// Ignore private browsing storage failures; the guide is non-critical.
-		}
-	}
-
-	function dismissWelcomeDialog() {
-		markGuideSeen();
-		setWelcomeDialogOpen(false);
-	}
-
-	function startGuide() {
-		markGuideSeen();
-		setWelcomeDialogOpen(false);
-		setIsSignalPanelCollapsed(false);
-		setGuideStepIndex(0);
-		setGuideOpen(true);
-	}
-
 	function replayGuide() {
 		setIsSignalPanelCollapsed(false);
 		setGuideStepIndex(0);
@@ -1985,6 +1849,9 @@ export function SignalsWorkspace() {
 
 	function closeGuide() {
 		setGuideOpen(false);
+		if (!hasProAccess) {
+			setPaywallOpen(true);
+		}
 	}
 
 	function goToNextGuideStep() {
@@ -1997,12 +1864,6 @@ export function SignalsWorkspace() {
 	}
 
 	const guideSteps: SignalsGuideStep[] = [
-		{
-			icon: RadioIcon,
-			target: "ticker",
-			title: t("guide.steps.market.title"),
-			description: t("guide.steps.market.description"),
-		},
 		{
 			icon: CrownIcon,
 			target: "traders",
@@ -2035,72 +1896,12 @@ export function SignalsWorkspace() {
 			className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:overflow-hidden min-h-full bg-[#141414] pt-[env(safe-area-inset-top)] text-foreground"
 		>
 			<style>{SIGNALS_SKELETON_STYLES}</style>
-			<Dialog
-				open={welcomeDialogOpen}
-				onOpenChange={(open) => {
-					if (open) {
-						setWelcomeDialogOpen(true);
-						return;
-					}
-					dismissWelcomeDialog();
-				}}
-			>
-				<DialogContent className="gap-0 border-white/10 px-7 pt-8 pb-6 text-white sm:max-w-[320px] md:w-[320px] [&>button]:top-4 [&>button]:right-4 [&>button]:text-white/58 [&>button]:hover:bg-white/8 [&>button]:hover:text-white w-[min(calc(100vw_-_40px),320px)] max-w-[320px] justify-items-center overflow-hidden bg-[#181818] text-center shadow-[0_28px_90px_rgba(0,0,0,0.52)] [&>button]:rounded-full [&>button]:opacity-100">
-					<style>{TRIAL_WELCOME_CONFETTI_STYLES}</style>
-					<div className="gap-4 flex w-full flex-col items-center text-center">
-						<div className="size-16 relative flex items-center justify-center overflow-visible">
-							{TRIAL_WELCOME_CONFETTI_PARTICLES.map((particle, index) => (
-								<span
-									aria-hidden="true"
-									className={cn(
-										"trial-confetti-particle absolute",
-										particle.className,
-									)}
-									key={index}
-									style={particle.style}
-								/>
-							))}
-							<div
-								aria-hidden="true"
-								className="size-14 border-white/10 bg-white/[0.07] text-3xl flex items-center justify-center rounded-full border shadow-[0_16px_36px_rgba(0,0,0,0.32)]"
-							>
-								🎉
-							</div>
-						</div>
-						<div className="gap-1.5 flex w-full flex-col items-center text-center">
-							<DialogTitle className="text-xl leading-tight">
-								{t("trialWelcome.title")}
-							</DialogTitle>
-							<DialogDescription className="text-base font-medium leading-6 text-white/72 mx-auto max-w-[248px] text-center">
-								{t("trialWelcome.description")}
-							</DialogDescription>
-						</div>
-					</div>
-					<div className="mt-6 gap-2 mx-auto flex w-full max-w-[180px] flex-col items-stretch justify-center">
-						<Button
-							type="button"
-							variant="primary"
-							size="sm"
-							className="h-10 gap-2 bg-white px-5 text-sm text-black ring-white/14 hover:bg-white/92 [&>svg]:!m-0 [&>svg]:size-4 w-full border-2 border-[#151515] shadow-[0_12px_30px_rgba(255,255,255,0.08)] ring-1"
-							onClick={startGuide}
-						>
-							<CompassIcon data-icon="inline-start" />
-							{t("trialWelcome.startGuide")}
-						</Button>
-						<Button
-							type="button"
-							variant="ghost"
-							size="sm"
-							className="h-6 px-2 text-xs font-medium text-white/52 hover:text-white/78 w-full hover:bg-transparent"
-							onClick={dismissWelcomeDialog}
-						>
-							{t("trialWelcome.skip")}
-						</Button>
-					</div>
-				</DialogContent>
-			</Dialog>
+			<style>{CHART_FULLSCREEN_STYLES}</style>
 			{guideOpen ? (
 				<SignalsGuideOverlay
+					onHeightChange={setGuideCardHeight}
+					isAuthenticated={isAuthenticated}
+					requiresMembership={!hasProAccess}
 					onClose={closeGuide}
 					onNext={goToNextGuideStep}
 					step={guideSteps[guideStepIndex]}
@@ -2108,14 +1909,57 @@ export function SignalsWorkspace() {
 					totalSteps={guideSteps.length}
 				/>
 			) : null}
+			<Dialog
+				open={paywallOpen && !isMobilePaywall}
+				onOpenChange={(open) => {
+					setPaywallOpen(open);
+					if (!open && !hasProAccess) replayGuide();
+				}}
+			>
+				<SignalsMobilePaywall
+					isAuthenticated={isAuthenticated}
+					open={paywallOpen && isMobilePaywall}
+					onClose={() => {
+						setPaywallOpen(false);
+						if (!hasProAccess) replayGuide();
+					}}
+				/>
+				<DialogContent
+					overlayClassName="bg-black/20 backdrop-blur-md"
+					className="border-white/10 text-white max-md:hidden sm:max-w-4xl max-h-[90dvh] overflow-y-auto bg-[#1c1a19]"
+				>
+					<DialogTitle>{t("paywall.title")}</DialogTitle>
+					<DialogDescription>{t("paywall.description")}</DialogDescription>
+					<div className="mt-5 gap-3 flex flex-col">
+						<PricingTable
+							planIds={["pro"]}
+							userId={isAuthenticated ? user?.id : undefined}
+						/>
+						{!isAuthenticated ? (
+							<Button asChild variant="outline" className="w-full">
+								<Link href="/login?redirectTo=%2Fsignals">{t("guide.login")}</Link>
+							</Button>
+						) : null}
+					</div>
+				</DialogContent>
+			</Dialog>
 			<Dialog open={isChartFullscreenOpen} onOpenChange={setIsChartFullscreenOpen}>
-				<DialogContent className="gap-0 border-white/10 p-0 text-white sm:max-w-none [&>button]:right-4 [&>button]:top-4 [&>button]:bg-white/8 [&>button]:p-2 [&>button]:text-white/70 [&>button]:hover:bg-white/14 [&>button]:hover:text-white h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-none overflow-hidden bg-[#141414] shadow-[0_28px_90px_rgba(0,0,0,0.72)] [&>button]:z-50 [&>button]:rounded-full [&>button]:opacity-100">
+				<DialogContent
+					data-chart-landscape-dialog="true"
+					className="gap-0 border-white/10 p-0 text-white sm:max-w-none [&>button]:right-4 [&>button]:top-4 [&>button]:bg-white/8 [&>button]:p-2 [&>button]:text-white/70 [&>button]:hover:bg-white/14 [&>button]:hover:text-white h-[calc(100dvh-32px)] w-[calc(100vw-32px)] max-w-none overflow-hidden bg-[#141414] shadow-[0_28px_90px_rgba(0,0,0,0.72)] [&>button]:z-50 [&>button]:rounded-full [&>button]:opacity-100"
+				>
 					<div className="min-h-0 flex h-full flex-col">
-						<div className="border-white/10 px-4 py-3 pr-14 flex shrink-0 items-center justify-between border-b bg-[#141414]">
+						<div
+							className="border-white/10 px-4 py-3 pr-14 flex shrink-0 items-center justify-between border-b bg-[#141414]"
+							data-chart-landscape-toolbar="true"
+						>
 							<div className="gap-3 flex items-center">
 								<ChartCandlestickIcon className="size-4 text-muted-foreground" />
 								<DialogTitle className="font-mono text-sm font-semibold leading-none">
-									{selectedSymbol || t("chart.loadingSymbol")}
+									{selectedSymbol ||
+										(isChartLoading
+											? t("chart.loadingSymbol")
+											: t("chart.emptyTitle"))}
 								</DialogTitle>
 								<DialogDescription className="sr-only">
 									{t("actions.expand")}
@@ -2139,7 +1983,7 @@ export function SignalsWorkspace() {
 								))}
 							</div>
 						</div>
-						<div className="min-h-0 flex-1">
+						<div className="min-h-0 flex-1" data-chart-landscape-stage="true">
 							{canShowChart ? (
 								<TradingViewSignalChart
 									activeSignal={activeSignal}
@@ -2175,989 +2019,1231 @@ export function SignalsWorkspace() {
 					</div>
 				</DialogContent>
 			</Dialog>
-			<header
-				className="px-4 py-2 backdrop-blur md:block hidden shrink-0 border-b bg-[#141414]/80"
-				data-guide-target="ticker"
-			>
-				{isTickerLoading ? (
-					<TickerSkeleton />
-				) : (
-					<div className="min-w-0 gap-3 no-scrollbar flex items-center overflow-x-auto">
-						<div className="gap-2 pr-3 text-sm font-semibold flex shrink-0 items-center">
-							<RadioIcon className="size-4 text-emerald-500" />
-							<span>{t("ticker.live")}</span>
-						</div>
-						{instruments.length === 0 && (
-							<span className="text-sm text-muted-foreground">
-								{t("ticker.empty")}
-							</span>
-						)}
-						{instruments.map((instrument) => (
-							<button
-								key={instrument.symbol}
-								type="button"
-								onClick={() => selectSymbol(instrument.symbol)}
-								className={cn(
-									"gap-2 px-3 py-1.5 text-sm hover:bg-white/8 flex shrink-0 items-center rounded-md border text-left transition-colors duration-200",
-									selectedSymbol === instrument.symbol
-										? "bg-white/8 border-foreground/20"
-										: "border-transparent bg-transparent",
-								)}
-							>
-								<span className="size-5 bg-black font-bold flex shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px]">
-									{instrument.logo ? (
-										<img
-											alt={instrument.base}
-											className="size-6 object-contain"
-											src={instrument.logo}
-										/>
-									) : (
-										instrument.base.slice(0, 2)
-									)}
-								</span>
-								<span className="font-semibold">{instrument.base}</span>
-								<span
-									className={cn(
-										"font-mono text-muted-foreground transition-colors duration-200",
-										instrument.tickDirection === "up" && "text-emerald-400",
-										instrument.tickDirection === "down" && "text-rose-400",
-									)}
-								>
-									{instrument.price > 0
-										? `$${formatPrice(instrument.price, instrument.pricePrecision ?? 0)}`
-										: "--"}
-								</span>
-								<span
-									className={cn(
-										"font-mono text-xs",
-										instrument.change >= 0
-											? "text-emerald-500"
-											: "text-rose-500",
-									)}
-								>
-									{instrument.change >= 0 ? "+" : ""}
-									{instrument.change.toFixed(2)}%
-								</span>
-							</button>
-						))}
-					</div>
-				)}
-			</header>
-
 			<div
-				className={cn(
-					"gap-0 xl:min-h-0 xl:flex-1 xl:overflow-hidden grid grid-cols-1",
-					isSignalPanelCollapsed
-						? "xl:grid-cols-[minmax(700px,1fr)_0px]"
-						: "xl:grid-cols-[minmax(700px,1fr)_328px]",
-				)}
+				data-guide-viewport={guideOpen ? "true" : undefined}
+				className={guideOpen ? "min-h-0 overflow-y-auto overscroll-contain" : "contents"}
+				style={
+					guideOpen
+						? { height: "100dvh", paddingBottom: guideCardHeight + 64 }
+						: undefined
+				}
+				inert={!hasProAccess}
 			>
-				<aside className="xl:border-r xl:border-b-0 hidden border-b bg-[#141414]">
-					<div className="px-4 py-4 flex items-center justify-between border-b">
-						<div>
-							<p className="text-xs text-muted-foreground">{t("market.eyebrow")}</p>
-							<h2 className="text-lg font-semibold">{t("market.title")}</h2>
-						</div>
-						<Button size="icon" variant="ghost" aria-label={t("market.search")}>
-							<SearchIcon className="size-4" />
-						</Button>
-					</div>
-
-					<div className="divide-y">
-						{instruments.map((instrument) => {
-							const isSelected = instrument.symbol === selectedSymbol;
-
-							return (
-								<div
+				{!hasProAccess ? (
+					<p className="px-4 py-2 text-xs text-muted-foreground">{t("guide.preview")}</p>
+				) : null}
+				<header
+					className={cn(
+						"px-4 py-2 backdrop-blur shrink-0 border-b bg-[#141414]/80",
+						guideOpen ? "block" : "md:block hidden",
+					)}
+					data-guide-target="ticker"
+				>
+					{isTickerLoading ? (
+						<TickerSkeleton />
+					) : (
+						<div className="min-w-0 gap-3 no-scrollbar flex items-center overflow-x-auto">
+							<div className="gap-2 pr-3 text-sm font-semibold flex shrink-0 items-center">
+								<RadioIcon className="size-4 text-emerald-500" />
+								<span>{t("ticker.live")}</span>
+							</div>
+							{instruments.length === 0 && (
+								<span className="text-sm text-muted-foreground">
+									{t("ticker.empty")}
+								</span>
+							)}
+							{instruments.map((instrument) => (
+								<button
 									key={instrument.symbol}
+									type="button"
+									onClick={() => selectSymbol(instrument.symbol)}
 									className={cn(
-										"group gap-3 px-4 py-4 flex items-center transition-colors",
-										isSelected ? "bg-white/8" : "hover:bg-white/5",
+										"gap-2 px-3 py-1.5 text-sm hover:bg-white/8 flex shrink-0 items-center rounded-md border text-left transition-colors duration-200",
+										selectedSymbol === instrument.symbol
+											? "bg-white/8 border-foreground/20"
+											: "border-transparent bg-transparent",
 									)}
 								>
-									<button
-										type="button"
-										onClick={() => selectSymbol(instrument.symbol)}
-										className="min-w-0 gap-3 flex flex-1 items-center text-left"
-									>
-										<span
-											className={cn(
-												"size-9 text-sm font-bold text-white flex shrink-0 items-center justify-center rounded-full",
-												instrument.accent,
-											)}
-										>
-											{instrument.base.slice(0, 1)}
-										</span>
-										<span className="min-w-0">
-											<span className="font-semibold block truncate">
-												{instrument.symbol}
-											</span>
-											<span className="font-mono text-xs text-muted-foreground">
-												{instrument.volume}
-											</span>
-										</span>
-									</button>
-									<div className="text-right">
-										<p className="font-mono text-sm font-semibold">
-											$
-											{formatPrice(
-												instrument.price,
-												instrument.symbol === "SOLUSDT" ? 2 : 0,
-											)}
-										</p>
-										<p
-											className={cn(
-												"font-mono text-xs",
-												instrument.change >= 0
-													? "text-emerald-500"
-													: "text-rose-500",
-											)}
-										>
-											{instrument.change >= 0 ? "+" : ""}
-											{instrument.change.toFixed(2)}%
-										</p>
-									</div>
-								</div>
-							);
-						})}
-					</div>
-				</aside>
-
-				<main className="min-h-0 min-w-0 flex flex-col bg-[#141414]">
-					<section
-						className="px-3 py-3 shrink-0 bg-[#141414]"
-						data-guide-target="filters"
-					>
-						<div className="gap-3 flex flex-col">
-							<div data-guide-target="traders">
-								<div className="md:flex md:flex-wrap md:items-start md:gap-2 hidden">
-									<button
-										type="button"
-										onClick={clearSourceFilters}
-										aria-pressed={selectedSourceIds.length === 0}
+									<span className="size-5 bg-black font-bold flex shrink-0 items-center justify-center overflow-hidden rounded-full text-[10px]">
+										{instrument.logo ? (
+											<img
+												alt={instrument.base}
+												className="size-6 object-contain"
+												src={instrument.logo}
+											/>
+										) : (
+											instrument.base.slice(0, 2)
+										)}
+									</span>
+									<span className="font-semibold">{instrument.base}</span>
+									<span
 										className={cn(
-											"md:size-auto md:min-w-[52px] md:px-2.5 md:py-1.5 md:text-xs font-medium gap-1 md:gap-0 md:rounded-md flex size-[52px] shrink-0 flex-col items-center justify-center rounded-lg border text-center text-[10px] transition-colors",
-											selectedSourceIds.length === 0
-												? "md:bg-foreground border-foreground/20 bg-foreground text-background"
-												: "hover:bg-white/8 md:bg-[#141414] bg-[#141414]",
+											"font-mono text-muted-foreground transition-colors duration-200",
+											instrument.tickDirection === "up" && "text-emerald-400",
+											instrument.tickDirection === "down" && "text-rose-400",
 										)}
 									>
-										<span className="size-10 md:hidden border-white/15 bg-white/8 font-bold flex items-center justify-center rounded-full border text-[11px]">
-											{t("filters.allSources").slice(0, 1)}
-										</span>
-										<span>{t("filters.allSources")}</span>
-									</button>
-									{sourceFilters.map((source) => (
+										{instrument.price > 0
+											? `$${formatPrice(instrument.price, instrument.pricePrecision ?? 0)}`
+											: "--"}
+									</span>
+									<span
+										className={cn(
+											"font-mono text-xs",
+											instrument.change >= 0
+												? "text-emerald-500"
+												: "text-rose-500",
+										)}
+									>
+										{instrument.change >= 0 ? "+" : ""}
+										{instrument.change.toFixed(2)}%
+									</span>
+								</button>
+							))}
+						</div>
+					)}
+				</header>
+
+				<div
+					className={cn(
+						"gap-0 xl:min-h-0 xl:flex-1 xl:overflow-hidden grid grid-cols-1",
+						isSignalPanelCollapsed
+							? "xl:grid-cols-[minmax(700px,1fr)_0px]"
+							: "xl:grid-cols-[minmax(700px,1fr)_328px]",
+					)}
+				>
+					<aside className="xl:border-r xl:border-b-0 hidden border-b bg-[#141414]">
+						<div className="px-4 py-4 flex items-center justify-between border-b">
+							<div>
+								<p className="text-xs text-muted-foreground">
+									{t("market.eyebrow")}
+								</p>
+								<h2 className="text-lg font-semibold">{t("market.title")}</h2>
+							</div>
+							<Button size="icon" variant="ghost" aria-label={t("market.search")}>
+								<SearchIcon className="size-4" />
+							</Button>
+						</div>
+
+						<div className="divide-y">
+							{instruments.map((instrument) => {
+								const isSelected = instrument.symbol === selectedSymbol;
+
+								return (
+									<div
+										key={instrument.symbol}
+										className={cn(
+											"group gap-3 px-4 py-4 flex items-center transition-colors",
+											isSelected ? "bg-white/8" : "hover:bg-white/5",
+										)}
+									>
 										<button
-											key={source.id}
 											type="button"
-											onClick={() => toggleSourceFilter(source.id)}
-											title={source.name}
-											className={cn(
-												"md:w-auto md:min-h-0 gap-1 md:gap-1.5 px-0 md:px-2 py-0 md:py-1 md:text-xs md:flex-row md:items-center md:rounded-md md:border flex min-h-[68px] w-[64px] shrink-0 flex-col items-center rounded-lg border border-transparent text-[10px] transition-colors",
-												selectedSourceIds.includes(source.id)
-													? "bg-white/8 md:border-foreground/20 md:bg-foreground md:text-background text-foreground"
-													: "hover:bg-white/8 md:bg-[#141414]",
-											)}
-											aria-pressed={selectedSourceIds.includes(source.id)}
+											onClick={() => selectSymbol(instrument.symbol)}
+											className="min-w-0 gap-3 flex flex-1 items-center text-left"
 										>
 											<span
 												className={cn(
-													"size-11 md:size-5 flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 ring-offset-2 ring-offset-[#141414] transition-colors",
-													selectedSourceIds.includes(source.id)
-														? "md:ring-transparent ring-foreground"
-														: "ring-white/10 md:ring-transparent",
+													"size-9 text-sm font-bold text-white flex shrink-0 items-center justify-center rounded-full",
+													instrument.accent,
 												)}
 											>
-												<img
-													alt={source.name}
-													className="size-full object-cover"
-													src={source.avatar}
-												/>
+												{instrument.base.slice(0, 1)}
 											</span>
-											<span className="md:w-auto md:max-w-32 md:text-left w-full truncate text-center">
-												{source.name}
+											<span className="min-w-0">
+												<span className="font-semibold block truncate">
+													{instrument.symbol}
+												</span>
+												<span className="font-mono text-xs text-muted-foreground">
+													{instrument.volume}
+												</span>
 											</span>
 										</button>
-									))}
-								</div>
-								<div className="min-w-0 gap-2 md:hidden flex items-start">
-									<div className="no-scrollbar min-w-0 gap-3 flex min-h-[76px] flex-1 items-start overflow-x-auto overflow-y-hidden">
+										<div className="text-right">
+											<p className="font-mono text-sm font-semibold">
+												$
+												{formatPrice(
+													instrument.price,
+													instrument.symbol === "SOLUSDT" ? 2 : 0,
+												)}
+											</p>
+											<p
+												className={cn(
+													"font-mono text-xs",
+													instrument.change >= 0
+														? "text-emerald-500"
+														: "text-rose-500",
+												)}
+											>
+												{instrument.change >= 0 ? "+" : ""}
+												{instrument.change.toFixed(2)}%
+											</p>
+										</div>
+									</div>
+								);
+							})}
+						</div>
+					</aside>
+
+					<main className="min-h-0 min-w-0 flex flex-col bg-[#141414]">
+						<section className="px-3 py-3 shrink-0 bg-[#141414]">
+							<div className="gap-3 flex flex-col">
+								<div>
+									<div
+										data-guide-target="traders"
+										className="md:flex md:flex-wrap md:items-start md:gap-2 hidden w-fit max-w-full"
+									>
+										<button
+											type="button"
+											onClick={clearSourceFilters}
+											aria-pressed={selectedSourceIds.length === 0}
+											className={cn(
+												"md:size-auto md:min-w-[52px] md:px-2.5 md:py-1.5 md:text-xs font-medium gap-1 md:gap-0 md:rounded-md flex size-[52px] shrink-0 flex-col items-center justify-center rounded-lg border text-center text-[10px] transition-colors",
+												selectedSourceIds.length === 0
+													? "md:bg-foreground border-foreground/20 bg-foreground text-background"
+													: "hover:bg-white/8 md:bg-[#141414] bg-[#141414]",
+											)}
+										>
+											<span className="size-10 md:hidden border-white/15 bg-white/8 font-bold flex items-center justify-center rounded-full border text-[11px]">
+												{t("filters.allSources").slice(0, 1)}
+											</span>
+											<span>{t("filters.allSources")}</span>
+										</button>
 										{sourceFilters.map((source) => (
 											<button
 												key={source.id}
 												type="button"
 												onClick={() => toggleSourceFilter(source.id)}
 												title={source.name}
+												className={cn(
+													"md:w-auto md:min-h-0 gap-1 md:gap-1.5 px-0 md:px-2 py-0 md:py-1 md:text-xs md:flex-row md:items-center md:rounded-md md:border flex min-h-[68px] w-[64px] shrink-0 flex-col items-center rounded-lg border border-transparent text-[10px] transition-colors",
+													selectedSourceIds.includes(source.id)
+														? "bg-white/8 md:border-foreground/20 md:bg-foreground md:text-background text-foreground"
+														: "hover:bg-white/8 md:bg-[#141414]",
+												)}
 												aria-pressed={selectedSourceIds.includes(source.id)}
-												className="gap-1 px-0 pt-1 pb-0 flex min-h-[72px] w-[64px] shrink-0 flex-col items-center rounded-lg border border-transparent text-[10px] text-foreground transition-colors"
 											>
 												<span
 													className={cn(
-														"size-11 box-border flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2",
+														"size-11 md:size-5 flex shrink-0 items-center justify-center overflow-hidden rounded-full ring-2 ring-offset-2 ring-offset-[#141414] transition-colors",
 														selectedSourceIds.includes(source.id)
-															? "border-white"
-															: "border-white/10",
+															? "md:ring-transparent ring-foreground"
+															: "ring-white/10 md:ring-transparent",
 													)}
 												>
 													<img
 														alt={source.name}
 														className="size-full object-cover"
+														onError={(event) =>
+															event.currentTarget.parentElement?.setAttribute(
+																"hidden",
+																"true",
+															)
+														}
 														src={source.avatar}
 													/>
 												</span>
-												<span className="w-full truncate text-center">
+												<span className="md:w-auto md:max-w-32 md:text-left w-full truncate text-center">
 													{source.name}
 												</span>
 											</button>
 										))}
 									</div>
-									<Sheet
-										open={isSourcePickerOpen}
-										onOpenChange={setIsSourcePickerOpen}
-									>
-										<Button
-											type="button"
-											size="icon"
-											variant="ghost"
-											aria-label={sourcePickerT("open")}
-											title={sourcePickerT("open")}
-											className="size-9 text-white/60 hover:bg-white/5 hover:text-white shrink-0"
-											onClick={() => setIsSourcePickerOpen(true)}
+									<div className="min-w-0 gap-1 md:hidden flex items-start">
+										<div
+											data-guide-target="traders"
+											className="no-scrollbar min-w-0 gap-3 flex max-w-full items-start overflow-x-auto overflow-y-hidden"
 										>
-											<ChevronRightIcon className="size-5" />
-										</Button>
-										<SheetContent
-											side="bottom"
-											showCloseButton={false}
-											className="md:hidden gap-0 border-white/10 !p-0 text-white flex h-[82dvh] max-h-[88dvh] flex-col overflow-hidden rounded-t-2xl bg-[#151515]"
-										>
-											<div className="mt-1 h-1 w-10 bg-white/20 mx-auto rounded-full" />
-											<div className="gap-1 px-4 pt-1 pb-0 flex flex-col">
-												<div className="gap-3 flex items-center">
-													<div className="relative flex-1">
-														<SearchIcon className="left-3 size-4 text-white/45 pointer-events-none absolute top-1/2 -translate-y-1/2" />
-														<input
-															value={sourcePickerQuery}
-															onChange={(event) =>
-																setSourcePickerQuery(
-																	event.target.value,
+											<button
+												type="button"
+												onClick={clearSourceFilters}
+												aria-pressed={selectedSourceIds.length === 0}
+												className="gap-1 pt-1 flex min-h-[76px] w-[64px] shrink-0 flex-col items-center text-[10px]"
+											>
+												<span className="border-white/30 text-sm flex size-[52px] items-center justify-center rounded-full border-2">
+													{t("filters.allSources")}
+												</span>
+												<span>{sourcePickerT("allTraders")}</span>
+											</button>
+											{sourceFilters.length === 0 ? (
+												guideOpen ? (
+													<div
+														aria-hidden="true"
+														className="gap-2 flex items-center self-center"
+													>
+														{[1, 2, 3, 4, 5].map((avatar) => (
+															<img
+																key={avatar}
+																alt=""
+																className="size-11 border-white/10 rounded-full border-2 object-cover"
+																src={
+																	avatar === 5
+																		? "/images/hero-floating/onboarding-kol-5.png"
+																		: `/images/hero-floating/icon-${avatar}.png`
+																}
+															/>
+														))}
+													</div>
+												) : (
+													<p className="text-xs self-center text-muted-foreground">
+														{sourcePickerT("noMatches")}
+													</p>
+												)
+											) : null}
+											{sourceFilters.map((source) => (
+												<button
+													key={source.id}
+													type="button"
+													onClick={() => toggleSourceFilter(source.id)}
+													title={source.name}
+													aria-pressed={selectedSourceIds.includes(
+														source.id,
+													)}
+													className="gap-1 px-0 pt-1 pb-0 flex min-h-[76px] w-[64px] shrink-0 flex-col items-center rounded-lg border border-transparent text-[10px] text-foreground transition-colors"
+												>
+													<span
+														className={cn(
+															"box-border flex size-[52px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2",
+															selectedSourceIds.includes(source.id)
+																? "border-white"
+																: "border-white/10",
+														)}
+													>
+														<img
+															alt={source.name}
+															className="size-full object-cover"
+															onError={(event) =>
+																event.currentTarget.parentElement?.setAttribute(
+																	"hidden",
+																	"true",
 																)
 															}
-															placeholder={sourcePickerT("search")}
-															className="h-11 bg-white/10 py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus-visible:ring-white/35 w-full rounded-full outline-none focus-visible:ring-1"
+															src={source.avatar}
 														/>
+													</span>
+													<span className="w-full truncate text-center">
+														{source.name}
+													</span>
+												</button>
+											))}
+										</div>
+										<Sheet
+											open={isSourcePickerOpen}
+											onOpenChange={setIsSourcePickerOpen}
+										>
+											<Button
+												type="button"
+												size="icon"
+												variant="ghost"
+												aria-label={sourcePickerT("open")}
+												title={sourcePickerT("open")}
+												className="size-6 text-white/40 hover:text-white/70 shrink-0 self-center bg-transparent hover:bg-transparent"
+												onClick={() => setIsSourcePickerOpen(true)}
+											>
+												<ChevronRightIcon className="size-4 opacity-70" />
+											</Button>
+											<SheetContent
+												side="bottom"
+												showCloseButton={false}
+												className="md:hidden gap-0 border-white/10 !p-0 text-white flex h-[82dvh] max-h-[88dvh] flex-col overflow-hidden rounded-t-2xl bg-[#151515]"
+											>
+												<div className="mt-1 h-1 w-10 bg-white/20 mx-auto rounded-full" />
+												<div className="gap-1 px-4 pt-1 pb-0 flex flex-col">
+													<div className="gap-3 flex items-center">
+														<div className="relative flex-1">
+															<SearchIcon className="left-3 size-4 text-white/45 pointer-events-none absolute top-1/2 -translate-y-1/2" />
+															<input
+																value={sourcePickerQuery}
+																onChange={(event) =>
+																	setSourcePickerQuery(
+																		event.target.value,
+																	)
+																}
+																placeholder={sourcePickerT(
+																	"search",
+																)}
+																className="h-11 bg-white/10 py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus-visible:ring-white/35 w-full rounded-full outline-none focus-visible:ring-1"
+															/>
+														</div>
+													</div>
+													<div className="no-scrollbar gap-2 flex overflow-x-auto">
+														{SOURCE_PICKER_CATEGORIES.map(
+															(category) => (
+																<button
+																	key={category}
+																	type="button"
+																	onClick={() =>
+																		setSourcePickerCategory(
+																			category,
+																		)
+																	}
+																	className={cn(
+																		"py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+																		sourcePickerCategory ===
+																			category
+																			? "border-white text-white border-b-2"
+																			: "text-white/45 border-b-2 border-transparent",
+																	)}
+																>
+																	{sourcePickerT(
+																		`categories.${category}`,
+																	)}
+																</button>
+															),
+														)}
 													</div>
 												</div>
-												<div className="no-scrollbar gap-2 flex overflow-x-auto">
-													{SOURCE_PICKER_CATEGORIES.map((category) => (
-														<button
-															key={category}
-															type="button"
-															onClick={() =>
-																setSourcePickerCategory(category)
-															}
-															className={cn(
-																"py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
-																sourcePickerCategory === category
-																	? "border-white text-white border-b-2"
-																	: "text-white/45 border-b-2 border-transparent",
-															)}
-														>
-															{sourcePickerT(
-																`categories.${category}`,
-															)}
-														</button>
-													))}
-												</div>
-											</div>
-											<div className="min-h-0 px-4 pb-2 flex-1 overflow-y-auto">
-												<div className="gap-1 flex flex-col">
-													{filteredSourcePickerSources.map((source) => {
-														const isSelected =
-															selectedSourceIds.length === 0 ||
-															selectedSourceIds.includes(source.id);
-														const isFollowed = (
-															followedSourceIds ?? []
-														).includes(source.id);
-														const sourceSignalCount =
-															visibleWebhookSignals.filter(
-																(signal) =>
-																	(signal.source.id ??
-																		normalizeSourceKey(
-																			signal.source.name,
-																		)) === source.id &&
-																	signal.symbol ===
-																		selectedSymbol,
-															).length;
+												<div className="min-h-0 px-4 pb-2 flex-1 overflow-y-auto">
+													<div className="gap-1 flex flex-col">
+														{filteredSourcePickerSources.map(
+															(source) => {
+																const isSelected =
+																	selectedSourceIds.length ===
+																		0 ||
+																	selectedSourceIds.includes(
+																		source.id,
+																	);
+																const isFollowed = (
+																	followedSourceIds ?? []
+																).includes(source.id);
+																const sourceSignalCount =
+																	visibleWebhookSignals.filter(
+																		(signal) =>
+																			(signal.source.id ??
+																				normalizeSourceKey(
+																					signal.source
+																						.name,
+																				)) === source.id &&
+																			signal.symbol ===
+																				selectedSymbol,
+																	).length;
 
-														return (
-															<div
-																key={source.id}
-																className="gap-2 px-1 flex min-h-[56px] items-center rounded-lg"
-															>
-																<button
-																	type="button"
-																	onClick={() =>
-																		toggleSourceFilter(
-																			source.id,
-																		)
-																	}
-																	aria-pressed={isSelected}
-																	className="min-w-0 gap-3 py-1 flex flex-1 items-center text-left"
-																>
-																	<img
-																		alt=""
-																		className="size-10 shrink-0 rounded-full object-cover"
-																		src={source.avatar}
-																	/>
-																	<span className="min-w-0 flex-1">
-																		<span className="text-sm font-medium block truncate">
-																			{source.name}
-																		</span>
-																		<span className="text-xs text-white/45 block">
-																			{sourcePickerT(
-																				"signalCount",
+																return (
+																	<div
+																		key={source.id}
+																		className="gap-2 px-1 flex min-h-[56px] items-center rounded-lg"
+																	>
+																		<button
+																			type="button"
+																			onClick={() =>
+																				toggleSourceFilter(
+																					source.id,
+																				)
+																			}
+																			aria-pressed={
+																				isSelected
+																			}
+																			className="min-w-0 gap-3 py-1 flex flex-1 items-center text-left"
+																		>
+																			<img
+																				alt=""
+																				className="size-10 shrink-0 rounded-full object-cover"
+																				onError={(event) =>
+																					event.currentTarget.setAttribute(
+																						"hidden",
+																						"true",
+																					)
+																				}
+																				src={source.avatar}
+																			/>
+																			<span className="min-w-0 flex-1">
+																				<span className="text-sm font-medium block truncate">
+																					{source.name}
+																				</span>
+																				<span className="text-xs text-white/45 block">
+																					{sourcePickerT(
+																						"signalCount",
+																						{
+																							count: sourceSignalCount,
+																						},
+																					)}
+																				</span>
+																			</span>
+																		</button>
+																		<Button
+																			type="button"
+																			variant="ghost"
+																			size="icon"
+																			aria-label={sourcePickerT(
+																				isFollowed
+																					? "unfollow"
+																					: "follow",
 																				{
-																					count: sourceSignalCount,
+																					name: source.name,
 																				},
 																			)}
-																		</span>
-																	</span>
-																</button>
-																<Button
-																	type="button"
-																	variant="ghost"
-																	size="icon"
-																	aria-label={sourcePickerT(
-																		isFollowed
-																			? "unfollow"
-																			: "follow",
-																		{
-																			name: source.name,
-																		},
-																	)}
-																	className={cn(
-																		"size-10 shrink-0",
-																		isFollowed
-																			? "text-amber-400 hover:text-amber-300"
-																			: "text-white/35 hover:text-amber-300",
-																	)}
-																	onClick={() =>
-																		toggleSourceFollow(
-																			source.id,
-																		)
-																	}
-																>
-																	<StarIcon
-																		className="size-5"
-																		fill={
-																			isFollowed
-																				? "currentColor"
-																				: "none"
-																		}
-																	/>
-																</Button>
-															</div>
-														);
-													})}
-													{filteredSourcePickerSources.length === 0 && (
-														<p className="py-12 text-sm text-white/45 text-center">
-															{sourcePickerT("noMatches")}
-														</p>
-													)}
+																			className={cn(
+																				"size-10 shrink-0",
+																				isFollowed
+																					? "text-amber-400 hover:text-amber-300"
+																					: "text-white/35 hover:text-amber-300",
+																			)}
+																			onClick={() =>
+																				toggleSourceFollow(
+																					source.id,
+																				)
+																			}
+																		>
+																			<StarIcon
+																				className="size-5"
+																				fill={
+																					isFollowed
+																						? "currentColor"
+																						: "none"
+																				}
+																			/>
+																		</Button>
+																	</div>
+																);
+															},
+														)}
+														{filteredSourcePickerSources.length ===
+															0 && (
+															<p className="py-12 text-sm text-white/45 text-center">
+																{sourcePickerT("noMatches")}
+															</p>
+														)}
+													</div>
 												</div>
-											</div>
-											<div className="px-4 pt-2 pb-[max(env(safe-area-inset-bottom),8px)]">
-												<Button
+												<div className="px-4 pt-2 pb-[max(env(safe-area-inset-bottom),8px)]">
+													<Button
+														type="button"
+														className="h-11 bg-white text-black hover:bg-white/90 w-full"
+														onClick={() => setIsSourcePickerOpen(false)}
+													>
+														{sourcePickerT("done")}
+													</Button>
+												</div>
+											</SheetContent>
+										</Sheet>
+									</div>
+								</div>
+								<div className="md:hidden flex w-full items-center">
+									<Button
+										data-guide-target="filters"
+										type="button"
+										size="icon"
+										variant="ghost"
+										aria-label={t("actions.filters")}
+										title={t("actions.filters")}
+										className="size-9 text-white/55 hover:bg-white/5 hover:text-white relative shrink-0"
+										onClick={() => openMobileFilters(true)}
+									>
+										<SlidersHorizontalIcon className="size-4" />
+										{activeMobileFilterCount > 0 && (
+											<span className="right-0 top-0 size-4 font-semibold absolute flex items-center justify-center rounded-full bg-foreground text-[9px] text-background">
+												{activeMobileFilterCount}
+											</span>
+										)}
+									</Button>
+									<Button
+										type="button"
+										size="icon"
+										variant="ghost"
+										aria-label={t("actions.refresh")}
+										title={t("actions.refresh")}
+										className="size-9 text-white/55 hover:bg-white/5 hover:text-white"
+										onClick={() => setSignalPageRefreshKey((key) => key + 1)}
+									>
+										<RefreshCwIcon className="size-4" />
+									</Button>
+									<Button
+										type="button"
+										size="icon"
+										variant="ghost"
+										aria-label={t("guide.replay")}
+										title={t("guide.replay")}
+										className="size-9 text-white/55 hover:bg-white/5 hover:text-white"
+										onClick={replayGuide}
+									>
+										<CompassIcon className="size-4" />
+									</Button>
+									<Button
+										type="button"
+										size="icon"
+										variant="ghost"
+										aria-label={t(
+											isChartCollapsed
+												? "actions.expandChart"
+												: "actions.collapseChart",
+										)}
+										title={t(
+											isChartCollapsed
+												? "actions.expandChart"
+												: "actions.collapseChart",
+										)}
+										className="size-9 text-white/55 hover:bg-white/5 hover:text-white ml-auto"
+										onClick={() =>
+											setIsChartCollapsed((collapsed) => !collapsed)
+										}
+									>
+										{isChartCollapsed ? (
+											<ChevronDownIcon className="size-4" />
+										) : (
+											<ChevronUpIcon className="size-4" />
+										)}
+									</Button>
+								</div>
+
+								<div className="gap-2 md:flex md:flex-wrap md:items-center hidden">
+									<div
+										data-guide-target="filters"
+										className="gap-2 flex w-fit max-w-full flex-wrap items-center"
+									>
+										{SIGNAL_DIRECTIONS.map((direction) => (
+											<button
+												key={direction}
+												type="button"
+												onClick={() => setSelectedDirection(direction)}
+												className={cn(
+													"gap-1 px-2.5 py-1.5 text-xs font-semibold flex min-w-[52px] items-center justify-center rounded-md border transition-colors",
+													selectedDirection === direction
+														? "border-foreground/20 bg-foreground text-background"
+														: "hover:bg-white/8 border-transparent bg-[#141414] text-muted-foreground hover:text-foreground",
+												)}
+											>
+												{direction === "long" && (
+													<TrendingUpIcon className="size-3.5" />
+												)}
+												{direction === "short" && (
+													<TrendingDownIcon className="size-3.5" />
+												)}
+												{t(`direction.${direction}`)}
+											</button>
+										))}
+
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<button
 													type="button"
-													className="h-11 bg-white text-black hover:bg-white/90 w-full"
-													onClick={() => setIsSourcePickerOpen(false)}
+													className="gap-1.5 px-2.5 py-1.5 text-xs font-medium hover:text-white flex items-center rounded-md border bg-[#141414] text-muted-foreground transition-colors"
 												>
-													{sourcePickerT("done")}
-												</Button>
-											</div>
-										</SheetContent>
-									</Sheet>
+													{selectedTimeRange === "all"
+														? "信号时间"
+														: selectedTimeRange === "24h"
+															? "24小时内"
+															: selectedTimeRange === "3d"
+																? "3天内"
+																: selectedTimeRange === "7d"
+																	? "7天内"
+																	: "30天内"}
+													<ChevronDownIcon className="size-3" />
+												</button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent
+												align="start"
+												className="border-white/10 text-white min-w-[120px] bg-[#1a1a1a]"
+											>
+												{TIME_RANGES.map((range) => (
+													<DropdownMenuItem
+														key={range}
+														className="gap-2 text-xs cursor-pointer"
+														onClick={() => setSelectedTimeRange(range)}
+													>
+														<CheckIcon
+															className={cn(
+																"size-3.5",
+																selectedTimeRange === range
+																	? "opacity-100"
+																	: "opacity-0",
+															)}
+														/>
+														{range === "all"
+															? "信号时间"
+															: range === "24h"
+																? "24小时内"
+																: range === "3d"
+																	? "3天内"
+																	: range === "7d"
+																		? "7天内"
+																		: "30天内"}
+													</DropdownMenuItem>
+												))}
+											</DropdownMenuContent>
+										</DropdownMenu>
+
+										<DropdownMenu>
+											<DropdownMenuTrigger asChild>
+												<button
+													type="button"
+													className="gap-1.5 px-2.5 py-1.5 text-xs font-medium hover:text-white flex items-center rounded-md border bg-[#141414] text-muted-foreground transition-colors"
+												>
+													{selectedEntryStatus === "all"
+														? "入场状态"
+														: selectedEntryStatus === "pending"
+															? "待入场"
+															: "已入场"}
+													<ChevronDownIcon className="size-3" />
+												</button>
+											</DropdownMenuTrigger>
+											<DropdownMenuContent
+												align="start"
+												className="border-white/10 text-white min-w-[110px] bg-[#1a1a1a]"
+											>
+												{ENTRY_STATUSES.map((es) => (
+													<DropdownMenuItem
+														key={es}
+														className="gap-2 text-xs cursor-pointer"
+														onClick={() => setSelectedEntryStatus(es)}
+													>
+														<CheckIcon
+															className={cn(
+																"size-3.5",
+																selectedEntryStatus === es
+																	? "opacity-100"
+																	: "opacity-0",
+															)}
+														/>
+														{es === "all"
+															? "入场状态"
+															: es === "pending"
+																? "待入场"
+																: "已入场"}
+													</DropdownMenuItem>
+												))}
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</div>
+									<Button
+										size="icon"
+										variant="ghost"
+										aria-label={t(
+											isChartCollapsed
+												? "actions.expandChart"
+												: "actions.collapseChart",
+										)}
+										title={t(
+											isChartCollapsed
+												? "actions.expandChart"
+												: "actions.collapseChart",
+										)}
+										className="size-8 text-white/55 hover:bg-white/5 hover:text-white md:size-9"
+										onClick={() =>
+											setIsChartCollapsed((collapsed) => !collapsed)
+										}
+									>
+										{isChartCollapsed ? (
+											<ChevronDownIcon className="size-4" />
+										) : (
+											<ChevronUpIcon className="size-4" />
+										)}
+									</Button>
+									<Button
+										size="icon"
+										variant="ghost"
+										aria-label={t("guide.replay")}
+										title={t("guide.replay")}
+										onClick={replayGuide}
+									>
+										<CompassIcon className="size-4" />
+									</Button>
+									<Button
+										size="icon"
+										variant="ghost"
+										aria-label={t("actions.refresh")}
+										onClick={() => setSignalPageRefreshKey((key) => key + 1)}
+									>
+										<RefreshCwIcon className="size-4" />
+									</Button>
+								</div>
+								<Sheet open={isMobileFiltersOpen} onOpenChange={openMobileFilters}>
+									<SheetContent
+										side="bottom"
+										className="md:hidden gap-0 border-white/10 p-0 text-white flex h-[80dvh] max-h-[85dvh] flex-col overflow-hidden rounded-t-2xl bg-[#181818]"
+									>
+										<SheetHeader className="px-5 pt-5 pb-3 pr-14 text-left">
+											<SheetTitle className="text-white text-left">
+												{t("filters.mobileTitle")}
+											</SheetTitle>
+											<SheetDescription className="text-white/55 text-left">
+												{t("filters.mobileDescription")}
+											</SheetDescription>
+										</SheetHeader>
+										<Accordion
+											type="multiple"
+											defaultValue={["direction"]}
+											className="min-h-0 px-5 flex-1 overflow-y-auto"
+										>
+											<AccordionItem
+												value="direction"
+												className="border-white/10"
+											>
+												<AccordionTrigger className="py-4 text-sm hover:no-underline">
+													{t("filters.direction")}
+												</AccordionTrigger>
+												<AccordionContent className="pb-4">
+													<div className="gap-2 flex flex-wrap">
+														{SIGNAL_DIRECTIONS.map((direction) => (
+															<button
+																key={direction}
+																type="button"
+																aria-pressed={
+																	draftDirection === direction
+																}
+																onClick={() =>
+																	setDraftDirection(direction)
+																}
+																className={cn(
+																	"min-h-10 px-4 text-sm rounded-lg border transition-colors",
+																	draftDirection === direction
+																		? "border-white bg-white text-black"
+																		: "border-white/10 bg-white/[0.04] text-white/70",
+																)}
+															>
+																{t(`direction.${direction}`)}
+															</button>
+														))}
+													</div>
+												</AccordionContent>
+											</AccordionItem>
+											<AccordionItem
+												value="timeRange"
+												className="border-white/10"
+											>
+												<AccordionTrigger className="py-4 text-sm hover:no-underline">
+													{t("filters.timeRange")}
+												</AccordionTrigger>
+												<AccordionContent className="pb-4">
+													<div className="gap-2 flex flex-wrap">
+														{TIME_RANGES.map((range) => (
+															<button
+																key={range}
+																type="button"
+																aria-pressed={
+																	draftTimeRange === range
+																}
+																onClick={() =>
+																	setDraftTimeRange(range)
+																}
+																className={cn(
+																	"min-h-10 px-4 text-sm rounded-lg border transition-colors",
+																	draftTimeRange === range
+																		? "border-white bg-white text-black"
+																		: "border-white/10 bg-white/[0.04] text-white/70",
+																)}
+															>
+																{t(`filters.timeRanges.${range}`)}
+															</button>
+														))}
+													</div>
+												</AccordionContent>
+											</AccordionItem>
+											<AccordionItem
+												value="entryStatus"
+												className="border-white/10"
+											>
+												<AccordionTrigger className="py-4 text-sm hover:no-underline">
+													{t("filters.entryStatus")}
+												</AccordionTrigger>
+												<AccordionContent className="pb-4">
+													<div className="gap-2 flex flex-wrap">
+														{ENTRY_STATUSES.map((status) => (
+															<button
+																key={status}
+																type="button"
+																aria-pressed={
+																	draftEntryStatus === status
+																}
+																onClick={() =>
+																	setDraftEntryStatus(status)
+																}
+																className={cn(
+																	"min-h-10 px-4 text-sm rounded-lg border transition-colors",
+																	draftEntryStatus === status
+																		? "border-white bg-white text-black"
+																		: "border-white/10 bg-white/[0.04] text-white/70",
+																)}
+															>
+																{t(
+																	`filters.entryStatuses.${status}`,
+																)}
+															</button>
+														))}
+													</div>
+												</AccordionContent>
+											</AccordionItem>
+										</Accordion>
+										<div className="gap-3 border-white/10 px-5 pt-3 grid grid-cols-2 border-t bg-[#181818] pb-[max(env(safe-area-inset-bottom),16px)]">
+											<Button
+												type="button"
+												variant="outline"
+												className="h-11 border-white/15 text-white bg-transparent"
+												onClick={resetMobileFilters}
+											>
+												{t("filters.reset")}
+											</Button>
+											<Button
+												type="button"
+												className="h-11 bg-white text-black hover:bg-white/90"
+												onClick={applyMobileFilters}
+											>
+												{t("filters.apply")}
+											</Button>
+										</div>
+									</SheetContent>
+								</Sheet>
+							</div>
+						</section>
+
+						<section
+							className={cn(
+								"xl:min-h-0 xl:flex-1 flex flex-col",
+								isChartCollapsed && "hidden",
+							)}
+							data-guide-target="chart"
+						>
+							<div className="px-3 py-2 md:px-4 md:py-3 flex items-center justify-between bg-[#141414]">
+								<div className="gap-2 md:gap-3 min-w-0 flex items-center">
+									<ChartCandlestickIcon className="size-4 md:block hidden text-muted-foreground" />
+									<span className="font-mono md:text-sm font-semibold text-[15px]">
+										{selectedSymbol ||
+											(isChartLoading
+												? t("chart.loadingSymbol")
+												: t("chart.emptyTitle"))}
+									</span>
+								</div>
+								<div className="gap-1 md:gap-2 flex shrink-0 items-center">
+									<div className="gap-0.5 md:p-0.5 md:rounded-md md:border md:bg-[#141414] flex items-center">
+										{SUPPORTED_TIMEFRAMES.map((timeframe) => (
+											<button
+												key={timeframe}
+												type="button"
+												onClick={() => setSelectedTimeframe(timeframe)}
+												className={cn(
+													"min-w-8 px-1.5 py-1.5 text-xs font-semibold md:min-w-0 md:border-0 md:px-2.5 md:py-1 md:rounded-sm after:bottom-0 after:h-0.5 relative transition-colors after:absolute after:left-1/2 after:w-[45%] after:-translate-x-1/2 after:rounded-full after:bg-transparent after:content-['']",
+													selectedTimeframe === timeframe
+														? "md:bg-foreground md:text-background text-foreground after:bg-foreground"
+														: "md:hover:bg-white/8 text-muted-foreground hover:text-foreground",
+												)}
+											>
+												{timeframe}
+											</button>
+										))}
+									</div>
+									<Button
+										size="icon"
+										variant="ghost"
+										aria-label={t("actions.expand")}
+										className="size-8 text-white/55 hover:bg-white/5 hover:text-white md:size-9"
+										onClick={() => setIsChartFullscreenOpen(true)}
+									>
+										<Maximize2Icon className="size-4" />
+									</Button>
 								</div>
 							</div>
-							<div className="md:hidden flex items-center">
-								<Button
-									type="button"
-									size="icon"
-									variant="ghost"
-									aria-label={t("actions.filters")}
-									title={t("actions.filters")}
-									className="size-9 text-white/55 hover:bg-white/5 hover:text-white relative shrink-0"
-									onClick={() => openMobileFilters(true)}
-								>
-									<SlidersHorizontalIcon className="size-4" />
-									{activeMobileFilterCount > 0 && (
-										<span className="right-0 top-0 size-4 font-semibold absolute flex items-center justify-center rounded-full bg-foreground text-[9px] text-background">
-											{activeMobileFilterCount}
-										</span>
-									)}
-								</Button>
-								<Button
-									type="button"
-									size="icon"
-									variant="ghost"
-									aria-label={t("actions.refresh")}
-									title={t("actions.refresh")}
-									className="size-9 text-white/55 hover:bg-white/5 hover:text-white"
-									onClick={() => setSignalPageRefreshKey((key) => key + 1)}
-								>
-									<RefreshCwIcon className="size-4" />
-								</Button>
-								<Button
-									type="button"
-									size="icon"
-									variant="ghost"
-									aria-label={t("guide.replay")}
-									title={t("guide.replay")}
-									className="size-9 text-white/55 hover:bg-white/5 hover:text-white"
-									onClick={replayGuide}
-								>
-									<CompassIcon className="size-4" />
-								</Button>
-							</div>
 
-							<div className="gap-2 md:flex md:flex-wrap md:items-center hidden">
-								{SIGNAL_DIRECTIONS.map((direction) => (
+							<div
+								className="md:h-[min(620px,calc(100vh-260px))] md:min-h-[420px] xl:h-auto xl:min-h-0 xl:flex-1 h-[min(280px,34dvh)] min-h-[240px]"
+								style={
+									guideOpen
+										? {
+												height: `clamp(80px, calc(100dvh - ${guideCardHeight + 200}px), 420px)`,
+												minHeight: 0,
+												flex: "none",
+											}
+										: undefined
+								}
+							>
+								{canShowChart ? (
+									<TradingViewSignalChart
+										activeSignal={activeSignal}
+										candles={candles}
+										className="h-full"
+										formatPrice={formatPrice}
+										focusedSignalId={activeSignalId}
+										labels={{
+											entry: t("chart.entry"),
+											stopLoss: t("chart.stopLoss"),
+											takeProfit: t("chart.takeProfit"),
+										}}
+										locale={locale}
+										onSelectSignal={focusSignal}
+										pricePrecision={chartPricePrecision}
+										signals={chartSignals}
+										symbol={selectedSymbol}
+										timeframe={selectedTimeframe}
+									/>
+								) : isSignalsLoading || isChartLoading ? (
+									<ChartSkeleton />
+								) : (
+									<div className="p-4 md:p-6 md:min-h-[520px] flex h-full min-h-[240px] items-center justify-center bg-[#141414]">
+										<div className="max-w-sm border-white/12 px-6 py-5 rounded-xl border border-dashed text-center">
+											<p className="font-medium">{t("chart.emptyTitle")}</p>
+											<p className="mt-1 text-sm text-muted-foreground">
+												{t("chart.emptyDescription")}
+											</p>
+										</div>
+									</div>
+								)}
+							</div>
+						</section>
+					</main>
+
+					<aside
+						data-guide-target="signalList"
+						style={
+							guideOpen
+								? {
+										alignSelf: "start",
+										maxHeight: `calc(100dvh - ${guideCardHeight + 100}px)`,
+										overflowY: "auto",
+									}
+								: undefined
+						}
+						className={cn(
+							"group min-h-0 xl:flex xl:flex-col xl:overflow-hidden xl:border-l xl:border-t-0 relative bg-[#141414]",
+						)}
+					>
+						<button
+							type="button"
+							onClick={() => setIsSignalPanelCollapsed((current) => !current)}
+							className={cn(
+								"left-0 top-3 size-8 border-white/10 hover:border-white/20 hover:text-white xl:flex backdrop-blur absolute z-40 hidden -translate-x-1/2 items-center justify-center rounded-full border bg-[#1f1f1f]/95 text-muted-foreground shadow-[0_10px_32px_rgba(0,0,0,0.35)] transition-all hover:bg-[#272727] focus-visible:opacity-100",
+								isSignalPanelCollapsed
+									? "opacity-100"
+									: "opacity-0 group-hover:opacity-100",
+							)}
+							aria-label={isSignalPanelCollapsed ? "展开信号面板" : "收起信号面板"}
+							aria-expanded={!isSignalPanelCollapsed}
+						>
+							{isSignalPanelCollapsed ? (
+								<ChevronLeftIcon className="size-4" />
+							) : (
+								<ChevronRightIcon className="size-4" />
+							)}
+						</button>
+
+						<div className={cn("shrink-0", isSignalPanelCollapsed && "xl:hidden")}>
+							<div
+								className={cn(
+									"min-w-0 grid grid-cols-2",
+									isSignalPanelCollapsed && "xl:hidden",
+								)}
+							>
+								{SIGNAL_STATUSES.map((status) => (
 									<button
-										key={direction}
+										key={status}
 										type="button"
-										onClick={() => setSelectedDirection(direction)}
+										onClick={() => {
+											setSelectedStatus(status);
+											const filters: SignalPageFilters = {
+												...signalPageFilters,
+												status,
+											};
+											const nextSignal = signals.find((signal) =>
+												doesTradeSignalMatchFilters(signal, filters),
+											);
+											setActiveSignalId(nextSignal?.id ?? null);
+										}}
 										className={cn(
-											"gap-1 px-2.5 py-1.5 text-xs font-semibold flex min-w-[52px] items-center justify-center rounded-md border transition-colors",
-											selectedDirection === direction
-												? "border-foreground/20 bg-foreground text-background"
-												: "hover:bg-white/8 border-transparent bg-[#141414] text-muted-foreground hover:text-foreground",
+											"gap-1.5 px-4 py-2.5 text-sm font-medium after:h-0.5 after:w-9 relative transition-colors after:absolute after:bottom-[-1px] after:left-1/2 after:-translate-x-1/2 after:content-['']",
+											selectedStatus === status
+												? "text-white after:bg-white"
+												: "hover:text-white/75 text-white/45 after:bg-transparent",
 										)}
 									>
-										{direction === "long" && (
-											<TrendingUpIcon className="size-3.5" />
+										<span>{t(`status.${status}`)}</span>
+										{displayedStatusCounts[status] > 0 && (
+											<span className="ml-1.5 text-xs font-semibold opacity-60">
+												{displayedStatusCounts[status]}
+											</span>
 										)}
-										{direction === "short" && (
-											<TrendingDownIcon className="size-3.5" />
-										)}
-										{t(`direction.${direction}`)}
 									</button>
 								))}
-
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<button
-											type="button"
-											className="gap-1.5 px-2.5 py-1.5 text-xs font-medium hover:text-white flex items-center rounded-md border bg-[#141414] text-muted-foreground transition-colors"
-										>
-											{selectedTimeRange === "all"
-												? "信号时间"
-												: selectedTimeRange === "24h"
-													? "24小时内"
-													: selectedTimeRange === "3d"
-														? "3天内"
-														: selectedTimeRange === "7d"
-															? "7天内"
-															: "30天内"}
-											<ChevronDownIcon className="size-3" />
-										</button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent
-										align="start"
-										className="border-white/10 text-white min-w-[120px] bg-[#1a1a1a]"
-									>
-										{TIME_RANGES.map((range) => (
-											<DropdownMenuItem
-												key={range}
-												className="gap-2 text-xs cursor-pointer"
-												onClick={() => setSelectedTimeRange(range)}
-											>
-												<CheckIcon
-													className={cn(
-														"size-3.5",
-														selectedTimeRange === range
-															? "opacity-100"
-															: "opacity-0",
-													)}
-												/>
-												{range === "all"
-													? "信号时间"
-													: range === "24h"
-														? "24小时内"
-														: range === "3d"
-															? "3天内"
-															: range === "7d"
-																? "7天内"
-																: "30天内"}
-											</DropdownMenuItem>
-										))}
-									</DropdownMenuContent>
-								</DropdownMenu>
-
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<button
-											type="button"
-											className="gap-1.5 px-2.5 py-1.5 text-xs font-medium hover:text-white flex items-center rounded-md border bg-[#141414] text-muted-foreground transition-colors"
-										>
-											{selectedEntryStatus === "all"
-												? "入场状态"
-												: selectedEntryStatus === "pending"
-													? "待入场"
-													: "已入场"}
-											<ChevronDownIcon className="size-3" />
-										</button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent
-										align="start"
-										className="border-white/10 text-white min-w-[110px] bg-[#1a1a1a]"
-									>
-										{ENTRY_STATUSES.map((es) => (
-											<DropdownMenuItem
-												key={es}
-												className="gap-2 text-xs cursor-pointer"
-												onClick={() => setSelectedEntryStatus(es)}
-											>
-												<CheckIcon
-													className={cn(
-														"size-3.5",
-														selectedEntryStatus === es
-															? "opacity-100"
-															: "opacity-0",
-													)}
-												/>
-												{es === "all"
-													? "入场状态"
-													: es === "pending"
-														? "待入场"
-														: "已入场"}
-											</DropdownMenuItem>
-										))}
-									</DropdownMenuContent>
-								</DropdownMenu>
-
-								<Button
-									size="icon"
-									variant="ghost"
-									aria-label={t("guide.replay")}
-									title={t("guide.replay")}
-									onClick={replayGuide}
-								>
-									<CompassIcon className="size-4" />
-								</Button>
-								<Button
-									size="icon"
-									variant="ghost"
-									aria-label={t("actions.refresh")}
-									onClick={() => setSignalPageRefreshKey((key) => key + 1)}
-								>
-									<RefreshCwIcon className="size-4" />
-								</Button>
-							</div>
-							<Sheet open={isMobileFiltersOpen} onOpenChange={openMobileFilters}>
-								<SheetContent
-									side="bottom"
-									className="md:hidden gap-0 border-white/10 p-0 text-white flex h-[80dvh] max-h-[85dvh] flex-col overflow-hidden rounded-t-2xl bg-[#181818]"
-								>
-									<SheetHeader className="px-5 pt-5 pb-3 pr-14 text-left">
-										<SheetTitle className="text-white text-left">
-											{t("filters.mobileTitle")}
-										</SheetTitle>
-										<SheetDescription className="text-white/55 text-left">
-											{t("filters.mobileDescription")}
-										</SheetDescription>
-									</SheetHeader>
-									<Accordion
-										type="multiple"
-										defaultValue={["direction"]}
-										className="min-h-0 px-5 flex-1 overflow-y-auto"
-									>
-										<AccordionItem
-											value="direction"
-											className="border-white/10"
-										>
-											<AccordionTrigger className="py-4 text-sm hover:no-underline">
-												{t("filters.direction")}
-											</AccordionTrigger>
-											<AccordionContent className="pb-4">
-												<div className="gap-2 flex flex-wrap">
-													{SIGNAL_DIRECTIONS.map((direction) => (
-														<button
-															key={direction}
-															type="button"
-															aria-pressed={
-																draftDirection === direction
-															}
-															onClick={() =>
-																setDraftDirection(direction)
-															}
-															className={cn(
-																"min-h-10 px-4 text-sm rounded-lg border transition-colors",
-																draftDirection === direction
-																	? "border-white bg-white text-black"
-																	: "border-white/10 bg-white/[0.04] text-white/70",
-															)}
-														>
-															{t(`direction.${direction}`)}
-														</button>
-													))}
-												</div>
-											</AccordionContent>
-										</AccordionItem>
-										<AccordionItem
-											value="timeRange"
-											className="border-white/10"
-										>
-											<AccordionTrigger className="py-4 text-sm hover:no-underline">
-												{t("filters.timeRange")}
-											</AccordionTrigger>
-											<AccordionContent className="pb-4">
-												<div className="gap-2 flex flex-wrap">
-													{TIME_RANGES.map((range) => (
-														<button
-															key={range}
-															type="button"
-															aria-pressed={draftTimeRange === range}
-															onClick={() => setDraftTimeRange(range)}
-															className={cn(
-																"min-h-10 px-4 text-sm rounded-lg border transition-colors",
-																draftTimeRange === range
-																	? "border-white bg-white text-black"
-																	: "border-white/10 bg-white/[0.04] text-white/70",
-															)}
-														>
-															{t(`filters.timeRanges.${range}`)}
-														</button>
-													))}
-												</div>
-											</AccordionContent>
-										</AccordionItem>
-										<AccordionItem
-											value="entryStatus"
-											className="border-white/10"
-										>
-											<AccordionTrigger className="py-4 text-sm hover:no-underline">
-												{t("filters.entryStatus")}
-											</AccordionTrigger>
-											<AccordionContent className="pb-4">
-												<div className="gap-2 flex flex-wrap">
-													{ENTRY_STATUSES.map((status) => (
-														<button
-															key={status}
-															type="button"
-															aria-pressed={
-																draftEntryStatus === status
-															}
-															onClick={() =>
-																setDraftEntryStatus(status)
-															}
-															className={cn(
-																"min-h-10 px-4 text-sm rounded-lg border transition-colors",
-																draftEntryStatus === status
-																	? "border-white bg-white text-black"
-																	: "border-white/10 bg-white/[0.04] text-white/70",
-															)}
-														>
-															{t(`filters.entryStatuses.${status}`)}
-														</button>
-													))}
-												</div>
-											</AccordionContent>
-										</AccordionItem>
-									</Accordion>
-									<div className="gap-3 border-white/10 px-5 pt-3 grid grid-cols-2 border-t bg-[#181818] pb-[max(env(safe-area-inset-bottom),16px)]">
-										<Button
-											type="button"
-											variant="outline"
-											className="h-11 border-white/15 text-white bg-transparent"
-											onClick={resetMobileFilters}
-										>
-											{t("filters.reset")}
-										</Button>
-										<Button
-											type="button"
-											className="h-11 bg-white text-black hover:bg-white/90"
-											onClick={applyMobileFilters}
-										>
-											{t("filters.apply")}
-										</Button>
-									</div>
-								</SheetContent>
-							</Sheet>
-						</div>
-					</section>
-
-					<section
-						className="xl:min-h-0 xl:flex-1 flex flex-col"
-						data-guide-target="chart"
-					>
-						<div className="px-3 py-2 md:px-4 md:py-3 flex items-center justify-between bg-[#141414]">
-							<div className="gap-2 md:gap-3 min-w-0 flex items-center">
-								<ChartCandlestickIcon className="size-4 md:block hidden text-muted-foreground" />
-								<span className="font-mono md:text-sm font-semibold text-[15px]">
-									{selectedSymbol || t("chart.loadingSymbol")}
-								</span>
-							</div>
-							<div className="gap-1 md:gap-2 flex shrink-0 items-center">
-								<div className="gap-0.5 md:p-0.5 md:rounded-md md:border md:bg-[#141414] flex items-center">
-									{SUPPORTED_TIMEFRAMES.map((timeframe) => (
-										<button
-											key={timeframe}
-											type="button"
-											onClick={() => setSelectedTimeframe(timeframe)}
-											className={cn(
-												"min-w-8 px-1.5 py-1.5 text-xs font-semibold md:min-w-0 md:border-0 md:px-2.5 md:py-1 md:rounded-sm border-b-2 border-transparent transition-colors",
-												selectedTimeframe === timeframe
-													? "md:bg-foreground md:text-background border-foreground text-foreground"
-													: "md:hover:bg-white/8 text-muted-foreground hover:text-foreground",
-											)}
-										>
-											{timeframe}
-										</button>
-									))}
-								</div>
-								<Button
-									size="icon"
-									variant="ghost"
-									aria-label={t("actions.expand")}
-									className="size-8 text-white/55 hover:bg-white/5 hover:text-white md:size-9"
-									onClick={() => setIsChartFullscreenOpen(true)}
-								>
-									<Maximize2Icon className="size-4" />
-								</Button>
 							</div>
 						</div>
 
-						<div className="md:h-[min(620px,calc(100vh-260px))] md:min-h-[420px] xl:h-auto xl:min-h-0 xl:flex-1 h-[min(280px,34dvh)] min-h-[240px]">
-							{canShowChart ? (
-								<TradingViewSignalChart
-									activeSignal={activeSignal}
-									candles={candles}
-									className="h-full"
-									formatPrice={formatPrice}
-									focusedSignalId={activeSignalId}
-									labels={{
-										entry: t("chart.entry"),
-										stopLoss: t("chart.stopLoss"),
-										takeProfit: t("chart.takeProfit"),
-									}}
-									locale={locale}
-									onSelectSignal={focusSignal}
-									pricePrecision={chartPricePrecision}
-									signals={chartSignals}
-									symbol={selectedSymbol}
-									timeframe={selectedTimeframe}
-								/>
-							) : isSignalsLoading || isChartLoading ? (
-								<ChartSkeleton />
-							) : (
-								<div className="p-4 md:p-6 md:min-h-[520px] flex h-full min-h-[240px] items-center justify-center bg-[#141414]">
-									<div className="max-w-sm border-white/12 px-6 py-5 rounded-xl border border-dashed text-center">
-										<p className="font-medium">{t("chart.emptyTitle")}</p>
-										<p className="mt-1 text-sm text-muted-foreground">
-											{t("chart.emptyDescription")}
-										</p>
-									</div>
-								</div>
-							)}
-						</div>
-					</section>
-				</main>
-
-				<aside
-					className={cn(
-						"group min-h-0 xl:flex xl:flex-col xl:overflow-hidden xl:border-l xl:border-t-0 relative bg-[#141414]",
-					)}
-					data-guide-target="signalList"
-				>
-					<button
-						type="button"
-						onClick={() => setIsSignalPanelCollapsed((current) => !current)}
-						className={cn(
-							"left-0 top-3 size-8 border-white/10 hover:border-white/20 hover:text-white xl:flex backdrop-blur absolute z-40 hidden -translate-x-1/2 items-center justify-center rounded-full border bg-[#1f1f1f]/95 text-muted-foreground shadow-[0_10px_32px_rgba(0,0,0,0.35)] transition-all hover:bg-[#272727] focus-visible:opacity-100",
-							isSignalPanelCollapsed
-								? "opacity-100"
-								: "opacity-0 group-hover:opacity-100",
-						)}
-						aria-label={isSignalPanelCollapsed ? "展开信号面板" : "收起信号面板"}
-						aria-expanded={!isSignalPanelCollapsed}
-					>
-						{isSignalPanelCollapsed ? (
-							<ChevronLeftIcon className="size-4" />
-						) : (
-							<ChevronRightIcon className="size-4" />
-						)}
-					</button>
-
-					<div className={cn("shrink-0", isSignalPanelCollapsed && "xl:hidden")}>
 						<div
 							className={cn(
-								"min-w-0 grid grid-cols-2",
+								"divide-white/[0.08] px-5 py-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:overscroll-contain xl:p-3 divide-y",
 								isSignalPanelCollapsed && "xl:hidden",
 							)}
 						>
-							{SIGNAL_STATUSES.map((status) => (
-								<button
-									key={status}
-									type="button"
-									onClick={() => {
-										setSelectedStatus(status);
-										const filters: SignalPageFilters = {
-											...signalPageFilters,
-											status,
-										};
-										const nextSignal = signals.find((signal) =>
-											doesTradeSignalMatchFilters(signal, filters),
-										);
-										setActiveSignalId(nextSignal?.id ?? null);
-									}}
-									className={cn(
-										"gap-1.5 px-4 py-2.5 text-sm font-medium after:h-0.5 after:w-9 relative transition-colors after:absolute after:bottom-[-1px] after:left-1/2 after:-translate-x-1/2 after:content-['']",
-										selectedStatus === status
-											? "text-white after:bg-white"
-											: "hover:text-white/75 text-white/45 after:bg-transparent",
-									)}
-								>
-									<span>{t(`status.${status}`)}</span>
-									{displayedStatusCounts[status] > 0 && (
-										<span className="ml-1.5 text-xs font-semibold opacity-60">
-											{displayedStatusCounts[status]}
-										</span>
-									)}
-								</button>
-							))}
-						</div>
-					</div>
-
-					<div
-						className={cn(
-							"space-y-3 p-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:overscroll-contain",
-							isSignalPanelCollapsed && "xl:hidden",
-						)}
-					>
-						{isSignalPageLoading && !filteredSignals.length ? (
-							<div className="p-6 rounded-md border border-dashed text-center">
-								<p className="font-medium">{t("signalsPanel.loadingTitle")}</p>
-								<p className="mt-1 text-sm text-muted-foreground">
-									{t("signalsPanel.loadingDescription")}
-								</p>
-							</div>
-						) : filteredSignals.length ? (
-							<>
-								{filteredSignals.map((signal) => {
-									const statusPresentation = getSignalStatusPresentation(signal, {
-										closed: t("signalsPanel.closed"),
-										entered: t("signalsPanel.entered"),
-										expectedRr: t("signalsPanel.expectedRr"),
-										pending: t("signalsPanel.pending"),
-										result: t("signalsPanel.result"),
-									});
-									const StatusIcon = statusPresentation.icon;
-
-									return (
-										<button
-											key={signal.id}
-											type="button"
-											onClick={() => focusSignal(signal)}
-											className={cn(
-												"p-3 border-white/5 hover:bg-white/5 w-full rounded-xl border bg-[#141414] text-left transition-colors",
-												signal.id === activeSignal?.id &&
-													"border-white/10 bg-white/5",
-											)}
-										>
-											<div className="mb-3 gap-2 grid grid-cols-[minmax(0,1fr)_auto] items-start">
-												<div className="min-w-0 gap-2 flex items-center">
-													<span className="size-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
-														<img
-															alt={signal.sourceName}
-															className="size-8 object-cover"
-															src={signal.avatarUrl}
-														/>
-													</span>
+							{!hasProAccess ? (
+								preview.signals.length ? (
+									<div className="divide-white/[0.08] divide-y">
+										{preview.signals.slice(0, 3).map((signal, index) => (
+											<article
+												key={`${signal.sourceName}-${signal.symbol}-${signal.submittedAt}-${index}`}
+												className="p-3"
+											>
+												<div className="gap-2 flex items-center">
+													<img
+														alt=""
+														className="size-8 rounded-full object-cover"
+														src={
+															signal.avatarUrl ??
+															getProfileAvatarUrlForSeed(
+																signal.sourceName,
+																80,
+															)
+														}
+													/>
 													<div className="min-w-0 flex-1">
 														<p className="text-sm font-semibold truncate">
 															{signal.sourceName}
 														</p>
-														<p className="text-xs truncate text-muted-foreground">
-															{selectedInstrument?.symbol ??
-																signal.symbol}{" "}
-															· {t(`direction.${signal.direction}`)}
+														<p className="text-xs text-muted-foreground">
+															{signal.symbol} ·{" "}
+															{t(`direction.${signal.direction}`)}
 														</p>
 													</div>
+													<span className="text-xs text-muted-foreground">
+														{t(`status.${signal.status}`)}
+													</span>
 												</div>
-												<span
-													className={cn(
-														"px-2 py-1 font-semibold leading-tight max-w-[72px] rounded-full border text-center text-[11px]",
-														statusPresentation.badgeClassName,
+												<p className="mt-2 text-xs text-muted-foreground">
+													{t("signalsPanel.submittedAt")}:{" "}
+													{formatSignalSubmittedAt(
+														signal.submittedAt,
+														locale,
 													)}
-												>
-													{statusPresentation.label}
-												</span>
-											</div>
+												</p>
+											</article>
+										))}
+									</div>
+								) : isSignalPageLoading ? (
+									<div className="p-5 text-sm text-muted-foreground">
+										{t("signalsPanel.loadingTitle")}
+									</div>
+								) : (
+									<div className="p-5 text-sm text-muted-foreground">
+										{t("signalsPanel.emptyTitle")}
+									</div>
+								)
+							) : isSignalPageLoading && !filteredSignals.length ? (
+								<div className="p-6 rounded-md border border-dashed text-center">
+									<p className="font-medium">{t("signalsPanel.loadingTitle")}</p>
+									<p className="mt-1 text-sm text-muted-foreground">
+										{t("signalsPanel.loadingDescription")}
+									</p>
+								</div>
+							) : filteredSignals.length ? (
+								<>
+									{filteredSignals.map((signal) => {
+										const statusPresentation = getSignalStatusPresentation(
+											signal,
+											{
+												closed: t("signalsPanel.closed"),
+												entered: t("signalsPanel.entered"),
+												expectedRr: t("signalsPanel.expectedRr"),
+												pending: t("signalsPanel.pending"),
+												result: t("signalsPanel.result"),
+											},
+										);
+										const StatusIcon = statusPresentation.icon;
 
-											<div className="gap-3 text-xs grid grid-cols-2">
-												<SignalMetric
-													label={t("signalsPanel.entry")}
-													value={formatPrice(signal.entry)}
-												/>
-												<SignalMetric
-													label={t("signalsPanel.submittedAt")}
-													value={signal.submittedAt}
-												/>
-												<SignalMetric
-													label={t("signalsPanel.takeProfit")}
-													value={
-														signal.takeProfit === undefined
-															? "--"
-															: formatPrice(signal.takeProfit)
-													}
-													tone="profit"
-												/>
-												<SignalMetric
-													label={t("signalsPanel.stopLoss")}
-													value={formatPrice(signal.stopLoss)}
-													tone="risk"
-												/>
-											</div>
-
-											<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-[#141414]">
-												<span className="gap-1 flex items-center text-muted-foreground">
-													<StatusIcon
+										return (
+											<button
+												key={signal.id}
+												type="button"
+												onClick={() => focusSignal(signal)}
+												className={cn(
+													"p-3 hover:bg-white/5 w-full bg-[#141414] text-left transition-colors",
+													signal.id === activeSignal?.id &&
+														"bg-white/5 rounded-xl",
+												)}
+											>
+												<div className="mb-3 gap-2 grid grid-cols-[minmax(0,1fr)_auto] items-start">
+													<div className="min-w-0 gap-2 flex items-center">
+														<span className="size-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
+															<img
+																alt={signal.sourceName}
+																className="size-8 object-cover"
+																onError={(event) =>
+																	event.currentTarget.parentElement?.setAttribute(
+																		"hidden",
+																		"true",
+																	)
+																}
+																src={signal.avatarUrl}
+															/>
+														</span>
+														<div className="min-w-0 flex-1">
+															<p className="text-sm font-semibold truncate">
+																{signal.sourceName}
+															</p>
+															<p className="text-xs truncate text-muted-foreground">
+																{selectedInstrument?.symbol ??
+																	signal.symbol}{" "}
+																·{" "}
+																{t(`direction.${signal.direction}`)}
+															</p>
+														</div>
+													</div>
+													<span
 														className={cn(
-															"size-3.5",
-															statusPresentation.resultIconClassName,
+															"px-2 py-1 font-semibold leading-tight max-w-[72px] rounded-full border text-center text-[11px]",
+															statusPresentation.badgeClassName,
 														)}
+													>
+														{statusPresentation.label}
+													</span>
+												</div>
+
+												<div className="gap-3 text-xs grid grid-cols-2">
+													<SignalMetric
+														label={t("signalsPanel.entry")}
+														value={formatPrice(signal.entry)}
 													/>
-													{statusPresentation.resultLabel}
-												</span>
-												<span
-													className={cn(
-														"font-mono font-semibold",
-														statusPresentation.resultValueClassName,
-													)}
-												>
-													{signal.status === "active"
-														? signal.takeProfit === undefined
-															? "--"
-															: signal.confidence.toFixed(2)
-														: statusPresentation.label}
-												</span>
-											</div>
-										</button>
-									);
-								})}
-							</>
-						) : (
-							<div className="p-6 rounded-md border border-dashed text-center">
-								<p className="font-medium">{t("signalsPanel.emptyTitle")}</p>
-								<p className="mt-1 text-sm text-muted-foreground">
-									{t("signalsPanel.emptyDescription")}
-								</p>
-							</div>
-						)}
-					</div>
-				</aside>
+													<SignalMetric
+														label={t("signalsPanel.submittedAt")}
+														value={signal.submittedAt}
+													/>
+													<SignalMetric
+														label={t("signalsPanel.takeProfit")}
+														value={
+															signal.takeProfit === undefined
+																? "--"
+																: formatPrice(signal.takeProfit)
+														}
+														tone="profit"
+													/>
+													<SignalMetric
+														label={t("signalsPanel.stopLoss")}
+														value={formatPrice(signal.stopLoss)}
+														tone="risk"
+													/>
+												</div>
+
+												<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-[#141414]">
+													<span className="gap-1 flex items-center text-muted-foreground">
+														<StatusIcon
+															className={cn(
+																"size-3.5",
+																statusPresentation.resultIconClassName,
+															)}
+														/>
+														{statusPresentation.resultLabel}
+													</span>
+													<span
+														className={cn(
+															"font-mono font-semibold",
+															statusPresentation.resultValueClassName,
+														)}
+													>
+														{signal.status === "active"
+															? signal.takeProfit === undefined
+																? "--"
+																: signal.confidence.toFixed(2)
+															: statusPresentation.label}
+													</span>
+												</div>
+											</button>
+										);
+									})}
+								</>
+							) : (
+								<div className="p-6 rounded-md border border-dashed text-center">
+									<p className="font-medium">{t("signalsPanel.emptyTitle")}</p>
+									<p className="mt-1 text-sm text-muted-foreground">
+										{t("signalsPanel.emptyDescription")}
+									</p>
+								</div>
+							)}
+						</div>
+					</aside>
+				</div>
 			</div>
 		</div>
 	);
@@ -3248,6 +3334,9 @@ function ChartSkeleton() {
 }
 
 interface SignalsGuideOverlayProps {
+	onHeightChange: (height: number) => void;
+	isAuthenticated: boolean;
+	requiresMembership: boolean;
 	step: SignalsGuideStep;
 	stepIndex: number;
 	totalSteps: number;
@@ -3256,6 +3345,9 @@ interface SignalsGuideOverlayProps {
 }
 
 function SignalsGuideOverlay({
+	onHeightChange,
+	isAuthenticated,
+	requiresMembership,
 	step,
 	stepIndex,
 	totalSteps,
@@ -3263,14 +3355,75 @@ function SignalsGuideOverlay({
 	onNext,
 }: SignalsGuideOverlayProps) {
 	const t = useTranslations("signals.guide");
-	const Icon = step.icon;
 	const isLastStep = stepIndex === totalSteps - 1;
 	const [targetRect, setTargetRect] = useState<GuideTargetRect | null>(null);
 	const [viewportSize, setViewportSize] = useState<GuideViewportSize>({
 		height: 0,
 		width: 0,
 	});
-	const cardStyle = getGuideCardStyle(targetRect, viewportSize);
+	const cardRef = useRef<HTMLDivElement>(null);
+	const [cardSize, setCardSize] = useState({ width: 360, height: 240 });
+	const cardWidth = Math.min(400, Math.max(0, viewportSize.width - 40));
+	const gap = 28;
+	const margin = 20;
+	const centeredLeft = targetRect
+		? clampNumber(
+				targetRect.left + (targetRect.width - cardWidth) / 2,
+				margin,
+				viewportSize.width - cardWidth - margin,
+			)
+		: margin;
+	const placements = targetRect
+		? [
+				{ left: centeredLeft, top: targetRect.bottom + gap },
+				{ left: centeredLeft, top: targetRect.top - cardSize.height - gap },
+				{
+					left: targetRect.right + gap,
+					top: clampNumber(
+						targetRect.top,
+						margin,
+						viewportSize.height - cardSize.height - margin,
+					),
+				},
+				{
+					left: targetRect.left - cardWidth - gap,
+					top: clampNumber(
+						targetRect.top,
+						margin,
+						viewportSize.height - cardSize.height - margin,
+					),
+				},
+			]
+		: [];
+	const placement = placements.find(
+		({ left, top }) =>
+			left >= margin &&
+			top >= margin &&
+			left + cardWidth <= viewportSize.width - margin &&
+			top + cardSize.height <= viewportSize.height - margin,
+	);
+	const cardStyle: CSSProperties = {
+		left: placement?.left ?? margin,
+		top: placement?.top ?? margin,
+		width: cardWidth || "calc(100vw - 40px)",
+		maxHeight: "48dvh",
+		overflowY: "auto",
+		visibility: targetRect && placement ? "visible" : "hidden",
+	};
+
+	useEffect(() => {
+		const card = cardRef.current;
+		if (!card) return;
+		function measureCard() {
+			const rect = card!.getBoundingClientRect();
+			setCardSize({ width: rect.width, height: Math.ceil(rect.height) });
+			onHeightChange(Math.ceil(rect.height));
+		}
+		measureCard();
+		const observer = new ResizeObserver(measureCard);
+		observer.observe(card);
+		return () => observer.disconnect();
+	}, [onHeightChange]);
 
 	useEffect(() => {
 		let frame = 0;
@@ -3282,9 +3435,7 @@ function SignalsGuideOverlay({
 				width: window.innerWidth,
 			});
 
-			const targetElement = document.querySelector<HTMLElement>(
-				`[data-guide-target="${step.target}"]`,
-			);
+			const targetElement = getGuideTargetElement(step.target);
 
 			if (!targetElement) {
 				setTargetRect(null);
@@ -3299,36 +3450,46 @@ function SignalsGuideOverlay({
 			frame = window.requestAnimationFrame(measureTarget);
 		}
 
-		const targetElement = document.querySelector<HTMLElement>(
-			`[data-guide-target="${step.target}"]`,
-		);
+		const targetElement = getGuideTargetElement(step.target);
 
-		targetElement?.scrollIntoView({
-			behavior: "smooth",
-			block: "center",
-			inline: "nearest",
-		});
+		function alignTarget() {
+			const preview = document.querySelector<HTMLElement>("[data-guide-viewport]");
+			const visibleTarget = getGuideTargetElement(step.target);
+			if (!visibleTarget || !preview) return;
+			const rect = visibleTarget.getBoundingClientRect();
+			preview.scrollBy({
+				top: rect.top - Math.max(24, preview.getBoundingClientRect().top + 16),
+				behavior: "instant",
+			});
+			scheduleMeasure();
+		}
+		alignTarget();
 
-		measureTimer = window.setTimeout(scheduleMeasure, 180);
+		const observer = new ResizeObserver(alignTarget);
+		if (targetElement) observer.observe(targetElement);
+		const preview = document.querySelector("[data-guide-viewport]");
+		if (preview) observer.observe(preview);
+		measureTimer = window.setTimeout(alignTarget, 180);
 		scheduleMeasure();
 
-		window.addEventListener("resize", scheduleMeasure);
+		window.addEventListener("resize", alignTarget);
 		window.addEventListener("scroll", scheduleMeasure, true);
 
 		return () => {
+			observer.disconnect();
 			window.clearTimeout(measureTimer);
 			window.cancelAnimationFrame(frame);
-			window.removeEventListener("resize", scheduleMeasure);
+			window.removeEventListener("resize", alignTarget);
 			window.removeEventListener("scroll", scheduleMeasure, true);
 		};
 	}, [step.target]);
 
 	return (
-		<div className="inset-0 pointer-events-none fixed z-50">
+		<div className="inset-0 fixed z-50" role="dialog" aria-modal="true" aria-label={step.title}>
 			{targetRect ? (
 				<>
 					<div
-						className="bg-black/76 absolute backdrop-blur-[1px]"
+						className="bg-black/40 backdrop-blur-sm absolute"
 						style={{
 							height: targetRect.top,
 							left: 0,
@@ -3337,7 +3498,7 @@ function SignalsGuideOverlay({
 						}}
 					/>
 					<div
-						className="bg-black/76 absolute backdrop-blur-[1px]"
+						className="bg-black/40 backdrop-blur-sm absolute"
 						style={{
 							bottom: 0,
 							left: 0,
@@ -3346,7 +3507,7 @@ function SignalsGuideOverlay({
 						}}
 					/>
 					<div
-						className="bg-black/76 absolute backdrop-blur-[1px]"
+						className="bg-black/40 backdrop-blur-sm absolute"
 						style={{
 							bottom: viewportSize.height - targetRect.bottom,
 							left: 0,
@@ -3355,7 +3516,7 @@ function SignalsGuideOverlay({
 						}}
 					/>
 					<div
-						className="bg-black/76 absolute backdrop-blur-[1px]"
+						className="bg-black/40 backdrop-blur-sm absolute"
 						style={{
 							bottom: viewportSize.height - targetRect.bottom,
 							left: targetRect.right,
@@ -3364,7 +3525,9 @@ function SignalsGuideOverlay({
 						}}
 					/>
 					<div
-						className="absolute rounded-xl border border-primary/80 bg-primary/8 shadow-[0_0_0_1px_rgba(255,255,255,0.15),0_0_28px_rgba(16,185,129,0.32)]"
+						data-guide-highlight="true"
+						data-guide-highlight-target={step.target}
+						className="border-emerald-300/80 absolute rounded-xl border shadow-[0_0_18px_rgba(110,231,183,0.16)]"
 						style={{
 							height: targetRect.height,
 							left: targetRect.left,
@@ -3374,48 +3537,83 @@ function SignalsGuideOverlay({
 					/>
 				</>
 			) : (
-				<div className="inset-0 bg-black/76 absolute backdrop-blur-[1px]" />
+				<div className="inset-0 bg-black/40 backdrop-blur-sm absolute" />
 			)}
+			{targetRect && placement ? (
+				<div
+					aria-hidden="true"
+					className="bg-emerald-200/70 pointer-events-none absolute"
+					style={
+						placement.top >= targetRect.bottom ||
+						placement.top + cardSize.height <= targetRect.top
+							? {
+									left: clampNumber(
+										placement.left + cardWidth / 2,
+										targetRect.left + 8,
+										targetRect.right - 8,
+									),
+									top:
+										placement.top >= targetRect.bottom
+											? targetRect.bottom
+											: placement.top + cardSize.height,
+									width: 1,
+									height: gap - 4,
+								}
+							: {
+									left:
+										placement.left >= targetRect.right
+											? targetRect.right
+											: placement.left + cardWidth,
+									top: clampNumber(
+										placement.top + cardSize.height / 2,
+										targetRect.top + 8,
+										targetRect.bottom - 8,
+									),
+									width: gap - 4,
+									height: 1,
+								}
+					}
+				/>
+			) : null}
 			<div
-				className="border-white/10 p-4 text-white shadow-2xl pointer-events-auto absolute rounded-xl border bg-[#172033]/95"
+				ref={cardRef}
+				data-guide-card="true"
+				className="px-1 py-2 text-white pointer-events-auto absolute [text-shadow:0_2px_10px_rgba(0,0,0,0.8)]"
 				style={cardStyle}
 			>
-				<div className="gap-3 flex items-start">
-					<div className="size-10 flex shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-						<Icon className="size-5" />
-					</div>
-					<div className="min-w-0 flex-1">
-						<p className="text-xs font-semibold text-primary uppercase">
-							{t("stepCounter", {
-								current: stepIndex + 1,
-								total: totalSteps,
-							})}
-						</p>
-						<h2 className="mt-1 text-lg font-semibold leading-snug">{step.title}</h2>
-						<p className="mt-2 text-sm leading-6 text-muted-foreground">
-							{step.description}
-						</p>
-					</div>
-				</div>
+				<p className="text-xs font-medium text-white/60">
+					{t("stepCounter", { current: stepIndex + 1, total: totalSteps })}
+				</p>
+				<h2 className="mt-2 text-lg font-semibold leading-snug">{step.title}</h2>
+				<p className="mt-2 text-sm leading-6 text-white/80">
+					{step.target === "filters" && viewportSize.width < 768
+						? t("steps.filters.mobileDescription")
+						: step.description}
+				</p>
 
-				<div className="mt-4 gap-1.5 flex">
-					{Array.from({ length: totalSteps }).map((_, index) => (
-						<span
-							key={index}
-							className={cn(
-								"h-1 flex-1 rounded-full",
-								index <= stepIndex ? "bg-primary" : "bg-white/10",
-							)}
-						/>
-					))}
-				</div>
-
-				<div className="mt-4 gap-2 flex justify-end">
-					<Button type="button" variant="ghost" size="sm" onClick={onClose}>
-						{t("close")}
-					</Button>
-					<Button type="button" variant="primary" size="sm" onClick={onNext}>
-						{isLastStep ? t("finish") : t("next")}
+				<div className="mt-4 gap-2 flex flex-wrap justify-end">
+					{!isAuthenticated ? (
+						<Button asChild type="button" variant="ghost" size="sm">
+							<Link href="/login?redirectTo=%2Fsignals">{t("login")}</Link>
+						</Button>
+					) : null}
+					{!requiresMembership || !isLastStep ? (
+						<Button type="button" variant="ghost" size="sm" onClick={onClose}>
+							{requiresMembership ? t("viewPlans") : t("close")}
+						</Button>
+					) : null}
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						className="border-white/70 text-white hover:bg-white/10 bg-transparent"
+						onClick={onNext}
+					>
+						{isLastStep
+							? requiresMembership
+								? t("viewPlans")
+								: t("finish")
+							: t("next")}
 					</Button>
 				</div>
 			</div>

@@ -1,8 +1,9 @@
 "use client";
 
+import { config } from "@config";
 import { Button } from "@repo/ui/components/button";
 import { getProfileAvatarUrl } from "@repo/utils";
-import { ArrowRightIcon, MaximizeIcon, PlayIcon, StarIcon } from "lucide-react";
+import { ArrowRightIcon, DownloadIcon, MaximizeIcon, PlayIcon, StarIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -71,15 +72,20 @@ export function HeroSection() {
 		? {
 				new: "🎇 新年快乐",
 				badge: "2026 特价优惠",
-				getStarted: "立即开始",
+				getStarted: "查看套餐",
+				install: "安装 SignalFast",
 				socialProof: "999+ 用户使用 SignalFast 构建策略",
 			}
 		: {
 				new: "🎇 Happy New Year",
 				badge: "2026 Special Offer",
-				getStarted: "Get Started",
+				getStarted: "View plans",
+				install: "Install SignalFast",
 				socialProof: "999+ users build strategies with SignalFast",
 			};
+	const saasInstallUrl = config.saasUrl
+		? `${config.saasUrl.replace(/\/$/, "")}/install`
+		: "/install";
 
 	return (
 		<div className="relative max-w-full overflow-x-hidden bg-linear-to-t from-background via-primary/5 to-background">
@@ -96,8 +102,24 @@ export function HeroSection() {
 
 				<TypewriterTitle />
 
-				<div className="mt-4 gap-2 flex items-center justify-center">
+				<div className="mt-4 gap-2 sm:flex-row flex flex-col items-center justify-center">
 					<Button className="sm:w-auto w-full" size="lg" variant="primary" asChild>
+						<a
+							href={saasInstallUrl}
+							onClick={(event) => {
+								if (process.env.NODE_ENV !== "production") {
+									event.preventDefault();
+									window.location.assign(
+										`http://${window.location.hostname}:4100/install`,
+									);
+								}
+							}}
+						>
+							<DownloadIcon className="mr-2 size-4" />
+							{heroCopy.install}
+						</a>
+					</Button>
+					<Button className="sm:w-auto w-full" size="lg" variant="outline" asChild>
 						<a href="#pricing">
 							{heroCopy.getStarted}
 							<ArrowRightIcon className="ml-2 size-4" />

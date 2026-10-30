@@ -644,7 +644,6 @@
 				"expiresAt": "权益将于 {date} 到期。",
 				"countdown": {
 					"label": "权益倒计时",
-					"signupTrialLabel": "新用户 48 小时 Pro 试用",
 					"expiresAt": "到期时间：{date}",
 					"remaining": "{hours}:{minutes}:{seconds}",
 					"remainingWithDays": "{days}天 {hours}:{minutes}:{seconds}",
@@ -739,7 +738,9 @@
 	"signals": {
 		"actions": {
 			"alert": "创建提醒",
+			"collapseChart": "收起 K 线图",
 			"expand": "放大图表",
+			"expandChart": "展开 K 线图",
 			"filters": "筛选",
 			"refresh": "刷新"
 		},
@@ -800,6 +801,11 @@
 		"guide": {
 			"close": "稍后再看",
 			"finish": "开始使用",
+			"login": "已有账号？直接登录",
+			"viewPlans": "查看会员套餐",
+			"preview": "实时行情预览，开通 Pro 后可查看完整信号。",
+			"lockedSignalsTitle": "信号详情区域",
+			"lockedSignalsDescription": "开通 Pro 后，这里会显示入场价、止盈、止损和入场状态。",
 			"next": "下一步",
 			"replay": "查看功能引导",
 			"stepCounter": "第 {current} / {total} 步",
@@ -814,7 +820,8 @@
 				},
 				"filters": {
 					"title": "用筛选缩小范围",
-					"description": "这里可以按做多/做空、信号时间和入场状态筛选，先排除不符合你交易计划的信号。"
+					"mobileDescription": "这里是筛选入口。开通 Pro 后，可按方向（做多/做空）、时间（24 小时、3 天、7 天或 30 天内）和入场状态（待入场/已入场）缩小范围。",
+					"description": "可以按方向（做多/做空）、时间（24 小时、3 天、7 天或 30 天内）和入场状态（待入场/已入场）筛选信号，快速缩小范围。"
 				},
 				"chart": {
 					"title": "在 K 线上看信号位置",
@@ -822,7 +829,7 @@
 				},
 				"signalList": {
 					"title": "查看完整信号详情",
-					"description": "右侧列表会展示入场价、止盈、止损、委托时间和入场状态。使用前请重点核对止损与信号是否已经入场。"
+					"description": "开通 Pro 后，此处会展示入场价、止盈、止损、委托时间和入场状态。使用前请重点核对止损与信号是否已经入场。"
 				}
 			}
 		},
@@ -867,13 +874,6 @@
 		"ticker": {
 			"empty": "暂无可展示交易对",
 			"live": "实时行情"
-		},
-		"trialWelcome": {
-			"benefit": "",
-			"description": "已获取2天Pro会员",
-			"skip": "稍后再看",
-			"startGuide": "查看引导",
-			"title": "注册成功"
 		}
 	},
 	"common": {

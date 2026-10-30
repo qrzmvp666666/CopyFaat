@@ -1,14 +1,10 @@
-import {
-	createPurchase,
-	deletePurchaseBySubscriptionId,
-	getPurchaseBySubscriptionId,
-	updatePurchase,
-} from "@repo/database";
+import { createPurchase, db, getPurchaseBySubscriptionId, updatePurchase } from "@repo/database";
 import { logger } from "@repo/logs";
 import Stripe from "stripe";
 
 import { setCustomerIdToEntity } from "../../lib/customer";
 import { getPlanIdByProviderPriceId } from "../../lib/provider-price-ids";
+import { claimPendingPurchases, upsertSubscriptionPurchase } from "../../lib/purchases";
 import type {
 	CancelSubscription,
 	CreateCheckoutLink,
@@ -121,6 +117,27 @@ function isMissingCustomerError(error: unknown) {
 	);
 }
 
+function getInvoiceSubscriptionId(invoice: Stripe.Invoice) {
+	const invoiceRecord = invoice as unknown as Record<string, unknown>;
+	const directSubscription = invoiceRecord.subscription;
+	if (typeof directSubscription === "string") return directSubscription;
+	if (directSubscription && typeof directSubscription === "object") {
+		const id = (directSubscription as { id?: unknown }).id;
+		if (typeof id === "string") return id;
+	}
+
+	const parent = invoiceRecord.parent as
+		| { subscription_details?: { subscription?: unknown } }
+		| undefined;
+	const parentSubscription = parent?.subscription_details?.subscription;
+	if (typeof parentSubscription === "string") return parentSubscription;
+	if (parentSubscription && typeof parentSubscription === "object") {
+		const id = (parentSubscription as { id?: unknown }).id;
+		if (typeof id === "string") return id;
+	}
+	return null;
+}
+
 export const createCustomerPortalLink: CreateCustomerPortalLink = async ({
 	customerId,
 	redirectUrl,
@@ -188,9 +205,70 @@ export const webhookHandler: WebhookHandler = async (req) => {
 	try {
 		switch (event.type) {
 			case "checkout.session.completed": {
-				const { mode, metadata, customer, id } = event.data.object;
+				const session = event.data.object;
+				const { mode, metadata, customer, id } = session;
 
 				if (mode === "subscription") {
+					const subscriptionId =
+						typeof session.subscription === "string"
+							? session.subscription
+							: session.subscription?.id;
+					if (!subscriptionId) {
+						return new Response("Missing subscription ID.", { status: 422 });
+					}
+
+					const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
+					const subscriptionMetadata = subscription.metadata;
+					const configuredPriceId =
+						metadata?.signalfast_price_id ?? subscriptionMetadata.signalfast_price_id;
+					const stripePriceId = configuredPriceId ?? subscription.items.data[0]?.price.id;
+					if (!stripePriceId || !getPlanIdByProviderPriceId(stripePriceId)) {
+						return new Response(
+							"Missing SignalFast plan mapping for Stripe Payment Link.",
+							{
+								status: 422,
+							},
+						);
+					}
+
+					const customerId = typeof customer === "string" ? customer : customer?.id;
+					const paymentLinkId =
+						typeof session.payment_link === "string"
+							? session.payment_link
+							: session.payment_link?.id;
+					const stripeCustomerEmail =
+						session.customer_details?.email ?? session.customer_email;
+
+					await upsertSubscriptionPurchase({
+						provider: "stripe",
+						priceId: stripePriceId,
+						customerId: customerId ?? `stripe_${subscriptionId}`,
+						status: subscription.status,
+						subscriptionId,
+						userId: metadata?.user_id,
+						customerEmail: stripeCustomerEmail,
+						paymentLinkId,
+						visitorId: session.client_reference_id,
+						datafastVisitorId: metadata?.datafast_visitor_id,
+						datafastSessionId: metadata?.datafast_session_id,
+					});
+
+					if (stripeCustomerEmail && !metadata?.user_id) {
+						const account = await db.user.findUnique({
+							where: { email: stripeCustomerEmail.trim().toLowerCase() },
+							select: { id: true, emailVerified: true },
+						});
+						if (account?.emailVerified) {
+							await claimPendingPurchases(account.id, stripeCustomerEmail);
+						}
+					}
+
+					if (customerId && metadata?.user_id) {
+						await setCustomerIdToEntity(customerId, {
+							organizationId: metadata.organization_id,
+							userId: metadata.user_id,
+						});
+					}
 					break;
 				}
 
@@ -225,7 +303,7 @@ export const webhookHandler: WebhookHandler = async (req) => {
 			case "customer.subscription.created": {
 				const { metadata, customer, items, id } = event.data.object;
 
-				const priceId = items?.data[0].price?.id;
+				const priceId = metadata?.signalfast_price_id ?? items?.data[0].price?.id;
 				const planId = priceId ? getPlanIdByProviderPriceId(priceId) : null;
 
 				if (!planId || !priceId) {
@@ -234,14 +312,16 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					});
 				}
 
-				await createPurchase({
+				await upsertSubscriptionPurchase({
 					subscriptionId: id,
-					organizationId: metadata?.organization_id || null,
-					userId: metadata?.user_id || null,
-					customerId: customer as string,
-					type: "SUBSCRIPTION",
+					provider: "stripe",
+					userId: metadata?.user_id,
+					customerId:
+						typeof customer === "string" ? customer : (customer?.id ?? `stripe_${id}`),
 					priceId,
 					status: event.data.object.status,
+					datafastVisitorId: metadata?.datafast_visitor_id,
+					datafastSessionId: metadata?.datafast_session_id,
 				});
 
 				await setCustomerIdToEntity(customer as string, {
@@ -252,11 +332,12 @@ export const webhookHandler: WebhookHandler = async (req) => {
 				break;
 			}
 			case "customer.subscription.updated": {
-				const subscriptionId = event.data.object.id;
+				const subscription = event.data.object;
+				const subscriptionId = subscription.id;
 
 				const existingPurchase = await getPurchaseBySubscriptionId(subscriptionId);
 
-				if (existingPurchase) {
+				if (existingPurchase && existingPurchase.status !== "canceled") {
 					const priceId = event.data.object.items?.data[0].price?.id;
 
 					await updatePurchase({
@@ -269,7 +350,62 @@ export const webhookHandler: WebhookHandler = async (req) => {
 				break;
 			}
 			case "customer.subscription.deleted": {
-				await deletePurchaseBySubscriptionId(event.data.object.id);
+				const subscription = event.data.object;
+				const metadata = subscription.metadata;
+				const priceId =
+					metadata?.signalfast_price_id ??
+					subscription.items.data[0]?.price.id ??
+					"stripe_unmapped";
+				await upsertSubscriptionPurchase({
+					provider: "stripe",
+					priceId,
+					customerId:
+						typeof subscription.customer === "string"
+							? subscription.customer
+							: (subscription.customer?.id ?? `stripe_${subscription.id}`),
+					status: "canceled",
+					subscriptionId: subscription.id,
+					userId: metadata?.user_id,
+					datafastVisitorId: metadata?.datafast_visitor_id,
+					datafastSessionId: metadata?.datafast_session_id,
+				});
+
+				break;
+			}
+			case "invoice.payment_failed": {
+				const subscriptionId = getInvoiceSubscriptionId(event.data.object);
+				if (subscriptionId) {
+					await db.purchase.updateMany({
+						where: { subscriptionId, status: { not: "canceled" } },
+						data: { status: "past_due" },
+					});
+				}
+
+				break;
+			}
+			case "invoice.paid": {
+				const subscriptionId = getInvoiceSubscriptionId(event.data.object);
+				if (subscriptionId) {
+					const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
+					const priceId =
+						subscription.metadata.signalfast_price_id ??
+						subscription.items.data[0]?.price.id;
+					if (priceId && getPlanIdByProviderPriceId(priceId)) {
+						await upsertSubscriptionPurchase({
+							provider: "stripe",
+							priceId,
+							customerId:
+								typeof subscription.customer === "string"
+									? subscription.customer
+									: (subscription.customer?.id ?? `stripe_${subscription.id}`),
+							status: subscription.status,
+							subscriptionId,
+							userId: subscription.metadata.user_id,
+							datafastVisitorId: subscription.metadata.datafast_visitor_id,
+							datafastSessionId: subscription.metadata.datafast_session_id,
+						});
+					}
+				}
 
 				break;
 			}

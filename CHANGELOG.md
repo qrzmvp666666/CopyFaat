@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-29
+
+- feat: Allow public access to the signals onboarding preview. Only a signed-in user with verified paid access can skip the guide and use live workspace features; all other visitors are guided to membership plans on every visit.
+- fix: Use lightweight transparent onboarding anchored beside each highlighted feature without a segmented progress bar, remove the live-market step, show up to three real signal summaries without Pro-only prices and real linked trader profiles, precisely target responsive filter controls and the signal tabs plus list, and show only Pro plans in the signals paywall.
+
 ## 2026-10-19
 
 ### Added

@@ -30,6 +30,7 @@ const allowedDevOrigins = new Set([
 	...(allowedDevOrigin ? [allowedDevOrigin] : []),
 	"localhost",
 	"signalfast.localhost",
+	"10.0.2.2",
 	...localNetworkOrigins,
 	"*.ngrok-free.dev",
 	"*.ngrok-free.app",

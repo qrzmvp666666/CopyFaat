@@ -33,11 +33,19 @@ export async function getPurchaseBySubscriptionId(subscriptionId: string) {
 	});
 }
 
-export async function createPurchase(
-	purchase: Omit<z.infer<typeof PurchaseSchema>, "id" | "createdAt" | "updatedAt">,
-) {
+type PurchaseInsert = Omit<
+	z.infer<typeof PurchaseSchema>,
+	"id" | "createdAt" | "updatedAt" | "provider" | "claimStatus"
+> &
+	Partial<Pick<z.infer<typeof PurchaseSchema>, "provider" | "claimStatus">>;
+
+export async function createPurchase(purchase: PurchaseInsert) {
 	const created = await db.purchase.create({
-		data: purchase,
+		data: {
+			provider: "stripe",
+			claimStatus: purchase.userId ? "claimed" : "pending",
+			...purchase,
+		},
 	});
 
 	return getPurchaseById(created.id);

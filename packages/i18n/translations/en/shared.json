@@ -30,10 +30,10 @@
 				"title": "Enterprise"
 			},
 			"free": {
-				"description": "Limited offer for the first 200 users: sign up to claim 48 hours of Pro membership",
+				"description": "Sign in to access the full signals workspace.",
 				"features": {
-					"freeAccess": "0 USD free access",
-					"proTrial48Hours": "Claim 48 hours of Pro after signup"
+					"freeAccess": "Full signals workspace access",
+					"fullWorkspaceAccess": "Full signals workspace access"
 				},
 				"price": "0 USD",
 				"title": "Free"
@@ -72,7 +72,7 @@
 		"recommended": "Recommended",
 		"subscribe": "Subscribe",
 		"title": "Pricing",
-		"trialPeriod": "48-hour free trial",
+		"trialPeriod": "{days}-day free trial",
 		"year": "{count, plural, one {year} other {{count} years}}",
 		"yearUnit": "/year",
 		"yearly": "Yearly",

@@ -1,4 +1,5 @@
 import {
+	createPurchasesHelper,
 	hasPaidSignalsAccess,
 	type ResolvedEntitlementGrant,
 	type ResolvedPurchase,
@@ -12,6 +13,8 @@ function createPurchase(overrides: Partial<ResolvedPurchase> = {}): ResolvedPurc
 		customerId: "customer_1",
 		id: "purchase_1",
 		organizationId: null,
+		provider: "stripe",
+		claimStatus: "claimed",
 		planId: "pro",
 		planPrice: {
 			amount: 19.99,
@@ -71,11 +74,20 @@ describe("hasPaidSignalsAccess", () => {
 		).toBe(true);
 	});
 
-	it("allows valid paid redemption and signup trial entitlements", () => {
+	it("allows valid paid redemption entitlements", () => {
 		expect(hasPaidSignalsAccess([], [createEntitlementGrant()], NOW)).toBe(true);
 		expect(
 			hasPaidSignalsAccess([], [createEntitlementGrant({ source: "signup_trial" })], NOW),
-		).toBe(true);
+		).toBe(false);
+	});
+
+	it("does not treat legacy signup trial grants as an active plan", () => {
+		const purchases = createPurchasesHelper(
+			[],
+			[createEntitlementGrant({ source: "signup_trial" })],
+		);
+
+		expect(purchases.activePlan?.id).toBe("free");
 	});
 
 	it("denies expired, unsupported, and inactive records", () => {

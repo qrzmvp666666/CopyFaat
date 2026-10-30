@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
 	return {
-		background_color: "#141414",
+		background_color: "#121212",
 		display: "standalone",
 		icons: [
 			{
@@ -20,6 +20,6 @@ export default function manifest(): MetadataRoute.Manifest {
 		short_name: "SignalFast",
 		start_url: "/signals",
 		scope: "/",
-		theme_color: "#141414",
+		theme_color: "#121212",
 	};
 }

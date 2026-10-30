@@ -724,7 +724,7 @@ export function TradingViewSignalChart({
 							aria-label={`${signal.sourceName}: ${signal.direction === "long" ? "long" : "short"} ${symbol}`}
 							title={signal.sourceName}
 							className={cn(
-								"size-7 p-0 pointer-events-auto absolute isolate flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-0 bg-transparent shadow-none transition-transform hover:scale-110",
+								"size-6 p-0 pointer-events-auto absolute isolate flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-0 bg-transparent shadow-none transition-transform hover:scale-110",
 								isEntered
 									? "shadow-[0_0_12px_rgba(16,185,129,0.36)]"
 									: isActive
@@ -741,27 +741,21 @@ export function TradingViewSignalChart({
 							)}
 							<span
 								className={cn(
-									"size-6 border-white/35 flex shrink-0 items-center justify-center overflow-hidden rounded-full border bg-[#141414]",
+									"size-5 border-white/35 flex shrink-0 items-center justify-center overflow-hidden rounded-full border bg-[#141414]",
 								)}
 							>
 								<img
 									alt={signal.sourceName}
 									className="size-full object-cover"
+									onError={(event) =>
+										event.currentTarget.parentElement?.setAttribute(
+											"hidden",
+											"true",
+										)
+									}
 									src={signal.avatarUrl}
 								/>
 							</span>
-							{isActive && focusedSignalId && !isCompactLayout && (
-								<span
-									className={cn(
-										"ml-0.5 rounded px-1.5 py-0.5 font-bold text-white text-[10px] whitespace-nowrap",
-										signal.direction === "long"
-											? "bg-emerald-500"
-											: "bg-rose-500",
-									)}
-								>
-									{labels.entry} {formatPrice(signal.entry, pricePrecision)}
-								</span>
-							)}
 						</button>
 					);
 				})}

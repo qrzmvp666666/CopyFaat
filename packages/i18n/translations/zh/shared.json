@@ -30,10 +30,10 @@
 				"title": "企业版"
 			},
 			"free": {
-				"description": "前200名用户限时领取：注册成功后，即可领取 48 小时 Pro 会员",
+				"description": "登录后即可使用完整信号工作区。",
 				"features": {
-					"freeAccess": "0 USD 免费体验",
-					"proTrial48Hours": "注册成功即可领取 48 小时 Pro 会员"
+					"freeAccess": "信号工作区完整访问",
+					"fullWorkspaceAccess": "信号工作区完整访问"
 				},
 				"price": "0 USD",
 				"title": "免费"
@@ -72,7 +72,7 @@
 		"recommended": "推荐",
 		"subscribe": "订阅",
 		"title": "定价",
-		"trialPeriod": "48小时免费试用",
+		"trialPeriod": "{days}天免费试用",
 		"year": "{count, plural, one {年} other {{count} 年}}",
 		"yearUnit": "/年",
 		"yearly": "按年付费",

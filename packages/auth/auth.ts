@@ -1,3 +1,5 @@
+import { networkInterfaces } from "node:os";
+
 import { passkey } from "@better-auth/passkey";
 import {
 	db,
@@ -6,7 +8,6 @@ import {
 	getPurchasesByUserId,
 	getUserByEmail,
 	getUserById,
-	grantSignupTrialEntitlement,
 } from "@repo/database";
 import { config as i18nConfig, type Locale } from "@repo/i18n";
 import { logger } from "@repo/logs";
@@ -19,7 +20,6 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { createAuthMiddleware } from "better-auth/api";
 import { admin, magicLink, openAPI, organization, twoFactor, username } from "better-auth/plugins";
 import { parse as parseCookies } from "cookie";
-import { networkInterfaces } from "node:os";
 
 import { config } from "./config";
 import { updateSeatsInOrganizationSubscription } from "./lib/organization";
@@ -58,6 +58,7 @@ const localDevTrustedOrigins =
 				`http://localhost:${localDevPort}`,
 				`http://127.0.0.1:${localDevPort}`,
 				`http://0.0.0.0:${localDevPort}`,
+				`http://10.0.2.2:${localDevPort}`,
 				...localNetworkTrustedOrigins,
 			];
 const trustedOrigins = Array.from(new Set([appUrl, ...localDevTrustedOrigins]));
@@ -102,16 +103,6 @@ export const auth = betterAuth({
 					} catch (error) {
 						logger.error(error, {
 							ctx: "createWelcomeNotification",
-							userId: createdUser.id,
-						});
-					}
-					try {
-						await grantSignupTrialEntitlement({
-							userId: createdUser.id,
-						});
-					} catch (error) {
-						logger.error(error, {
-							ctx: "grantSignupTrialEntitlement",
 							userId: createdUser.id,
 						});
 					}

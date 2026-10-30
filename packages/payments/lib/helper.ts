@@ -9,7 +9,7 @@ import { getPlanIdByProviderPriceId, getPlanPriceByProviderPriceId } from "./pro
 type PurchaseWithoutTimestamps = Omit<z.infer<typeof PurchaseSchema>, "createdAt" | "updatedAt">;
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["active", "trialing"]);
-const SIGNALS_ENTITLEMENT_SOURCES = new Set(["redeem_code", "signup_trial"]);
+const SIGNALS_ENTITLEMENT_SOURCES = new Set(["redeem_code"]);
 
 export interface ResolvedPurchase extends PurchaseWithoutTimestamps {
 	planId?: PlanId | null;
@@ -108,7 +108,9 @@ function getActivePlanFromPurchases(purchases?: ResolvedPurchase[]) {
 function getActiveGrantFromEntitlements(entitlementGrants?: ResolvedEntitlementGrant[]) {
 	const now = Date.now();
 	const activeGrants = entitlementGrants
-		?.filter((grant) => new Date(grant.expiresAt).getTime() > now)
+		?.filter(
+			(grant) => grant.source !== "signup_trial" && new Date(grant.expiresAt).getTime() > now,
+		)
 		.sort((left, right) => {
 			return new Date(right.expiresAt).getTime() - new Date(left.expiresAt).getTime();
 		});

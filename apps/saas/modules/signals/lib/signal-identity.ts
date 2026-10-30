@@ -30,6 +30,12 @@ export function isBlockedSignalTrader(source: Pick<ParsedSignalWebhookRequest["s
 	return isBlockedSignalTraderName(source.name);
 }
 
+export function isDemoStrategyTrader(source: Pick<ParsedSignalWebhookRequest["source"], "name">) {
+	const normalizedName = source.name.normalize("NFKC").replace(/\s+/g, "");
+
+	return /^演示策略0?[1-8]$/u.test(normalizedName);
+}
+
 export function getTraderExternalId(input: ParsedSignalWebhookRequest) {
 	const sourcePlatform = normalizeSignalIdentityPart(input.source.platform || "webhook");
 	const sourceName = normalizeSignalIdentityPart(input.source.name);

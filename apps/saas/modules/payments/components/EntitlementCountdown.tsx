@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 
 interface EntitlementCountdownProps {
 	expiresAt: Date | string;
-	source?: string;
 	compact?: boolean;
 	className?: string;
 }
@@ -33,7 +32,6 @@ function getRemainingParts(remainingMs: number) {
 
 export function EntitlementCountdown({
 	expiresAt,
-	source,
 	compact = false,
 	className,
 }: EntitlementCountdownProps) {
@@ -59,7 +57,7 @@ export function EntitlementCountdown({
 
 	const parts = getRemainingParts(remainingMs);
 	const remaining = t(parts.days > 0 ? "remainingWithDays" : "remaining", parts);
-	const label = source === "signup_trial" ? t("signupTrialLabel") : t("label");
+	const label = t("label");
 
 	if (compact) {
 		return (

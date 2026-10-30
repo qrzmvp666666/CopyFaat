@@ -49,5 +49,18 @@ function TaliviaSignupTracker() {
 		}
 	}, [loaded, user]);
 
+	useEffect(() => {
+		if (loaded && user?.emailVerified) {
+			void fetch("/api/payments/claim", { method: "POST" })
+				.then((response) => (response.ok ? response.json() : null))
+				.then((result: { claimed?: number } | null) => {
+					if (result && result.claimed && result.claimed > 0) {
+						window.location.reload();
+					}
+				})
+				.catch(() => undefined);
+		}
+	}, [loaded, user?.email, user?.emailVerified]);
+
 	return null;
 }

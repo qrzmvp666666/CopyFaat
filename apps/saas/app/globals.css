@@ -25,7 +25,7 @@
 @layer base {
 	html:has([data-pwa-theme-surface="signals"]),
 	body:has([data-pwa-theme-surface="signals"]) {
-		background-color: #141414;
+		background-color: #121212;
 	}
 
 	.auth-dark-shell.dark {
@@ -62,5 +62,24 @@
 
 	svg.lucide {
 		stroke-width: 1.5;
+	}
+}
+
+/* Keep installed signal pages above utility-layer backgrounds and theme overrides. */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+	html:has([data-pwa-theme-surface="signals"]),
+	body:has([data-pwa-theme-surface="signals"]) {
+		height: 100vh;
+		min-height: 100dvh;
+		color-scheme: dark !important;
+		background-color: #121212;
+	}
+
+	[data-pwa-theme-surface="signals"] {
+		box-sizing: border-box;
+		min-height: 100vh;
+		min-height: 100dvh;
+		padding-bottom: env(safe-area-inset-bottom, 0px);
+		background-color: #121212;
 	}
 }

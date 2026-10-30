@@ -235,7 +235,12 @@ export function PricingSection() {
 				</div>
 
 				<div className="@container">
-					<div className={cn("gap-4 max-w-4xl @xl:grid-cols-2 mx-auto grid grid-cols-1")}>
+					<div
+						className={cn(
+							"gap-4 mx-auto grid grid-cols-1",
+							plans.length > 1 ? "max-w-4xl @xl:grid-cols-2" : "max-w-2xl",
+						)}
+					>
 						{plans.map((plan) => {
 							const weeklyPrice = plan.prices?.find(
 								(price): price is SubscriptionPlanPrice =>
