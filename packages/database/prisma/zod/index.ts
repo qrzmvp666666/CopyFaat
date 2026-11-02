@@ -66,7 +66,7 @@ export type InvitationScalarFieldEnum = z.infer<typeof InvitationScalarFieldEnum
 
 // File: PurchaseScalarFieldEnum.schema.ts
 
-export const PurchaseScalarFieldEnumSchema = z.enum(['id', 'organizationId', 'userId', 'type', 'provider', 'claimStatus', 'customerId', 'customerEmail', 'subscriptionId', 'paymentLinkId', 'visitorId', 'datafastVisitorId', 'datafastSessionId', 'priceId', 'status', 'createdAt', 'updatedAt'])
+export const PurchaseScalarFieldEnumSchema = z.enum(['id', 'organizationId', 'userId', 'type', 'provider', 'claimStatus', 'customerId', 'customerEmail', 'subscriptionId', 'paymentLinkId', 'visitorId', 'priceId', 'status', 'createdAt', 'updatedAt'])
 
 export type PurchaseScalarFieldEnum = z.infer<typeof PurchaseScalarFieldEnumSchema>;
 
@@ -335,8 +335,6 @@ export const PurchaseSchema = z.object({
   subscriptionId: z.string().nullish(),
   paymentLinkId: z.string().nullish(),
   visitorId: z.string().nullish(),
-  datafastVisitorId: z.string().nullish(),
-  datafastSessionId: z.string().nullish(),
   priceId: z.string(),
   status: z.string().nullish(),
   createdAt: z.date(),

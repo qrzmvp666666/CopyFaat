@@ -736,6 +736,13 @@
 		"welcome": "Welcome {name}!"
 	},
 	"signals": {
+		"accountMenu": {
+			"guest": "Not signed in",
+			"label": "Account",
+			"login": "Sign in",
+			"purchases": "Purchases and plan",
+			"settings": "Account settings"
+		},
 		"actions": {
 			"alert": "Create alert",
 			"collapseChart": "Collapse chart",
@@ -815,21 +822,21 @@
 					"description": "This ticker syncs live prices and moves for major pairs. For steadier market, chart, and signal sync, switch your network or proxy node to Japan or Singapore first."
 				},
 				"traders": {
-					"title": "Choose the traders you follow",
-					"description": "This row filters signal sources. Keep all channels visible, or focus on specific traders to compare strategy views faster."
+					"title": "Choose traders",
+					"description": "Select an avatar to view its signals."
 				},
 				"filters": {
-					"title": "Narrow the signal set",
-					"mobileDescription": "This is the filter button. With Pro, narrow signals by direction (long or short), time (24 hours, 3, 7, or 30 days), and entry status (pending or entered).",
-					"description": "Narrow signals by direction (long or short), time (24 hours, 3, 7, or 30 days), and entry status (pending or entered)."
+					"title": "Filter signals",
+					"mobileDescription": "Filter by direction, time, and entry status.",
+					"description": "Filter by direction, time, and entry status."
 				},
 				"chart": {
-					"title": "Read signals on the K-line chart",
-					"description": "The chart shows the selected pair and signal markers. Click a marker or a signal card to locate the entry level and related setup."
+					"title": "Explore the chart",
+					"description": "See price movement and signal markers."
 				},
 				"signalList": {
-					"title": "Review the full signal details",
-					"description": "With Pro, this area shows entry, take-profit, stop-loss, submission time, and entry status. Check the stop-loss and whether the trade has entered before acting."
+					"title": "View signal details",
+					"description": "Review entry, take-profit, stop-loss, and status."
 				}
 			}
 		},
@@ -900,6 +907,11 @@
 	"checkoutReturn": {
 		"title": "Processing your purchase",
 		"description": "Please wait while we confirm your payment.",
-		"loading": "Confirming your purchase, please wait..."
+		"loading": "Confirming your purchase, please wait...",
+		"anonymousTitle": "Payment submitted",
+		"anonymousDescription": "Sign in or create an account with the email used for payment. After you verify your email, your membership will be activated automatically.",
+		"anonymousActionDescription": "Use the email from your payment to sign in, or create an account if you do not have one yet.",
+		"login": "Sign in",
+		"signup": "Create account"
 	}
 }

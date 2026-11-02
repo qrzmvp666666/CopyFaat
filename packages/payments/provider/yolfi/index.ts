@@ -117,14 +117,6 @@ function getVisitorId(object: Record<string, unknown>, metadata: Record<string, 
 	);
 }
 
-function getDatafastVisitorId(metadata: Record<string, unknown>) {
-	return asString(metadata.datafast_visitor_id);
-}
-
-function getDatafastSessionId(metadata: Record<string, unknown>) {
-	return asString(metadata.datafast_session_id);
-}
-
 export async function yolfiWebhookHandler(request: Request) {
 	const secret = process.env.YOLFI_WEBHOOK_SECRET;
 	if (!secret) {
@@ -175,8 +167,6 @@ export async function yolfiWebhookHandler(request: Request) {
 			customerEmail: getEmail(object),
 			paymentLinkId: paylinkId,
 			visitorId: getVisitorId(object, metadata),
-			datafastVisitorId: getDatafastVisitorId(metadata),
-			datafastSessionId: getDatafastSessionId(metadata),
 		});
 
 		const customerEmail = getEmail(object)?.trim().toLowerCase();
@@ -216,8 +206,6 @@ export async function yolfiWebhookHandler(request: Request) {
 					customerEmail: getEmail(object),
 					paymentLinkId: paylinkId,
 					visitorId: getVisitorId(object, metadata),
-					datafastVisitorId: getDatafastVisitorId(metadata),
-					datafastSessionId: getDatafastSessionId(metadata),
 				});
 			} else {
 				await db.purchase.updateMany({

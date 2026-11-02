@@ -736,6 +736,13 @@
 		"welcome": "欢迎，{name}！"
 	},
 	"signals": {
+		"accountMenu": {
+			"guest": "未登录",
+			"label": "个人中心",
+			"login": "登录",
+			"purchases": "购买记录与权益",
+			"settings": "账号设置"
+		},
 		"actions": {
 			"alert": "创建提醒",
 			"collapseChart": "收起 K 线图",
@@ -781,7 +788,7 @@
 			}
 		},
 		"sourcePicker": {
-			"allTraders": "全部 KOL",
+			"allTraders": "全网 KOL",
 			"categories": {
 				"contract": "合约",
 				"onchain": "链上",
@@ -815,17 +822,17 @@
 					"description": "这里会实时同步主流交易对价格和涨跌幅。为了行情、K 线和信号同步更稳定，建议先把网络或代理节点切换至日本或新加坡。"
 				},
 				"traders": {
-					"title": "选择你关注的交易员",
-					"description": "这一排是信号来源筛选。可以只看某几个交易员或频道，也可以保持全部，方便快速对比不同策略观点。"
+					"title": "选择交易员",
+					"description": "选择头像，查看对应信号。"
 				},
 				"filters": {
-					"title": "用筛选缩小范围",
-					"mobileDescription": "这里是筛选入口。开通 Pro 后，可按方向（做多/做空）、时间（24 小时、3 天、7 天或 30 天内）和入场状态（待入场/已入场）缩小范围。",
-					"description": "可以按方向（做多/做空）、时间（24 小时、3 天、7 天或 30 天内）和入场状态（待入场/已入场）筛选信号，快速缩小范围。"
+					"title": "筛选信号",
+					"mobileDescription": "按方向、时间和入场状态筛选。",
+					"description": "按方向、时间和入场状态筛选。"
 				},
 				"chart": {
-					"title": "在 K 线上看信号位置",
-					"description": "K 线区域会展示当前交易对走势和信号标记。点击标记或右侧信号，可以定位入场价与对应策略。"
+					"title": "入场止盈止损，一图看清",
+					"description": "信号位置与关键价位，跟着走势一眼掌握。"
 				},
 				"signalList": {
 					"title": "查看完整信号详情",
@@ -900,6 +907,11 @@
 	"checkoutReturn": {
 		"title": "正在处理您的购买",
 		"description": "请稍候，我们正在确认您的付款。",
-		"loading": "正在确认您的购买，请稍候..."
+		"loading": "正在确认您的购买，请稍候...",
+		"anonymousTitle": "付款已提交",
+		"anonymousDescription": "请使用支付时填写的邮箱登录或注册。完成邮箱验证后，系统会自动开通会员权益。",
+		"anonymousActionDescription": "如果您还没有账号，请先注册；如果已有账号，请使用支付时填写的邮箱登录。",
+		"login": "登录",
+		"signup": "注册"
 	}
 }

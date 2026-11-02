@@ -34,31 +34,34 @@ export const viewport: Viewport = {
 	viewportFit: "cover",
 };
 
+const taliviaWebsiteId = process.env.TALIVIA_WEBSITE_ID;
+const taliviaDomain = process.env.TALIVIA_DOMAIN;
+const taliviaCrossDomainDomains = taliviaDomain
+	? Array.from(
+			new Set([
+				taliviaDomain,
+				taliviaDomain.startsWith("www.") ? taliviaDomain.slice(4) : `www.${taliviaDomain}`,
+			]),
+		).join(",")
+	: undefined;
+
 export default async function RootLayout({ children }: PropsWithChildren) {
 	const locale = await getLocale();
 	const messages = await getMessages();
 
 	return (
 		<html lang={locale} suppressHydrationWarning>
-			<body
-				className={cn(
-					"min-h-screen bg-background text-foreground antialiased",
-				)}
-			>
+			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
 				<PwaServiceWorkerRegistration />
-				<Script
-					src="https://datafa.st/js/script.js"
-					data-website-id="dfid_fb2tp0jNLHKxFdogSJxxe"
-					data-domain="www.signalfast.cn"
-					strategy="afterInteractive"
-				/>
-				<Script
-					src="https://talivia.com/script.js"
-					data-website-id="46cfdef2-8ed5-4a66-957e-b5e7b85f2295"
-					data-domain="www.signalfast.cn"
-					data-cross-domain-domains="www.signalfast.cn,signalfast.cn"
-					strategy="afterInteractive"
-				/>
+				{taliviaWebsiteId && taliviaDomain && (
+					<Script
+						src="https://talivia.com/script.js"
+						data-website-id={taliviaWebsiteId}
+						data-domain={taliviaDomain}
+						data-cross-domain-domains={taliviaCrossDomainDomains}
+						strategy="afterInteractive"
+					/>
+				)}
 				<NuqsAdapter>
 					<NextIntlClientProvider messages={messages}>
 						<ThemeProvider

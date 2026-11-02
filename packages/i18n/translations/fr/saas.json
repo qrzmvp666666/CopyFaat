@@ -750,6 +750,11 @@
 	"checkoutReturn": {
 		"title": "Traitement de votre achat",
 		"description": "Veuillez patienter pendant que nous confirmons votre paiement.",
-		"loading": "Confirmation de votre achat en cours, veuillez patienter..."
+		"loading": "Confirmation de votre achat en cours, veuillez patienter...",
+		"anonymousTitle": "Paiement envoyé",
+		"anonymousDescription": "Connectez-vous ou créez un compte avec l'adresse e-mail utilisée pour le paiement. Après sa vérification, votre abonnement sera activé automatiquement.",
+		"anonymousActionDescription": "Utilisez l'adresse e-mail du paiement pour vous connecter ou créez un compte si nécessaire.",
+		"login": "Se connecter",
+		"signup": "Créer un compte"
 	}
 }

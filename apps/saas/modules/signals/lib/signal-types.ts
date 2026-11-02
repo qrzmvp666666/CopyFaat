@@ -74,10 +74,14 @@ export interface SignalsPreviewResponse {
 	signals: {
 		avatarUrl?: string;
 		direction: WebhookSignalDirection;
+		entry?: number;
+		entryStatus?: WebhookSignalEntryStatus;
 		sourceName: string;
 		status: WebhookSignalStatus;
+		stopLoss?: number;
 		submittedAt: string;
 		symbol: string;
+		takeProfit?: number;
 	}[];
 	sources: Pick<SignalWebhookSource, "id" | "name" | "avatarUrl" | "handle" | "platform">[];
 	tradingSymbols: StoredTradingSymbol[];

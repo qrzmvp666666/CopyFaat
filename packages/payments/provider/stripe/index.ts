@@ -3,7 +3,6 @@ import { logger } from "@repo/logs";
 import Stripe from "stripe";
 
 import { setCustomerIdToEntity } from "../../lib/customer";
-import { getPlanIdByProviderPriceId } from "../../lib/provider-price-ids";
 import { claimPendingPurchases, upsertSubscriptionPurchase } from "../../lib/purchases";
 import type {
 	CancelSubscription,
@@ -43,15 +42,11 @@ export const createCheckoutLink: CreateCheckoutLink = async (options) => {
 		trialPeriodDays,
 		seats,
 		email,
-		datafastVisitorId,
-		datafastSessionId,
 	} = options;
 
 	const metadata = {
 		organization_id: organizationId || null,
 		user_id: userId || null,
-		...(datafastVisitorId ? { datafast_visitor_id: datafastVisitorId } : {}),
-		...(datafastSessionId ? { datafast_session_id: datafastSessionId } : {}),
 	};
 
 	const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -138,6 +133,45 @@ function getInvoiceSubscriptionId(invoice: Stripe.Invoice) {
 	return null;
 }
 
+function getStripePaymentLinkId(paymentLink: string | Stripe.PaymentLink | null | undefined) {
+	if (typeof paymentLink === "string") return paymentLink;
+	return paymentLink?.id ?? null;
+}
+
+function normalizePaymentLinkUrl(paymentLink: string | null | undefined) {
+	if (!paymentLink) return null;
+
+	try {
+		const url = new URL(paymentLink);
+		if (url.protocol !== "https:") return null;
+		return `${url.origin}${url.pathname.replace(/\/$/, "")}`;
+	} catch {
+		return null;
+	}
+}
+
+async function getStripePaymentLinkPriceId(stripeClient: Stripe, paymentLinkId: string | null) {
+	if (!paymentLinkId) return null;
+
+	const paymentLink = await stripeClient.paymentLinks.retrieve(paymentLinkId);
+	const actualUrl = normalizePaymentLinkUrl(paymentLink.url);
+	if (!actualUrl) return null;
+
+	if (
+		actualUrl ===
+		normalizePaymentLinkUrl(process.env.NEXT_PUBLIC_STRIPE_PRO_WEEKLY_PAYMENT_LINK)
+	) {
+		return "stripe_pro_weekly";
+	}
+	if (
+		actualUrl ===
+		normalizePaymentLinkUrl(process.env.NEXT_PUBLIC_STRIPE_PRO_YEARLY_PAYMENT_LINK)
+	) {
+		return "stripe_pro_yearly";
+	}
+	return null;
+}
+
 export const createCustomerPortalLink: CreateCustomerPortalLink = async ({
 	customerId,
 	redirectUrl,
@@ -206,7 +240,7 @@ export const webhookHandler: WebhookHandler = async (req) => {
 		switch (event.type) {
 			case "checkout.session.completed": {
 				const session = event.data.object;
-				const { mode, metadata, customer, id } = session;
+				const { mode, metadata, customer } = session;
 
 				if (mode === "subscription") {
 					const subscriptionId =
@@ -217,31 +251,20 @@ export const webhookHandler: WebhookHandler = async (req) => {
 						return new Response("Missing subscription ID.", { status: 422 });
 					}
 
-					const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
-					const subscriptionMetadata = subscription.metadata;
-					const configuredPriceId =
-						metadata?.signalfast_price_id ?? subscriptionMetadata.signalfast_price_id;
-					const stripePriceId = configuredPriceId ?? subscription.items.data[0]?.price.id;
-					if (!stripePriceId || !getPlanIdByProviderPriceId(stripePriceId)) {
-						return new Response(
-							"Missing SignalFast plan mapping for Stripe Payment Link.",
-							{
-								status: 422,
-							},
-						);
+					const customerId = typeof customer === "string" ? customer : customer?.id;
+					const paymentLinkId = getStripePaymentLinkId(session.payment_link);
+					const priceId = await getStripePaymentLinkPriceId(stripeClient, paymentLinkId);
+					if (!priceId) {
+						return new Response("Unmapped Stripe Payment Link.", { status: 422 });
 					}
 
-					const customerId = typeof customer === "string" ? customer : customer?.id;
-					const paymentLinkId =
-						typeof session.payment_link === "string"
-							? session.payment_link
-							: session.payment_link?.id;
+					const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
 					const stripeCustomerEmail =
 						session.customer_details?.email ?? session.customer_email;
 
 					await upsertSubscriptionPurchase({
 						provider: "stripe",
-						priceId: stripePriceId,
+						priceId,
 						customerId: customerId ?? `stripe_${subscriptionId}`,
 						status: subscription.status,
 						subscriptionId,
@@ -249,8 +272,6 @@ export const webhookHandler: WebhookHandler = async (req) => {
 						customerEmail: stripeCustomerEmail,
 						paymentLinkId,
 						visitorId: session.client_reference_id,
-						datafastVisitorId: metadata?.datafast_visitor_id,
-						datafastSessionId: metadata?.datafast_session_id,
 					});
 
 					if (stripeCustomerEmail && !metadata?.user_id) {
@@ -272,17 +293,10 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					break;
 				}
 
-				const checkoutSession = await stripeClient.checkout.sessions.retrieve(id, {
-					expand: ["line_items"],
-				});
-
-				const priceId = checkoutSession.line_items?.data[0].price?.id;
-				const planId = priceId ? getPlanIdByProviderPriceId(priceId) : null;
-
-				if (!planId || !priceId) {
-					return new Response("Missing plan or price ID.", {
-						status: 400,
-					});
+				const paymentLinkId = getStripePaymentLinkId(session.payment_link);
+				const priceId = await getStripePaymentLinkPriceId(stripeClient, paymentLinkId);
+				if (!priceId) {
+					return new Response("Unmapped Stripe Payment Link.", { status: 422 });
 				}
 
 				await createPurchase({
@@ -291,6 +305,8 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					customerId: customer as string,
 					type: "ONE_TIME",
 					priceId,
+					paymentLinkId,
+					visitorId: session.client_reference_id,
 				});
 
 				await setCustomerIdToEntity(customer as string, {
@@ -301,33 +317,11 @@ export const webhookHandler: WebhookHandler = async (req) => {
 				break;
 			}
 			case "customer.subscription.created": {
-				const { metadata, customer, items, id } = event.data.object;
-
-				const priceId = metadata?.signalfast_price_id ?? items?.data[0].price?.id;
-				const planId = priceId ? getPlanIdByProviderPriceId(priceId) : null;
-
-				if (!planId || !priceId) {
-					return new Response("Missing plan or price ID.", {
-						status: 400,
-					});
+				const subscription = event.data.object;
+				const existingPurchase = await getPurchaseBySubscriptionId(subscription.id);
+				if (existingPurchase) {
+					await updatePurchase({ id: existingPurchase.id, status: subscription.status });
 				}
-
-				await upsertSubscriptionPurchase({
-					subscriptionId: id,
-					provider: "stripe",
-					userId: metadata?.user_id,
-					customerId:
-						typeof customer === "string" ? customer : (customer?.id ?? `stripe_${id}`),
-					priceId,
-					status: event.data.object.status,
-					datafastVisitorId: metadata?.datafast_visitor_id,
-					datafastSessionId: metadata?.datafast_session_id,
-				});
-
-				await setCustomerIdToEntity(customer as string, {
-					organizationId: metadata?.organization_id,
-					userId: metadata?.user_id,
-				});
 
 				break;
 			}
@@ -338,12 +332,9 @@ export const webhookHandler: WebhookHandler = async (req) => {
 				const existingPurchase = await getPurchaseBySubscriptionId(subscriptionId);
 
 				if (existingPurchase && existingPurchase.status !== "canceled") {
-					const priceId = event.data.object.items?.data[0].price?.id;
-
 					await updatePurchase({
 						id: existingPurchase.id,
 						status: event.data.object.status,
-						...(priceId ? { priceId } : {}),
 					});
 				}
 
@@ -351,24 +342,10 @@ export const webhookHandler: WebhookHandler = async (req) => {
 			}
 			case "customer.subscription.deleted": {
 				const subscription = event.data.object;
-				const metadata = subscription.metadata;
-				const priceId =
-					metadata?.signalfast_price_id ??
-					subscription.items.data[0]?.price.id ??
-					"stripe_unmapped";
-				await upsertSubscriptionPurchase({
-					provider: "stripe",
-					priceId,
-					customerId:
-						typeof subscription.customer === "string"
-							? subscription.customer
-							: (subscription.customer?.id ?? `stripe_${subscription.id}`),
-					status: "canceled",
-					subscriptionId: subscription.id,
-					userId: metadata?.user_id,
-					datafastVisitorId: metadata?.datafast_visitor_id,
-					datafastSessionId: metadata?.datafast_session_id,
-				});
+				const existingPurchase = await getPurchaseBySubscriptionId(subscription.id);
+				if (existingPurchase) {
+					await updatePurchase({ id: existingPurchase.id, status: "canceled" });
+				}
 
 				break;
 			}
@@ -386,23 +363,13 @@ export const webhookHandler: WebhookHandler = async (req) => {
 			case "invoice.paid": {
 				const subscriptionId = getInvoiceSubscriptionId(event.data.object);
 				if (subscriptionId) {
-					const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
-					const priceId =
-						subscription.metadata.signalfast_price_id ??
-						subscription.items.data[0]?.price.id;
-					if (priceId && getPlanIdByProviderPriceId(priceId)) {
-						await upsertSubscriptionPurchase({
-							provider: "stripe",
-							priceId,
-							customerId:
-								typeof subscription.customer === "string"
-									? subscription.customer
-									: (subscription.customer?.id ?? `stripe_${subscription.id}`),
+					const existingPurchase = await getPurchaseBySubscriptionId(subscriptionId);
+					if (existingPurchase && existingPurchase.status !== "canceled") {
+						const subscription =
+							await stripeClient.subscriptions.retrieve(subscriptionId);
+						await updatePurchase({
+							id: existingPurchase.id,
 							status: subscription.status,
-							subscriptionId,
-							userId: subscription.metadata.user_id,
-							datafastVisitorId: subscription.metadata.datafast_visitor_id,
-							datafastSessionId: subscription.metadata.datafast_session_id,
 						});
 					}
 				}

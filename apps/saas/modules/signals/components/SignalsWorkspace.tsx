@@ -25,6 +25,7 @@ import {
 } from "@repo/ui/components/sheet";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { getProfileAvatarUrlForSeed } from "@repo/utils";
+import { UserAvatar } from "@shared/components/UserAvatar";
 import { SignalsMobilePaywall } from "@signals/components/SignalsMobilePaywall";
 import type { UTCTimestamp } from "lightweight-charts";
 import {
@@ -40,8 +41,10 @@ import {
 	CrownIcon,
 	Maximize2Icon,
 	RadioIcon,
+	ReceiptTextIcon,
 	RefreshCwIcon,
 	SearchIcon,
+	SettingsIcon,
 	SlidersHorizontalIcon,
 	StarIcon,
 	TargetIcon,
@@ -73,6 +76,104 @@ const TIME_RANGES = ["all", "24h", "3d", "7d", "30d"] as const;
 const ENTRY_STATUSES = ["all", "pending", "entered"] as const;
 const SOURCE_PICKER_CATEGORIES = ["watchlist", "contract"] as const;
 const SOURCE_FOLLOW_STORAGE_KEY = "signalfast:followed-sources:v1";
+const GUIDE_DEMO_PREVIEW: SignalsPreviewResponse = {
+	sources: [1, 2, 3, 4, 5].map((index) => ({
+		id: `guide-kol-${index}`,
+		name: index === 5 ? "舒琴" : `KOL ${String(index).padStart(2, "0")}`,
+		handle: `@demo_kol_${index}`,
+		platform: "Demo",
+		avatarUrl:
+			index === 5
+				? "/images/hero-floating/onboarding-kol-5.png"
+				: `/images/hero-floating/icon-${index}.png`,
+	})),
+	signals: [
+		{
+			sourceName: "KOL 01",
+			avatarUrl: "/images/hero-floating/icon-1.png",
+			symbol: "BTCUSDT",
+			direction: "long",
+			entry: 67_420,
+			entryStatus: "entered",
+			status: "active",
+			stopLoss: 66_850,
+			submittedAt: "2026-10-31T10:00:00.000Z",
+			takeProfit: 68_560,
+		},
+		{
+			sourceName: "KOL 03",
+			avatarUrl: "/images/hero-floating/icon-3.png",
+			symbol: "ETHUSDT",
+			direction: "short",
+			entry: 2_468.5,
+			entryStatus: "pending",
+			status: "active",
+			stopLoss: 2_512,
+			submittedAt: "2026-10-31T09:30:00.000Z",
+			takeProfit: 2_382,
+		},
+		{
+			sourceName: "舒琴",
+			avatarUrl: "/images/hero-floating/onboarding-kol-5.png",
+			symbol: "BTCUSDT",
+			direction: "long",
+			entry: 66_980,
+			entryStatus: "entered",
+			status: "history",
+			stopLoss: 66_400,
+			submittedAt: "2026-10-30T18:45:00.000Z",
+			takeProfit: 68_120,
+		},
+	],
+	tradingSymbols: ["BTCUSDT", "ETHUSDT"].map((symbol) => ({
+		id: symbol,
+		symbol,
+		baseAsset: symbol.replace("USDT", ""),
+		quoteAsset: "USDT",
+		exchange: "binance",
+		pricePrecision: 2,
+	})),
+};
+
+function getGuideDemoClose(index: number) {
+	return 67_420 + Math.sin(index * 0.31) * 260 + Math.sin(index * 0.09) * 430 + index * 2.4;
+}
+
+const GUIDE_DEMO_CANDLES: Candle[] = Array.from({ length: 72 }, (_, index) => {
+	const close = getGuideDemoClose(index);
+	const open = index === 0 ? close - 42 : getGuideDemoClose(index - 1);
+	const wick = 48 + Math.abs(Math.sin(index * 1.7)) * 82;
+
+	return {
+		close,
+		high: Math.max(open, close) + wick,
+		low: Math.min(open, close) - wick * 0.82,
+		open,
+		time: (Math.floor(Date.now() / 3_600_000) * 3_600 - (71 - index) * 3_600) as UTCTimestamp,
+	};
+});
+
+function formatPreviewRiskReward(signal: SignalsPreviewResponse["signals"][number]) {
+	if (
+		signal.entry === undefined ||
+		signal.stopLoss === undefined ||
+		signal.takeProfit === undefined
+	) {
+		return "--";
+	}
+
+	const risk =
+		signal.direction === "long"
+			? signal.entry - signal.stopLoss
+			: signal.stopLoss - signal.entry;
+	const reward =
+		signal.direction === "long"
+			? signal.takeProfit - signal.entry
+			: signal.entry - signal.takeProfit;
+
+	return risk > 0 && reward > 0 ? (reward / risk).toFixed(2) : "--";
+}
+
 const SIGNALS_SKELETON_STYLES = `
 @keyframes signals-skeleton-shimmer {
 	100% {
@@ -211,6 +312,76 @@ interface TradeSignal {
 	y: number;
 	outcome?: string;
 }
+
+const GUIDE_DEMO_SIGNAL_DEFINITIONS = (
+	[
+		{
+			avatarLabel: "01",
+			avatarUrl: "/images/hero-floating/icon-1.png",
+			direction: "long",
+			entry: 67_200,
+			entryStatus: "entered",
+			id: "guide-signal-kol-01",
+			sourceId: "guide-kol-1",
+			sourceName: "KOL 01",
+			stopLoss: 66_850,
+			takeProfit: 68_050,
+			x: 32,
+		},
+		{
+			avatarLabel: "03",
+			avatarUrl: "/images/hero-floating/icon-3.png",
+			direction: "short",
+			entry: 67_680,
+			entryStatus: "pending",
+			id: "guide-signal-kol-03",
+			sourceId: "guide-kol-3",
+			sourceName: "KOL 03",
+			stopLoss: 68_100,
+			takeProfit: 66_920,
+			x: 57,
+		},
+		{
+			avatarLabel: "舒",
+			avatarUrl: "/images/hero-floating/onboarding-kol-5.png",
+			direction: "long",
+			entry: 67_520,
+			entryStatus: "entered",
+			id: "guide-signal-shu-qin",
+			sourceId: "guide-kol-5",
+			sourceName: "舒琴",
+			stopLoss: 67_130,
+			takeProfit: 68_240,
+			x: 78,
+		},
+	] satisfies Array<
+		Pick<
+			TradeSignal,
+			| "avatarLabel"
+			| "avatarUrl"
+			| "direction"
+			| "entry"
+			| "entryStatus"
+			| "id"
+			| "sourceId"
+			| "sourceName"
+			| "stopLoss"
+			| "takeProfit"
+			| "x"
+		>
+	>
+).map(
+	(signal): TradeSignal => ({
+		...signal,
+		status: "active",
+		symbol: "BTCUSDT",
+		submittedAt: "",
+		submittedAtTime: (Math.floor(Date.now() / 3_600_000) * 3_600 -
+			(71 - Math.round((signal.x / 100) * 71)) * 3_600) as UTCTimestamp,
+		confidence: 2,
+		y: 50,
+	}),
+);
 
 interface SignalStatusPresentation {
 	icon: LucideIcon;
@@ -1026,7 +1197,7 @@ interface SignalsWorkspaceProps {
 }
 
 export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorkspaceProps) {
-	const { user } = useSession();
+	const { user, loaded: sessionLoaded } = useSession();
 	const t = useTranslations("signals");
 	const sourcePickerT = useTranslations("signals.sourcePicker");
 	const locale = useLocale();
@@ -1040,7 +1211,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const [instrumentQuotes, setInstrumentQuotes] = useState<Record<string, Partial<Instrument>>>(
 		{},
 	);
-	const [selectedSymbol, setSelectedSymbol] = useState("");
+	const [selectedSymbol, setSelectedSymbol] = useState(hasProAccess ? "" : "BTCUSDT");
 	const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("1h");
 	const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
 	const defaultSourcesInitializedRef = useRef(false);
@@ -1063,31 +1234,25 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
 	const [isChartCollapsed, setIsChartCollapsed] = useState(false);
 	const [isChartFullscreenOpen, setIsChartFullscreenOpen] = useState(false);
-	const [isSignalsLoading, setIsSignalsLoading] = useState(true);
-	const [preview, setPreview] = useState<SignalsPreviewResponse>({
-		signals: [],
-		sources: [],
-		tradingSymbols: [
-			{
-				id: "BTCUSDT",
-				symbol: "BTCUSDT",
-				baseAsset: "BTC",
-				quoteAsset: "USDT",
-				exchange: "binance",
-				pricePrecision: 2,
-			},
-		],
-	});
-	const [isSignalPageLoading, setIsSignalPageLoading] = useState(true);
+	const [isSignalsLoading, setIsSignalsLoading] = useState(hasProAccess);
+	const preview = GUIDE_DEMO_PREVIEW;
+	const [isSignalPageLoading, setIsSignalPageLoading] = useState(hasProAccess);
 	const [isKlinesLoading, setIsKlinesLoading] = useState(false);
 	const [guideOpen, setGuideOpen] = useState(!hasProAccess);
 	const [guideCardHeight, setGuideCardHeight] = useState(300);
+	const [guideAvatarRevealCount, setGuideAvatarRevealCount] = useState(0);
+	const [guideActiveSourceId, setGuideActiveSourceId] = useState<string | null>(null);
+	const [guideFilterRevealCount, setGuideFilterRevealCount] = useState(0);
+	const [guideActiveFilterOption, setGuideActiveFilterOption] = useState<number | null>(null);
+	const [guideIntroAnimating, setGuideIntroAnimating] = useState(!hasProAccess);
 	const [paywallOpen, setPaywallOpen] = useState(false);
 	const [isMobilePaywall, setIsMobilePaywall] = useState(false);
 	const [guideStepIndex, setGuideStepIndex] = useState(0);
 	const signalPageRequestIdRef = useRef(0);
 	const [signalPageRefreshKey, setSignalPageRefreshKey] = useState(0);
-	const [supportedSymbols, setSupportedSymbols] = useState<Set<string> | null>(null);
+	const [supportedSymbols, setSupportedSymbols] = useState<Set<string> | null>(() =>
+		hasProAccess ? null : new Set(["BTCUSDT"]),
+	);
 	const symbolAvailabilityRef = useRef(new Map<string, boolean>());
 	const [symbolAvailabilityRetryVersion, setSymbolAvailabilityRetryVersion] = useState(0);
 
@@ -1099,28 +1264,6 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		return () => mediaQuery.removeEventListener("change", updateMobileState);
 	}, []);
 
-	useEffect(() => {
-		if (hasProAccess) return;
-		const controller = new AbortController();
-		async function loadPreview() {
-			try {
-				const response = await fetch("/api/signals/preview", { signal: controller.signal });
-				if (!response.ok) return;
-				const data = (await response.json()) as SignalsPreviewResponse;
-				setPreview((current) => ({
-					signals: data.signals.slice(0, 3),
-					sources: data.sources,
-					tradingSymbols: data.tradingSymbols.length
-						? data.tradingSymbols
-						: current.tradingSymbols,
-				}));
-			} catch {
-				// Keep public exchange markets visible if workspace metadata is unavailable.
-			}
-		}
-		void loadPreview();
-		return () => controller.abort();
-	}, [hasProAccess]);
 	const visibleWebhookSignals = useMemo(() => {
 		if (!supportedSymbols) {
 			return [];
@@ -1198,6 +1341,84 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 		return Array.from(sources.values()).sort((a, b) => a.name.localeCompare(b.name));
 	}, [hasProAccess, preview.sources, visibleWebhookSignals]);
+	const guideAvatarSources = useMemo(() => sourceFilters.slice(0, 7), [sourceFilters]);
+
+	useEffect(() => {
+		if (!guideOpen || guideStepIndex > 1) {
+			setGuideAvatarRevealCount(guideAvatarSources.length);
+			setGuideActiveSourceId(null);
+			setGuideFilterRevealCount(6);
+			setGuideActiveFilterOption(null);
+			setGuideIntroAnimating(false);
+			return;
+		}
+
+		if (guideStepIndex === 1) {
+			setGuideAvatarRevealCount(guideAvatarSources.length);
+			setGuideActiveSourceId(null);
+			setGuideIntroAnimating(true);
+			setGuideFilterRevealCount(0);
+			setGuideActiveFilterOption(null);
+
+			const revealTimers = Array.from({ length: 6 }, (_, index) =>
+				window.setTimeout(
+					() => {
+						setGuideFilterRevealCount(index + 1);
+						setGuideActiveFilterOption(index);
+					},
+					120 + index * 300,
+				),
+			);
+			const finishTimer = window.setTimeout(
+				() => {
+					setGuideActiveFilterOption(null);
+					setGuideIntroAnimating(false);
+				},
+				120 + 6 * 300 + 420,
+			);
+
+			return () => {
+				for (const timer of revealTimers) window.clearTimeout(timer);
+				window.clearTimeout(finishTimer);
+			};
+		}
+
+		if (guideAvatarSources.length === 0) {
+			setGuideAvatarRevealCount(0);
+			setGuideActiveSourceId(null);
+			setGuideIntroAnimating(false);
+			return;
+		}
+
+		setGuideIntroAnimating(true);
+		setGuideAvatarRevealCount(0);
+		setGuideActiveSourceId(null);
+		setGuideFilterRevealCount(6);
+		setGuideActiveFilterOption(null);
+
+		const revealTimers = guideAvatarSources.map((source, index) =>
+			window.setTimeout(
+				() => {
+					setGuideAvatarRevealCount(index + 1);
+					setGuideActiveSourceId(source.id);
+				},
+				120 + index * 360,
+			),
+		);
+		const finishTimer = window.setTimeout(
+			() => {
+				setGuideActiveSourceId(null);
+				setGuideIntroAnimating(false);
+			},
+			120 + guideAvatarSources.length * 360 + 420,
+		);
+
+		return () => {
+			for (const timer of revealTimers) window.clearTimeout(timer);
+			window.clearTimeout(finishTimer);
+		};
+	}, [guideAvatarSources, guideOpen, guideStepIndex]);
+
 	const filteredSourcePickerSources = useMemo(() => {
 		const query = sourcePickerQuery.trim().toLocaleLowerCase();
 		const categorySources =
@@ -1442,6 +1663,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	}, [hasProAccess, signalPageFilters, signalPageRefreshKey]);
 
 	useEffect(() => {
+		if (!hasProAccess) {
+			setBinanceCandles(null);
+			setIsKlinesLoading(false);
+			return;
+		}
 		let isMounted = true;
 		const controller = new AbortController();
 
@@ -1460,7 +1686,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 					limit: "180",
 					symbol: selectedSymbol,
 				});
-				const endpoint = hasProAccess ? "/api/signals/klines" : "/api/market/klines";
+				const endpoint = "/api/signals/klines";
 				const response = await fetch(`${endpoint}?${params.toString()}`, {
 					cache: "no-store",
 					signal: controller.signal,
@@ -1614,7 +1840,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	}, [instruments]);
 
 	useEffect(() => {
-		if (!tickerSymbols) {
+		if (!hasProAccess || !tickerSymbols) {
 			return;
 		}
 
@@ -1667,7 +1893,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	}, [hasProAccess, baseInstruments, tickerSymbols]);
 
 	useEffect(() => {
-		if (!selectedSymbol) {
+		if (!hasProAccess || !selectedSymbol) {
 			setBinanceCandles(null);
 			return;
 		}
@@ -1736,6 +1962,18 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 		return binanceCandles.candles;
 	}, [binanceCandles, selectedSymbol, selectedTimeframe]);
+	const isGuideChartPreview = guideOpen && guideStepIndex === 2 && !hasProAccess;
+	const chartCandles = isGuideChartPreview ? GUIDE_DEMO_CANDLES : candles;
+	const displayedChartSignals = isGuideChartPreview
+		? GUIDE_DEMO_SIGNAL_DEFINITIONS
+		: chartSignals;
+	const guideActiveChartSignal = isGuideChartPreview
+		? (GUIDE_DEMO_SIGNAL_DEFINITIONS.find((signal) => signal.id === activeSignalId) ??
+			GUIDE_DEMO_SIGNAL_DEFINITIONS[0] ??
+			null)
+		: null;
+	const displayedActiveSignal = isGuideChartPreview ? guideActiveChartSignal : activeSignal;
+	const displayedFocusedSignalId = isGuideChartPreview ? null : activeSignalId;
 
 	const selectedInstrument =
 		instruments.find((instrument) => instrument.symbol === selectedSymbol) ?? null;
@@ -1746,8 +1984,8 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		binanceCandles?.symbol === selectedSymbol &&
 		binanceCandles.timeframe === selectedTimeframe;
 	const chartPricePrecision = getChartPricePrecision(
-		candles,
-		chartSignals,
+		chartCandles,
+		displayedChartSignals,
 		selectedPricePrecision,
 	);
 	function formatPrice(value: number, fractionDigits = selectedPricePrecision) {
@@ -1775,8 +2013,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const canShowChart =
 		!!selectedSymbol &&
 		!!selectedInstrument &&
-		!isChartLoading &&
-		candles.length >= MIN_CHART_CANDLES;
+		(isGuideChartPreview || (!isChartLoading && candles.length >= MIN_CHART_CANDLES));
 
 	function focusSignal(signal: SignalChartSignal) {
 		setActiveSignalId(signal.id);
@@ -1897,10 +2134,71 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		>
 			<style>{SIGNALS_SKELETON_STYLES}</style>
 			<style>{CHART_FULLSCREEN_STYLES}</style>
+			<nav
+				aria-label={t("accountMenu.label")}
+				className="min-h-14 gap-3 px-3 py-2 border-white/10 md:hidden flex items-center justify-between border-b bg-[#141414]"
+			>
+				<div className="min-w-0 gap-2.5 flex items-center">
+					<UserAvatar
+						name={user?.name || user?.email || t("accountMenu.guest")}
+						avatarUrl={user?.image}
+						className="size-9 border-white/10 shrink-0 border"
+					/>
+					<div className="min-w-0 leading-tight">
+						{!sessionLoaded ? (
+							<span className="h-4 w-28 animate-pulse rounded bg-white/10 block" />
+						) : user ? (
+							<>
+								<span className="text-sm font-medium text-white block truncate">
+									{user.name || user.email}
+								</span>
+								<span className="text-xs text-white/55 block truncate">
+									{user.email}
+								</span>
+							</>
+						) : (
+							<span className="text-sm text-white/65 block">
+								{t("accountMenu.guest")}
+							</span>
+						)}
+					</div>
+				</div>
+				<div className="gap-1 flex shrink-0 items-center">
+					{!sessionLoaded ? null : user ? (
+						<>
+							<Link
+								href="/settings/general"
+								aria-label={t("accountMenu.settings")}
+								title={t("accountMenu.settings")}
+								className="size-10 text-white/75 hover:bg-white/8 hover:text-white flex items-center justify-center rounded-md"
+							>
+								<SettingsIcon className="size-5" />
+							</Link>
+							<Link
+								href="/settings/billing"
+								aria-label={t("accountMenu.purchases")}
+								title={t("accountMenu.purchases")}
+								className="size-10 text-white/75 hover:bg-white/8 hover:text-white flex items-center justify-center rounded-md"
+							>
+								<ReceiptTextIcon className="size-5" />
+							</Link>
+						</>
+					) : (
+						<Button asChild size="sm" variant="outline" className="h-9">
+							<Link href="/login?redirectTo=%2Fsignals">
+								{t("accountMenu.login")}
+							</Link>
+						</Button>
+					)}
+				</div>
+			</nav>
 			{guideOpen ? (
 				<SignalsGuideOverlay
 					onHeightChange={setGuideCardHeight}
+					activeFilterOption={guideActiveFilterOption}
+					filterRevealCount={guideFilterRevealCount}
 					isAuthenticated={isAuthenticated}
+					isIntroComplete={!guideIntroAnimating || !isMobilePaywall}
 					requiresMembership={!hasProAccess}
 					onClose={closeGuide}
 					onNext={goToNextGuideStep}
@@ -1986,11 +2284,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 						<div className="min-h-0 flex-1" data-chart-landscape-stage="true">
 							{canShowChart ? (
 								<TradingViewSignalChart
-									activeSignal={activeSignal}
-									candles={candles}
+									activeSignal={displayedActiveSignal}
+									candles={chartCandles}
 									className="min-h-0 h-full"
 									formatPrice={formatPrice}
-									focusedSignalId={activeSignalId}
+									focusedSignalId={displayedFocusedSignalId}
 									labels={{
 										entry: t("chart.entry"),
 										stopLoss: t("chart.stopLoss"),
@@ -1999,7 +2297,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 									locale={locale}
 									onSelectSignal={focusSignal}
 									pricePrecision={chartPricePrecision}
-									signals={chartSignals}
+									signals={displayedChartSignals}
 									symbol={selectedSymbol}
 									timeframe={selectedTimeframe}
 								/>
@@ -2035,7 +2333,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 				<header
 					className={cn(
 						"px-4 py-2 backdrop-blur shrink-0 border-b bg-[#141414]/80",
-						guideOpen ? "block" : "md:block hidden",
+						guideOpen && guideStepIndex === 2
+							? "md:block hidden"
+							: guideOpen
+								? "block"
+								: "md:block hidden",
 					)}
 					data-guide-target="ticker"
 				>
@@ -2137,28 +2439,30 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 											isSelected ? "bg-white/8" : "hover:bg-white/5",
 										)}
 									>
-										<button
-											type="button"
-											onClick={() => selectSymbol(instrument.symbol)}
-											className="min-w-0 gap-3 flex flex-1 items-center text-left"
-										>
-											<span
-												className={cn(
-													"size-9 text-sm font-bold text-white flex shrink-0 items-center justify-center rounded-full",
-													instrument.accent,
-												)}
+										{!(guideOpen && guideStepIndex === 0) ? (
+											<button
+												type="button"
+												onClick={() => selectSymbol(instrument.symbol)}
+												className="min-w-0 gap-3 flex flex-1 items-center text-left"
 											>
-												{instrument.base.slice(0, 1)}
-											</span>
-											<span className="min-w-0">
-												<span className="font-semibold block truncate">
-													{instrument.symbol}
+												<span
+													className={cn(
+														"size-9 text-sm font-bold text-white flex shrink-0 items-center justify-center rounded-full",
+														instrument.accent,
+													)}
+												>
+													{instrument.base.slice(0, 1)}
 												</span>
-												<span className="font-mono text-xs text-muted-foreground">
-													{instrument.volume}
+												<span className="min-w-0">
+													<span className="font-semibold block truncate">
+														{instrument.symbol}
+													</span>
+													<span className="font-mono text-xs text-muted-foreground">
+														{instrument.volume}
+													</span>
 												</span>
-											</span>
-										</button>
+											</button>
+										) : null}
 										<div className="text-right">
 											<p className="font-mono text-sm font-semibold">
 												$
@@ -2186,29 +2490,36 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 					</aside>
 
 					<main className="min-h-0 min-w-0 flex flex-col bg-[#141414]">
-						<section className="px-3 py-3 shrink-0 bg-[#141414]">
+						<section
+							className={cn(
+								"px-3 py-3 shrink-0 bg-[#141414]",
+								guideOpen && guideStepIndex === 2 && "max-md:hidden",
+							)}
+						>
 							<div className="gap-3 flex flex-col">
 								<div>
 									<div
 										data-guide-target="traders"
 										className="md:flex md:flex-wrap md:items-start md:gap-2 hidden w-fit max-w-full"
 									>
-										<button
-											type="button"
-											onClick={clearSourceFilters}
-											aria-pressed={selectedSourceIds.length === 0}
-											className={cn(
-												"md:size-auto md:min-w-[52px] md:px-2.5 md:py-1.5 md:text-xs font-medium gap-1 md:gap-0 md:rounded-md flex size-[52px] shrink-0 flex-col items-center justify-center rounded-lg border text-center text-[10px] transition-colors",
-												selectedSourceIds.length === 0
-													? "md:bg-foreground border-foreground/20 bg-foreground text-background"
-													: "hover:bg-white/8 md:bg-[#141414] bg-[#141414]",
-											)}
-										>
-											<span className="size-10 md:hidden border-white/15 bg-white/8 font-bold flex items-center justify-center rounded-full border text-[11px]">
-												{t("filters.allSources").slice(0, 1)}
-											</span>
-											<span>{t("filters.allSources")}</span>
-										</button>
+										{!(guideOpen && guideStepIndex === 0) ? (
+											<button
+												type="button"
+												onClick={clearSourceFilters}
+												aria-pressed={selectedSourceIds.length === 0}
+												className={cn(
+													"md:size-auto md:min-w-[52px] md:px-2.5 md:py-1.5 md:text-xs font-medium gap-1 md:gap-0 md:rounded-md flex size-[52px] shrink-0 flex-col items-center justify-center rounded-lg border text-center text-[10px] transition-colors",
+													selectedSourceIds.length === 0
+														? "md:bg-foreground border-foreground/20 bg-foreground text-background"
+														: "hover:bg-white/8 md:bg-[#141414] bg-[#141414]",
+												)}
+											>
+												<span className="size-10 md:hidden border-white/15 bg-white/8 font-bold flex items-center justify-center rounded-full border text-[11px]">
+													{t("filters.allSources").slice(0, 1)}
+												</span>
+												<span>{t("filters.allSources")}</span>
+											</button>
+										) : null}
 										{sourceFilters.map((source) => (
 											<button
 												key={source.id}
@@ -2249,22 +2560,24 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 											</button>
 										))}
 									</div>
-									<div className="min-w-0 gap-1 md:hidden flex items-start">
-										<div
-											data-guide-target="traders"
-											className="no-scrollbar min-w-0 gap-3 flex max-w-full items-start overflow-x-auto overflow-y-hidden"
-										>
-											<button
-												type="button"
-												onClick={clearSourceFilters}
-												aria-pressed={selectedSourceIds.length === 0}
-												className="gap-1 pt-1 flex min-h-[76px] w-[64px] shrink-0 flex-col items-center text-[10px]"
-											>
-												<span className="border-white/30 text-sm flex size-[52px] items-center justify-center rounded-full border-2">
-													{t("filters.allSources")}
-												</span>
-												<span>{sourcePickerT("allTraders")}</span>
-											</button>
+									<div
+										data-guide-target="traders"
+										className="min-w-0 gap-1 md:hidden relative flex flex-col items-start"
+									>
+										<div className="no-scrollbar min-w-0 gap-3 flex max-w-full items-start overflow-x-auto overflow-y-hidden">
+											{!(guideOpen && guideStepIndex === 0) ? (
+												<button
+													type="button"
+													onClick={clearSourceFilters}
+													aria-pressed={selectedSourceIds.length === 0}
+													className="gap-1 pt-1 flex min-h-[76px] w-[64px] shrink-0 flex-col items-center text-[10px]"
+												>
+													<span className="border-white/30 text-sm flex size-[52px] items-center justify-center rounded-full border-2">
+														{t("filters.allSources")}
+													</span>
+													<span>{sourcePickerT("allTraders")}</span>
+												</button>
+											) : null}
 											{sourceFilters.length === 0 ? (
 												guideOpen ? (
 													<div
@@ -2290,43 +2603,118 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 													</p>
 												)
 											) : null}
-											{sourceFilters.map((source) => (
-												<button
-													key={source.id}
-													type="button"
-													onClick={() => toggleSourceFilter(source.id)}
-													title={source.name}
-													aria-pressed={selectedSourceIds.includes(
-														source.id,
-													)}
-													className="gap-1 px-0 pt-1 pb-0 flex min-h-[76px] w-[64px] shrink-0 flex-col items-center rounded-lg border border-transparent text-[10px] text-foreground transition-colors"
-												>
-													<span
+											{(guideOpen && guideStepIndex === 0
+												? sourceFilters.slice(0, 4)
+												: sourceFilters
+											).map((source, index) => {
+												const isIntroAvatar =
+													guideOpen && guideStepIndex === 0;
+												const isRevealed =
+													!isIntroAvatar ||
+													index < guideAvatarRevealCount;
+												const isSelected = isIntroAvatar
+													? guideActiveSourceId === source.id
+													: selectedSourceIds.includes(source.id);
+
+												return (
+													<button
+														key={source.id}
+														type="button"
+														onClick={() =>
+															toggleSourceFilter(source.id)
+														}
+														title={source.name}
+														aria-pressed={
+															isIntroAvatar
+																? isSelected
+																: selectedSourceIds.includes(
+																		source.id,
+																	)
+														}
 														className={cn(
-															"box-border flex size-[52px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2",
-															selectedSourceIds.includes(source.id)
-																? "border-white"
-																: "border-white/10",
+															"gap-1 px-0 pt-1 pb-0 flex min-h-[76px] w-[64px] shrink-0 flex-col items-center rounded-lg border border-transparent text-[10px] text-foreground transition-opacity",
+															isRevealed
+																? isIntroAvatar
+																	? "animate-in fade-in-0 slide-in-from-top-2 duration-500"
+																	: "opacity-100"
+																: "opacity-0",
 														)}
 													>
-														<img
-															alt={source.name}
-															className="size-full object-cover"
-															onError={(event) =>
-																event.currentTarget.parentElement?.setAttribute(
-																	"hidden",
-																	"true",
-																)
-															}
-															src={source.avatar}
-														/>
-													</span>
-													<span className="w-full truncate text-center">
-														{source.name}
-													</span>
-												</button>
-											))}
+														<span
+															className={cn(
+																"box-border flex size-[52px] shrink-0 items-center justify-center overflow-hidden rounded-full border-2 transition-all duration-300",
+																isSelected
+																	? "border-white scale-105 shadow-[0_0_0_2px_rgba(255,255,255,0.16)]"
+																	: "border-white/10",
+															)}
+														>
+															<img
+																alt={source.name}
+																className="size-full object-cover"
+																onError={(event) =>
+																	event.currentTarget.parentElement?.setAttribute(
+																		"hidden",
+																		"true",
+																	)
+																}
+																src={source.avatar}
+															/>
+														</span>
+														<span className="w-full truncate text-center">
+															{source.name}
+														</span>
+													</button>
+												);
+											})}
 										</div>
+										{guideOpen &&
+										guideStepIndex === 0 &&
+										sourceFilters.length > 4 ? (
+											<div className="mt-1 gap-3 ml-0 relative flex min-h-[72px] items-start">
+												{sourceFilters.slice(4, 7).map((source, index) => {
+													const isRevealed =
+														guideAvatarRevealCount > index + 4;
+													const isSelected = guideIntroAnimating
+														? guideActiveSourceId === source.id
+														: selectedSourceIds.includes(source.id);
+
+													return (
+														<button
+															key={source.id}
+															type="button"
+															onClick={() =>
+																toggleSourceFilter(source.id)
+															}
+															aria-pressed={isSelected}
+															className={cn(
+																"gap-1 px-0 pt-1 flex min-h-[68px] w-[64px] shrink-0 flex-col items-center text-[10px] transition-opacity",
+																isRevealed
+																	? "animate-in fade-in-0 slide-in-from-top-2 duration-500"
+																	: "opacity-0",
+															)}
+														>
+															<span
+																className={cn(
+																	"size-11 overflow-hidden rounded-full border-2 transition-all duration-300",
+																	isSelected
+																		? "border-white scale-105 shadow-[0_0_0_2px_rgba(255,255,255,0.16)]"
+																		: "border-white/10",
+																)}
+															>
+																<img
+																	alt={source.name}
+																	className="size-full object-cover"
+																	src={source.avatar}
+																/>
+															</span>
+															<span className="w-full truncate text-center">
+																{source.name}
+															</span>
+														</button>
+													);
+												})}
+											</div>
+										) : null}
 										<Sheet
 											open={isSourcePickerOpen}
 											onOpenChange={setIsSourcePickerOpen}
@@ -2889,6 +3277,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 							className={cn(
 								"xl:min-h-0 xl:flex-1 flex flex-col",
 								isChartCollapsed && "hidden",
+								guideOpen && guideStepIndex === 2 && "max-md:-mt-6",
 							)}
 							data-guide-target="chart"
 						>
@@ -2937,7 +3326,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 								style={
 									guideOpen
 										? {
-												height: `clamp(80px, calc(100dvh - ${guideCardHeight + 200}px), 420px)`,
+												height: `clamp(80px, calc(100dvh - ${guideCardHeight + (guideStepIndex === 2 ? 220 : 200)}px), 420px)`,
 												minHeight: 0,
 												flex: "none",
 											}
@@ -2946,11 +3335,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 							>
 								{canShowChart ? (
 									<TradingViewSignalChart
-										activeSignal={activeSignal}
-										candles={candles}
+										activeSignal={displayedActiveSignal}
+										candles={chartCandles}
 										className="h-full"
 										formatPrice={formatPrice}
-										focusedSignalId={activeSignalId}
+										focusedSignalId={displayedFocusedSignalId}
 										labels={{
 											entry: t("chart.entry"),
 											stopLoss: t("chart.stopLoss"),
@@ -2959,7 +3348,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 										locale={locale}
 										onSelectSignal={focusSignal}
 										pricePrecision={chartPricePrecision}
-										signals={chartSignals}
+										signals={displayedChartSignals}
 										symbol={selectedSymbol}
 										timeframe={selectedTimeframe}
 									/>
@@ -2985,13 +3374,16 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 							guideOpen
 								? {
 										alignSelf: "start",
-										maxHeight: `calc(100dvh - ${guideCardHeight + 100}px)`,
+										maxHeight: `calc(100dvh - ${guideCardHeight + (guideStepIndex === 3 ? 180 : 100)}px)`,
 										overflowY: "auto",
 									}
 								: undefined
 						}
 						className={cn(
 							"group min-h-0 xl:flex xl:flex-col xl:overflow-hidden xl:border-l xl:border-t-0 relative bg-[#141414]",
+							guideOpen &&
+								guideStepIndex === 3 &&
+								"xl:order-none xl:min-h-0 order-first flex min-h-[40dvh] flex-col",
 						)}
 					>
 						<button
@@ -3056,6 +3448,9 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 						<div
 							className={cn(
 								"divide-white/[0.08] px-5 py-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:overscroll-contain xl:p-3 divide-y",
+								guideOpen &&
+									guideStepIndex === 3 &&
+									"flex flex-1 flex-col justify-center",
 								isSignalPanelCollapsed && "xl:hidden",
 							)}
 						>
@@ -3088,17 +3483,64 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 															{t(`direction.${signal.direction}`)}
 														</p>
 													</div>
-													<span className="text-xs text-muted-foreground">
-														{t(`status.${signal.status}`)}
+													<div className="gap-1 flex shrink-0 flex-col items-end">
+														<span
+															className={cn(
+																"px-2 py-0.5 font-medium rounded-full text-[10px]",
+																signal.entryStatus === "entered"
+																	? "bg-emerald-500/10 text-emerald-300"
+																	: "bg-amber-500/10 text-amber-200",
+															)}
+														>
+															{t(
+																`filters.entryStatuses.${signal.entryStatus ?? "pending"}`,
+															)}
+														</span>
+													</div>
+												</div>
+												<div className="mt-3 gap-x-4 gap-y-2 text-xs grid grid-cols-2">
+													<SignalMetric
+														label={t("signalsPanel.entry")}
+														value={
+															signal.entry === undefined
+																? "--"
+																: formatPrice(signal.entry)
+														}
+													/>
+													<SignalMetric
+														label={t("signalsPanel.submittedAt")}
+														value={formatSignalSubmittedAt(
+															signal.submittedAt,
+															locale,
+														)}
+													/>
+													<SignalMetric
+														label={t("signalsPanel.takeProfit")}
+														value={
+															signal.takeProfit === undefined
+																? "--"
+																: formatPrice(signal.takeProfit)
+														}
+														tone="profit"
+													/>
+													<SignalMetric
+														label={t("signalsPanel.stopLoss")}
+														value={
+															signal.stopLoss === undefined
+																? "--"
+																: formatPrice(signal.stopLoss)
+														}
+														tone="risk"
+													/>
+												</div>
+												<div className="mt-3 px-3 py-2 text-xs flex items-center justify-between rounded-md bg-[#141414]">
+													<span className="text-muted-foreground">
+														{t("signalsPanel.expectedRr")}
+													</span>
+													<span className="font-mono font-semibold text-emerald-400">
+														{formatPreviewRiskReward(signal)}
 													</span>
 												</div>
-												<p className="mt-2 text-xs text-muted-foreground">
-													{t("signalsPanel.submittedAt")}:{" "}
-													{formatSignalSubmittedAt(
-														signal.submittedAt,
-														locale,
-													)}
-												</p>
 											</article>
 										))}
 									</div>
@@ -3335,7 +3777,10 @@ function ChartSkeleton() {
 
 interface SignalsGuideOverlayProps {
 	onHeightChange: (height: number) => void;
+	activeFilterOption: number | null;
+	filterRevealCount: number;
 	isAuthenticated: boolean;
+	isIntroComplete: boolean;
 	requiresMembership: boolean;
 	step: SignalsGuideStep;
 	stepIndex: number;
@@ -3346,7 +3791,10 @@ interface SignalsGuideOverlayProps {
 
 function SignalsGuideOverlay({
 	onHeightChange,
+	activeFilterOption,
+	filterRevealCount,
 	isAuthenticated,
+	isIntroComplete,
 	requiresMembership,
 	step,
 	stepIndex,
@@ -3357,58 +3805,19 @@ function SignalsGuideOverlay({
 	const t = useTranslations("signals.guide");
 	const isLastStep = stepIndex === totalSteps - 1;
 	const [targetRect, setTargetRect] = useState<GuideTargetRect | null>(null);
+	const [cardTop, setCardTop] = useState<number | null>(null);
 	const [viewportSize, setViewportSize] = useState<GuideViewportSize>({
 		height: 0,
 		width: 0,
 	});
 	const cardRef = useRef<HTMLDivElement>(null);
-	const [cardSize, setCardSize] = useState({ width: 360, height: 240 });
-	const cardWidth = Math.min(400, Math.max(0, viewportSize.width - 40));
-	const gap = 28;
-	const margin = 20;
-	const centeredLeft = targetRect
-		? clampNumber(
-				targetRect.left + (targetRect.width - cardWidth) / 2,
-				margin,
-				viewportSize.width - cardWidth - margin,
-			)
-		: margin;
-	const placements = targetRect
-		? [
-				{ left: centeredLeft, top: targetRect.bottom + gap },
-				{ left: centeredLeft, top: targetRect.top - cardSize.height - gap },
-				{
-					left: targetRect.right + gap,
-					top: clampNumber(
-						targetRect.top,
-						margin,
-						viewportSize.height - cardSize.height - margin,
-					),
-				},
-				{
-					left: targetRect.left - cardWidth - gap,
-					top: clampNumber(
-						targetRect.top,
-						margin,
-						viewportSize.height - cardSize.height - margin,
-					),
-				},
-			]
-		: [];
-	const placement = placements.find(
-		({ left, top }) =>
-			left >= margin &&
-			top >= margin &&
-			left + cardWidth <= viewportSize.width - margin &&
-			top + cardSize.height <= viewportSize.height - margin,
-	);
 	const cardStyle: CSSProperties = {
-		left: placement?.left ?? margin,
-		top: placement?.top ?? margin,
-		width: cardWidth || "calc(100vw - 40px)",
-		maxHeight: "48dvh",
+		bottom: "max(env(safe-area-inset-bottom), 20px)",
+		left: "50%",
+		transform: "translateX(-50%)",
+		width: "min(560px, calc(100vw - 40px))",
+		maxHeight: "calc(100dvh - max(env(safe-area-inset-top), 20px) - 40px)",
 		overflowY: "auto",
-		visibility: targetRect && placement ? "visible" : "hidden",
 	};
 
 	useEffect(() => {
@@ -3416,8 +3825,8 @@ function SignalsGuideOverlay({
 		if (!card) return;
 		function measureCard() {
 			const rect = card!.getBoundingClientRect();
-			setCardSize({ width: rect.width, height: Math.ceil(rect.height) });
 			onHeightChange(Math.ceil(rect.height));
+			setCardTop(rect.top);
 		}
 		measureCard();
 		const observer = new ResizeObserver(measureCard);
@@ -3427,7 +3836,6 @@ function SignalsGuideOverlay({
 
 	useEffect(() => {
 		let frame = 0;
-		let measureTimer = 0;
 
 		function measureTarget() {
 			setViewportSize({
@@ -3451,45 +3859,34 @@ function SignalsGuideOverlay({
 		}
 
 		const targetElement = getGuideTargetElement(step.target);
-
-		function alignTarget() {
-			const preview = document.querySelector<HTMLElement>("[data-guide-viewport]");
-			const visibleTarget = getGuideTargetElement(step.target);
-			if (!visibleTarget || !preview) return;
-			const rect = visibleTarget.getBoundingClientRect();
-			preview.scrollBy({
-				top: rect.top - Math.max(24, preview.getBoundingClientRect().top + 16),
-				behavior: "instant",
-			});
-			scheduleMeasure();
-		}
-		alignTarget();
-
-		const observer = new ResizeObserver(alignTarget);
+		const observer = new ResizeObserver(scheduleMeasure);
 		if (targetElement) observer.observe(targetElement);
 		const preview = document.querySelector("[data-guide-viewport]");
 		if (preview) observer.observe(preview);
-		measureTimer = window.setTimeout(alignTarget, 180);
 		scheduleMeasure();
 
-		window.addEventListener("resize", alignTarget);
+		window.addEventListener("resize", scheduleMeasure);
 		window.addEventListener("scroll", scheduleMeasure, true);
 
 		return () => {
 			observer.disconnect();
-			window.clearTimeout(measureTimer);
 			window.cancelAnimationFrame(frame);
-			window.removeEventListener("resize", alignTarget);
+			window.removeEventListener("resize", scheduleMeasure);
 			window.removeEventListener("scroll", scheduleMeasure, true);
 		};
-	}, [step.target]);
+	}, [step.target, stepIndex]);
 
 	return (
-		<div className="inset-0 fixed z-50" role="dialog" aria-modal="true" aria-label={step.title}>
+		<div
+			className="inset-0 pointer-events-none fixed z-50"
+			role="dialog"
+			aria-modal="true"
+			aria-label={step.title}
+		>
 			{targetRect ? (
 				<>
 					<div
-						className="bg-black/40 backdrop-blur-sm absolute"
+						className="bg-black/40 backdrop-blur-sm pointer-events-none absolute"
 						style={{
 							height: targetRect.top,
 							left: 0,
@@ -3498,7 +3895,7 @@ function SignalsGuideOverlay({
 						}}
 					/>
 					<div
-						className="bg-black/40 backdrop-blur-sm absolute"
+						className="bg-black/40 backdrop-blur-sm pointer-events-none absolute"
 						style={{
 							bottom: 0,
 							left: 0,
@@ -3507,7 +3904,7 @@ function SignalsGuideOverlay({
 						}}
 					/>
 					<div
-						className="bg-black/40 backdrop-blur-sm absolute"
+						className="bg-black/40 backdrop-blur-sm pointer-events-none absolute"
 						style={{
 							bottom: viewportSize.height - targetRect.bottom,
 							left: 0,
@@ -3516,7 +3913,7 @@ function SignalsGuideOverlay({
 						}}
 					/>
 					<div
-						className="bg-black/40 backdrop-blur-sm absolute"
+						className="bg-black/40 backdrop-blur-sm pointer-events-none absolute"
 						style={{
 							bottom: viewportSize.height - targetRect.bottom,
 							left: targetRect.right,
@@ -3527,7 +3924,7 @@ function SignalsGuideOverlay({
 					<div
 						data-guide-highlight="true"
 						data-guide-highlight-target={step.target}
-						className="border-emerald-300/80 absolute rounded-xl border shadow-[0_0_18px_rgba(110,231,183,0.16)]"
+						className="border-emerald-300/80 pointer-events-none absolute rounded-xl border shadow-[0_0_18px_rgba(110,231,183,0.16)]"
 						style={{
 							height: targetRect.height,
 							left: targetRect.left,
@@ -3535,63 +3932,70 @@ function SignalsGuideOverlay({
 							width: targetRect.width,
 						}}
 					/>
+					{stepIndex === 0 &&
+					viewportSize.width < 768 &&
+					cardTop !== null &&
+					cardTop > targetRect.bottom ? (
+						<svg
+							aria-hidden="true"
+							className="inset-0 text-emerald-300 pointer-events-none fixed overflow-visible"
+							viewBox={`0 0 ${viewportSize.width} ${viewportSize.height}`}
+						>
+							<path
+								d={`M ${targetRect.right - 38} ${targetRect.bottom - 2} C ${targetRect.right + 10} ${targetRect.bottom + 78}, ${viewportSize.width * 0.76} ${cardTop - 76}, ${viewportSize.width * 0.68} ${cardTop - 10}`}
+								fill="none"
+								stroke="currentColor"
+								strokeLinecap="round"
+								strokeWidth="1.8"
+							/>
+							<path
+								d={`M ${viewportSize.width * 0.68 - 7} ${cardTop - 18} L ${viewportSize.width * 0.68} ${cardTop - 10} L ${viewportSize.width * 0.68 + 8} ${cardTop - 16}`}
+								fill="none"
+								stroke="currentColor"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth="1.8"
+							/>
+						</svg>
+					) : null}
+					{step.target === "filters" && viewportSize.width < 768 && cardTop !== null ? (
+						<SignalsGuideFilterOptions
+							activeOptionIndex={activeFilterOption}
+							revealCount={filterRevealCount}
+							style={{
+								left: Math.min(targetRect.right + 40, viewportSize.width - 190),
+								right: 16,
+								top: Math.min(targetRect.top - 34, cardTop - 144),
+							}}
+						/>
+					) : null}
 				</>
 			) : (
-				<div className="inset-0 bg-black/40 backdrop-blur-sm absolute" />
+				<div className="inset-0 bg-black/40 backdrop-blur-sm pointer-events-none absolute" />
 			)}
-			{targetRect && placement ? (
-				<div
-					aria-hidden="true"
-					className="bg-emerald-200/70 pointer-events-none absolute"
-					style={
-						placement.top >= targetRect.bottom ||
-						placement.top + cardSize.height <= targetRect.top
-							? {
-									left: clampNumber(
-										placement.left + cardWidth / 2,
-										targetRect.left + 8,
-										targetRect.right - 8,
-									),
-									top:
-										placement.top >= targetRect.bottom
-											? targetRect.bottom
-											: placement.top + cardSize.height,
-									width: 1,
-									height: gap - 4,
-								}
-							: {
-									left:
-										placement.left >= targetRect.right
-											? targetRect.right
-											: placement.left + cardWidth,
-									top: clampNumber(
-										placement.top + cardSize.height / 2,
-										targetRect.top + 8,
-										targetRect.bottom - 8,
-									),
-									width: gap - 4,
-									height: 1,
-								}
-					}
-				/>
-			) : null}
 			<div
 				ref={cardRef}
 				data-guide-card="true"
-				className="px-1 py-2 text-white pointer-events-auto absolute [text-shadow:0_2px_10px_rgba(0,0,0,0.8)]"
+				className={cn(
+					"text-white ease-out pointer-events-auto absolute z-10 transition-[opacity,transform] duration-700 [text-shadow:0_2px_10px_rgba(0,0,0,0.8)]",
+					isIntroComplete
+						? "translate-y-0 opacity-100"
+						: "-translate-y-3 pointer-events-none opacity-0",
+				)}
 				style={cardStyle}
 			>
-				<p className="text-xs font-medium text-white/60">
+				<p className="text-xs font-medium text-white/60 text-center">
 					{t("stepCounter", { current: stepIndex + 1, total: totalSteps })}
 				</p>
-				<h2 className="mt-2 text-lg font-semibold leading-snug">{step.title}</h2>
-				<p className="mt-2 text-sm leading-6 text-white/80">
+				<h2 className="mt-2 text-lg font-semibold leading-snug text-center">
+					{step.title}
+				</h2>
+				<p className="mt-2 text-sm leading-6 text-white/80 text-center">
 					{step.target === "filters" && viewportSize.width < 768
 						? t("steps.filters.mobileDescription")
 						: step.description}
 				</p>
-
-				<div className="mt-4 gap-2 flex flex-wrap justify-end">
+				<div className="mt-4 gap-2 flex flex-wrap justify-center [text-shadow:0_2px_10px_rgba(0,0,0,0.8)]">
 					{!isAuthenticated ? (
 						<Button asChild type="button" variant="ghost" size="sm">
 							<Link href="/login?redirectTo=%2Fsignals">{t("login")}</Link>
@@ -3602,20 +4006,82 @@ function SignalsGuideOverlay({
 							{requiresMembership ? t("viewPlans") : t("close")}
 						</Button>
 					) : null}
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						className="border-white/70 text-white hover:bg-white/10 bg-transparent"
-						onClick={onNext}
-					>
-						{isLastStep
-							? requiresMembership
-								? t("viewPlans")
-								: t("finish")
-							: t("next")}
-					</Button>
 				</div>
+				<Button
+					type="button"
+					variant="primary"
+					className="mt-3 h-11 min-w-40 border-white bg-white px-7 text-sm font-semibold text-neutral-950 shadow-md hover:bg-white/90 mx-auto flex w-fit"
+					onClick={onNext}
+				>
+					{isLastStep ? (requiresMembership ? t("viewPlans") : t("finish")) : t("next")}
+				</Button>
+			</div>
+		</div>
+	);
+}
+
+function SignalsGuideFilterOptions({
+	activeOptionIndex,
+	revealCount,
+	style,
+}: {
+	activeOptionIndex: number | null;
+	revealCount: number;
+	style: CSSProperties;
+}) {
+	const t = useTranslations("signals");
+	const rows = [
+		{
+			label: t("filters.direction"),
+			options: [t("direction.long"), t("direction.short")],
+		},
+		{
+			label: t("filters.timeRange"),
+			options: [t("filters.timeRanges.24h"), t("filters.timeRanges.7d")],
+		},
+		{
+			label: t("filters.entryStatus"),
+			options: [t("filters.entryStatuses.entered"), t("filters.entryStatuses.pending")],
+		},
+	];
+
+	return (
+		<div aria-hidden="true" className="text-white pointer-events-none fixed z-10" style={style}>
+			<div className="gap-2 flex flex-col">
+				{rows.map((row, rowIndex) => (
+					<div key={row.label} className="gap-2 flex items-center">
+						<span className="text-xs text-white/60 w-[4.5rem] shrink-0">
+							{row.label}
+						</span>
+						<div className="gap-1.5 flex flex-wrap">
+							{row.options.map((option, index) => {
+								const optionIndex = rowIndex * 2 + index;
+								const isRevealed = optionIndex < revealCount;
+								const isSelected =
+									activeOptionIndex === null
+										? index === 0
+										: activeOptionIndex === optionIndex;
+
+								return (
+									<span
+										key={option}
+										className={cn(
+											"px-2.5 py-1 text-xs rounded-full border transition-[opacity,background-color,color,border-color] duration-300",
+											isRevealed
+												? "animate-in fade-in-0 slide-in-from-top-1 duration-300"
+												: "opacity-0",
+											isSelected
+												? "border-white/80 bg-white text-neutral-950"
+												: "border-white/20 bg-white/5 text-white/70",
+										)}
+									>
+										{option}
+									</span>
+								);
+							})}
+						</div>
+					</div>
+				))}
 			</div>
 		</div>
 	);

@@ -113,8 +113,6 @@ export type CreateCheckoutLink = (params: {
 	userId?: string;
 	trialPeriodDays?: number;
 	seats?: number;
-	datafastVisitorId?: string;
-	datafastSessionId?: string;
 }) => Promise<string | null>;
 
 export type CreateCustomerPortalLink = (params: {

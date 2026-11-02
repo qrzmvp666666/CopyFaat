@@ -10,8 +10,6 @@ interface UpsertSubscriptionPurchaseInput {
 	subscriptionId: string;
 	paymentLinkId?: string | null;
 	visitorId?: string | null;
-	datafastVisitorId?: string | null;
-	datafastSessionId?: string | null;
 }
 
 export async function upsertSubscriptionPurchase(input: UpsertSubscriptionPurchaseInput) {
@@ -34,8 +32,6 @@ export async function upsertSubscriptionPurchase(input: UpsertSubscriptionPurcha
 			subscriptionId: input.subscriptionId,
 			paymentLinkId: input.paymentLinkId ?? null,
 			visitorId: input.visitorId ?? null,
-			datafastVisitorId: input.datafastVisitorId ?? null,
-			datafastSessionId: input.datafastSessionId ?? null,
 			priceId: input.priceId,
 			status: input.status,
 		},
@@ -48,8 +44,6 @@ export async function upsertSubscriptionPurchase(input: UpsertSubscriptionPurcha
 			...(customerEmail ? { customerEmail } : {}),
 			...(input.paymentLinkId ? { paymentLinkId: input.paymentLinkId } : {}),
 			...(input.visitorId ? { visitorId: input.visitorId } : {}),
-			...(input.datafastVisitorId ? { datafastVisitorId: input.datafastVisitorId } : {}),
-			...(input.datafastSessionId ? { datafastSessionId: input.datafastSessionId } : {}),
 			priceId: input.priceId,
 			status: existing?.status === "canceled" ? "canceled" : input.status,
 		},
