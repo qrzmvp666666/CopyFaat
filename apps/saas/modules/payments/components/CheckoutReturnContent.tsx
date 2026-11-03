@@ -1,5 +1,6 @@
 "use client";
 
+import { trackTaliviaPaymentCompleted } from "@auth/lib/talivia";
 import { createPurchasesHelper } from "@repo/payments/lib/helper";
 import { Button } from "@repo/ui/components/button";
 import { Spinner } from "@repo/ui/components/spinner";
@@ -59,6 +60,12 @@ export function CheckoutReturnContent({
 
 		void fetch("/api/payments/claim", { method: "POST" });
 	}, [isAuthenticated]);
+
+	useEffect(() => {
+		if (sessionId) {
+			trackTaliviaPaymentCompleted();
+		}
+	}, [sessionId]);
 
 	useEffect(() => {
 		if (isAuthenticated && activePlan) {

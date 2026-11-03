@@ -35,6 +35,7 @@
 		"@repo/ui": "workspace:*",
 		"@repo/utils": "workspace:*",
 		"@sindresorhus/slugify": "catalog:",
+		"@talivia/bot-traffic": "^0.1.1",
 		"@tanstack/react-query": "^5.95.2",
 		"@tanstack/react-table": "^8.21.3",
 		"ai": "catalog:",

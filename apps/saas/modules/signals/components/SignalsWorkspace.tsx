@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "@auth/hooks/use-session";
+import { trackTaliviaCheckoutStarted, trackTaliviaEvent } from "@auth/lib/talivia";
 import { PricingTable } from "@payments/components/PricingTable";
 import { Button, cn } from "@repo/ui";
 import {
@@ -75,6 +76,12 @@ const SIGNAL_STATUSES = ["active", "history"] as const;
 const TIME_RANGES = ["all", "24h", "3d", "7d", "30d"] as const;
 const ENTRY_STATUSES = ["all", "pending", "entered"] as const;
 const SOURCE_PICKER_CATEGORIES = ["watchlist", "contract"] as const;
+const GUIDE_STEP_EVENTS = [
+	"Choose Traders",
+	"Filter Signals",
+	"Explore Chart",
+	"View Signal Details",
+] as const;
 const SOURCE_FOLLOW_STORAGE_KEY = "signalfast:followed-sources:v1";
 const GUIDE_DEMO_PREVIEW: SignalsPreviewResponse = {
 	sources: [1, 2, 3, 4, 5].map((index) => ({
@@ -1248,6 +1255,8 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const [paywallOpen, setPaywallOpen] = useState(false);
 	const [isMobilePaywall, setIsMobilePaywall] = useState(false);
 	const [guideStepIndex, setGuideStepIndex] = useState(0);
+	const previousGuideStateRef = useRef({ isOpen: false, stepIndex: -1 });
+	const previousPaywallOpenRef = useRef(false);
 	const signalPageRequestIdRef = useRef(0);
 	const [signalPageRefreshKey, setSignalPageRefreshKey] = useState(0);
 	const [supportedSymbols, setSupportedSymbols] = useState<Set<string> | null>(() =>
@@ -1263,6 +1272,25 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		mediaQuery.addEventListener("change", updateMobileState);
 		return () => mediaQuery.removeEventListener("change", updateMobileState);
 	}, []);
+
+	useEffect(() => {
+		const previousState = previousGuideStateRef.current;
+		if (guideOpen && (!previousState.isOpen || previousState.stepIndex !== guideStepIndex)) {
+			if (!previousState.isOpen) {
+				trackTaliviaEvent("Start Onboarding");
+			} else if (guideStepIndex > 0) {
+				trackTaliviaEvent(GUIDE_STEP_EVENTS[guideStepIndex]);
+			}
+		}
+		previousGuideStateRef.current = { isOpen: guideOpen, stepIndex: guideStepIndex };
+	}, [guideOpen, guideStepIndex]);
+
+	useEffect(() => {
+		if (paywallOpen && !previousPaywallOpenRef.current) {
+			trackTaliviaEvent("Enter Paywall");
+		}
+		previousPaywallOpenRef.current = paywallOpen;
+	}, [paywallOpen]);
 
 	const visibleWebhookSignals = useMemo(() => {
 		if (!supportedSymbols) {
@@ -1339,7 +1367,12 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			});
 		}
 
-		return Array.from(sources.values()).sort((a, b) => a.name.localeCompare(b.name));
+		return Array.from(sources.values()).sort((a, b) => {
+			const nameA = a.name.normalize("NFKC").toLowerCase();
+			const nameB = b.name.normalize("NFKC").toLowerCase();
+
+			return nameA < nameB ? -1 : nameA > nameB ? 1 : a.id.localeCompare(b.id);
+		});
 	}, [hasProAccess, preview.sources, visibleWebhookSignals]);
 	const guideAvatarSources = useMemo(() => sourceFilters.slice(0, 7), [sourceFilters]);
 
@@ -2096,6 +2129,9 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			closeGuide();
 			return;
 		}
+		if (guideStepIndex === 0) {
+			trackTaliviaEvent(GUIDE_STEP_EVENTS[0]);
+		}
 
 		setGuideStepIndex((currentStep) => currentStep + 1);
 	}
@@ -2230,6 +2266,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 					<DialogDescription>{t("paywall.description")}</DialogDescription>
 					<div className="mt-5 gap-3 flex flex-col">
 						<PricingTable
+							onCheckoutStarted={trackTaliviaCheckoutStarted}
 							planIds={["pro"]}
 							userId={isAuthenticated ? user?.id : undefined}
 						/>

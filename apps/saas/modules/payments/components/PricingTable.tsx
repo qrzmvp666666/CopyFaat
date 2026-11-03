@@ -95,6 +95,7 @@ function PaymentMethodMarks({ methods }: { methods: PaymentMethodMark[] }) {
 
 export function PricingTable({
 	className,
+	onCheckoutStarted,
 	userId,
 	organizationId,
 	activePlanId,
@@ -102,6 +103,7 @@ export function PricingTable({
 	planIds,
 }: {
 	className?: string;
+	onCheckoutStarted?: () => void;
 	userId?: string;
 	organizationId?: string;
 	activePlanId?: string;
@@ -144,6 +146,7 @@ export function PricingTable({
 					: `${window.location.origin}/checkout-return`,
 			});
 
+			onCheckoutStarted?.();
 			window.location.href = checkoutLink;
 		} catch (error) {
 			console.error(error);

@@ -642,6 +642,9 @@ importers:
       '@sindresorhus/slugify':
         specifier: 'catalog:'
         version: 3.0.0
+      '@talivia/bot-traffic':
+        specifier: ^0.1.1
+        version: 0.1.1
       '@tanstack/react-query':
         specifier: ^5.95.2
         version: 5.95.2(react@19.2.4)
@@ -5069,6 +5072,10 @@ packages:
     resolution: {integrity: sha512-w31dd8HOx3k9vPtcQh5QHP9GwKcgbMp87j58qi6xgiBnFFtKEAgCWnDw4qUT8aHwkCp8bKvb/KGKWWHedP0AAg==}
     peerDependencies:
       tailwindcss: '>=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1'
+
+  '@talivia/bot-traffic@0.1.1':
+    resolution: {integrity: sha512-iyFL+kM0nLXAwqD9u7q/TPJaojojGCwvdJZyE4GzuVIYNkK3k5XXS4WvZtQNgX+1B0QETRKuPlO5aUpljSfU5w==}
+    engines: {node: '>=18'}
 
   '@tanstack/query-core@5.95.2':
     resolution: {integrity: sha512-o4T8vZHZET4Bib3jZ/tCW9/7080urD4c+0/AUaYVpIqOsr7y0reBc1oX3ttNaSW5mYyvZHctiQ/UOP2PfdmFEQ==}
@@ -12703,6 +12710,8 @@ snapshots:
     dependencies:
       postcss-selector-parser: 6.0.10
       tailwindcss: 4.2.2
+
+  '@talivia/bot-traffic@0.1.1': {}
 
   '@tanstack/query-core@5.95.2': {}
 

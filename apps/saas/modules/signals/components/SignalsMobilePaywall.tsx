@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "@auth/hooks/use-session";
+import { trackTaliviaCheckoutStarted } from "@auth/lib/talivia";
 import { cn } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
 import { toastError } from "@repo/ui/components/toast";
@@ -56,6 +57,7 @@ export function SignalsMobilePaywall({
 	function startYolfiCheckout() {
 		const paymentLink =
 			period === "year" ? YOLFI_YEARLY_PAYMENT_LINK : YOLFI_WEEKLY_PAYMENT_LINK;
+		trackTaliviaCheckoutStarted();
 		window.location.href = getYolfiPaymentLinkUrl(
 			paymentLink,
 			isAuthenticated ? user?.email : undefined,
@@ -76,6 +78,7 @@ export function SignalsMobilePaywall({
 		}
 
 		setIsStartingCheckout(true);
+		trackTaliviaCheckoutStarted();
 		window.location.href = getStripePaymentLinkUrl(paymentLink, user?.email);
 	}
 

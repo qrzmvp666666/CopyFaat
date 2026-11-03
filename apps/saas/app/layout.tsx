@@ -3,11 +3,11 @@ import { cn, Toaster } from "@repo/ui";
 import { ApiClientProvider } from "@shared/components/ApiClientProvider";
 import { ClientProviders } from "@shared/components/ClientProviders";
 import { PwaServiceWorkerRegistration } from "@shared/components/PwaServiceWorkerRegistration";
+import { TaliviaTracker } from "@shared/components/TaliviaTracker";
 import type { Metadata, Viewport } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
-import Script from "next/script";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { PropsWithChildren } from "react";
 
@@ -54,12 +54,10 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
 				<PwaServiceWorkerRegistration />
 				{taliviaWebsiteId && taliviaDomain && (
-					<Script
-						src="https://talivia.com/script.js"
-						data-website-id={taliviaWebsiteId}
-						data-domain={taliviaDomain}
-						data-cross-domain-domains={taliviaCrossDomainDomains}
-						strategy="afterInteractive"
+					<TaliviaTracker
+						websiteId={taliviaWebsiteId}
+						domain={taliviaDomain}
+						crossDomainDomains={taliviaCrossDomainDomains}
 					/>
 				)}
 				<NuqsAdapter>
