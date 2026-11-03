@@ -748,10 +748,11 @@
 		"title": "Kauf wird verarbeitet",
 		"description": "Bitte warten Sie, während wir Ihre Zahlung bestätigen.",
 		"loading": "Ihr Kauf wird bestätigt, bitte warten...",
-		"anonymousTitle": "Zahlung übermittelt",
-		"anonymousDescription": "Melden Sie sich mit der beim Bezahlen verwendeten E-Mail-Adresse an oder erstellen Sie ein Konto. Nach der E-Mail-Bestätigung wird Ihre Mitgliedschaft automatisch aktiviert.",
-		"anonymousActionDescription": "Verwenden Sie die E-Mail-Adresse Ihrer Zahlung zum Anmelden oder erstellen Sie ein Konto.",
+		"anonymousTitle": "Zahlung erfolgreich!",
+		"successLabel": "🎉",
+		"anonymousDescription": "Melden Sie sich mit der beim Bezahlen verwendeten E-Mail-Adresse an oder registrieren Sie sich, um Ihren Kauf zu erhalten.",
+		"anonymousActionDescription": "",
 		"login": "Anmelden",
-		"signup": "Konto erstellen"
+		"signup": "Registrieren"
 	}
 }

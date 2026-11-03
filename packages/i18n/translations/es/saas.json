@@ -751,9 +751,10 @@
 		"title": "Procesando tu compra",
 		"description": "Por favor espera mientras confirmamos tu pago.",
 		"loading": "Confirmando tu compra, por favor espera...",
-		"anonymousTitle": "Pago enviado",
-		"anonymousDescription": "Inicia sesión o crea una cuenta con el correo usado para pagar. Después de verificarlo, tu membresía se activará automáticamente.",
-		"anonymousActionDescription": "Usa el correo de tu pago para iniciar sesión o crea una cuenta si aún no tienes una.",
+		"anonymousTitle": "¡Pago realizado con éxito!",
+		"successLabel": "🎉",
+		"anonymousDescription": "Inicia sesión o crea una cuenta con el correo usado al pagar para recibir tu compra.",
+		"anonymousActionDescription": "",
 		"login": "Iniciar sesión",
 		"signup": "Crear cuenta"
 	}

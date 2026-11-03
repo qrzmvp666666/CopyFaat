@@ -908,9 +908,10 @@
 		"title": "正在处理您的购买",
 		"description": "请稍候，我们正在确认您的付款。",
 		"loading": "正在确认您的购买，请稍候...",
-		"anonymousTitle": "付款已提交",
-		"anonymousDescription": "请使用支付时填写的邮箱登录或注册。完成邮箱验证后，系统会自动开通会员权益。",
-		"anonymousActionDescription": "如果您还没有账号，请先注册；如果已有账号，请使用支付时填写的邮箱登录。",
+		"anonymousTitle": "支付成功！",
+		"successLabel": "🎉",
+		"anonymousDescription": "请使用支付时填写的邮箱登录或注册，\n验证后即可领取购买权益。",
+		"anonymousActionDescription": "",
 		"login": "登录",
 		"signup": "注册"
 	}

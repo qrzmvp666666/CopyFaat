@@ -82,16 +82,20 @@ export function CheckoutReturnContent({
 
 	if (!isAuthenticated) {
 		return (
-			<div className="gap-4 py-8 flex flex-col items-center justify-center">
-				<p className="max-w-md text-sm text-center text-muted-foreground">
-					{t("anonymousActionDescription")}
-				</p>
-				<div className="gap-3 flex flex-wrap justify-center">
-					<Button asChild>
-						<Link href={`/login?redirectTo=${redirectTo}`}>{t("login")}</Link>
-					</Button>
-					<Button asChild variant="outline">
+			<div className="gap-4 flex flex-col items-center justify-center">
+				<div className="gap-3 flex w-full flex-col">
+					<Button
+						asChild
+						className="bg-white text-black hover:bg-white/90 w-full rounded-lg"
+					>
 						<Link href={`/signup?redirectTo=${redirectTo}`}>{t("signup")}</Link>
+					</Button>
+					<Button
+						asChild
+						variant="outline"
+						className="w-full rounded-lg border-foreground/25 text-foreground hover:bg-foreground/5"
+					>
+						<Link href={`/login?redirectTo=${redirectTo}`}>{t("login")}</Link>
 					</Button>
 				</div>
 			</div>

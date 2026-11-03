@@ -8,7 +8,8 @@ import { LocaleSwitch } from "./LocaleSwitch";
 export function AuthWrapper({
 	children,
 	contentClass,
-}: PropsWithChildren<{ contentClass?: string }>) {
+	unframed = false,
+}: PropsWithChildren<{ contentClass?: string; unframed?: boolean }>) {
 	return (
 		<div className="auth-dark-shell dark py-6 flex min-h-dvh w-full bg-background text-foreground">
 			<div className="gap-8 flex w-full flex-col items-center justify-between">
@@ -27,7 +28,8 @@ export function AuthWrapper({
 				<div className="pointer-events-auto relative z-10 container flex justify-center">
 					<main
 						className={cn(
-							"max-w-md p-6 lg:p-8 pointer-events-auto relative z-10 w-full rounded-3xl border bg-card",
+							"pointer-events-auto relative z-10 w-full",
+							!unframed && "max-w-md p-6 lg:p-8 rounded-3xl border bg-card",
 							contentClass,
 						)}
 					>

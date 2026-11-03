@@ -908,9 +908,10 @@
 		"title": "Processing your purchase",
 		"description": "Please wait while we confirm your payment.",
 		"loading": "Confirming your purchase, please wait...",
-		"anonymousTitle": "Payment submitted",
-		"anonymousDescription": "Sign in or create an account with the email used for payment. After you verify your email, your membership will be activated automatically.",
-		"anonymousActionDescription": "Use the email from your payment to sign in, or create an account if you do not have one yet.",
+		"anonymousTitle": "Payment successful!",
+		"successLabel": "🎉",
+		"anonymousDescription": "Sign in or create an account with the email used at checkout to claim your purchase.",
+		"anonymousActionDescription": "",
 		"login": "Sign in",
 		"signup": "Create account"
 	}
