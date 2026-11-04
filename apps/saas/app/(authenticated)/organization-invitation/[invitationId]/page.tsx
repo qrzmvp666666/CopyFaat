@@ -1,9 +1,9 @@
+import { redirectWithLocale } from "@i18n/redirect";
 import { OrganizationInvitationModal } from "@organizations/components/OrganizationInvitationModal";
 import { auth } from "@repo/auth";
 import { getOrganizationById } from "@repo/database";
 import { AuthWrapper } from "@shared/components/AuthWrapper";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 
 export default async function OrganizationInvitationPage({
 	params,
@@ -20,7 +20,7 @@ export default async function OrganizationInvitationPage({
 	});
 
 	if (!invitation) {
-		redirect("/");
+		return await redirectWithLocale("/");
 	}
 
 	const organization = await getOrganizationById(invitation.organizationId);

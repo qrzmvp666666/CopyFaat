@@ -1,5 +1,6 @@
 import { config } from "@config";
 import { cn, Toaster } from "@repo/ui";
+import { AdAttributionTracker } from "@shared/components/AdAttributionTracker";
 import { ApiClientProvider } from "@shared/components/ApiClientProvider";
 import { ClientProviders } from "@shared/components/ClientProviders";
 import { PwaServiceWorkerRegistration } from "@shared/components/PwaServiceWorkerRegistration";
@@ -52,6 +53,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 	return (
 		<html lang={locale} suppressHydrationWarning>
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
+				<AdAttributionTracker />
 				<PwaServiceWorkerRegistration />
 				{taliviaWebsiteId && taliviaDomain && (
 					<TaliviaTracker
@@ -61,7 +63,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 					/>
 				)}
 				<NuqsAdapter>
-					<NextIntlClientProvider messages={messages}>
+					<NextIntlClientProvider locale={locale} messages={messages}>
 						<ThemeProvider
 							attribute="class"
 							disableTransitionOnChange

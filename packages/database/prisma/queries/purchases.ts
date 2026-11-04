@@ -35,9 +35,29 @@ export async function getPurchaseBySubscriptionId(subscriptionId: string) {
 
 type PurchaseInsert = Omit<
 	z.infer<typeof PurchaseSchema>,
-	"id" | "createdAt" | "updatedAt" | "provider" | "claimStatus"
+	| "id"
+	| "createdAt"
+	| "updatedAt"
+	| "provider"
+	| "claimStatus"
+	| "attributionId"
+	| "adPlatform"
+	| "adClickId"
+	| "taliviaVisitorId"
+	| "taliviaSessionId"
 > &
-	Partial<Pick<z.infer<typeof PurchaseSchema>, "provider" | "claimStatus">>;
+	Partial<
+		Pick<
+			z.infer<typeof PurchaseSchema>,
+			| "provider"
+			| "claimStatus"
+			| "attributionId"
+			| "adPlatform"
+			| "adClickId"
+			| "taliviaVisitorId"
+			| "taliviaSessionId"
+		>
+	>;
 
 export async function createPurchase(purchase: PurchaseInsert) {
 	const created = await db.purchase.create({

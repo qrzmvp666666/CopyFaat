@@ -198,7 +198,7 @@ export function PricingSection() {
 					: planId === "lifetime"
 						? marketingPlanCopy.lifetime
 						: undefined;
-			const planUrl = saasUrl ? `${saasUrl}/choose-plan?planId=${planId}` : "#";
+			const planUrl = saasUrl ? `${saasUrl}/${locale}/choose-plan?planId=${planId}` : "#";
 
 			result.push({
 				id: planId,
@@ -215,12 +215,12 @@ export function PricingSection() {
 				prices,
 				price,
 				paymentMethods: getPaymentMethodsForPlan(),
-				to: isEnterprise ? (saasUrl ? `${saasUrl}/signup` : "#") : planUrl,
+				to: isEnterprise ? (saasUrl ? `${saasUrl}/${locale}/signup` : "#") : planUrl,
 			});
 		}
 
 		return result;
-	}, [t, saasUrl, marketingPlanCopy]);
+	}, [t, saasUrl, marketingPlanCopy, locale]);
 
 	return (
 		<section id="pricing" className="scroll-mt-16 pt-6 pb-10 lg:pt-8 lg:pb-14">

@@ -1,12 +1,14 @@
 "use client";
 
 import { trackTaliviaPaymentCompleted } from "@auth/lib/talivia";
+import { localizePath } from "@i18n/routing";
+import type { Locale } from "@repo/i18n";
 import { createPurchasesHelper } from "@repo/payments/lib/helper";
 import { Button } from "@repo/ui/components/button";
 import { Spinner } from "@repo/ui/components/spinner";
 import { orpc } from "@shared/lib/orpc-query-utils";
 import { useQuery } from "@tanstack/react-query";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -26,6 +28,7 @@ export function CheckoutReturnContent({
 	sessionId,
 }: CheckoutReturnContentProps) {
 	const t = useTranslations("checkoutReturn");
+	const locale = useLocale() as Locale;
 	const router = useRouter();
 	const [polling, setPolling] = useState(true);
 
@@ -37,8 +40,8 @@ export function CheckoutReturnContent({
 		returnParams.set("session_id", sessionId);
 	}
 	const returnPath = returnParams.toString()
-		? `/checkout-return?${returnParams.toString()}`
-		: "/checkout-return";
+		? `${localizePath("/checkout-return", locale)}?${returnParams.toString()}`
+		: localizePath("/checkout-return", locale);
 	const redirectTo = encodeURIComponent(returnPath);
 
 	const { data } = useQuery({
@@ -70,9 +73,9 @@ export function CheckoutReturnContent({
 	useEffect(() => {
 		if (isAuthenticated && activePlan) {
 			setPolling(false);
-			router.replace("/");
+			router.replace(localizePath("/", locale));
 		}
-	}, [activePlan, isAuthenticated, router]);
+	}, [activePlan, isAuthenticated, router, locale]);
 
 	useEffect(() => {
 		if (!isAuthenticated) {
@@ -81,11 +84,11 @@ export function CheckoutReturnContent({
 
 		const timer = setTimeout(() => {
 			setPolling(false);
-			router.replace("/choose-plan");
+			router.replace(localizePath("/choose-plan", locale));
 		}, MAX_WAIT_MS);
 
 		return () => clearTimeout(timer);
-	}, [isAuthenticated, router]);
+	}, [isAuthenticated, router, locale]);
 
 	if (!isAuthenticated) {
 		return (
@@ -95,14 +98,18 @@ export function CheckoutReturnContent({
 						asChild
 						className="bg-white text-black hover:bg-white/90 w-full rounded-lg"
 					>
-						<Link href={`/signup?redirectTo=${redirectTo}`}>{t("signup")}</Link>
+						<Link href={`${localizePath("/signup", locale)}?redirectTo=${redirectTo}`}>
+							{t("signup")}
+						</Link>
 					</Button>
 					<Button
 						asChild
 						variant="outline"
 						className="w-full rounded-lg border-foreground/25 text-foreground hover:bg-foreground/5"
 					>
-						<Link href={`/login?redirectTo=${redirectTo}`}>{t("login")}</Link>
+						<Link href={`${localizePath("/login", locale)}?redirectTo=${redirectTo}`}>
+							{t("login")}
+						</Link>
 					</Button>
 				</div>
 			</div>

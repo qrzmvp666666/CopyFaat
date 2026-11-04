@@ -10,6 +10,11 @@ interface UpsertSubscriptionPurchaseInput {
 	subscriptionId: string;
 	paymentLinkId?: string | null;
 	visitorId?: string | null;
+	attributionId?: string | null;
+	adPlatform?: string | null;
+	adClickId?: string | null;
+	taliviaVisitorId?: string | null;
+	taliviaSessionId?: string | null;
 }
 
 export async function upsertSubscriptionPurchase(input: UpsertSubscriptionPurchaseInput) {
@@ -18,11 +23,21 @@ export async function upsertSubscriptionPurchase(input: UpsertSubscriptionPurcha
 		select: { id: true, userId: true, status: true },
 	});
 	const canAttachUser = !existing?.userId || existing.userId === input.userId;
+	const attribution = Object.fromEntries(
+		Object.entries({
+			attributionId: input.attributionId,
+			adPlatform: input.adPlatform,
+			adClickId: input.adClickId,
+			taliviaVisitorId: input.taliviaVisitorId,
+			taliviaSessionId: input.taliviaSessionId,
+		}).filter(([, value]) => value != null),
+	);
 	const customerEmail = input.customerEmail?.trim().toLowerCase();
 
 	return db.purchase.upsert({
 		where: { subscriptionId: input.subscriptionId },
 		create: {
+			...attribution,
 			type: "SUBSCRIPTION",
 			provider: input.provider,
 			claimStatus: input.userId ? "claimed" : "pending",
@@ -36,6 +51,7 @@ export async function upsertSubscriptionPurchase(input: UpsertSubscriptionPurcha
 			status: input.status,
 		},
 		update: {
+			...attribution,
 			provider: input.provider,
 			customerId: input.customerId,
 			...(canAttachUser && input.userId

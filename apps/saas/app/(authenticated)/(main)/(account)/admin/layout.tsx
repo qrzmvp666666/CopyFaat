@@ -1,11 +1,11 @@
 import { getSession } from "@auth/lib/server";
+import { redirectWithLocale } from "@i18n/redirect";
 import { config } from "@repo/auth/config";
 import { Logo } from "@repo/ui";
 import { SettingsMenu } from "@settings/components/SettingsMenu";
 import { PageHeader } from "@shared/components/PageHeader";
 import { Building2Icon, UsersIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
 import type { PropsWithChildren } from "react";
 
 export default async function AdminLayout({ children }: PropsWithChildren) {
@@ -13,11 +13,11 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
 	const session = await getSession();
 
 	if (!session) {
-		redirect("/login");
+		return await redirectWithLocale("/login");
 	}
 
 	if (session.user?.role !== "admin") {
-		redirect("/");
+		return await redirectWithLocale("/");
 	}
 
 	return (

@@ -206,6 +206,11 @@ model Purchase {
   subscriptionId    String?       @unique
   paymentLinkId     String?
   visitorId         String?
+  attributionId     String?
+  adPlatform        String?
+  adClickId         String?
+  taliviaVisitorId  String?
+  taliviaSessionId  String?
   priceId           String
   status            String?
   createdAt         DateTime      @default(now())
@@ -379,4 +384,39 @@ model Signal {
   @@index([traderId])
   @@index([submittedAt])
   @@map("signal")
+}
+
+// A checkout correlation, not a purchase. No email or payment credentials are stored here.
+model CheckoutAttribution {
+  id String @id
+  provider String
+  paymentLinkUrl String
+  adPlatform String?
+  adClickId String?
+  taliviaVisitorId String?
+  taliviaSessionId String?
+  utmSource String?
+  utmMedium String?
+  utmCampaign String?
+  utmContent String?
+  utmTerm String?
+  createdAt DateTime @default(now())
+  @@index([provider, taliviaSessionId, createdAt])
+  @@map("checkout_attribution")
+}
+
+model AdConversion {
+  id String @id @default(cuid())
+  provider String
+  paymentId String
+  attributionId String
+  amountUsd String
+  status String @default("pending")
+  attempts Int @default(0)
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([provider, paymentId])
+  @@unique([provider, attributionId])
+  @@map("ad_conversion")
 }

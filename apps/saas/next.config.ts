@@ -68,6 +68,21 @@ const nextConfig: NextConfig = {
 	async redirects() {
 		return [
 			{
+				source: "/:locale(zh|en)/settings",
+				destination: "/:locale/settings/general",
+				permanent: true,
+			},
+			{
+				source: "/:locale(zh|en)/:organizationSlug/settings",
+				destination: "/:locale/:organizationSlug/settings/general",
+				permanent: true,
+			},
+			{
+				source: "/:locale(zh|en)/admin",
+				destination: "/:locale/admin/users",
+				permanent: true,
+			},
+			{
 				source: "/settings",
 				destination: "/settings/general",
 				permanent: true,

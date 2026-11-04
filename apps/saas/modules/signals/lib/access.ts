@@ -1,8 +1,9 @@
 import "server-only";
+
 import { getSession } from "@auth/lib/server";
+import { redirectWithLocale } from "@i18n/redirect";
 import { getPurchasesByUserId, getUnexpiredEntitlementGrantsByUserId } from "@repo/database";
 import { hasPaidSignalsAccess } from "@repo/payments/lib/helper";
-import { redirect } from "next/navigation";
 
 export const SIGNALS_ACCESS = {
 	allowed: "allowed",
@@ -36,5 +37,5 @@ export async function requireCurrentSignalsAccess() {
 		return;
 	}
 
-	redirect("/choose-plan");
+	await redirectWithLocale("/choose-plan");
 }

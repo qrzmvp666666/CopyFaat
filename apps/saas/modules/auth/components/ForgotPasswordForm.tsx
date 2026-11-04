@@ -2,7 +2,9 @@
 
 import { useAuthErrorMessages } from "@auth/hooks/errors-messages";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { localizePath } from "@i18n/routing";
 import { authClient } from "@repo/auth/client";
+import type { Locale } from "@repo/i18n";
 import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert";
 import { Button } from "@repo/ui/components/button";
 import {
@@ -15,7 +17,7 @@ import {
 } from "@repo/ui/components/form";
 import { Input } from "@repo/ui/components/input";
 import { AlertTriangleIcon, ArrowLeftIcon, MailboxIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -26,6 +28,7 @@ const formSchema = z.object({
 
 export function ForgotPasswordForm() {
 	const t = useTranslations();
+	const locale = useLocale() as Locale;
 	const { getAuthErrorMessage } = useAuthErrorMessages();
 
 	const form = useForm({
@@ -37,7 +40,10 @@ export function ForgotPasswordForm() {
 
 	const onSubmit = form.handleSubmit(async ({ email }) => {
 		try {
-			const redirectTo = new URL("/reset-password", window.location.origin).toString();
+			const redirectTo = new URL(
+				localizePath("/reset-password", locale),
+				window.location.origin,
+			).toString();
 
 			const { error } = await authClient.requestPasswordReset({
 				email,
@@ -101,7 +107,7 @@ export function ForgotPasswordForm() {
 			)}
 
 			<div className="mt-6 text-sm text-center">
-				<Link href="/login">
+				<Link href={localizePath("/login", locale)}>
 					<ArrowLeftIcon className="mr-1 size-4 inline align-middle" />
 					{t("auth.forgotPassword.backToSignin")}
 				</Link>

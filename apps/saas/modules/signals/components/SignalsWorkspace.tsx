@@ -2,7 +2,9 @@
 
 import { useSession } from "@auth/hooks/use-session";
 import { trackTaliviaCheckoutStarted, trackTaliviaEvent } from "@auth/lib/talivia";
+import { localizePath } from "@i18n/routing";
 import { PricingTable } from "@payments/components/PricingTable";
+import type { Locale } from "@repo/i18n";
 import { Button, cn } from "@repo/ui";
 import {
 	Accordion,
@@ -26,6 +28,7 @@ import {
 } from "@repo/ui/components/sheet";
 import { Skeleton } from "@repo/ui/components/skeleton";
 import { getProfileAvatarUrlForSeed } from "@repo/utils";
+import { LocaleSwitch } from "@shared/components/LocaleSwitch";
 import { UserAvatar } from "@shared/components/UserAvatar";
 import { SignalsMobilePaywall } from "@signals/components/SignalsMobilePaywall";
 import type { UTCTimestamp } from "lightweight-charts";
@@ -2200,6 +2203,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 					</div>
 				</div>
 				<div className="gap-1 flex shrink-0 items-center">
+					<LocaleSwitch />
 					{!sessionLoaded ? null : user ? (
 						<>
 							<Link
@@ -2221,7 +2225,9 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 						</>
 					) : (
 						<Button asChild size="sm" variant="outline" className="h-9">
-							<Link href="/login?redirectTo=%2Fsignals">
+							<Link
+								href={`${localizePath("/login", locale as Locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale as Locale))}`}
+							>
 								{t("accountMenu.login")}
 							</Link>
 						</Button>
@@ -2272,7 +2278,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 						/>
 						{!isAuthenticated ? (
 							<Button asChild variant="outline" className="w-full">
-								<Link href="/login?redirectTo=%2Fsignals">{t("guide.login")}</Link>
+								<Link
+									href={`${localizePath("/login", locale as Locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale as Locale))}`}
+								>
+									{t("guide.login")}
+								</Link>
 							</Button>
 						) : null}
 					</div>
@@ -3043,15 +3053,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 													type="button"
 													className="gap-1.5 px-2.5 py-1.5 text-xs font-medium hover:text-white flex items-center rounded-md border bg-[#141414] text-muted-foreground transition-colors"
 												>
-													{selectedTimeRange === "all"
-														? "信号时间"
-														: selectedTimeRange === "24h"
-															? "24小时内"
-															: selectedTimeRange === "3d"
-																? "3天内"
-																: selectedTimeRange === "7d"
-																	? "7天内"
-																	: "30天内"}
+													{t(`filters.timeRanges.${selectedTimeRange}`)}
 													<ChevronDownIcon className="size-3" />
 												</button>
 											</DropdownMenuTrigger>
@@ -3073,15 +3075,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 																	: "opacity-0",
 															)}
 														/>
-														{range === "all"
-															? "信号时间"
-															: range === "24h"
-																? "24小时内"
-																: range === "3d"
-																	? "3天内"
-																	: range === "7d"
-																		? "7天内"
-																		: "30天内"}
+														{t(`filters.timeRanges.${range}`)}
 													</DropdownMenuItem>
 												))}
 											</DropdownMenuContent>
@@ -3093,11 +3087,9 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 													type="button"
 													className="gap-1.5 px-2.5 py-1.5 text-xs font-medium hover:text-white flex items-center rounded-md border bg-[#141414] text-muted-foreground transition-colors"
 												>
-													{selectedEntryStatus === "all"
-														? "入场状态"
-														: selectedEntryStatus === "pending"
-															? "待入场"
-															: "已入场"}
+													{t(
+														`filters.entryStatuses.${selectedEntryStatus}`,
+													)}
 													<ChevronDownIcon className="size-3" />
 												</button>
 											</DropdownMenuTrigger>
@@ -3119,11 +3111,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 																	: "opacity-0",
 															)}
 														/>
-														{es === "all"
-															? "入场状态"
-															: es === "pending"
-																? "待入场"
-																: "已入场"}
+														{t(`filters.entryStatuses.${es}`)}
 													</DropdownMenuItem>
 												))}
 											</DropdownMenuContent>
@@ -3432,7 +3420,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 									? "opacity-100"
 									: "opacity-0 group-hover:opacity-100",
 							)}
-							aria-label={isSignalPanelCollapsed ? "展开信号面板" : "收起信号面板"}
+							aria-label={
+								isSignalPanelCollapsed
+									? t("actions.expand")
+									: t("actions.collapseChart")
+							}
 							aria-expanded={!isSignalPanelCollapsed}
 						>
 							{isSignalPanelCollapsed ? (
@@ -3840,6 +3832,7 @@ function SignalsGuideOverlay({
 	onNext,
 }: SignalsGuideOverlayProps) {
 	const t = useTranslations("signals.guide");
+	const locale = useLocale() as Locale;
 	const isLastStep = stepIndex === totalSteps - 1;
 	const [targetRect, setTargetRect] = useState<GuideTargetRect | null>(null);
 	const [cardTop, setCardTop] = useState<number | null>(null);
@@ -4035,7 +4028,11 @@ function SignalsGuideOverlay({
 				<div className="mt-4 gap-2 flex flex-wrap justify-center [text-shadow:0_2px_10px_rgba(0,0,0,0.8)]">
 					{!isAuthenticated ? (
 						<Button asChild type="button" variant="ghost" size="sm">
-							<Link href="/login?redirectTo=%2Fsignals">{t("login")}</Link>
+							<Link
+								href={`${localizePath("/login", locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale))}`}
+							>
+								{t("login")}
+							</Link>
 						</Button>
 					) : null}
 					{!requiresMembership || !isLastStep ? (

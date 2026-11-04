@@ -1243,3 +1243,10 @@ We have upgraded to Biome 2.3 which introduces some changes to how CSS files are
 	},
 }
 ```
+
+## 2026-11-03
+
+- Add anonymous payment-link attribution snapshots across Marketing and SaaS, preserving Talivia correlation and copying attribution to purchases from verified webhooks.
+- Add PropellerAds conversion delivery for both sandbox and live payments using actual USD paid amounts, persisted delivery status, duplicate suppression, and webhook-based retry. Use advertiser-generated test clicks for end-to-end sandbox testing.
+
+- Add Chinese and English SaaS language paths, translated signal/paywall controls, language-aware authentication and payment returns, and locale-preserving Marketing links. Preserve campaign parameters when redirecting legacy links or switching languages.

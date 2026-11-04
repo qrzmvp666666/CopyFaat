@@ -573,6 +573,10 @@ export function WelcomeMessage() {
 
 ### Locale Handling
 
+- SaaS public UI paths use `/zh/...` and `/en/...`. `apps/saas/proxy.ts` rewrites these to the existing App Router tree and supplies `X-NEXT-INTL-LOCALE`; keep APIs, assets, image proxy, and webhook URLs unprefixed.
+- Use `localizePath` from `@i18n/routing` for UI links and `redirectWithLocale` from `@i18n/redirect` for server redirects. Strip the locale before comparing navigation paths. Marketing links into SaaS must carry their current locale explicitly.
+- Payment Link return URLs are provider-configured. Generic `/checkout-return` uses an explicit supported `locale` query or the checkout locale cookie, then the general locale cookie. Explicit `/en/checkout-return` or `/zh/checkout-return` paths take precedence. Dynamic checkout return URLs must include the locale path.
+
 - Honor locale detection from `packages/i18n/config.ts`
 - Use correct cookie naming conventions (`NEXT_LOCALE`)
 - Load server-side message bundles through `getMessagesForLocale(locale, scope)`

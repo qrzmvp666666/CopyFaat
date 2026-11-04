@@ -4,9 +4,11 @@ import { useAuthErrorMessages } from "@auth/hooks/errors-messages";
 import { sessionQueryKey } from "@auth/lib/api";
 import { config } from "@config";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { localizePath } from "@i18n/routing";
 import { OrganizationInvitationAlert } from "@organizations/components/OrganizationInvitationAlert";
 import { authClient } from "@repo/auth/client";
 import { config as authConfig } from "@repo/auth/config";
+import type { Locale } from "@repo/i18n";
 import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert";
 import { Button } from "@repo/ui/components/button";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "@repo/ui/components/form";
@@ -21,7 +23,7 @@ import {
 	KeyIcon,
 	MailboxIcon,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -48,6 +50,7 @@ const formSchema = z.union([
 
 export function LoginForm() {
 	const t = useTranslations();
+	const locale = useLocale() as Locale;
 	const { getAuthErrorMessage } = useAuthErrorMessages();
 	const router = useRouter();
 	const queryClient = useQueryClient();
@@ -68,9 +71,14 @@ export function LoginForm() {
 		},
 	});
 
-	const redirectPath = invitationId
-		? `/organization-invitation/${invitationId}`
-		: (redirectTo ?? config.redirectAfterSignIn);
+	const redirectPath = localizePath(
+		invitationId
+			? `/organization-invitation/${invitationId}`
+			: redirectTo?.startsWith("/") && !redirectTo.startsWith("//")
+				? redirectTo
+				: config.redirectAfterSignIn,
+		locale,
+	);
 
 	useEffect(() => {
 		if (sessionLoaded && user) {
@@ -91,7 +99,10 @@ export function LoginForm() {
 
 				if ((data as any).twoFactorRedirect) {
 					router.replace(
-						withQuery("/verify", Object.fromEntries(searchParams.entries())),
+						withQuery(
+							localizePath("/verify", locale),
+							Object.fromEntries(searchParams.entries()),
+						),
 					);
 					return;
 				}
@@ -280,7 +291,7 @@ export function LoginForm() {
 							</span>
 							<Link
 								href={withQuery(
-									"/signup",
+									localizePath("/signup", locale),
 									Object.fromEntries(searchParams.entries()),
 								)}
 							>

@@ -84,7 +84,7 @@ export function HeroSection() {
 				socialProof: "999+ users build strategies with SignalFast",
 			};
 	const saasInstallUrl = config.saasUrl
-		? `${config.saasUrl.replace(/\/$/, "")}/install`
+		? `${config.saasUrl.replace(/\/$/, "")}/${locale}/install`
 		: "/install";
 
 	return (

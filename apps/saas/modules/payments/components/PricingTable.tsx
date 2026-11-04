@@ -1,7 +1,9 @@
 "use client";
 
+import { localizePath } from "@i18n/routing";
 import { usePlanData } from "@payments/hooks/plan-data";
 import type { PlanId } from "@payments/types";
+import type { Locale } from "@repo/i18n";
 import { config as paymentsConfig } from "@repo/payments/config";
 import type { PaidPlan } from "@repo/payments/types";
 import { cn } from "@repo/ui";
@@ -17,7 +19,7 @@ import {
 	CreditCardIcon,
 	StarIcon,
 } from "lucide-react";
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import type { ComponentType, ReactNode, SVGProps } from "react";
 import { useState } from "react";
 
@@ -62,6 +64,7 @@ function getPaymentMethodsForPlan(): PaymentMethodMark[] {
 }
 
 function PaymentMethodMarks({ methods }: { methods: PaymentMethodMark[] }) {
+	const locale = useLocale();
 	const paymentMethods: Record<
 		PaymentMethodMark,
 		{
@@ -71,14 +74,17 @@ function PaymentMethodMarks({ methods }: { methods: PaymentMethodMark[] }) {
 		}
 	> = {
 		card: {
-			label: "银行卡/信用卡",
+			label: locale === "zh" ? "银行卡/信用卡" : "Card / credit card",
 			icon: CreditCardIcon,
 			className: "size-5 text-foreground/70",
 		},
 	};
 
 	return (
-		<div className="gap-3 flex shrink-0 items-center" aria-label="支持的支付方式">
+		<div
+			className="gap-3 flex shrink-0 items-center"
+			aria-label={locale === "zh" ? "支持的支付方式" : "Supported payment methods"}
+		>
 			{methods.map((method) => {
 				const paymentMethod = paymentMethods[method];
 				const Icon = paymentMethod.icon;
@@ -111,6 +117,7 @@ export function PricingTable({
 	planIds?: readonly VisiblePaidPlanId[];
 }) {
 	const t = useTranslations();
+	const locale = useLocale() as Locale;
 	const format = useFormatter();
 	const router = useRouter();
 	const [loading, setLoading] = useState<PlanId | false>(false);
@@ -124,7 +131,7 @@ export function PricingTable({
 
 	const onSelectPlan = async (planId: PlanId, selection?: PlanSelection) => {
 		if (!(userId || organizationId)) {
-			router.push("/signup");
+			router.push(localizePath("/signup", locale));
 			return;
 		}
 
@@ -142,8 +149,8 @@ export function PricingTable({
 				organizationId,
 				paymentMethod: "card",
 				redirectUrl: organizationId
-					? `${window.location.origin}/checkout-return?organizationId=${organizationId}`
-					: `${window.location.origin}/checkout-return`,
+					? `${window.location.origin}${localizePath("/checkout-return", locale)}?organizationId=${organizationId}`
+					: `${window.location.origin}${localizePath("/checkout-return", locale)}`,
 			});
 
 			onCheckoutStarted?.();
@@ -151,8 +158,8 @@ export function PricingTable({
 		} catch (error) {
 			console.error(error);
 			toastError(
-				"支付失败",
-				error instanceof Error ? error.message : "发起支付时出错，请稍后重试",
+				t("choosePlan.paymentErrorTitle"),
+				error instanceof Error ? error.message : t("choosePlan.paymentErrorDescription"),
 			);
 		} finally {
 			setLoading(false);

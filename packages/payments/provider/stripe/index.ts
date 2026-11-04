@@ -1,7 +1,9 @@
-import { createPurchase, db, getPurchaseBySubscriptionId, updatePurchase } from "@repo/database";
+import { db, getPurchaseBySubscriptionId, updatePurchase } from "@repo/database";
 import { logger } from "@repo/logs";
 import Stripe from "stripe";
 
+import { reportAdConversion } from "../../lib/ad-conversions";
+import { resolvePaymentAttribution } from "../../lib/attribution";
 import { setCustomerIdToEntity } from "../../lib/customer";
 import { claimPendingPurchases, upsertSubscriptionPurchase } from "../../lib/purchases";
 import type {
@@ -238,9 +240,28 @@ export const webhookHandler: WebhookHandler = async (req) => {
 
 	try {
 		switch (event.type) {
-			case "checkout.session.completed": {
+			case "checkout.session.completed":
+			case "checkout.session.async_payment_succeeded": {
 				const session = event.data.object;
 				const { mode, metadata, customer } = session;
+				const linkId = getStripePaymentLinkId(session.payment_link);
+				const link = linkId ? await stripeClient.paymentLinks.retrieve(linkId) : null;
+				const attribution = await resolvePaymentAttribution(
+					"stripe",
+					session.client_reference_id,
+					session.created,
+					normalizePaymentLinkUrl(link?.url) ?? undefined,
+				);
+				const sendConversion = async () => {
+					if (session.payment_status === "paid")
+						await reportAdConversion({
+							provider: "stripe",
+							paymentId: session.id,
+							...attribution,
+							amountMinor: session.amount_total ?? 0,
+							currency: session.currency ?? "",
+						});
+				};
 
 				if (mode === "subscription") {
 					const subscriptionId =
@@ -264,6 +285,7 @@ export const webhookHandler: WebhookHandler = async (req) => {
 
 					await upsertSubscriptionPurchase({
 						provider: "stripe",
+						...attribution,
 						priceId,
 						customerId: customerId ?? `stripe_${subscriptionId}`,
 						status: subscription.status,
@@ -290,6 +312,7 @@ export const webhookHandler: WebhookHandler = async (req) => {
 							userId: metadata.user_id,
 						});
 					}
+					await sendConversion();
 					break;
 				}
 
@@ -299,14 +322,27 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					return new Response("Unmapped Stripe Payment Link.", { status: 422 });
 				}
 
-				await createPurchase({
-					organizationId: metadata?.organization_id || null,
-					userId: metadata?.user_id || null,
-					customerId: customer as string,
-					type: "ONE_TIME",
-					priceId,
-					paymentLinkId,
-					visitorId: session.client_reference_id,
+				// Stable Checkout Session key makes webhook retries idempotent.
+				await db.purchase.upsert({
+					where: { id: `stripe_${session.id}` },
+					create: {
+						id: `stripe_${session.id}`,
+						...attribution,
+						provider: "stripe",
+						claimStatus: metadata?.user_id ? "claimed" : "pending",
+						organizationId: metadata?.organization_id || null,
+						userId: metadata?.user_id || null,
+						customerId:
+							typeof customer === "string" ? customer : (customer?.id ?? session.id),
+						customerEmail:
+							session.customer_details?.email?.trim().toLowerCase() ??
+							session.customer_email?.trim().toLowerCase(),
+						type: "ONE_TIME",
+						priceId,
+						paymentLinkId,
+						visitorId: session.client_reference_id,
+					},
+					update: {},
 				});
 
 				await setCustomerIdToEntity(customer as string, {
@@ -314,6 +350,7 @@ export const webhookHandler: WebhookHandler = async (req) => {
 					userId: metadata?.user_id,
 				});
 
+				await sendConversion();
 				break;
 			}
 			case "customer.subscription.created": {
@@ -386,7 +423,7 @@ export const webhookHandler: WebhookHandler = async (req) => {
 		return new Response(null, { status: 204 });
 	} catch (error) {
 		return new Response(`Webhook error: ${error instanceof Error ? error.message : ""}`, {
-			status: 400,
+			status: 500,
 		});
 	}
 };

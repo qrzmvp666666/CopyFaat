@@ -1,9 +1,9 @@
 import { getSession } from "@auth/lib/server";
+import { redirectWithLocale } from "@i18n/redirect";
 import { OnboardingForm } from "@onboarding/components/OnboardingForm";
 import { config } from "@repo/auth/config";
 import { AuthWrapper } from "@shared/components/AuthWrapper";
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -20,11 +20,11 @@ export default async function OnboardingPage() {
 	const session = await getSession();
 
 	if (!session) {
-		redirect("/login");
+		return await redirectWithLocale("/login");
 	}
 
 	if (!config.users.enableOnboarding || session.user.onboardingComplete) {
-		redirect("/");
+		return await redirectWithLocale("/");
 	}
 
 	return (

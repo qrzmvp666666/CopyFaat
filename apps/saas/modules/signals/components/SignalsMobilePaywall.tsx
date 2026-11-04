@@ -2,6 +2,9 @@
 
 import { useSession } from "@auth/hooks/use-session";
 import { trackTaliviaCheckoutStarted } from "@auth/lib/talivia";
+import { localizePath } from "@i18n/routing";
+import { prepareAttributedPaymentLink } from "@payments/lib/checkout-attribution";
+import type { Locale } from "@repo/i18n";
 import { cn } from "@repo/ui";
 import { Button } from "@repo/ui/components/button";
 import { toastError } from "@repo/ui/components/toast";
@@ -13,6 +16,7 @@ import {
 	UsersRoundIcon,
 	XIcon,
 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -31,8 +35,10 @@ const YOLFI_YEARLY_PAYMENT_LINK =
 const STRIPE_WEEKLY_PAYMENT_LINK = process.env.NEXT_PUBLIC_STRIPE_PRO_WEEKLY_PAYMENT_LINK ?? "";
 const STRIPE_YEARLY_PAYMENT_LINK = process.env.NEXT_PUBLIC_STRIPE_PRO_YEARLY_PAYMENT_LINK ?? "";
 
-function getYolfiPaymentLinkUrl(paymentLink: string, email?: string) {
+function getYolfiPaymentLinkUrl(paymentLink: string, locale: Locale, email?: string) {
 	const url = new URL(paymentLink);
+	const paylinkId = url.pathname.split("/").filter(Boolean).at(-1);
+	if (paylinkId) url.pathname = `/${locale === "zh" ? "zh-CN" : "en"}/${paylinkId}`;
 	if (email) url.searchParams.set("email", email);
 	return url.toString();
 }
@@ -49,37 +55,44 @@ export function SignalsMobilePaywall({
 	open,
 }: SignalsMobilePaywallProps) {
 	const { user } = useSession();
+	const locale = useLocale() as Locale;
+	const t = useTranslations("signals.mobilePaywall");
 	const [paymentMethod, setPaymentMethod] = useState<"card" | "stablecoin">("card");
 	const [period, setPeriod] = useState<"year" | "week">("year");
 	const [isStartingCheckout, setIsStartingCheckout] = useState(false);
 	if (!open) return null;
 
-	function startYolfiCheckout() {
-		const paymentLink =
-			period === "year" ? YOLFI_YEARLY_PAYMENT_LINK : YOLFI_WEEKLY_PAYMENT_LINK;
-		trackTaliviaCheckoutStarted();
-		window.location.href = getYolfiPaymentLinkUrl(
-			paymentLink,
-			isAuthenticated ? user?.email : undefined,
-		);
-	}
-
 	async function startCheckout() {
-		if (paymentMethod === "stablecoin") {
-			startYolfiCheckout();
-			return;
-		}
-
+		if (isStartingCheckout) return;
+		const provider = paymentMethod === "stablecoin" ? "yolfi" : "stripe";
 		const paymentLink =
-			period === "year" ? STRIPE_YEARLY_PAYMENT_LINK : STRIPE_WEEKLY_PAYMENT_LINK;
+			provider === "yolfi"
+				? period === "year"
+					? YOLFI_YEARLY_PAYMENT_LINK
+					: YOLFI_WEEKLY_PAYMENT_LINK
+				: period === "year"
+					? STRIPE_YEARLY_PAYMENT_LINK
+					: STRIPE_WEEKLY_PAYMENT_LINK;
 		if (!paymentLink) {
-			toastError("支付链接未配置", "请联系支持团队完成银行卡支付配置");
+			toastError(t("errorTitle"), t("errorDescription"));
 			return;
 		}
-
 		setIsStartingCheckout(true);
 		trackTaliviaCheckoutStarted();
-		window.location.href = getStripePaymentLinkUrl(paymentLink, user?.email);
+		const target =
+			provider === "yolfi"
+				? getYolfiPaymentLinkUrl(
+						paymentLink,
+						locale,
+						isAuthenticated ? user?.email : undefined,
+					)
+				: getStripePaymentLinkUrl(paymentLink, user?.email);
+		try {
+			window.location.href = await prepareAttributedPaymentLink(target, provider, locale);
+		} catch {
+			setIsStartingCheckout(false);
+			toastError(t("attributionErrorTitle"), t("attributionErrorDescription"));
+		}
 	}
 
 	return (
@@ -96,7 +109,7 @@ export function SignalsMobilePaywall({
 			<div className="mx-auto flex h-[100dvh] w-full max-w-[430px] flex-col">
 				<header className="px-5 h-14 flex shrink-0 items-center justify-between pt-[max(env(safe-area-inset-top),16px)]">
 					<button
-						aria-label="关闭付费墙"
+						aria-label={t("close")}
 						className="text-white/75 hover:text-white size-10 flex items-center justify-center"
 						onClick={onClose}
 						type="button"
@@ -106,9 +119,9 @@ export function SignalsMobilePaywall({
 					{!isAuthenticated ? (
 						<Link
 							className="text-sm font-medium text-white/70 hover:text-white"
-							href="/login?redirectTo=%2Fsignals"
+							href={`${localizePath("/login", locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale))}`}
 						>
-							已有权益？登录
+							{t("login")}
 						</Link>
 					) : (
 						<span className="w-10" />
@@ -123,34 +136,43 @@ export function SignalsMobilePaywall({
 							src="/images/paywall/signalfast-logo.png"
 						/>
 						<h1 className="mt-3 font-bold leading-8 text-[26px]">SignalFast Pro</h1>
-						<p className="mt-2 text-sm leading-6 text-white/65">
-							实时 KOL 信号、聚合 K 线与完整交易细节
-						</p>
+						<p className="mt-2 text-sm leading-6 text-white/65">{t("description")}</p>
 					</section>
 
-					<div aria-label="Pro 会员权益" className="mt-7 -mx-6 space-y-2 overflow-hidden">
+					<div
+						aria-label={t("benefitsLabel")}
+						className="mt-7 -mx-6 space-y-2 overflow-hidden"
+					>
 						<div className="flex w-max animate-[benefit-slide-left_24s_linear_infinite] motion-reduce:animate-none">
 							<div className="gap-2 px-3 flex shrink-0">
-								<BenefitPill icon={ArrowUpRightIcon}>实时 KOL 信号</BenefitPill>
-								<BenefitPill icon={CandlestickChartIcon}>聚合 K 线</BenefitPill>
-								<BenefitPill icon={CircleDotIcon}>完整信号</BenefitPill>
+								<BenefitPill icon={ArrowUpRightIcon}>
+									{t("liveSignals")}
+								</BenefitPill>
+								<BenefitPill icon={CandlestickChartIcon}>
+									{t("aggregatedChart")}
+								</BenefitPill>
+								<BenefitPill icon={CircleDotIcon}>{t("fullSignals")}</BenefitPill>
 							</div>
 							<div aria-hidden="true" className="gap-2 px-3 flex shrink-0">
-								<BenefitPill icon={ArrowUpRightIcon}>实时 KOL 信号</BenefitPill>
-								<BenefitPill icon={CandlestickChartIcon}>聚合 K 线</BenefitPill>
-								<BenefitPill icon={CircleDotIcon}>完整信号</BenefitPill>
+								<BenefitPill icon={ArrowUpRightIcon}>
+									{t("liveSignals")}
+								</BenefitPill>
+								<BenefitPill icon={CandlestickChartIcon}>
+									{t("aggregatedChart")}
+								</BenefitPill>
+								<BenefitPill icon={CircleDotIcon}>{t("fullSignals")}</BenefitPill>
 							</div>
 						</div>
 						<div className="flex w-max animate-[benefit-slide-right_28s_linear_infinite] motion-reduce:animate-none">
 							<div className="gap-2 px-3 flex shrink-0">
-								<BenefitPill icon={CheckIcon}>无广告体验</BenefitPill>
-								<BenefitPill icon={UsersRoundIcon}>专属社区</BenefitPill>
-								<BenefitPill icon={ArrowUpRightIcon}>行情追踪</BenefitPill>
+								<BenefitPill icon={CheckIcon}>{t("noAds")}</BenefitPill>
+								<BenefitPill icon={UsersRoundIcon}>{t("community")}</BenefitPill>
+								<BenefitPill icon={ArrowUpRightIcon}>{t("tracking")}</BenefitPill>
 							</div>
 							<div aria-hidden="true" className="gap-2 px-3 flex shrink-0">
-								<BenefitPill icon={CheckIcon}>无广告体验</BenefitPill>
-								<BenefitPill icon={UsersRoundIcon}>专属社区</BenefitPill>
-								<BenefitPill icon={ArrowUpRightIcon}>行情追踪</BenefitPill>
+								<BenefitPill icon={CheckIcon}>{t("noAds")}</BenefitPill>
+								<BenefitPill icon={UsersRoundIcon}>{t("community")}</BenefitPill>
+								<BenefitPill icon={ArrowUpRightIcon}>{t("tracking")}</BenefitPill>
 							</div>
 						</div>
 					</div>
@@ -165,7 +187,7 @@ export function SignalsMobilePaywall({
 							onClick={() => setPaymentMethod("card")}
 							type="button"
 						>
-							银行卡支付
+							{t("card")}
 						</button>
 						<button
 							aria-pressed={paymentMethod === "stablecoin"}
@@ -176,7 +198,7 @@ export function SignalsMobilePaywall({
 							onClick={() => setPaymentMethod("stablecoin")}
 							type="button"
 						>
-							稳定币支付
+							{t("stablecoin")}
 						</button>
 					</div>
 
@@ -207,20 +229,20 @@ export function SignalsMobilePaywall({
 									/>
 								</span>
 								<span className="min-w-0 flex-1">
-									<span className="text-sm font-bold block">年度 Pro</span>
+									<span className="text-sm font-bold block">{t("yearly")}</span>
 									<span className="mt-1 text-xs block text-[#aaa6b1]">
-										US$99.99 / 年
+										{t("perYear")}
 									</span>
 								</span>
 								<span className="shrink-0 text-right">
 									<span className="text-sm font-bold block">US$1.92</span>
 									<span className="mt-1 block text-[10px] text-[#aaa6b1]">
-										折合每周
+										{t("weeklyEquivalent")}
 									</span>
 								</span>
 							</button>
 							<span className="right-3 top-0 px-3 py-1 font-bold absolute z-10 -translate-y-1/2 rounded-full bg-gradient-to-r from-[#9ceeff] to-[#e7b9ff] text-[10px] leading-none text-[#17131e]">
-								最划算 · 省 79%
+								{t("bestValue")}
 							</span>
 						</div>
 						<button
@@ -248,10 +270,12 @@ export function SignalsMobilePaywall({
 								/>
 							</span>
 							<span className="min-w-0 flex-1">
-								<span className="text-sm font-bold block">每周 Pro</span>
-								<span className="mt-1 text-xs block text-[#aaa6b1]">按周付费</span>
+								<span className="text-sm font-bold block">{t("weekly")}</span>
+								<span className="mt-1 text-xs block text-[#aaa6b1]">
+									{t("payWeekly")}
+								</span>
 							</span>
-							<span className="text-sm font-bold shrink-0">US$8.99 / 周</span>
+							<span className="text-sm font-bold shrink-0">{t("perWeek")}</span>
 						</button>
 					</div>
 				</div>
@@ -262,7 +286,7 @@ export function SignalsMobilePaywall({
 						disabled={isStartingCheckout}
 						onClick={startCheckout}
 					>
-						立即解锁 Pro
+						{t("unlock")}
 					</Button>
 				</footer>
 			</div>

@@ -1,6 +1,9 @@
 "use client";
 
+import { localizePath } from "@i18n/routing";
+import type { Locale } from "@repo/i18n";
 import { cn } from "@repo/ui";
+import { useLocale } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -21,6 +24,7 @@ export function SettingsMenu({
 	className?: string;
 }) {
 	const pathname = usePathname();
+	const locale = useLocale() as Locale;
 
 	const isActiveMenuItem = (href: string) => pathname.includes(href);
 
@@ -35,7 +39,7 @@ export function SettingsMenu({
 					return (
 						<Link
 							key={index}
-							href={item.href}
+							href={localizePath(item.href, locale)}
 							className={cn(
 								"px-4 py-2 text-sm relative border-b-2 transition-colors",
 								isActive

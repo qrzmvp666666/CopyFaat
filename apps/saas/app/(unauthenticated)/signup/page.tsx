@@ -1,7 +1,9 @@
 import { SignupForm } from "@auth/components/SignupForm";
 import { getInvitation } from "@auth/lib/server";
+import { localizePath } from "@i18n/routing";
 import { config } from "@repo/auth/config";
-import { getTranslations } from "next-intl/server";
+import type { Locale } from "@repo/i18n";
+import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { withQuery } from "ufo";
 
@@ -24,10 +26,11 @@ export default async function SignupPage({
 	}>;
 }) {
 	const params = await searchParams;
+	const locale = (await getLocale()) as Locale;
 	const { invitationId } = params;
 
 	if (!(config.enableSignup || invitationId)) {
-		redirect(withQuery("/login", params));
+		redirect(withQuery(localizePath("/login", locale), params));
 	}
 
 	if (invitationId) {
@@ -38,7 +41,7 @@ export default async function SignupPage({
 			invitation.status !== "pending" ||
 			invitation.expiresAt.getTime() < Date.now()
 		) {
-			redirect(withQuery("/login", params));
+			redirect(withQuery(localizePath("/login", locale), params));
 		}
 
 		return <SignupForm prefillEmail={invitation.email} />;

@@ -1,5 +1,6 @@
 import { userAccountQueryKey, userPasskeyQueryKey } from "@auth/lib/api";
 import { getSession, getUserAccounts, getUserPasskeys } from "@auth/lib/server";
+import { redirectWithLocale } from "@i18n/redirect";
 import { config } from "@repo/auth/config";
 import { ActiveSessionsBlock } from "@settings/components/ActiveSessionsBlock";
 import { ChangePasswordForm } from "@settings/components/ChangePassword";
@@ -11,7 +12,6 @@ import { PageHeader } from "@shared/components/PageHeader";
 import { SettingsList } from "@shared/components/SettingsList";
 import { getServerQueryClient } from "@shared/lib/server";
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
 
 export async function generateMetadata() {
 	const t = await getTranslations("settings.account.security");
@@ -25,7 +25,7 @@ export default async function AccountSettingsPage() {
 	const session = await getSession();
 
 	if (!session) {
-		redirect("/login");
+		return await redirectWithLocale("/login");
 	}
 
 	const userAccounts = await getUserAccounts();

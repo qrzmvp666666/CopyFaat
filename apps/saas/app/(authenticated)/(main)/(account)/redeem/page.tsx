@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { redirectWithLocale } from "@i18n/redirect";
 
 export default async function RedeemCodePage() {
-	redirect("/settings/billing");
+	return await redirectWithLocale("/settings/billing");
 }

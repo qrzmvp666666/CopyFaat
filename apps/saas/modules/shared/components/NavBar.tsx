@@ -2,10 +2,12 @@
 
 import { useSession } from "@auth/hooks/use-session";
 import { config } from "@config";
+import { localizePath, stripLocaleFromPath } from "@i18n/routing";
 import { useActiveOrganization } from "@organizations/hooks/use-active-organization";
 import { EntitlementCountdown } from "@payments/components/EntitlementCountdown";
 import { usePurchases } from "@payments/hooks/purchases";
 import { config as authConfig } from "@repo/auth/config";
+import type { Locale } from "@repo/i18n";
 import { config as paymentsConfig } from "@repo/payments/config";
 import {
 	Button,
@@ -28,6 +30,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@repo/ui/components/tooltip";
+import { LocaleSwitch } from "@shared/components/LocaleSwitch";
 import { NotificationCenter } from "@shared/components/NotificationCenter";
 import { UserMenu } from "@shared/components/UserMenu";
 import {
@@ -43,7 +46,7 @@ import {
 	ShieldUserIcon,
 	UserCogIcon,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -82,7 +85,8 @@ function NavMenuList({
 	listClassName,
 	onLinkClick,
 }: NavMenuListProps) {
-	const pathname = usePathname();
+	const pathname = stripLocaleFromPath(usePathname());
+	const locale = useLocale() as Locale;
 
 	return (
 		<TooltipProvider delayDuration={0}>
@@ -116,7 +120,7 @@ function NavMenuList({
 										<Tooltip>
 											<TooltipTrigger asChild>
 												<Link
-													href={menuItem.href}
+													href={localizePath(menuItem.href, locale)}
 													onClick={onLinkClick}
 													className={parentClasses}
 													prefetch
@@ -167,7 +171,10 @@ function NavMenuList({
 												return (
 													<DropdownMenuItem key={subItem.href} asChild>
 														<Link
-															href={subItem.href}
+															href={localizePath(
+																subItem.href,
+																locale,
+															)}
 															className={cn(
 																"flex w-full cursor-pointer items-center",
 																subActive && "font-semibold",
@@ -187,7 +194,7 @@ function NavMenuList({
 						return (
 							<li key={menuItem.href} className="gap-0.5 flex flex-col">
 								<Link
-									href={menuItem.href}
+									href={localizePath(menuItem.href, locale)}
 									onClick={onLinkClick}
 									className={parentClasses}
 									prefetch
@@ -218,7 +225,10 @@ function NavMenuList({
 												return (
 													<li key={subItem.href}>
 														<Link
-															href={subItem.href}
+															href={localizePath(
+																subItem.href,
+																locale,
+															)}
 															onClick={onLinkClick}
 															className={cn(
 																"py-1.5 pl-2 pr-3 text-sm flex w-full items-center rounded-md text-muted-foreground transition-colors hover:bg-accent/50",
@@ -241,7 +251,7 @@ function NavMenuList({
 
 					const menuItemContent = (
 						<Link
-							href={menuItem.href}
+							href={localizePath(menuItem.href, locale)}
 							onClick={onLinkClick}
 							className={parentClasses}
 							prefetch
@@ -279,6 +289,7 @@ function NavMenuList({
 }
 
 function MembershipLinkButton({ href, className }: { href: string; className?: string }) {
+	const locale = useLocale() as Locale;
 	const t = useTranslations("app.menu");
 
 	return (
@@ -294,7 +305,7 @@ function MembershipLinkButton({ href, className }: { href: string; className?: s
 							className,
 						)}
 					>
-						<Link href={href} aria-label={t("openEntitlements")}>
+						<Link href={localizePath(href, locale)} aria-label={t("openEntitlements")}>
 							<CrownIcon className="size-4" />
 						</Link>
 					</Button>
@@ -328,8 +339,9 @@ function SidebarEntitlementCountdown() {
 }
 
 export function NavBar() {
+	const locale = useLocale() as Locale;
 	const t = useTranslations();
-	const pathname = usePathname();
+	const pathname = stripLocaleFromPath(usePathname());
 	const { user } = useSession();
 	const { activeOrganization, isOrganizationAdmin } = useActiveOrganization();
 	const { isCollapsed, toggleCollapsed } = useSidebar();
@@ -501,7 +513,7 @@ export function NavBar() {
 										</div>
 									</SheetContent>
 								</Sheet>
-								<Link href="/" className="block shrink-0">
+								<Link href={localizePath("/", locale)} className="block shrink-0">
 									<Logo withLabel={false} />
 								</Link>
 							</div>
@@ -526,6 +538,7 @@ export function NavBar() {
 								</Button>
 
 								<MembershipLinkButton href={entitlementsHref} />
+								<LocaleSwitch />
 								<NotificationCenter className="shrink-0" />
 							</div>
 						</div>

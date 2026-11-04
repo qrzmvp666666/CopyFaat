@@ -4,7 +4,9 @@ import { useAuthErrorMessages } from "@auth/hooks/errors-messages";
 import { useSession } from "@auth/hooks/use-session";
 import { config } from "@config";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { localizePath } from "@i18n/routing";
 import { authClient } from "@repo/auth/client";
+import type { Locale } from "@repo/i18n";
 import { Alert, AlertTitle } from "@repo/ui/components/alert";
 import { Button } from "@repo/ui/components/button";
 import {
@@ -19,7 +21,7 @@ import { passwordSchema } from "@repo/utils";
 import { PasswordInput } from "@shared/components/PasswordInput";
 import { useRouter } from "@shared/hooks/router";
 import { AlertTriangleIcon, ArrowLeftIcon, MailboxIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -31,6 +33,7 @@ const formSchema = z.object({
 
 export function ResetPasswordForm() {
 	const t = useTranslations();
+	const locale = useLocale() as Locale;
 	const { user } = useSession();
 	const router = useRouter();
 	const { getAuthErrorMessage } = useAuthErrorMessages();
@@ -56,7 +59,7 @@ export function ResetPasswordForm() {
 			}
 
 			if (user) {
-				router.push(config.redirectAfterSignIn);
+				router.push(localizePath(config.redirectAfterSignIn, locale));
 			}
 		} catch (e) {
 			form.setError("root", {
@@ -114,7 +117,7 @@ export function ResetPasswordForm() {
 			)}
 
 			<div className="mt-6 text-sm text-center">
-				<Link href="/login">
+				<Link href={localizePath("/login", locale)}>
 					<ArrowLeftIcon className="mr-1 size-4 inline align-middle" />
 					{t("auth.resetPassword.backToSignin")}
 				</Link>

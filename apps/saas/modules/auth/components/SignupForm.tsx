@@ -4,9 +4,11 @@ import { useAuthErrorMessages } from "@auth/hooks/errors-messages";
 import { useSession } from "@auth/hooks/use-session";
 import { config } from "@config";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { localizePath } from "@i18n/routing";
 import { OrganizationInvitationAlert } from "@organizations/components/OrganizationInvitationAlert";
 import { authClient } from "@repo/auth/client";
 import { config as authConfig } from "@repo/auth/config";
+import type { Locale } from "@repo/i18n";
 import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/alert";
 import { Button } from "@repo/ui/components/button";
 import {
@@ -21,7 +23,7 @@ import { Input } from "@repo/ui/components/input";
 import { passwordSchema } from "@repo/utils";
 import { PasswordInput } from "@shared/components/PasswordInput";
 import { AlertTriangleIcon, ArrowRightIcon, MailboxIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
@@ -45,6 +47,7 @@ const formSchema = z.object({
 
 export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 	const t = useTranslations();
+	const locale = useLocale() as Locale;
 	const router = useRouter();
 	const { user, loaded: sessionLoaded } = useSession();
 	const { getAuthErrorMessage } = useAuthErrorMessages();
@@ -65,9 +68,14 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 
 	const invitationOnlyMode = !authConfig.enableSignup && invitationId;
 
-	const redirectPath = invitationId
-		? `/organization-invitation/${invitationId}`
-		: (redirectTo ?? config.redirectAfterSignIn);
+	const redirectPath = localizePath(
+		invitationId
+			? `/organization-invitation/${invitationId}`
+			: redirectTo?.startsWith("/") && !redirectTo.startsWith("//")
+				? redirectTo
+				: config.redirectAfterSignIn,
+		locale,
+	);
 
 	useEffect(() => {
 		if (sessionLoaded && user) {
@@ -237,7 +245,12 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 
 			<div className="mt-6 text-sm text-center">
 				<span className="text-foreground/60">{t("auth.signup.alreadyHaveAccount")} </span>
-				<Link href={withQuery("/login", Object.fromEntries(searchParams.entries()))}>
+				<Link
+					href={withQuery(
+						localizePath("/login", locale),
+						Object.fromEntries(searchParams.entries()),
+					)}
+				>
 					{t("auth.signup.signIn")}
 					<ArrowRightIcon className="ml-1 size-4 inline align-middle" />
 				</Link>

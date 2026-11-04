@@ -148,19 +148,23 @@ export async function SignalsPaywall() {
 					<div className="min-h-0 xl:grid-cols-[minmax(0,1fr)_328px] grid flex-1 grid-cols-1">
 						<main className="min-h-0 border-white/10 xl:border-r xl:border-b-0 border-b">
 							<div className="gap-2 border-white/10 p-4 flex flex-wrap border-b">
-								{["全部", "币圈所长", "独领风骚", "日内交易", "时间领主"].map(
-									(source, index) => (
-										<span
-											key={source}
-											className="gap-1.5 border-white/10 bg-white/[0.035] px-2.5 py-1 text-xs text-white/75 flex items-center rounded-md border"
-										>
-											{index > 0 ? (
-												<span className="size-2 bg-emerald-400 rounded-full" />
-											) : null}
-											{source}
-										</span>
-									),
-								)}
+								{[
+									t("sourcePicker.allTraders"),
+									"币圈所长",
+									"独领风骚",
+									"日内交易",
+									"时间领主",
+								].map((source, index) => (
+									<span
+										key={source}
+										className="gap-1.5 border-white/10 bg-white/[0.035] px-2.5 py-1 text-xs text-white/75 flex items-center rounded-md border"
+									>
+										{index > 0 ? (
+											<span className="size-2 bg-emerald-400 rounded-full" />
+										) : null}
+										{source}
+									</span>
+								))}
 							</div>
 
 							<div className="h-12 border-white/10 px-4 flex items-center justify-between border-b">

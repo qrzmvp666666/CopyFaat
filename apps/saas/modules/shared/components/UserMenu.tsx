@@ -2,7 +2,9 @@
 
 import { useSession } from "@auth/hooks/use-session";
 import { config } from "@config";
+import { localizePath } from "@i18n/routing";
 import { authClient } from "@repo/auth/client";
+import type { Locale } from "@repo/i18n";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -13,11 +15,12 @@ import {
 } from "@repo/ui";
 import { UserAvatar } from "@shared/components/UserAvatar";
 import { BookIcon, HomeIcon, LogOutIcon, MoreVerticalIcon, SettingsIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 
 export function UserMenu({ showUserName }: { showUserName?: boolean }) {
 	const t = useTranslations();
+	const locale = useLocale() as Locale;
 	const { user } = useSession();
 
 	const onLogout = async () => {
@@ -25,7 +28,7 @@ export function UserMenu({ showUserName }: { showUserName?: boolean }) {
 			fetchOptions: {
 				onSuccess: async () => {
 					window.location.href = new URL(
-						config.redirectAfterLogout,
+						localizePath(config.redirectAfterLogout, locale),
 						window.location.origin,
 					).toString();
 				},
@@ -70,7 +73,7 @@ export function UserMenu({ showUserName }: { showUserName?: boolean }) {
 				<DropdownMenuSeparator />
 
 				<DropdownMenuItem asChild>
-					<Link href="/settings/general">
+					<Link href={localizePath("/settings/general", locale)}>
 						<SettingsIcon className="mr-2 size-4" />
 						{t("app.userMenu.accountSettings")}
 					</Link>

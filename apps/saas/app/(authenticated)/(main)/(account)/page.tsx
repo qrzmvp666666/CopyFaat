@@ -1,12 +1,12 @@
 import { getOrganizationList, getSession } from "@auth/lib/server";
+import { redirectWithLocale } from "@i18n/redirect";
 import { config } from "@repo/auth/config";
-import { redirect } from "next/navigation";
 
 export default async function AppStartPage() {
 	const session = await getSession();
 
 	if (!session) {
-		redirect("/login");
+		return await redirectWithLocale("/login");
 	}
 
 	const organizations = await getOrganizationList();
@@ -17,11 +17,11 @@ export default async function AppStartPage() {
 			organizations[0];
 
 		if (!organization) {
-			redirect("/new-organization");
+			return await redirectWithLocale("/new-organization");
 		}
 
-		redirect(`/${organization.slug}`);
+		return await redirectWithLocale(`/${organization.slug}`);
 	}
 
-	redirect("/signals");
+	return await redirectWithLocale("/signals");
 }

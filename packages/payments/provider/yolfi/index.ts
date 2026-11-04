@@ -2,6 +2,8 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { db } from "@repo/database";
 
+import { reportAdConversion } from "../../lib/ad-conversions";
+import { resolvePaymentAttribution } from "../../lib/attribution";
 import { claimPendingPurchases, upsertSubscriptionPurchase } from "../../lib/purchases";
 
 interface YolfiEvent {
@@ -148,9 +150,16 @@ export async function yolfiWebhookHandler(request: Request) {
 		const priceId = getYolfiPaylinkPriceId(paylinkId);
 		if (!priceId) return new Response(null, { status: 204 });
 		if (!subscriptionId) {
-			return new Response("Unmapped or incomplete Yolfi subscription invoice", { status: 422 });
+			return new Response("Unmapped or incomplete Yolfi subscription invoice", {
+				status: 422,
+			});
 		}
 
+		const attribution = await resolvePaymentAttribution(
+			"yolfi",
+			asString(metadata.attribution_id),
+			event.created ?? Math.floor(Date.now() / 1000),
+		);
 		const existing = await db.purchase.findUnique({
 			where: { subscriptionId },
 			select: { status: true },
@@ -160,6 +169,7 @@ export async function yolfiWebhookHandler(request: Request) {
 
 		await upsertSubscriptionPurchase({
 			provider: "yolfi",
+			...attribution,
 			priceId,
 			customerId,
 			status,
@@ -177,6 +187,25 @@ export async function yolfiWebhookHandler(request: Request) {
 			});
 			if (account?.emailVerified) {
 				await claimPendingPurchases(account.id, customerEmail);
+			}
+		}
+		// Stripe adapter expresses invoice amounts in currency minor units.
+		// Missing/unknown amounts are deliberately not substituted with plan prices.
+		if (
+			typeof object.amount_paid === "number" &&
+			typeof object.currency === "string" &&
+			asString(object.id)
+		) {
+			try {
+				await reportAdConversion({
+					provider: "yolfi",
+					paymentId: object.id as string,
+					...attribution,
+					amountMinor: object.amount_paid,
+					currency: object.currency,
+				});
+			} catch {
+				return new Response("Ad conversion pending; retry webhook", { status: 503 });
 			}
 		}
 	} else if (

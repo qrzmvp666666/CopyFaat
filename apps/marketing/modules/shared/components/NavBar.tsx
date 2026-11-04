@@ -7,12 +7,13 @@ import { Button } from "@repo/ui/components/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@repo/ui/components/sheet";
 import { LocaleSwitch } from "@shared/components/LocaleSwitch";
 import { MenuIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import NextLink from "next/link";
 import { Suspense, useEffect, useState } from "react";
 
 export function NavBar() {
 	const t = useTranslations();
+	const locale = useLocale();
 	const localePathname = useLocalePathname();
 
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -167,7 +168,7 @@ export function NavBar() {
 
 									{config.saasUrl && (
 										<NextLink
-											href={config.saasUrl}
+											href={`${config.saasUrl.replace(/\/$/, "")}/${locale}`}
 											className="px-3 py-2 text-base block"
 											onClick={handleMobileMenuClose}
 											prefetch
@@ -181,7 +182,10 @@ export function NavBar() {
 
 						{config.saasUrl && (
 							<Button className="lg:flex hidden" asChild variant="secondary">
-								<NextLink href={config.saasUrl} prefetch>
+								<NextLink
+									href={`${config.saasUrl.replace(/\/$/, "")}/${locale}`}
+									prefetch
+								>
 									{t("common.menu.login")}
 								</NextLink>
 							</Button>

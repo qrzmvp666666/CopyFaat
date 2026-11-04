@@ -1,7 +1,10 @@
 import { getOrganizationList, getSession } from "@auth/lib/server";
+import { redirectWithLocale } from "@i18n/redirect";
+import { localizePath } from "@i18n/routing";
 import { PricingTable } from "@payments/components/PricingTable";
 import { listPurchases } from "@payments/lib/server";
 import { config as authConfig } from "@repo/auth/config";
+import type { Locale } from "@repo/i18n";
 import {
 	createCheckoutLink,
 	createQiXiangCheckoutLink,
@@ -13,7 +16,7 @@ import {
 import { config as paymentsConfig } from "@repo/payments/config";
 import { createPurchasesHelper } from "@repo/payments/lib/helper";
 import { AuthWrapper } from "@shared/components/AuthWrapper";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +36,7 @@ export default async function ChoosePlanPage({
 	searchParams: Promise<{ planId?: string; interval?: string; paymentMethod?: string }>;
 }) {
 	const t = await getTranslations("choosePlan");
+	const locale = (await getLocale()) as Locale;
 	const { planId, interval, paymentMethod } = await searchParams;
 	const session = await getSession();
 	const selectedPaymentMethod =
@@ -44,7 +48,7 @@ export default async function ChoosePlanPage({
 		const loginPath = planId
 			? `/login?redirectTo=${encodeURIComponent(`/choose-plan?planId=${planId}${interval ? `&interval=${interval}` : ""}&paymentMethod=${selectedPaymentMethod}`)}`
 			: "/login";
-		redirect(loginPath);
+		redirect(localizePath(loginPath, locale));
 	}
 
 	let organizationId: string | undefined;
@@ -52,7 +56,7 @@ export default async function ChoosePlanPage({
 		const organization = (await getOrganizationList()).at(0);
 
 		if (!organization) {
-			redirect("/new-organization");
+			return await redirectWithLocale("/new-organization");
 		}
 
 		organizationId = organization.id;
@@ -66,7 +70,7 @@ export default async function ChoosePlanPage({
 	);
 
 	if (activePlan && activePlan.id !== "free") {
-		redirect("/");
+		return await redirectWithLocale("/");
 	}
 
 	// If planId is provided, skip the plan selection page and go directly to checkout
@@ -96,8 +100,8 @@ export default async function ChoosePlanPage({
 				process.env.NEXT_PUBLIC_SAAS_URL?.replace(/\/$/, "") ??
 				"http://signalfast.localhost:4100";
 			const redirectUrl = organizationId
-				? `${appUrl}/checkout-return?organizationId=${organizationId}`
-				: `${appUrl}/checkout-return`;
+				? `${appUrl}${localizePath("/checkout-return", locale)}?organizationId=${organizationId}`
+				: `${appUrl}${localizePath("/checkout-return", locale)}`;
 
 			if (
 				selectedPaymentMethod === "wechat_person" ||

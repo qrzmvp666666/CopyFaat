@@ -3,7 +3,9 @@
 import { useAuthErrorMessages } from "@auth/hooks/errors-messages";
 import { config } from "@config";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { localizePath } from "@i18n/routing";
 import { authClient } from "@repo/auth/client";
+import type { Locale } from "@repo/i18n";
 import { Alert, AlertTitle } from "@repo/ui/components/alert";
 import { Button } from "@repo/ui/components/button";
 import {
@@ -22,7 +24,7 @@ import {
 } from "@repo/ui/components/input-otp";
 import { useRouter } from "@shared/hooks/router";
 import { AlertTriangleIcon, ArrowLeftIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -34,6 +36,7 @@ const formSchema = z.object({
 
 export function OtpForm() {
 	const t = useTranslations();
+	const locale = useLocale() as Locale;
 	const router = useRouter();
 	const { getAuthErrorMessage } = useAuthErrorMessages();
 	const searchParams = useSearchParams();
@@ -41,9 +44,14 @@ export function OtpForm() {
 	const invitationId = searchParams.get("invitationId");
 	const redirectTo = searchParams.get("redirectTo");
 
-	const redirectPath = invitationId
-		? `/organization-invitation/${invitationId}`
-		: (redirectTo ?? config.redirectAfterSignIn);
+	const redirectPath = localizePath(
+		invitationId
+			? `/organization-invitation/${invitationId}`
+			: redirectTo?.startsWith("/") && !redirectTo.startsWith("//")
+				? redirectTo
+				: config.redirectAfterSignIn,
+		locale,
+	);
 
 	const form = useForm({
 		resolver: zodResolver(formSchema),
@@ -125,7 +133,7 @@ export function OtpForm() {
 			</Form>
 
 			<div className="mt-6 text-sm text-center">
-				<Link href="/login">
+				<Link href={localizePath("/login", locale)}>
 					<ArrowLeftIcon className="mr-1 size-4 inline align-middle" />
 					{t("auth.verify.backToSignin")}
 				</Link>

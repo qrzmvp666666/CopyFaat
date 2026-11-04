@@ -1,6 +1,7 @@
 "use client";
 
 import { updateLocale } from "@i18n/lib/update-locale";
+import { localizePath } from "@i18n/routing";
 import type { Locale } from "@repo/i18n";
 import { config as i18nConfig } from "@repo/i18n";
 import { Button } from "@repo/ui/components/button";
@@ -13,13 +14,12 @@ import {
 } from "@repo/ui/components/dropdown-menu";
 import { LanguagesIcon } from "lucide-react";
 import { useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export function LocaleSwitch() {
-	const router = useRouter();
 	const currentLocale = useLocale();
-	const [value, setValue] = useState<string>(currentLocale);
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
 
 	if (Object.keys(i18nConfig.locales).length <= 1) {
 		return null;
@@ -28,18 +28,24 @@ export function LocaleSwitch() {
 	return (
 		<DropdownMenu modal={false}>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="icon" aria-label="Language">
+				<Button
+					variant="ghost"
+					size="icon"
+					aria-label={currentLocale === "zh" ? "切换语言" : "Change language"}
+				>
 					<LanguagesIcon className="size-4" />
 				</Button>
 			</DropdownMenuTrigger>
 
 			<DropdownMenuContent>
 				<DropdownMenuRadioGroup
-					value={value}
+					value={currentLocale}
 					onValueChange={async (value) => {
-						setValue(value);
 						await updateLocale(value as Locale);
-						router.refresh();
+						const query = searchParams.toString();
+						window.location.assign(
+							`${localizePath(pathname, value as Locale)}${query ? `?${query}` : ""}${window.location.hash}`,
+						);
 					}}
 				>
 					{Object.entries(i18nConfig.locales).map(([locale, { label }]) => {

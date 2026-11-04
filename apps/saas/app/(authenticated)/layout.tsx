@@ -1,6 +1,7 @@
 import { SessionProvider } from "@auth/components/SessionProvider";
 import { sessionQueryKey } from "@auth/lib/api";
 import { getOrganizationList, getSession } from "@auth/lib/server";
+import { redirectWithLocale } from "@i18n/redirect";
 import { ActiveOrganizationProvider } from "@organizations/components/ActiveOrganizationProvider";
 import { organizationListQueryKey } from "@organizations/lib/api";
 import { listPurchases } from "@payments/lib/server";
@@ -10,7 +11,6 @@ import { ConfirmationAlertProvider } from "@shared/components/ConfirmationAlertP
 import { orpc } from "@shared/lib/orpc-query-utils";
 import { getServerQueryClient } from "@shared/lib/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { redirect } from "next/navigation";
 import type { PropsWithChildren } from "react";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export default async function AuthenticatedLayout({ children }: PropsWithChildre
 	const session = await getSession();
 
 	if (!session) {
-		redirect("/login");
+		return await redirectWithLocale("/login");
 	}
 
 	const queryClient = getServerQueryClient();

@@ -298,7 +298,9 @@
 	},
 	"choosePlan": {
 		"title": "Choose your plan",
-		"description": "To continue, please select a plan."
+		"description": "To continue, please select a plan.",
+		"paymentErrorTitle": "Payment failed",
+		"paymentErrorDescription": "Could not start checkout. Please try again later."
 	},
 	"documentation": {
 		"title": "Documentation"
@@ -736,6 +738,32 @@
 		"welcome": "Welcome {name}!"
 	},
 	"signals": {
+		"mobilePaywall": {
+			"attributionErrorDescription": "Please try again. Your checkout tracking could not be saved.",
+			"attributionErrorTitle": "Could not prepare checkout",
+			"errorTitle": "Payment link unavailable",
+			"errorDescription": "Please contact support to finish setting up your payment.",
+			"close": "Close paywall",
+			"login": "Already have Pro? Sign in",
+			"description": "Live KOL signals, aggregated charts, and full trade details",
+			"benefitsLabel": "Pro membership benefits",
+			"liveSignals": "Live KOL signals",
+			"aggregatedChart": "Aggregated charts",
+			"fullSignals": "Full signals",
+			"noAds": "Ad-free experience",
+			"community": "Exclusive community",
+			"tracking": "Market tracking",
+			"card": "Pay by card",
+			"stablecoin": "Pay with stablecoins",
+			"yearly": "Yearly Pro",
+			"perYear": "US$99.99 / year",
+			"weeklyEquivalent": "Per week",
+			"bestValue": "Best value · save 79%",
+			"weekly": "Weekly Pro",
+			"payWeekly": "Billed weekly",
+			"perWeek": "US$8.99 / week",
+			"unlock": "Unlock Pro now"
+		},
 		"accountMenu": {
 			"guest": "Not signed in",
 			"label": "Account",

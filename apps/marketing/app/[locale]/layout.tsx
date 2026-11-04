@@ -2,6 +2,7 @@ import { AnalyticsScript } from "@analytics";
 import { config } from "@config";
 import { config as i18nConfig } from "@i18n/config";
 import { cn, Toaster } from "@repo/ui";
+import { AdAttributionTracker } from "@shared/components/AdAttributionTracker";
 import { ClientProviders } from "@shared/components/ClientProviders";
 import { ConsentProvider } from "@shared/components/ConsentProvider";
 import { Footer } from "@shared/components/Footer";
@@ -61,6 +62,7 @@ export default async function MarketingLayout({
 			className={cn(sansFont.variable, config.defaultTheme)}
 		>
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
+				<AdAttributionTracker />
 				{taliviaWebsiteId && taliviaDomain && (
 					<Script
 						src="https://talivia.com/script.js"
