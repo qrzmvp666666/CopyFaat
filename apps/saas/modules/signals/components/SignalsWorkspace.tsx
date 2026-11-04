@@ -17,6 +17,8 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@repo/ui/components/dropdown-menu";
 import {
@@ -45,10 +47,8 @@ import {
 	CrownIcon,
 	Maximize2Icon,
 	RadioIcon,
-	ReceiptTextIcon,
 	RefreshCwIcon,
 	SearchIcon,
-	SettingsIcon,
 	SlidersHorizontalIcon,
 	StarIcon,
 	TargetIcon,
@@ -58,6 +58,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import Image from "next/image";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -86,6 +87,7 @@ const GUIDE_STEP_EVENTS = [
 	"View Signal Details",
 ] as const;
 const SOURCE_FOLLOW_STORAGE_KEY = "signalfast:followed-sources:v1";
+const GUIDE_KOL_AVATARS = [1, 2, 3, 4, 5] as const;
 const GUIDE_DEMO_PREVIEW: SignalsPreviewResponse = {
 	sources: [1, 2, 3, 4, 5].map((index) => ({
 		id: `guide-kol-${index}`,
@@ -1221,12 +1223,10 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const [instrumentQuotes, setInstrumentQuotes] = useState<Record<string, Partial<Instrument>>>(
 		{},
 	);
-	const [selectedSymbol, setSelectedSymbol] = useState(hasProAccess ? "" : "BTCUSDT");
+	const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
 	const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("1h");
 	const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
-	const defaultSourcesInitializedRef = useRef(false);
-	const defaultSignalInitializedRef = useRef(false);
-	const defaultSourceIdRef = useRef<string | null>(null);
+	const hasManuallyChangedSourcesRef = useRef(false);
 	const [selectedDirection, setSelectedDirection] = useState<SignalDirection>("all");
 	const [selectedStatus, setSelectedStatus] = useState<SignalStatus>("active");
 	const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("30d");
@@ -1457,13 +1457,15 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 	const filteredSourcePickerSources = useMemo(() => {
 		const query = sourcePickerQuery.trim().toLocaleLowerCase();
+		const followedIds = new Set(followedSourceIds ?? []);
 		const categorySources =
 			sourcePickerCategory === "contract"
 				? sourceFilters
 				: sourcePickerCategory === "watchlist"
-					? sourceFilters.filter((source) =>
-							(followedSourceIds ?? []).includes(source.id),
-						)
+					? Array.from(followedIds, (id) => {
+							const source = sourceFilters.find((candidate) => candidate.id === id);
+							return source;
+						}).filter((source): source is Source => source !== undefined)
 					: [];
 
 		return categorySources.filter((source) =>
@@ -1506,6 +1508,14 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		for (const signal of webhookSignals) {
 			tradingSymbols.set(signal.symbol, signal.tradingSymbol);
 		}
+		tradingSymbols.set("BTCUSDT", {
+			id: "default-btcusdt",
+			symbol: "BTCUSDT",
+			baseAsset: "BTC",
+			quoteAsset: "USDT",
+			exchange: "binance",
+			pricePrecision: 2,
+		});
 
 		for (const symbol of tradingSymbols.values()) {
 			if (!isBinanceTradingSymbol(symbol)) {
@@ -1540,13 +1550,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 				return;
 			}
 
-			setSupportedSymbols(
-				new Set(
-					Array.from(tradingSymbols.keys()).filter((symbol) =>
-						symbolAvailabilityRef.current.get(symbol),
-					),
-				),
-			);
+			setSupportedSymbols(new Set(tradingSymbols.keys()));
 
 			if (availability.some((canDisplay) => canDisplay === null)) {
 				retryTimer = window.setTimeout(() => {
@@ -1650,7 +1654,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		const controller = new AbortController();
 
 		async function loadSignalPage() {
-			if (!hasProAccess || !signalPageFilters.symbol) {
+			if (!hasProAccess) {
 				setSignalPageSignals([]);
 				setStatusCounts({
 					active: 0,
@@ -1664,7 +1668,10 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 			try {
 				const data = await fetchAllStoredSignals(
-					getSignalPageSearchParams(signalPageFilters),
+					getSignalPageSearchParams({
+						...signalPageFilters,
+						symbol: signalPageFilters.symbol || "BTCUSDT",
+					}),
 					controller.signal,
 				);
 
@@ -1778,12 +1785,6 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 	useEffect(() => {
 		if (!instruments.length) {
-			if (selectedSymbol) {
-				setSelectedSymbol("");
-				setActiveSignalId(null);
-				setBinanceCandles(null);
-				setIsKlinesLoading(false);
-			}
 			return;
 		}
 
@@ -1829,18 +1830,17 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 	useEffect(() => {
 		if (
-			defaultSourcesInitializedRef.current ||
+			!hasProAccess ||
+			hasManuallyChangedSourcesRef.current ||
 			!sourceFilters.length ||
-			(process.env.NODE_ENV !== "production" && !selectedSymbol)
+			!selectedSymbol
 		) {
 			return;
 		}
 
-		const firstSourceId = sourceFilters[0].id;
-		defaultSourcesInitializedRef.current = true;
-		defaultSourceIdRef.current = firstSourceId;
-		setSelectedSourceIds([firstSourceId]);
-	}, [selectedSymbol, sourceFilters]);
+		const allSourceIds = sourceFilters.map((source) => source.id);
+		setSelectedSourceIds(allSourceIds);
+	}, [hasProAccess, selectedSymbol, sourceFilters]);
 
 	useEffect(() => {
 		const visibleSourceIds = new Set(sourceFilters.map((source) => source.id));
@@ -1964,28 +1964,12 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		return disconnect;
 	}, [hasProAccess, selectedSymbol, selectedTimeframe]);
 
-	const filteredSignals = signalPageTradeSignals;
-	useEffect(() => {
-		if (
-			!defaultSourcesInitializedRef.current ||
-			defaultSignalInitializedRef.current ||
-			!filteredSignals.length
-		) {
-			return;
-		}
-
-		const firstSourceSignal = filteredSignals.find(
-			(signal) => signal.sourceId === defaultSourceIdRef.current,
-		);
-
-		if (firstSourceSignal) {
-			defaultSignalInitializedRef.current = true;
-			setActiveSignalId(firstSourceSignal.id);
-		}
-	}, [filteredSignals]);
+	const filteredSignals = signalPageTradeSignals.filter((signal) =>
+		selectedSourceIds.includes(signal.sourceId),
+	);
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
-	const chartSignals = activeSignal ? [activeSignal] : filteredSignals;
+	const chartSignals = filteredSignals;
 
 	const candles = useMemo(() => {
 		if (
@@ -2068,6 +2052,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	}
 
 	function toggleSourceFilter(sourceId: string) {
+		hasManuallyChangedSourcesRef.current = true;
 		setSelectedSourceIds((currentSourceIds) =>
 			currentSourceIds.includes(sourceId)
 				? currentSourceIds.filter((currentSourceId) => currentSourceId !== sourceId)
@@ -2077,6 +2062,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	}
 
 	function clearSourceFilters() {
+		hasManuallyChangedSourcesRef.current = true;
 		setSelectedSourceIds([]);
 		setActiveSignalId(null);
 	}
@@ -2177,61 +2163,110 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 				aria-label={t("accountMenu.label")}
 				className="min-h-14 gap-3 px-3 py-2 border-white/10 md:hidden flex items-center justify-between border-b bg-[#141414]"
 			>
-				<div className="min-w-0 gap-2.5 flex items-center">
-					<UserAvatar
-						name={user?.name || user?.email || t("accountMenu.guest")}
-						avatarUrl={user?.image}
-						className="size-9 border-white/10 shrink-0 border"
-					/>
-					<div className="min-w-0 leading-tight">
-						{!sessionLoaded ? (
-							<span className="h-4 w-28 animate-pulse rounded bg-white/10 block" />
-						) : user ? (
-							<>
-								<span className="text-sm font-medium text-white block truncate">
-									{user.name || user.email}
-								</span>
-								<span className="text-xs text-white/55 block truncate">
+				<DropdownMenu modal={false}>
+					<DropdownMenuTrigger asChild>
+						<button
+							type="button"
+							aria-label={t("accountMenu.label")}
+							className="min-w-0 gap-2.5 focus-visible:ring-white/50 flex items-center rounded-md text-left outline-hidden focus-visible:ring-2"
+						>
+							<UserAvatar
+								name={user?.name || user?.email || t("accountMenu.guest")}
+								avatarUrl={user?.image}
+								className="size-9 border-white/10 shrink-0 border"
+							/>
+							<div className="min-w-0 leading-tight">
+								{!sessionLoaded ? (
+									<span className="h-4 w-28 animate-pulse rounded bg-white/10 block" />
+								) : user ? (
+									<>
+										<span className="text-sm font-medium text-white block truncate">
+											{user.name || user.email}
+										</span>
+										<span className="text-xs text-white/55 block truncate">
+											{user.email}
+										</span>
+									</>
+								) : (
+									<span className="text-sm text-white/65 block">
+										{t("accountMenu.guest")}
+									</span>
+								)}
+							</div>
+						</button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="start" className="min-w-56">
+						<DropdownMenuLabel>
+							{user?.name || user?.email || t("accountMenu.guest")}
+							{user?.email ? (
+								<span className="text-xs font-normal block text-muted-foreground">
 									{user.email}
 								</span>
+							) : null}
+						</DropdownMenuLabel>
+						<DropdownMenuSeparator />
+						{user ? (
+							<>
+								<DropdownMenuItem asChild>
+									<Link
+										href={localizePath("/settings/general", locale as Locale)}
+									>
+										{t("accountMenu.settings")}
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuItem asChild>
+									<Link
+										href={localizePath("/settings/billing", locale as Locale)}
+									>
+										{t("accountMenu.purchases")}
+									</Link>
+								</DropdownMenuItem>
 							</>
 						) : (
-							<span className="text-sm text-white/65 block">
-								{t("accountMenu.guest")}
-							</span>
+							<DropdownMenuItem asChild>
+								<Link
+									href={`${localizePath("/login", locale as Locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale as Locale))}`}
+								>
+									{t("accountMenu.login")}
+								</Link>
+							</DropdownMenuItem>
 						)}
-					</div>
-				</div>
+					</DropdownMenuContent>
+				</DropdownMenu>
 				<div className="gap-1 flex shrink-0 items-center">
 					<LocaleSwitch />
-					{!sessionLoaded ? null : user ? (
-						<>
-							<Link
-								href="/settings/general"
-								aria-label={t("accountMenu.settings")}
-								title={t("accountMenu.settings")}
-								className="size-10 text-white/75 hover:bg-white/8 hover:text-white flex items-center justify-center rounded-md"
-							>
-								<SettingsIcon className="size-5" />
-							</Link>
-							<Link
-								href="/settings/billing"
-								aria-label={t("accountMenu.purchases")}
-								title={t("accountMenu.purchases")}
-								className="size-10 text-white/75 hover:bg-white/8 hover:text-white flex items-center justify-center rounded-md"
-							>
-								<ReceiptTextIcon className="size-5" />
-							</Link>
-						</>
-					) : (
-						<Button asChild size="sm" variant="outline" className="h-9">
-							<Link
-								href={`${localizePath("/login", locale as Locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale as Locale))}`}
-							>
-								{t("accountMenu.login")}
-							</Link>
-						</Button>
-					)}
+					<a
+						href="https://t.me/Michael_Qin"
+						target="_blank"
+						rel="noopener noreferrer"
+						aria-label="Telegram"
+						title="Telegram"
+						className="size-10 hover:bg-white/8 flex items-center justify-center rounded-md"
+					>
+						<Image
+							src="/images/contact/telegram-monochrome.svg"
+							className="opacity-75 invert transition-opacity hover:opacity-100"
+							alt=""
+							width={24}
+							height={24}
+						/>
+					</a>
+					<a
+						href="https://discord.gg/signalfast"
+						target="_blank"
+						rel="noopener noreferrer"
+						aria-label="Discord"
+						title="Discord"
+						className="size-10 hover:bg-white/8 flex items-center justify-center rounded-md"
+					>
+						<Image
+							src="/images/contact/discord-monochrome.svg"
+							className="opacity-75 invert transition-opacity hover:opacity-100"
+							alt=""
+							width={24}
+							height={24}
+						/>
+					</a>
 				</div>
 			</nav>
 			{guideOpen ? (
@@ -2549,7 +2584,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 										data-guide-target="traders"
 										className="md:flex md:flex-wrap md:items-start md:gap-2 hidden w-fit max-w-full"
 									>
-										{!(guideOpen && guideStepIndex === 0) ? (
+										{!hasProAccess && !(guideOpen && guideStepIndex === 0) ? (
 											<button
 												type="button"
 												onClick={clearSourceFilters}
@@ -2612,7 +2647,8 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 										className="min-w-0 gap-1 md:hidden relative flex flex-col items-start"
 									>
 										<div className="no-scrollbar min-w-0 gap-3 flex max-w-full items-start overflow-x-auto overflow-y-hidden">
-											{!(guideOpen && guideStepIndex === 0) ? (
+											{!hasProAccess &&
+											!(guideOpen && guideStepIndex === 0) ? (
 												<button
 													type="button"
 													onClick={clearSourceFilters}
@@ -2631,11 +2667,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 														aria-hidden="true"
 														className="gap-2 flex items-center self-center"
 													>
-														{[1, 2, 3, 4, 5].map((avatar) => (
+														{GUIDE_KOL_AVATARS.map((avatar) => (
 															<img
 																key={avatar}
 																alt=""
-																className="size-11 border-white/10 rounded-full border-2 object-cover"
+																className="border-white/10 size-[52px] shrink-0 rounded-full border-2 object-cover"
 																src={
 																	avatar === 5
 																		? "/images/hero-floating/onboarding-kol-5.png"
@@ -2742,7 +2778,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 														>
 															<span
 																className={cn(
-																	"size-11 overflow-hidden rounded-full border-2 transition-all duration-300",
+																	"size-[52px] shrink-0 overflow-hidden rounded-full border-2 transition-all duration-300",
 																	isSelected
 																		? "border-white scale-105 shadow-[0_0_0_2px_rgba(255,255,255,0.16)]"
 																		: "border-white/10",
@@ -2768,14 +2804,14 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 										>
 											<Button
 												type="button"
-												size="icon"
 												variant="ghost"
 												aria-label={sourcePickerT("open")}
 												title={sourcePickerT("open")}
-												className="size-6 text-white/40 hover:text-white/70 shrink-0 self-center bg-transparent hover:bg-transparent"
+												className="mt-1 h-9 gap-1 px-3 text-xs text-white/55 hover:bg-white/5 hover:text-white mx-auto"
 												onClick={() => setIsSourcePickerOpen(true)}
 											>
-												<ChevronRightIcon className="size-4 opacity-70" />
+												{sourcePickerT("open")}
+												<ChevronDownIcon className="size-4" />
 											</Button>
 											<SheetContent
 												side="bottom"
@@ -2832,12 +2868,15 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 													<div className="gap-1 flex flex-col">
 														{filteredSourcePickerSources.map(
 															(source) => {
-																const isSelected =
-																	selectedSourceIds.length ===
-																		0 ||
-																	selectedSourceIds.includes(
-																		source.id,
-																	);
+																const isSelected = hasProAccess
+																	? selectedSourceIds.includes(
+																			source.id,
+																		)
+																	: selectedSourceIds.length ===
+																			0 ||
+																		selectedSourceIds.includes(
+																			source.id,
+																		);
 																const isFollowed = (
 																	followedSourceIds ?? []
 																).includes(source.id);
@@ -3617,10 +3656,10 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 											>
 												<div className="mb-3 gap-2 grid grid-cols-[minmax(0,1fr)_auto] items-start">
 													<div className="min-w-0 gap-2 flex items-center">
-														<span className="size-8 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
+														<span className="size-11 flex shrink-0 items-center justify-center overflow-hidden rounded-full">
 															<img
 																alt={signal.sourceName}
-																className="size-8 object-cover"
+																className="size-full object-cover"
 																onError={(event) =>
 																	event.currentTarget.parentElement?.setAttribute(
 																		"hidden",
