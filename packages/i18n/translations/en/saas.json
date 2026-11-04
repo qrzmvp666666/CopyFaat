@@ -870,6 +870,7 @@
 		},
 		"market": {
 			"eyebrow": "Market",
+			"noMatches": "No trading pairs found",
 			"search": "Search markets",
 			"title": "Markets"
 		},

@@ -620,10 +620,7 @@ function createInstrumentFromTradingSymbol(symbol: StoredTradingSymbol): Instrum
 		accent: getSymbolAccent(symbol.symbol),
 		base: symbol.baseAsset || getSymbolBase(symbol.symbol),
 		change: 0,
-		logo:
-			symbol.logoUrl ??
-			FALLBACK_LOGOS[symbol.symbol] ??
-			getGeneratedSvgDataUrl(symbol.symbol, symbol.baseAsset || symbol.symbol, "symbol"),
+		logo: symbol.logoUrl ?? FALLBACK_LOGOS[symbol.symbol] ?? "",
 		price: 0,
 		pricePrecision: symbol.pricePrecision ?? getDefaultPricePrecision(symbol.symbol),
 		symbol: symbol.symbol,
@@ -633,6 +630,15 @@ function createInstrumentFromTradingSymbol(symbol: StoredTradingSymbol): Instrum
 
 function isBinanceTradingSymbol(symbol: StoredTradingSymbol) {
 	return symbol.exchange.trim().toLowerCase() === "binance";
+}
+
+function isCryptoTradingSymbol(symbol: StoredTradingSymbol) {
+	const baseAsset = symbol.baseAsset.trim().toUpperCase();
+	return (
+		symbol.quoteAsset.trim().toUpperCase() === "USDT" &&
+		baseAsset !== "SPCX" &&
+		baseAsset !== "XAG"
+	);
 }
 
 async function canDisplaySymbolChart(
@@ -1215,6 +1221,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const locale = useLocale();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
 	const [signalPageSignals, setSignalPageSignals] = useState<StoredSignal[]>([]);
+	const [databaseTradingSymbols, setDatabaseTradingSymbols] = useState<StoredTradingSymbol[]>([]);
 	const [statusCounts, setStatusCounts] = useState<Record<SignalStatus, number>>({
 		active: 0,
 		history: 0,
@@ -1233,6 +1240,8 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const [selectedEntryStatus, setSelectedEntryStatus] = useState<EntryStatus>("all");
 	const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 	const [isSourcePickerOpen, setIsSourcePickerOpen] = useState(false);
+	const [isSymbolPickerOpen, setIsSymbolPickerOpen] = useState(false);
+	const [symbolPickerQuery, setSymbolPickerQuery] = useState("");
 	const [sourcePickerQuery, setSourcePickerQuery] = useState("");
 	const [followedSourceIds, setFollowedSourceIds] = useState<string[] | null>(null);
 	const [sourcePickerCategory, setSourcePickerCategory] =
@@ -1248,6 +1257,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const preview = GUIDE_DEMO_PREVIEW;
 	const [isSignalPageLoading, setIsSignalPageLoading] = useState(hasProAccess);
 	const [isKlinesLoading, setIsKlinesLoading] = useState(false);
+	const [klinesRefreshKey, setKlinesRefreshKey] = useState(0);
 	const [guideOpen, setGuideOpen] = useState(!hasProAccess);
 	const [guideCardHeight, setGuideCardHeight] = useState(300);
 	const [guideAvatarRevealCount, setGuideAvatarRevealCount] = useState(0);
@@ -1301,7 +1311,10 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		}
 
 		return webhookSignals.filter(
-			(signal) => !isDemoStrategyTrader(signal.source) && supportedSymbols.has(signal.symbol),
+			(signal) =>
+				!isDemoStrategyTrader(signal.source) &&
+				isCryptoTradingSymbol(signal.tradingSymbol) &&
+				supportedSymbols.has(signal.symbol),
 		);
 	}, [supportedSymbols, webhookSignals]);
 	const visibleSignalPageSignals = useMemo(() => {
@@ -1310,7 +1323,10 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		}
 
 		return signalPageSignals.filter(
-			(signal) => !isDemoStrategyTrader(signal.source) && supportedSymbols.has(signal.symbol),
+			(signal) =>
+				!isDemoStrategyTrader(signal.source) &&
+				isCryptoTradingSymbol(signal.tradingSymbol) &&
+				supportedSymbols.has(signal.symbol),
 		);
 	}, [signalPageSignals, supportedSymbols]);
 
@@ -1327,16 +1343,33 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		const symbols = new Map<string, StoredTradingSymbol>();
 		if (!hasProAccess) {
 			for (const symbol of preview.tradingSymbols) symbols.set(symbol.symbol, symbol);
+		} else {
+			for (const symbol of databaseTradingSymbols) {
+				if (isBinanceTradingSymbol(symbol) && isCryptoTradingSymbol(symbol)) {
+					symbols.set(symbol.symbol, symbol);
+				}
+			}
 		}
 
 		for (const signal of visibleWebhookSignals) {
-			symbols.set(signal.tradingSymbol.symbol, signal.tradingSymbol);
+			if (isCryptoTradingSymbol(signal.tradingSymbol)) {
+				symbols.set(signal.tradingSymbol.symbol, signal.tradingSymbol);
+			}
+		}
+		if (hasProAccess && !symbols.has("BTCUSDT")) {
+			symbols.set("BTCUSDT", {
+				id: "default-btcusdt",
+				symbol: "BTCUSDT",
+				baseAsset: "BTC",
+				quoteAsset: "USDT",
+				exchange: "binance",
+			});
 		}
 
 		return Array.from(symbols.values())
 			.map(createInstrumentFromTradingSymbol)
 			.sort(sortInstrumentsByPriority);
-	}, [hasProAccess, preview.tradingSymbols, visibleWebhookSignals]);
+	}, [databaseTradingSymbols, hasProAccess, preview.tradingSymbols, visibleWebhookSignals]);
 	const instruments = useMemo(
 		() =>
 			baseInstruments
@@ -1351,6 +1384,14 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		() => baseInstruments.map((instrument) => instrument.symbol).join("/"),
 		[baseInstruments],
 	);
+	const filteredSymbolOptions = useMemo(() => {
+		const query = symbolPickerQuery.trim().toLocaleLowerCase();
+		return instruments.filter(
+			(instrument) =>
+				!query ||
+				`${instrument.base} ${instrument.symbol}`.toLocaleLowerCase().includes(query),
+		);
+	}, [instruments, symbolPickerQuery]);
 	const sourceFilters = useMemo(() => {
 		const sources = new Map<string, Source>();
 		if (!hasProAccess) {
@@ -1377,6 +1418,14 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			return nameA < nameB ? -1 : nameA > nameB ? 1 : a.id.localeCompare(b.id);
 		});
 	}, [hasProAccess, preview.sources, visibleWebhookSignals]);
+	const pageSourceFilters = useMemo(() => {
+		if (!hasProAccess || !followedSourceIds?.length) {
+			return sourceFilters;
+		}
+
+		const followedIds = new Set(followedSourceIds);
+		return sourceFilters.filter((source) => followedIds.has(source.id));
+	}, [followedSourceIds, hasProAccess, sourceFilters]);
 	const guideAvatarSources = useMemo(() => sourceFilters.slice(0, 7), [sourceFilters]);
 
 	useEffect(() => {
@@ -1505,8 +1554,16 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		const controller = new AbortController();
 		const tradingSymbols = new Map<string, StoredTradingSymbol>();
 
+		for (const symbol of databaseTradingSymbols) {
+			if (isBinanceTradingSymbol(symbol) && isCryptoTradingSymbol(symbol)) {
+				tradingSymbols.set(symbol.symbol, symbol);
+			}
+		}
+
 		for (const signal of webhookSignals) {
-			tradingSymbols.set(signal.symbol, signal.tradingSymbol);
+			if (isCryptoTradingSymbol(signal.tradingSymbol)) {
+				tradingSymbols.set(signal.symbol, signal.tradingSymbol);
+			}
 		}
 		tradingSymbols.set("BTCUSDT", {
 			id: "default-btcusdt",
@@ -1571,6 +1628,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	}, [
 		hasProAccess,
 		isSignalsLoading,
+		databaseTradingSymbols,
 		preview.tradingSymbols,
 		symbolAvailabilityRetryVersion,
 		webhookSignals,
@@ -1578,12 +1636,29 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 	useEffect(() => {
 		if (!hasProAccess) {
+			setDatabaseTradingSymbols([]);
 			setWebhookSignals([]);
 			setIsSignalsLoading(false);
 			return;
 		}
 		let isMounted = true;
 		const controller = new AbortController();
+
+		async function loadDatabaseTradingSymbols() {
+			try {
+				const response = await fetch("/api/signals/symbols", {
+					cache: "no-store",
+					signal: controller.signal,
+				});
+				if (!response.ok) return;
+				const data = (await response.json()) as {
+					tradingSymbols: StoredTradingSymbol[];
+				};
+				if (isMounted) setDatabaseTradingSymbols(data.tradingSymbols);
+			} catch {
+				// Keep signal-derived symbols available if the catalog request fails.
+			}
+		}
 
 		async function loadWebhookSignals() {
 			try {
@@ -1603,6 +1678,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			}
 		}
 
+		void loadDatabaseTradingSymbols();
 		void loadWebhookSignals();
 		const eventSource = new EventSource("/api/signals/events");
 
@@ -1781,7 +1857,14 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			isMounted = false;
 			controller.abort();
 		};
-	}, [hasProAccess, selectedSymbol, selectedTimeframe]);
+	}, [hasProAccess, selectedSymbol, selectedTimeframe, klinesRefreshKey]);
+
+	function refreshSignalsWorkspace() {
+		setSignalPageRefreshKey((key) => key + 1);
+		setKlinesRefreshKey((key) => key + 1);
+	}
+
+	const isRefreshing = isSignalPageLoading || isKlinesLoading;
 
 	useEffect(() => {
 		if (!instruments.length) {
@@ -1964,8 +2047,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		return disconnect;
 	}, [hasProAccess, selectedSymbol, selectedTimeframe]);
 
-	const filteredSignals = signalPageTradeSignals.filter((signal) =>
-		selectedSourceIds.includes(signal.sourceId),
+	const visiblePageSourceIds = new Set(pageSourceFilters.map((source) => source.id));
+	const filteredSignals = signalPageTradeSignals.filter(
+		(signal) =>
+			selectedSourceIds.includes(signal.sourceId) &&
+			visiblePageSourceIds.has(signal.sourceId),
 	);
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
@@ -2602,7 +2688,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 												<span>{t("filters.allSources")}</span>
 											</button>
 										) : null}
-										{sourceFilters.map((source) => (
+										{pageSourceFilters.map((source) => (
 											<button
 												key={source.id}
 												type="button"
@@ -2688,7 +2774,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 											) : null}
 											{(guideOpen && guideStepIndex === 0
 												? sourceFilters.slice(0, 4)
-												: sourceFilters
+												: pageSourceFilters
 											).map((source, index) => {
 												const isIntroAvatar =
 													guideOpen && guideStepIndex === 0;
@@ -3016,10 +3102,13 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 										variant="ghost"
 										aria-label={t("actions.refresh")}
 										title={t("actions.refresh")}
-										className="size-9 text-white/55 hover:bg-white/5 hover:text-white"
-										onClick={() => setSignalPageRefreshKey((key) => key + 1)}
+										className="size-9 text-white/55 hover:bg-white/5 hover:text-white disabled:opacity-60"
+										disabled={isRefreshing || !hasProAccess}
+										onClick={refreshSignalsWorkspace}
 									>
-										<RefreshCwIcon className="size-4" />
+										<RefreshCwIcon
+											className={cn("size-4", isRefreshing && "animate-spin")}
+										/>
 									</Button>
 									<Button
 										type="button"
@@ -3193,9 +3282,13 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 										size="icon"
 										variant="ghost"
 										aria-label={t("actions.refresh")}
-										onClick={() => setSignalPageRefreshKey((key) => key + 1)}
+										title={t("actions.refresh")}
+										disabled={isRefreshing || !hasProAccess}
+										onClick={refreshSignalsWorkspace}
 									>
-										<RefreshCwIcon className="size-4" />
+										<RefreshCwIcon
+											className={cn("size-4", isRefreshing && "animate-spin")}
+										/>
 									</Button>
 								</div>
 								<Sheet open={isMobileFiltersOpen} onOpenChange={openMobileFilters}>
@@ -3348,12 +3441,111 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 							<div className="px-3 py-2 md:px-4 md:py-3 flex items-center justify-between bg-[#141414]">
 								<div className="gap-2 md:gap-3 min-w-0 flex items-center">
 									<ChartCandlestickIcon className="size-4 md:block hidden text-muted-foreground" />
-									<span className="font-mono md:text-sm font-semibold text-[15px]">
-										{selectedSymbol ||
-											(isChartLoading
-												? t("chart.loadingSymbol")
-												: t("chart.emptyTitle"))}
-									</span>
+									<Sheet
+										open={isSymbolPickerOpen}
+										onOpenChange={(open) => {
+											setIsSymbolPickerOpen(open);
+											if (!open) setSymbolPickerQuery("");
+										}}
+									>
+										<Button
+											type="button"
+											variant="ghost"
+											aria-label={t("market.search")}
+											title={t("market.search")}
+											className="h-9 gap-1 px-1.5 font-mono font-semibold hover:bg-white/5 md:hidden md:text-sm text-[15px]"
+											onClick={() => setIsSymbolPickerOpen(true)}
+										>
+											{selectedSymbol ||
+												(isChartLoading
+													? t("chart.loadingSymbol")
+													: t("chart.emptyTitle"))}
+											<ChevronDownIcon className="size-4 text-white/45" />
+										</Button>
+										<SheetContent
+											side="bottom"
+											showCloseButton={false}
+											className="md:hidden gap-0 border-white/10 !p-0 text-white flex h-[72dvh] max-h-[82dvh] flex-col overflow-hidden rounded-t-2xl bg-[#151515]"
+										>
+											<div className="mt-1 h-1 w-10 bg-white/20 mx-auto rounded-full" />
+											<div className="px-4 pt-4 pb-3">
+												<div className="relative">
+													<SearchIcon className="left-3 size-4 text-white/45 pointer-events-none absolute top-1/2 -translate-y-1/2" />
+													<input
+														value={symbolPickerQuery}
+														onChange={(event) =>
+															setSymbolPickerQuery(event.target.value)
+														}
+														placeholder={t("market.search")}
+														className="h-11 bg-white/10 py-2 pl-10 pr-4 text-sm text-white placeholder:text-white/40 focus-visible:ring-white/35 w-full rounded-full outline-none focus-visible:ring-1"
+													/>
+												</div>
+											</div>
+											<div className="min-h-0 px-4 flex-1 overflow-y-auto pb-[max(env(safe-area-inset-bottom),16px)]">
+												<div className="gap-1 flex flex-col">
+													{filteredSymbolOptions.map((instrument) => {
+														const isSelected =
+															instrument.symbol === selectedSymbol;
+														return (
+															<button
+																key={instrument.symbol}
+																type="button"
+																aria-pressed={isSelected}
+																onClick={() => {
+																	selectSymbol(instrument.symbol);
+																	setIsSymbolPickerOpen(false);
+																}}
+																className={cn(
+																	"min-h-14 gap-3 px-2 flex items-center rounded-lg text-left transition-colors",
+																	isSelected
+																		? "bg-white/10"
+																		: "hover:bg-white/5",
+																)}
+															>
+																<span
+																	className={cn(
+																		"size-10 text-sm font-bold text-white flex shrink-0 items-center justify-center overflow-hidden rounded-full",
+																		instrument.accent,
+																	)}
+																>
+																	{instrument.logo ? (
+																		<img
+																			alt=""
+																			className="size-full object-contain"
+																			src={instrument.logo}
+																		/>
+																	) : (
+																		instrument.base.slice(0, 1)
+																	)}
+																</span>
+																<span className="min-w-0 flex-1">
+																	<span className="text-sm font-medium block">
+																		{instrument.base}/USDT
+																	</span>
+																	<span className="text-xs text-white/45 block">
+																		{instrument.symbol}
+																	</span>
+																</span>
+																<CheckIcon
+																	className={cn(
+																		"size-4 text-white",
+																		isSelected
+																			? "opacity-100"
+																			: "opacity-0",
+																	)}
+																/>
+															</button>
+														);
+													})}
+													{filteredSymbolOptions.length === 0 && (
+														<p className="py-12 text-sm text-white/45 text-center">
+															{t("market.noMatches")}
+														</p>
+													)}
+												</div>
+											</div>
+										</SheetContent>
+									</Sheet>
 								</div>
 								<div className="gap-1 md:gap-2 flex shrink-0 items-center">
 									<div className="gap-0.5 md:p-0.5 md:rounded-md md:border md:bg-[#141414] flex items-center">

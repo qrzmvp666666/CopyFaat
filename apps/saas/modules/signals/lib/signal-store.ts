@@ -291,6 +291,30 @@ export async function listSignalPreviewTraders(): Promise<SignalsPreviewResponse
 		.slice(0, 8);
 }
 
+export async function listActiveTradingSymbols() {
+	const symbols = await db.tradingSymbol.findMany({
+		where: { isActive: true },
+		select: {
+			baseAsset: true,
+			displayName: true,
+			exchange: true,
+			id: true,
+			logoUrl: true,
+			pricePrecision: true,
+			quoteAsset: true,
+			symbol: true,
+		},
+		orderBy: [{ baseAsset: "asc" }, { quoteAsset: "asc" }],
+	});
+
+	return symbols.map((symbol) => ({
+		...symbol,
+		displayName: symbol.displayName ?? undefined,
+		logoUrl: symbol.logoUrl ?? undefined,
+		pricePrecision: symbol.pricePrecision ?? undefined,
+	}));
+}
+
 export async function listStoredSignals(
 	input: ListStoredSignalsInput = {},
 ): Promise<ListStoredSignalsResult> {

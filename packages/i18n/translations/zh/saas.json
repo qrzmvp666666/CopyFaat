@@ -870,6 +870,7 @@
 		},
 		"market": {
 			"eyebrow": "Market",
+			"noMatches": "没有找到交易品种",
 			"search": "搜索市场",
 			"title": "市场"
 		},

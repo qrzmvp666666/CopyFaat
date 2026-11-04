@@ -1,0 +1,80 @@
+[
+	{
+		"base": "BTC",
+		"url": "https://www.okx.com/cdn/announce/20230419/168187541969745fb238e-d1b3-4ce6-962b-13437f92960d.png",
+		"page": "https://www.okx.com/price/bitcoin-btc",
+		"path": "/images/trading-symbols/btc.png"
+	},
+	{
+		"base": "ETH",
+		"url": "https://www.okx.com/cdn/announce/20230419/1681875475851e1d1320b-a48f-4c1a-a6fd-3c4ec0a3cc7e.png",
+		"page": "https://www.okx.com/price/ethereum-eth",
+		"path": "/images/trading-symbols/eth.png"
+	},
+	{
+		"base": "AAVE",
+		"url": "https://www.okx.com/cdn/assets/imgs/221/C7C799C98C90D285.png",
+		"page": "https://www.okx.com/price/aave-aave",
+		"path": "/images/trading-symbols/aave.png"
+	},
+	{
+		"base": "ADA",
+		"url": "https://www.okx.com/cdn/assets/imgs/221/5FFE6AFD21B40243.png",
+		"page": "https://www.okx.com/price/cardano-ada",
+		"path": "/images/trading-symbols/ada.png"
+	},
+	{
+		"base": "JUP",
+		"url": "https://www.okx.com/cdn/announce/20240131/17066711701873f75f054-8364-433d-8e9b-3cd6dc089320.png",
+		"page": "https://www.okx.com/price/jupiter-jup",
+		"path": "/images/trading-symbols/jup.png"
+	},
+	{
+		"base": "MMT",
+		"url": "https://www.okx.com/cdn/announce/20251030/17618225249966a71a4d3-30b1-46e8-9a78-0591190e793d.png",
+		"page": "https://www.okx.com/price/momentum-mmt",
+		"path": "/images/trading-symbols/mmt.png"
+	},
+	{
+		"base": "XRP",
+		"url": "https://www.okx.com/cdn/announce/20230419/1681875637926ca623341-1b36-4572-b1f7-8132abf5aa38.png",
+		"page": "https://www.okx.com/price/xrp-xrp",
+		"path": "/images/trading-symbols/xrp.png"
+	},
+	{
+		"base": "SOL",
+		"url": "https://www.okx.com/cdn/announce/20230419/1681875530349f92aa4a2-db30-4964-999c-ef7eb6f3914a.png",
+		"page": "https://www.okx.com/price/solana-sol?locale=en_US",
+		"path": "/images/trading-symbols/sol.png"
+	},
+	{
+		"base": "ENA",
+		"url": "https://www.okx.com/cdn/announce/20250915/1757935158073b3ef0f94-8347-4dea-a1df-0065a1b9b13d.png",
+		"page": "https://www.okx.com/price/ethena-ena?locale=en_US",
+		"path": "/images/trading-symbols/ena.png"
+	},
+	{
+		"base": "INJ",
+		"url": "https://www.okx.com/cdn/announce/20250424/1745461396127319b7a14-0799-45f0-8774-72d2145cee27.png",
+		"page": "https://www.okx.com/price/injective-inj?locale=en_US",
+		"path": "/images/trading-symbols/inj.png"
+	},
+	{
+		"base": "THETA",
+		"url": "https://www.okx.com/cdn/assets/imgs/221/1B4B7CD35DD111DB.png",
+		"page": "https://www.okx.com/price/theta-network-theta?locale=en_US",
+		"path": "/images/trading-symbols/theta.png"
+	},
+	{
+		"base": "MAV",
+		"url": "https://assets.coingecko.com/coins/images/30850/standard/MAV_Logo.png?1696529701",
+		"path": "/images/trading-symbols/mav.png",
+		"page": "https://www.coingecko.com/en/coins/maverick-protocol"
+	},
+	{
+		"base": "EIGEN",
+		"url": "https://assets.coingecko.com/coins/images/37441/standard/eigencloud.jpg?1751003565",
+		"path": "/images/trading-symbols/eigen.png",
+		"page": "https://www.coingecko.com/en/coins/eigencloud"
+	}
+]
