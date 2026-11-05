@@ -834,11 +834,41 @@
 			"unfollow": "Unfollow {name}"
 		},
 		"guide": {
+			"filterDemo": {
+				"bothDirections": "Both directions",
+				"label": "Signal filter demo",
+				"choose": "Filter signals by {dimension}",
+				"description": "A preview of focusing on signals that match your preferences.",
+				"compare": "Compare preview and Pro"
+			},
+			"comparison": {
+				"title": "From market previews to complete signals",
+				"feature": "Features",
+				"free": "Preview",
+				"market": "Live markets and candles",
+				"signals": "Signals from your chosen KOLs",
+				"levels": "Entry, TP/SL and risk-reward",
+				"filters": "Direction, time and entry filters",
+				"included": "Included",
+				"demo": "Demo only"
+			},
+			"back": "Back",
+			"offerEntry": "Save up to 79%",
+			"carousel": {
+				"label": "KOL signal examples",
+				"role": "carousel",
+				"slide": "slide",
+				"example": "Demo signals · Not live trading advice",
+				"pause": "Pause",
+				"play": "Auto-play",
+				"position": "Slide {current} of {total}",
+				"goTo": "Show signal {current}"
+			},
 			"close": "Maybe later",
 			"finish": "Start using",
 			"introEyebrow": "Now, let's focus on signals.",
-			"introDescription": "Follow traders to explore their BTC signals. You can change your picks anytime.",
-			"introCta": "Get Started",
+			"introDescription": "View signals from all KOLs together on one candlestick chart.",
+			"introCta": "Try It Now",
 			"login": "Already have an account? Log in",
 			"viewPlans": "View membership plans",
 			"preview": "Live market preview. Pro membership unlocks complete signals.",
@@ -853,8 +883,9 @@
 					"description": "This ticker syncs live prices and moves for major pairs. For steadier market, chart, and signal sync, switch your network or proxy node to Japan or Singapore first."
 				},
 				"traders": {
-					"title": "Choose traders",
-					"description": "Select an avatar to view its signals."
+					"title": "Real-time KOL signals, all in one place",
+					"description": "Select an avatar to view its signals.",
+					"eyebrow": "No more switching between TG and Discord communities"
 				},
 				"filters": {
 					"title": "Filter signals",
@@ -863,11 +894,13 @@
 				},
 				"chart": {
 					"title": "Explore the chart",
-					"description": "See price movement and signal markers."
+					"description": "See price movement and signal markers.",
+					"eyebrow": "Every community signal in view"
 				},
 				"signalList": {
-					"title": "View signal details",
-					"description": "Review entry, take-profit, stop-loss, and status."
+					"title": "Signal details for your favorite pairs and KOLs",
+					"description": "Review entry, take-profit, stop-loss, and status.",
+					"eyebrow": "Live risk-reward ratios and complete signal lists"
 				}
 			}
 		},

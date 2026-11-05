@@ -82,9 +82,9 @@ const ENTRY_STATUSES = ["all", "pending", "entered"] as const;
 const SOURCE_PICKER_CATEGORIES = ["watchlist", "contract"] as const;
 const GUIDE_STEP_EVENTS = [
 	"Choose Traders",
-	"Filter Signals",
 	"Explore Chart",
 	"View Signal Details",
+	"Filter Signals",
 ] as const;
 const SOURCE_FOLLOW_STORAGE_KEY = "signalfast:followed-sources:v1";
 const GUIDE_KOL_AVATARS = [1, 2, 3, 4, 5] as const;
@@ -101,7 +101,7 @@ const GUIDE_DEMO_PREVIEW: SignalsPreviewResponse = {
 	})),
 	signals: [
 		{
-			sourceName: "KOL 01",
+			sourceName: "三马哥",
 			avatarUrl: "/images/hero-floating/icon-1.png",
 			symbol: "BTCUSDT",
 			direction: "long",
@@ -113,7 +113,7 @@ const GUIDE_DEMO_PREVIEW: SignalsPreviewResponse = {
 			takeProfit: 68_560,
 		},
 		{
-			sourceName: "KOL 03",
+			sourceName: "所长",
 			avatarUrl: "/images/hero-floating/icon-3.png",
 			symbol: "ETHUSDT",
 			direction: "short",
@@ -135,6 +135,30 @@ const GUIDE_DEMO_PREVIEW: SignalsPreviewResponse = {
 			stopLoss: 66_400,
 			submittedAt: "2026-10-30T18:45:00.000Z",
 			takeProfit: 68_120,
+		},
+		{
+			sourceName: "飞扬",
+			avatarUrl: "/images/hero-floating/icon-2.png",
+			symbol: "BTCUSDT",
+			direction: "short",
+			entry: 68_200,
+			entryStatus: "pending",
+			status: "active",
+			stopLoss: 68_800,
+			submittedAt: "2026-10-30T08:00:00.000Z",
+			takeProfit: 67_000,
+		},
+		{
+			sourceName: "军长",
+			avatarUrl: "/images/hero-floating/icon-4.png",
+			symbol: "BTCUSDT",
+			direction: "long",
+			entry: 66_500,
+			entryStatus: "entered",
+			status: "active",
+			stopLoss: 65_900,
+			submittedAt: "2026-10-29T14:00:00.000Z",
+			takeProfit: 67_700,
 		},
 	],
 	tradingSymbols: ["BTCUSDT", "ETHUSDT"].map((symbol) => ({
@@ -202,6 +226,83 @@ const SIGNALS_SKELETON_STYLES = `
 		animation: none;
 		opacity: 0.45;
 	}
+}
+`;
+
+const SIGNALS_GUIDE_INTRO_STYLES = `
+@keyframes signals-guide-enter-from-top {
+	from { opacity: 0; transform: translateY(-24px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes signals-guide-enter-from-bottom {
+	from { opacity: 0; transform: translateY(24px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+.signals-guide-intro-top {
+	animation: signals-guide-enter-from-top 900ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.signals-guide-intro-avatar {
+	animation: signals-guide-enter-from-top 760ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.signals-guide-intro-bottom {
+	animation: signals-guide-enter-from-bottom 850ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+@keyframes signals-guide-gift-open {
+	0%, 12% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+	17% { opacity: 1; transform: translateY(-4px) rotate(-12deg) scale(1.08); }
+	21% { opacity: 1; transform: translateY(0) rotate(12deg) scale(0.92); }
+	25% { opacity: 1; transform: translateY(-6px) rotate(-8deg) scale(1.2); }
+	30%, 92% { opacity: 0; transform: translateY(-12px) scale(1.65); }
+	96%, 100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes signals-guide-offer-reveal {
+	0%, 29% { opacity: 0; transform: translateY(6px) scale(0.85); }
+	36%, 86% { opacity: 1; transform: translateY(0) scale(1); }
+	93%, 100% { opacity: 0; transform: translateY(-4px) scale(0.96); }
+}
+@keyframes signals-guide-confetti {
+	0%, 24% { opacity: 0; transform: translate(0, 0) scale(0); }
+	27% { opacity: 1; transform: translate(0, 0) scale(1); }
+	40% { opacity: 0; transform: translate(var(--burst-x), var(--burst-y)) rotate(150deg) scale(0.5); }
+	100% { opacity: 0; transform: translate(var(--burst-x), var(--burst-y)) scale(0); }
+}
+.signals-guide-gift {
+	position: absolute;
+	left: calc(75% - 14px);
+	animation: signals-guide-gift-open 8s ease-in-out infinite;
+}
+.signals-guide-offer {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	animation: signals-guide-offer-reveal 8s ease-in-out infinite;
+}
+.signals-guide-confetti {
+	position: absolute;
+	left: calc(75% - 2px);
+	top: 50%;
+	width: 5px;
+	height: 7px;
+	border-radius: 1px;
+	pointer-events: none;
+	animation: signals-guide-confetti 8s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.signals-guide-intro-top,
+	.signals-guide-intro-avatar,
+	.signals-guide-intro-bottom,
+	.signals-guide-gift,
+	.signals-guide-offer,
+	.signals-guide-confetti {
+		animation: none;
+	}
+	.signals-guide-gift, .signals-guide-confetti { display: none; }
 }
 `;
 
@@ -1357,7 +1458,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const guideAvatarSources = useMemo(() => sourceFilters.slice(0, 7), [sourceFilters]);
 
 	useEffect(() => {
-		if (!guideOpen || guideStepIndex > 1) {
+		if (!guideOpen || guideStepIndex > 3) {
 			setGuideAvatarRevealCount(guideAvatarSources.length);
 			setGuideActiveSourceId(null);
 			setGuideFilterRevealCount(6);
@@ -1366,7 +1467,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			return;
 		}
 
-		if (guideStepIndex === 1) {
+		if (guideStepIndex === 3) {
 			setGuideAvatarRevealCount(guideAvatarSources.length);
 			setGuideActiveSourceId(null);
 			setGuideIntroAnimating(true);
@@ -1394,6 +1495,15 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 				for (const timer of revealTimers) window.clearTimeout(timer);
 				window.clearTimeout(finishTimer);
 			};
+		}
+
+		if (guideStepIndex === 1 || guideStepIndex === 2) {
+			setGuideAvatarRevealCount(guideAvatarSources.length);
+			setGuideActiveSourceId(null);
+			setGuideFilterRevealCount(6);
+			setGuideActiveFilterOption(null);
+			setGuideIntroAnimating(false);
+			return;
 		}
 
 		if (guideAvatarSources.length === 0) {
@@ -1989,7 +2099,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 		return binanceCandles.candles;
 	}, [binanceCandles, selectedSymbol, selectedTimeframe]);
-	const isGuideChartPreview = guideOpen && guideStepIndex === 2 && !hasProAccess;
+	const isGuideChartPreview = guideOpen && guideStepIndex === 1 && !hasProAccess;
 	const chartCandles = isGuideChartPreview ? GUIDE_DEMO_CANDLES : candles;
 	const displayedChartSignals = isGuideChartPreview
 		? GUIDE_DEMO_SIGNAL_DEFINITIONS
@@ -2144,12 +2254,6 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			description: t("guide.steps.traders.description"),
 		},
 		{
-			icon: TargetIcon,
-			target: "filters",
-			title: t("guide.steps.filters.title"),
-			description: t("guide.steps.filters.description"),
-		},
-		{
 			icon: ChartCandlestickIcon,
 			target: "chart",
 			title: t("guide.steps.chart.title"),
@@ -2160,6 +2264,12 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			target: "signalList",
 			title: t("guide.steps.signalList.title"),
 			description: t("guide.steps.signalList.description"),
+		},
+		{
+			icon: TargetIcon,
+			target: "filters",
+			title: t("guide.steps.filters.title"),
+			description: t("guide.steps.filters.description"),
 		},
 	];
 
@@ -2284,12 +2394,24 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 				<SignalsGuideOverlay
 					onHeightChange={setGuideCardHeight}
 					activeFilterOption={guideActiveFilterOption}
+					chartPreview={{
+						candles: GUIDE_DEMO_CANDLES,
+						formatPrice,
+						pricePrecision: chartPricePrecision,
+						signals: GUIDE_DEMO_SIGNAL_DEFINITIONS,
+					}}
+					signalPreviews={preview.signals}
 					filterRevealCount={guideFilterRevealCount}
 					isAuthenticated={isAuthenticated}
 					isIntroComplete={!guideIntroAnimating || !isMobilePaywall}
 					requiresMembership={!hasProAccess}
 					onClose={closeGuide}
 					onNext={goToNextGuideStep}
+					onBack={() => setGuideStepIndex((current) => Math.max(0, current - 1))}
+					onViewPlans={() => {
+						setGuideOpen(false);
+						setPaywallOpen(true);
+					}}
 					step={guideSteps[guideStepIndex]}
 					stepIndex={guideStepIndex}
 					totalSteps={guideSteps.length}
@@ -2426,7 +2548,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 				<header
 					className={cn(
 						"px-4 py-2 backdrop-blur shrink-0 border-b bg-[#141414]/80",
-						guideOpen && guideStepIndex === 2
+						guideOpen && guideStepIndex === 1
 							? "md:block hidden"
 							: guideOpen
 								? "block"
@@ -2586,7 +2708,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 						<section
 							className={cn(
 								"px-3 py-3 shrink-0 bg-[#141414]",
-								guideOpen && guideStepIndex === 2 && "max-md:hidden",
+								guideOpen && guideStepIndex === 1 && "max-md:hidden",
 							)}
 						>
 							<div className="gap-3 flex flex-col">
@@ -3371,7 +3493,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 							className={cn(
 								"xl:min-h-0 xl:flex-1 flex flex-col",
 								isChartCollapsed && "hidden",
-								guideOpen && guideStepIndex === 2 && "max-md:-mt-6",
+								guideOpen && guideStepIndex === 1 && "max-md:-mt-6",
 							)}
 							data-guide-target="chart"
 						>
@@ -3519,7 +3641,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 								style={
 									guideOpen
 										? {
-												height: `clamp(80px, calc(100dvh - ${guideCardHeight + (guideStepIndex === 2 ? 220 : 200)}px), 420px)`,
+												height: `clamp(80px, calc(100dvh - ${guideCardHeight + (guideStepIndex === 1 ? 220 : 200)}px), 420px)`,
 												minHeight: 0,
 												flex: "none",
 											}
@@ -3567,7 +3689,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 							guideOpen
 								? {
 										alignSelf: "start",
-										maxHeight: `calc(100dvh - ${guideCardHeight + (guideStepIndex === 3 ? 180 : 100)}px)`,
+										maxHeight: `calc(100dvh - ${guideCardHeight + (guideStepIndex === 2 ? 180 : 100)}px)`,
 										overflowY: "auto",
 									}
 								: undefined
@@ -3575,7 +3697,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 						className={cn(
 							"group min-h-0 xl:flex xl:flex-col xl:overflow-hidden xl:border-l xl:border-t-0 relative bg-[#141414]",
 							guideOpen &&
-								guideStepIndex === 3 &&
+								guideStepIndex === 2 &&
 								"xl:order-none xl:min-h-0 order-first flex min-h-[40dvh] flex-col",
 						)}
 					>
@@ -3640,7 +3762,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 							className={cn(
 								"divide-white/[0.08] px-5 py-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:overscroll-contain xl:p-3 divide-y",
 								guideOpen &&
-									guideStepIndex === 3 &&
+									guideStepIndex === 2 &&
 									"flex flex-1 flex-col justify-center",
 								isSignalPanelCollapsed && "xl:hidden",
 							)}
@@ -3969,6 +4091,13 @@ function ChartSkeleton() {
 interface SignalsGuideOverlayProps {
 	onHeightChange: (height: number) => void;
 	activeFilterOption: number | null;
+	chartPreview: {
+		candles: Candle[];
+		formatPrice: (value: number, fractionDigits?: number) => string;
+		pricePrecision: number;
+		signals: SignalChartSignal[];
+	};
+	signalPreviews: SignalsPreviewResponse["signals"];
 	filterRevealCount: number;
 	isAuthenticated: boolean;
 	isIntroComplete: boolean;
@@ -3978,11 +4107,15 @@ interface SignalsGuideOverlayProps {
 	totalSteps: number;
 	onClose: () => void;
 	onNext: () => void;
+	onBack: () => void;
+	onViewPlans: () => void;
 }
 
 function SignalsGuideOverlay({
 	onHeightChange,
 	activeFilterOption,
+	chartPreview,
+	signalPreviews,
 	filterRevealCount,
 	isAuthenticated,
 	isIntroComplete,
@@ -3992,6 +4125,8 @@ function SignalsGuideOverlay({
 	totalSteps,
 	onClose,
 	onNext,
+	onBack,
+	onViewPlans,
 }: SignalsGuideOverlayProps) {
 	const t = useTranslations("signals.guide");
 	const locale = useLocale() as Locale;
@@ -4068,7 +4203,10 @@ function SignalsGuideOverlay({
 		};
 	}, [step.target, stepIndex]);
 
-	if (stepIndex === 0) {
+	if (stepIndex <= 3) {
+		const isChartIntro = stepIndex === 1;
+		const isSignalIntro = stepIndex === 2;
+		const isFilterIntro = stepIndex === 3;
 		const kolNames = ["三马哥", "飞扬", "所长", "军长", "舒琴"];
 		const avatarSources = [
 			"/images/hero-floating/icon-1.png",
@@ -4085,71 +4223,187 @@ function SignalsGuideOverlay({
 				aria-modal="true"
 				aria-label={step.title}
 			>
-				<div className="max-w-md mx-auto w-full text-center">
-					<p className="text-base font-medium text-white/60">{t("introEyebrow")}</p>
+				<style>{SIGNALS_GUIDE_INTRO_STYLES}</style>
+				<div className="inset-x-0 px-5 absolute top-[max(env(safe-area-inset-top),12px)] flex items-center justify-between">
+					{stepIndex > 0 ? (
+						<button
+							type="button"
+							onClick={onBack}
+							className="size-11 text-white/70 hover:text-white flex items-center justify-center rounded-full"
+							aria-label={t("back")}
+						>
+							<ChevronLeftIcon className="size-5" aria-hidden="true" />
+						</button>
+					) : (
+						<span />
+					)}
+					<button
+						type="button"
+						onClick={onViewPlans}
+						className="min-h-11 gap-2 px-3 text-xs font-semibold text-white/85 hover:text-white flex items-center rounded-full"
+						aria-label={`${t("viewPlans")} · ${t("offerEntry")}`}
+					>
+						<span
+							className="min-h-8 relative inline-flex items-center"
+							aria-hidden="true"
+						>
+							<span className="signals-guide-gift text-2xl">🎁</span>
+							{[
+								[-24, -20],
+								[0, -30],
+								[25, -23],
+								[35, 0],
+								[24, 23],
+								[-22, 20],
+							].map(([x, y], index) => (
+								<span
+									key={index}
+									className="signals-guide-confetti"
+									style={
+										{
+											"--burst-x": `${x}px`,
+											"--burst-y": `${y}px`,
+											backgroundColor: ["#fbbf24", "#fb7185", "#34d399"][
+												index % 3
+											],
+										} as CSSProperties
+									}
+								/>
+							))}
+							<span className="signals-guide-offer">
+								<span className="text-xl">🎉</span>
+								{t("offerEntry")}
+							</span>
+						</span>
+					</button>
+				</div>
+				<div
+					key={`intro-top-${stepIndex}`}
+					className="signals-guide-intro-top max-w-md mx-auto w-full text-center"
+				>
+					<p className="text-base font-medium text-white/60">
+						{t(
+							stepIndex === 0
+								? "steps.traders.eyebrow"
+								: stepIndex === 1
+									? "steps.chart.eyebrow"
+									: stepIndex === 2
+										? "steps.signalList.eyebrow"
+										: "introEyebrow",
+						)}
+					</p>
 					<h2 className="mt-5 text-3xl font-bold tracking-normal sm:text-4xl leading-[1.12]">
 						{step.title}
 					</h2>
-					<p className="mt-6 max-w-sm text-base leading-7 text-white/60 sm:text-lg mx-auto">
-						{t("introDescription")}
-					</p>
 				</div>
 
-				<div className="gap-x-5 gap-y-7 py-10 sm:gap-x-8 sm:gap-y-9 mx-auto my-auto grid w-full max-w-[390px] grid-cols-3">
-					{avatarSources.map((src, index) => (
-						<div
-							key={src}
-							className={cn(
-								"gap-2 flex flex-col items-center",
-								index === 1 && "translate-y-3",
-								index === 3 && "-translate-y-2",
-								index === 4 && "translate-y-2",
-							)}
-						>
-							<div
-								className={cn(
-									"border-white/15 p-1 sm:size-[88px] size-[76px] overflow-hidden rounded-[22px] border bg-[#171717]",
-									index % 2 === 0 ? "rotate-[-7deg]" : "rotate-[6deg]",
-								)}
-							>
-								<Image
-									src={src}
-									alt={kolNames[index]}
-									width={88}
-									height={88}
-									className="size-full rounded-[17px] object-cover"
-								/>
-							</div>
-							<span className="text-sm text-white/75">{kolNames[index]}</span>
+				{isFilterIntro ? (
+					<div key="intro-filters" className="py-10 mx-auto my-auto w-full max-w-[390px]">
+						<SignalsGuideIntroFilters />
+					</div>
+				) : isChartIntro ? (
+					<div
+						key="intro-chart"
+						className="signals-guide-intro-top py-10 mx-auto my-auto w-full max-w-[390px]"
+					>
+						<div className="mb-3 px-1 flex items-center justify-between">
+							<span className="text-base font-semibold text-white">BTCUSDT</span>
+							<span className="text-xs text-white/50">
+								15m　<span className="text-white">1h</span>　4h　1d
+							</span>
 						</div>
-					))}
-				</div>
+						<div className="border-white/10 h-[min(38dvh,320px)] min-h-[220px] overflow-hidden rounded-xl border bg-[#141414]">
+							<TradingViewSignalChart
+								activeSignal={chartPreview.signals[0] ?? null}
+								candles={chartPreview.candles}
+								className="h-full"
+								formatPrice={chartPreview.formatPrice}
+								focusedSignalId={null}
+								labels={{
+									entry: t("chart.entry"),
+									stopLoss: t("chart.stopLoss"),
+									takeProfit: t("chart.takeProfit"),
+								}}
+								locale={locale}
+								onSelectSignal={() => undefined}
+								pricePrecision={chartPreview.pricePrecision}
+								signals={chartPreview.signals}
+								symbol="BTCUSDT"
+								timeframe="1h"
+							/>
+						</div>
+					</div>
+				) : isSignalIntro ? (
+					<div
+						key="intro-signal"
+						className="signals-guide-intro-top py-10 mx-auto my-auto w-full max-w-[390px]"
+					>
+						<SignalsGuideSignalCarousel
+							formatPrice={chartPreview.formatPrice}
+							locale={locale}
+							signals={signalPreviews}
+						/>
+					</div>
+				) : (
+					<div
+						key="intro-kols"
+						className="gap-x-5 gap-y-7 py-10 sm:gap-x-8 sm:gap-y-9 mx-auto my-auto grid w-full max-w-[390px] grid-cols-3"
+					>
+						{avatarSources.map((src, index) => (
+							<div
+								key={src}
+								className={cn(
+									"signals-guide-intro-avatar gap-2 flex flex-col items-center",
+									index === 1 && "translate-y-3",
+									index === 3 && "-translate-y-2",
+									index === 4 && "translate-y-2",
+								)}
+								style={{ animationDelay: `${180 + index * 130}ms` }}
+							>
+								<div
+									className="sm:size-[88px] size-[76px] overflow-hidden"
+									style={{ borderRadius: "50%", clipPath: "circle(50%)" }}
+								>
+									<Image
+										src={src}
+										alt={kolNames[index]}
+										width={88}
+										height={88}
+										className="size-full object-cover"
+										style={{ borderRadius: "50%" }}
+									/>
+								</div>
+								<span className="text-sm text-white/75">{kolNames[index]}</span>
+							</div>
+						))}
+					</div>
+				)}
 
-				<div className="max-w-lg mx-auto mt-auto w-full">
-					{!isAuthenticated ? (
-						<Link
-							href={`${localizePath("/login", locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale))}`}
-							className="mb-3 text-sm font-medium text-white/65 hover:text-white block text-center"
-						>
-							{t("login")}
-						</Link>
-					) : null}
+				<div
+					key={`intro-bottom-${stepIndex}`}
+					className="signals-guide-intro-bottom max-w-lg mx-auto mt-auto w-full text-center"
+				>
+					<p className="mb-5 px-3 text-base leading-7 text-white/60 sm:text-lg">
+						{isFilterIntro || isChartIntro || isSignalIntro
+							? step.description
+							: t("introDescription")}
+					</p>
 					<Button
 						type="button"
 						variant="primary"
-						className="border-white bg-white text-lg font-semibold text-neutral-950 hover:bg-white/90 h-[68px] w-full rounded-full shadow-[0_12px_36px_rgba(255,255,255,0.08)]"
+						className="border-white bg-white text-lg font-semibold text-neutral-950 hover:bg-white/90 mx-auto w-full rounded-full shadow-[0_12px_36px_rgba(255,255,255,0.08)]"
+						style={{ height: 52, maxWidth: 346 }}
 						onClick={onNext}
 					>
-						{t("introCta")}
+						{stepIndex === 0 ? t("introCta") : t("next")}
 					</Button>
-					{requiresMembership ? (
-						<button
-							type="button"
-							onClick={onClose}
-							className="mt-4 py-1 text-sm text-white/45 hover:text-white/75 w-full text-center"
+					{!isAuthenticated ? (
+						<Link
+							href={`${localizePath("/login", locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale))}`}
+							className="mt-4 text-sm font-medium text-white/65 hover:text-white block text-center"
 						>
-							{t("close")}
-						</button>
+							{t("login")}
+						</Link>
 					) : null}
 				</div>
 			</div>
@@ -4366,6 +4620,360 @@ function SignalsGuideFilterOptions({
 						</div>
 					</div>
 				))}
+			</div>
+		</div>
+	);
+}
+
+function SignalsGuideIntroFilters() {
+	const t = useTranslations("signals");
+	const [frame, setFrame] = useState(0);
+	const [isReducedMotion, setIsReducedMotion] = useState(false);
+	useEffect(() => {
+		const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+		const update = () => setIsReducedMotion(media.matches);
+		update();
+		media.addEventListener("change", update);
+		return () => media.removeEventListener("change", update);
+	}, []);
+	useEffect(() => {
+		if (isReducedMotion || frame >= 12) return;
+		const timer = window.setTimeout(() => setFrame((value) => value + 1), 1000);
+		return () => window.clearTimeout(timer);
+	}, [frame, isReducedMotion]);
+	const rows = [
+		{
+			label: t("filters.direction"),
+			options: [
+				t("direction.long"),
+				t("direction.short"),
+				t("guide.filterDemo.bothDirections"),
+			],
+		},
+		{
+			label: t("filters.timeRange"),
+			options: [
+				t("filters.timeRanges.24h"),
+				t("filters.timeRanges.7d"),
+				t("filters.timeRanges.30d"),
+			],
+		},
+		{
+			label: t("filters.entryStatus"),
+			options: [
+				t("filters.entryStatuses.entered"),
+				t("filters.entryStatuses.pending"),
+				t("filters.entryStatuses.all"),
+			],
+		},
+		{ label: t("signalsPanel.expectedRr"), options: ["≥ 1:1", "≥ 2:1", "≥ 3:1"] },
+	];
+	if (frame >= 12) return <SignalsGuidePlanComparison />;
+	const rowIndex = Math.floor(frame / 3);
+	const row = rows[rowIndex];
+	const optionIndex = frame % 3;
+	return (
+		<section aria-label={t("guide.filterDemo.label")} className="text-center">
+			<div className="mb-8 gap-3 flex items-center justify-center">
+				{rows.map((item, index) => (
+					<button
+						type="button"
+						key={item.label}
+						onClick={() => setFrame(index * 3)}
+						aria-pressed={rowIndex === index}
+						className={cn(
+							"h-8 px-2 text-xs rounded-full transition-colors",
+							rowIndex === index
+								? "bg-emerald-300/10 text-emerald-200"
+								: "text-white/40 hover:text-white/75",
+						)}
+					>
+						{item.label}
+					</button>
+				))}
+			</div>
+			<p className="text-lg text-white/80">
+				{t("guide.filterDemo.choose", { dimension: row.label })}
+			</p>
+			<div
+				key={rowIndex}
+				className="signals-guide-intro-top my-6 gap-3 flex min-h-[240px] flex-col items-center justify-center"
+			>
+				{[-1, 0, 1].map((offset) => {
+					const index = (optionIndex + offset + row.options.length) % row.options.length;
+					return (
+						<button
+							type="button"
+							key={offset}
+							onClick={() => setFrame(rowIndex * 3 + index)}
+							aria-pressed={offset === 0}
+							className={cn(
+								"min-h-14 transition-all duration-500 motion-reduce:transition-none",
+								offset === 0
+									? "text-5xl font-bold sm:text-6xl text-[#b5f7b2]"
+									: "text-3xl font-semibold text-[#b5f7b2]/35 blur-[0.3px]",
+							)}
+						>
+							<span
+								key={`${rowIndex}-${index}`}
+								className={
+									offset === 0
+										? "signals-guide-intro-top inline-block"
+										: undefined
+								}
+							>
+								{row.options[index]}
+							</span>
+						</button>
+					);
+				})}
+			</div>
+			<p className="text-sm leading-6 text-white/45">{t("guide.filterDemo.description")}</p>
+			<button
+				type="button"
+				onClick={() => setFrame(isReducedMotion && rowIndex < 3 ? (rowIndex + 1) * 3 : 12)}
+				className="mt-5 min-h-11 px-4 text-sm text-white/60 hover:text-white"
+			>
+				{t(isReducedMotion && rowIndex < 3 ? "guide.next" : "guide.filterDemo.compare")}
+			</button>
+		</section>
+	);
+}
+
+function SignalsGuidePlanComparison() {
+	const t = useTranslations("signals.guide.comparison");
+	return (
+		<div className="signals-guide-intro-bottom border-white/10 overflow-hidden rounded-2xl border bg-[#141414]">
+			<table className="text-sm w-full table-fixed">
+				<caption className="p-4 text-base font-semibold text-white text-left">
+					{t("title")}
+				</caption>
+				<thead>
+					<tr className="border-white/10 text-white/55 border-b">
+						<th scope="col" className="px-4 py-3 font-medium w-[54%] text-left">
+							{t("feature")}
+						</th>
+						<th scope="col" className="px-1 py-3 font-medium">
+							{t("free")}
+						</th>
+						<th
+							scope="col"
+							className="bg-emerald-400/10 px-1 py-3 font-semibold text-emerald-400"
+						>
+							Pro
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					{(["market", "signals", "levels", "filters"] as const).map((feature, index) => (
+						<tr key={feature} className="border-white/10 border-b last:border-0">
+							<th
+								scope="row"
+								className="px-4 py-4 font-normal leading-6 text-white/80 text-left"
+							>
+								{t(feature)}
+							</th>
+							<td className="px-1 py-4 text-center">
+								{index === 0 ? (
+									<CheckIcon
+										aria-label={t("included")}
+										className="size-5 text-white/65 mx-auto"
+									/>
+								) : (
+									<span className="text-xs text-white/45">{t("demo")}</span>
+								)}
+							</td>
+							<td className="bg-emerald-400/10 px-1 py-4 text-center">
+								<CheckIcon
+									aria-label={t("included")}
+									className="size-5 text-emerald-400 mx-auto"
+								/>
+							</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+	);
+}
+
+interface SignalsGuideSignalCarouselProps {
+	formatPrice: (value: number, fractionDigits?: number) => string;
+	locale: string;
+	signals: SignalsPreviewResponse["signals"];
+}
+
+function SignalsGuideSignalCarousel({
+	formatPrice,
+	locale,
+	signals,
+}: SignalsGuideSignalCarouselProps) {
+	const t = useTranslations("signals.guide.carousel");
+	const viewportRef = useRef<HTMLDivElement>(null);
+	const [activeIndex, setActiveIndex] = useState(0);
+	const [isPaused, setIsPaused] = useState(false);
+	const [isInteracting, setIsInteracting] = useState(false);
+	const [isReducedMotion, setIsReducedMotion] = useState(true);
+
+	useEffect(() => {
+		const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+		const update = () => setIsReducedMotion(query.matches);
+		update();
+		query.addEventListener("change", update);
+		return () => query.removeEventListener("change", update);
+	}, []);
+
+	function selectSlide(index: number) {
+		const viewport = viewportRef.current;
+		if (!viewport) return;
+		viewport.scrollTo({
+			left: index * viewport.clientWidth,
+			behavior: isReducedMotion ? "instant" : "smooth",
+		});
+	}
+
+	useEffect(() => {
+		if (isPaused || isInteracting || isReducedMotion || signals.length < 2) return;
+		const timer = window.setInterval(() => {
+			if (document.hidden) return;
+			const viewport = viewportRef.current;
+			if (!viewport) return;
+			viewport.scrollTo({
+				left: ((activeIndex + 1) % signals.length) * viewport.clientWidth,
+				behavior: "smooth",
+			});
+		}, 1500);
+		return () => window.clearInterval(timer);
+	}, [activeIndex, isPaused, isInteracting, isReducedMotion, signals.length]);
+
+	return (
+		<section
+			aria-label={t("label")}
+			aria-roledescription={t("role")}
+			onMouseEnter={() => setIsInteracting(true)}
+			onMouseLeave={() => setIsInteracting(false)}
+			onFocusCapture={() => setIsInteracting(true)}
+			onBlurCapture={(event) => {
+				if (!event.currentTarget.contains(event.relatedTarget)) setIsInteracting(false);
+			}}
+		>
+			<div
+				ref={viewportRef}
+				className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain rounded-xl"
+				role="group"
+				aria-label={t("label")}
+				onPointerDown={() => setIsPaused(true)}
+				onScroll={(event) => {
+					const viewport = event.currentTarget;
+					setActiveIndex(Math.round(viewport.scrollLeft / viewport.clientWidth));
+				}}
+			>
+				{signals.map((signal, index) => (
+					<div
+						key={`${signal.sourceName}-${signal.symbol}`}
+						className="w-full shrink-0 snap-center"
+						role="group"
+						aria-roledescription={t("slide")}
+						aria-label={t("position", { current: index + 1, total: signals.length })}
+					>
+						<SignalsGuideIntroSignal
+							formatPrice={formatPrice}
+							locale={locale}
+							signal={signal}
+						/>
+					</div>
+				))}
+			</div>
+			<div className="mt-4 gap-2 flex items-center justify-center">
+				{signals.map((signal, index) => (
+					<button
+						key={signal.sourceName}
+						type="button"
+						className="h-7 min-w-7 flex items-center justify-center"
+						aria-label={t("goTo", { current: index + 1 })}
+						aria-current={activeIndex === index ? "true" : undefined}
+						onClick={() => {
+							setIsPaused(true);
+							selectSlide(index);
+						}}
+					>
+						<span
+							className={cn(
+								"h-1.5 rounded-full transition-all motion-reduce:transition-none",
+								activeIndex === index ? "w-6 bg-white" : "w-1.5 bg-white/25",
+							)}
+						/>
+					</button>
+				))}
+			</div>
+		</section>
+	);
+}
+
+function SignalsGuideIntroSignal({
+	formatPrice,
+	locale,
+	signal,
+}: {
+	formatPrice: (value: number, fractionDigits?: number) => string;
+	locale: string;
+	signal: SignalsPreviewResponse["signals"][number];
+}) {
+	const t = useTranslations("signals");
+	const isEntered = signal.entryStatus === "entered";
+
+	return (
+		<div className="border-white/10 p-4 sm:p-5 rounded-xl border bg-[#171717]">
+			<div className="gap-3 flex items-center">
+				<img
+					alt=""
+					className="size-12 rounded-full object-cover"
+					src={signal.avatarUrl ?? getProfileAvatarUrlForSeed(signal.sourceName, 80)}
+				/>
+				<div className="min-w-0 flex-1">
+					<p className="font-semibold text-white">{signal.sourceName}</p>
+					<p className="mt-0.5 text-sm text-white/55">
+						{signal.symbol} · {t(`direction.${signal.direction}`)}
+					</p>
+				</div>
+				<span
+					className={cn(
+						"px-3 py-1 text-xs font-medium shrink-0 rounded-full border",
+						isEntered
+							? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+							: "border-amber-300/30 bg-amber-300/10 text-amber-200",
+					)}
+				>
+					{t(`filters.entryStatuses.${signal.entryStatus ?? "pending"}`)}
+				</span>
+			</div>
+
+			<div className="mt-5 gap-x-4 gap-y-5 grid grid-cols-2">
+				<SignalMetric
+					label={t("signalsPanel.entry")}
+					value={signal.entry === undefined ? "--" : formatPrice(signal.entry)}
+				/>
+				<SignalMetric
+					label={t("signalsPanel.submittedAt")}
+					value={formatSignalSubmittedAt(signal.submittedAt, locale)}
+				/>
+				<SignalMetric
+					label={t("signalsPanel.takeProfit")}
+					value={signal.takeProfit === undefined ? "--" : formatPrice(signal.takeProfit)}
+					tone="profit"
+				/>
+				<SignalMetric
+					label={t("signalsPanel.stopLoss")}
+					value={signal.stopLoss === undefined ? "--" : formatPrice(signal.stopLoss)}
+					tone="risk"
+				/>
+			</div>
+
+			<div className="mt-5 px-4 py-3 flex items-center justify-between rounded-lg bg-[#101010]">
+				<span className="text-sm text-white/50">{t("signalsPanel.expectedRr")}</span>
+				<span className="font-mono font-semibold text-emerald-400">
+					{formatPreviewRiskReward(signal)}
+				</span>
 			</div>
 		</div>
 	);

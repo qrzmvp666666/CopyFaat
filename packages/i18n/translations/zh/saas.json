@@ -834,11 +834,41 @@
 			"unfollow": "取消关注 {name}"
 		},
 		"guide": {
+			"filterDemo": {
+				"bothDirections": "多空不限",
+				"label": "信号筛选演示",
+				"choose": "按{dimension}筛选信号",
+				"description": "筛选效果演示，按你的偏好聚焦信号。",
+				"compare": "查看免费与 Pro 对比"
+			},
+			"comparison": {
+				"title": "从行情预览到完整信号",
+				"feature": "功能对比",
+				"free": "免费预览",
+				"market": "实时行情与 K 线",
+				"signals": "自选 KOL 聚合信号",
+				"levels": "入场、止盈止损与盈亏比",
+				"filters": "方向、时间与入场状态筛选",
+				"included": "支持",
+				"demo": "仅演示"
+			},
+			"back": "返回",
+			"offerEntry": "最高省 79%",
+			"carousel": {
+				"label": "KOL 信号示例轮播",
+				"role": "轮播",
+				"slide": "幻灯片",
+				"example": "演示信号 · 非实时交易建议",
+				"pause": "暂停轮播",
+				"play": "自动播放",
+				"position": "第 {current} / {total} 张",
+				"goTo": "查看第 {current} 张信号"
+			},
 			"close": "稍后再看",
 			"finish": "开始使用",
 			"introEyebrow": "现在，开始专注于信号",
-			"introDescription": "关注交易员，查看他们的 BTC 交易信号。之后也可以随时调整。",
-			"introCta": "开始体验",
+			"introDescription": "在这里你将可以查看所有 KOL 的信号数据在同一个 K 线图上。",
+			"introCta": "立刻体验",
 			"login": "已有账号？直接登录",
 			"viewPlans": "查看会员套餐",
 			"preview": "实时行情预览，开通 Pro 后可查看完整信号。",
@@ -853,8 +883,9 @@
 					"description": "这里会实时同步主流交易对价格和涨跌幅。为了行情、K 线和信号同步更稳定，建议先把网络或代理节点切换至日本或新加坡。"
 				},
 				"traders": {
-					"title": "选择交易员",
-					"description": "选择头像，查看对应信号。"
+					"title": "全网聚合最全KOL实时信号",
+					"description": "选择头像，查看对应信号。",
+					"eyebrow": "现在，你不再需要反复切换TG和Discord社群"
 				},
 				"filters": {
 					"title": "筛选信号",
@@ -863,11 +894,13 @@
 				},
 				"chart": {
 					"title": "入场止盈止损，一图看清",
-					"description": "信号位置与关键价位，跟着走势一眼掌握。"
+					"description": "信号位置与关键价位，跟着走势一眼掌握。",
+					"eyebrow": "所有社群信号无所遁形"
 				},
 				"signalList": {
-					"title": "查看完整信号详情",
-					"description": "开通 Pro 后，此处会展示入场价、止盈、止损、委托时间和入场状态。使用前请重点核对止损与信号是否已经入场。"
+					"title": "自选品种和KOL的信号详情",
+					"description": "开通 Pro，一览入场价、止盈止损与信号状态。",
+					"eyebrow": "实时计算盈亏比和完整信号列表"
 				}
 			}
 		},
