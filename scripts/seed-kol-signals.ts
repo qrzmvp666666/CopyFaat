@@ -30,15 +30,17 @@ const KOLS = [
 
 const SIGNALS = [
 	{
+		kolExternalId: "signalfast-guide:san-ma-ge",
 		eventId: "signalfast-guide-btc-20261104-01",
 		direction: "long",
 		entry: 67420,
 		takeProfit: 68560,
 		stopLoss: 66850,
 		entryStatus: "entered",
-		submittedAt: new Date("2026-11-04T08:00:00+08:00"),
+		submittedAt: new Date("2026-11-05T08:00:00+08:00"),
 	},
 	{
+		kolExternalId: "signalfast-guide:fei-yang",
 		eventId: "signalfast-guide-btc-20261104-02",
 		direction: "short",
 		entry: 67880,
@@ -48,6 +50,7 @@ const SIGNALS = [
 		submittedAt: new Date("2026-11-04T07:30:00+08:00"),
 	},
 	{
+		kolExternalId: "signalfast-guide:suo-zhang",
 		eventId: "signalfast-guide-btc-20261104-03",
 		direction: "short",
 		entry: 67760,
@@ -57,22 +60,74 @@ const SIGNALS = [
 		submittedAt: new Date("2026-11-03T21:45:00+08:00"),
 	},
 	{
+		kolExternalId: "signalfast-guide:jun-zhang",
 		eventId: "signalfast-guide-btc-20261104-04",
 		direction: "long",
 		entry: 67180,
 		takeProfit: 68100,
 		stopLoss: 66720,
 		entryStatus: "entered",
-		submittedAt: new Date("2026-11-04T06:15:00+08:00"),
+		submittedAt: new Date("2026-11-02T06:15:00+08:00"),
 	},
 	{
+		kolExternalId: "signalfast-guide:shu-qin",
 		eventId: "signalfast-guide-btc-20261104-05",
 		direction: "long",
 		entry: 67260,
 		takeProfit: 68020,
 		stopLoss: 66880,
 		entryStatus: "entered",
-		submittedAt: new Date("2026-11-04T05:40:00+08:00"),
+		submittedAt: new Date("2026-11-01T05:40:00+08:00"),
+	},
+	{
+		kolExternalId: "signalfast-guide:san-ma-ge",
+		eventId: "signalfast-guide-btc-20261105-06",
+		direction: "short",
+		entry: 68120,
+		takeProfit: 67480,
+		stopLoss: 68480,
+		entryStatus: "pending",
+		submittedAt: new Date("2026-11-04T14:10:00+08:00"),
+	},
+	{
+		kolExternalId: "signalfast-guide:fei-yang",
+		eventId: "signalfast-guide-btc-20261105-07",
+		direction: "long",
+		entry: 67080,
+		takeProfit: 67940,
+		stopLoss: 66640,
+		entryStatus: "entered",
+		submittedAt: new Date("2026-11-03T12:25:00+08:00"),
+	},
+	{
+		kolExternalId: "signalfast-guide:suo-zhang",
+		eventId: "signalfast-guide-btc-20261105-08",
+		direction: "long",
+		entry: 66520,
+		takeProfit: 67580,
+		stopLoss: 66080,
+		entryStatus: "pending",
+		submittedAt: new Date("2026-11-02T17:35:00+08:00"),
+	},
+	{
+		kolExternalId: "signalfast-guide:jun-zhang",
+		eventId: "signalfast-guide-btc-20261105-09",
+		direction: "short",
+		entry: 67640,
+		takeProfit: 66820,
+		stopLoss: 68060,
+		entryStatus: "entered",
+		submittedAt: new Date("2026-11-01T18:50:00+08:00"),
+	},
+	{
+		kolExternalId: "signalfast-guide:shu-qin",
+		eventId: "signalfast-guide-btc-20261105-10",
+		direction: "short",
+		entry: 68240,
+		takeProfit: 67420,
+		stopLoss: 68680,
+		entryStatus: "pending",
+		submittedAt: new Date("2026-10-31T10:20:00+08:00"),
 	},
 ] as const;
 
@@ -90,7 +145,8 @@ async function main() {
 		update: { isActive: true },
 	});
 
-	for (const [index, kol] of KOLS.entries()) {
+	const traderIds = new Map<string, string>();
+	for (const kol of KOLS) {
 		const trader = await db.trader.upsert({
 			where: { externalId: kol.externalId },
 			create: {
@@ -108,18 +164,25 @@ async function main() {
 				isActive: true,
 			},
 		});
-		const plan = SIGNALS[index];
+		traderIds.set(kol.externalId, trader.id);
+	}
+
+	for (const plan of SIGNALS) {
+		const traderId = traderIds.get(plan.kolExternalId);
+		if (!traderId) {
+			throw new Error(`Missing trader for seed signal: ${plan.kolExternalId}`);
+		}
 		const risk =
 			plan.direction === "long" ? plan.entry - plan.stopLoss : plan.stopLoss - plan.entry;
 		const reward =
 			plan.direction === "long" ? plan.takeProfit - plan.entry : plan.entry - plan.takeProfit;
-		const businessKey = `${kol.externalId}|BTCUSDT|${plan.direction}|${plan.entry}|${plan.takeProfit}|${plan.stopLoss}`;
+		const businessKey = `${plan.kolExternalId}|BTCUSDT|${plan.direction}|${plan.entry}|${plan.takeProfit}|${plan.stopLoss}`;
 		const existing = await db.signal.findFirst({
 			where: { OR: [{ eventId: plan.eventId }, { businessKey }] },
 			select: { id: true },
 		});
 		const data = {
-			traderId: trader.id,
+			traderId,
 			symbolId: symbol.id,
 			direction: plan.direction,
 			entryStatus: plan.entryStatus,

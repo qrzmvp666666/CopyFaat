@@ -496,42 +496,8 @@ const FALLBACK_ACCENTS = [
 	"bg-cyan-500",
 ] as const;
 
-const GENERATED_AVATAR_COLORS = [
-	"#00C087",
-	"#F6465D",
-	"#F0B90B",
-	"#7C5CFF",
-	"#2D9CDB",
-	"#E056FD",
-	"#FF7A45",
-	"#22C55E",
-] as const;
-
 function getSeedHash(seed: string) {
 	return Array.from(seed).reduce((total, char) => total + char.charCodeAt(0), 0);
-}
-
-function getGeneratedSvgDataUrl(seed: string, label: string, variant: "symbol" | "trader") {
-	const seedHash = getSeedHash(seed);
-	const background = GENERATED_AVATAR_COLORS[seedHash % GENERATED_AVATAR_COLORS.length];
-	const secondary = GENERATED_AVATAR_COLORS[(seedHash + 3) % GENERATED_AVATAR_COLORS.length];
-	const safeLabel = label.trim().slice(0, 2).toUpperCase();
-	const fontSize = variant === "symbol" ? 34 : 30;
-	const svg = `
-		<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
-			<defs>
-				<linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-					<stop offset="0%" stop-color="${background}"/>
-					<stop offset="100%" stop-color="${secondary}"/>
-				</linearGradient>
-			</defs>
-			<rect width="96" height="96" rx="48" fill="url(#g)"/>
-			<circle cx="74" cy="22" r="18" fill="rgba(255,255,255,0.18)"/>
-			<text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-family="Inter, Arial, sans-serif" font-size="${fontSize}" font-weight="800">${safeLabel}</text>
-		</svg>
-	`;
-
-	return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 function getAvatarLabel(sourceName: string) {
@@ -985,13 +951,6 @@ function getSelectedSignal(signals: TradeSignal[], activeSignalId: string | null
 	return signals.find((signal) => signal.id === activeSignalId) ?? null;
 }
 
-function matchesSelectedSources(
-	signal: Pick<TradeSignal, "sourceId">,
-	selectedSourceIds: string[],
-) {
-	return selectedSourceIds.length === 0 || selectedSourceIds.includes(signal.sourceId);
-}
-
 function getSubmittedAfterForTimeRange(timeRange: TimeRange) {
 	if (timeRange === "all") {
 		return null;
@@ -1022,6 +981,8 @@ function doesStoredSignalMatchPageFilters(signal: StoredSignal, filters: SignalP
 		if (!filters.sourceIds.includes(sourceId)) {
 			return false;
 		}
+	} else {
+		return false;
 	}
 
 	if (filters.direction !== "all" && signal.direction !== filters.direction) {
@@ -1138,36 +1099,6 @@ async function fetchAllStoredSignals(
 	};
 }
 
-function doesTradeSignalMatchFilters(signal: TradeSignal, filters: SignalPageFilters) {
-	if (signal.symbol !== filters.symbol || signal.status !== filters.status) {
-		return false;
-	}
-
-	if (!matchesSelectedSources(signal, filters.sourceIds)) {
-		return false;
-	}
-
-	if (filters.direction !== "all" && signal.direction !== filters.direction) {
-		return false;
-	}
-
-	if (filters.entryStatus !== "all" && signal.entryStatus !== filters.entryStatus) {
-		return false;
-	}
-
-	if (filters.submittedAfter) {
-		const submittedAt = signal.submittedAtTime
-			? new Date(Number(signal.submittedAtTime) * 1000)
-			: null;
-
-		if (!submittedAt || submittedAt < filters.submittedAfter) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
 function clampNumber(value: number, min: number, max: number) {
 	return Math.min(Math.max(value, min), max);
 }
@@ -1233,10 +1164,10 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
 	const [selectedTimeframe, setSelectedTimeframe] = useState<Timeframe>("1h");
 	const [selectedSourceIds, setSelectedSourceIds] = useState<string[]>([]);
-	const hasManuallyChangedSourcesRef = useRef(false);
+	const defaultSourceSelectionInitializedRef = useRef(false);
 	const [selectedDirection, setSelectedDirection] = useState<SignalDirection>("all");
 	const [selectedStatus, setSelectedStatus] = useState<SignalStatus>("active");
-	const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("30d");
+	const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRange>("7d");
 	const [selectedEntryStatus, setSelectedEntryStatus] = useState<EntryStatus>("all");
 	const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 	const [isSourcePickerOpen, setIsSourcePickerOpen] = useState(false);
@@ -1247,9 +1178,10 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const [sourcePickerCategory, setSourcePickerCategory] =
 		useState<(typeof SOURCE_PICKER_CATEGORIES)[number]>("contract");
 	const [draftDirection, setDraftDirection] = useState<SignalDirection>("all");
-	const [draftTimeRange, setDraftTimeRange] = useState<TimeRange>("30d");
+	const [draftTimeRange, setDraftTimeRange] = useState<TimeRange>("7d");
 	const [draftEntryStatus, setDraftEntryStatus] = useState<EntryStatus>("all");
 	const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
+	const [soloSignalId, setSoloSignalId] = useState<string | null>(null);
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
 	const [isChartCollapsed, setIsChartCollapsed] = useState(false);
 	const [isChartFullscreenOpen, setIsChartFullscreenOpen] = useState(false);
@@ -1330,10 +1262,6 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		);
 	}, [signalPageSignals, supportedSymbols]);
 
-	const signals = useMemo(
-		() => visibleWebhookSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
-		[locale, visibleWebhookSignals],
-	);
 	const signalPageTradeSignals = useMemo(
 		() =>
 			visibleSignalPageSignals.map((signal) => mapStoredSignalToTradeSignal(signal, locale)),
@@ -1528,14 +1456,13 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			sourceIds: selectedSourceIds,
 			status: selectedStatus,
 			submittedAfter: getSubmittedAfterForTimeRange(selectedTimeRange),
-			symbol: selectedSymbol,
+			symbol: "",
 		}),
 		[
 			selectedDirection,
 			selectedEntryStatus,
 			selectedSourceIds,
 			selectedStatus,
-			selectedSymbol,
 			selectedTimeRange,
 		],
 	);
@@ -1744,10 +1671,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 			try {
 				const data = await fetchAllStoredSignals(
-					getSignalPageSearchParams({
-						...signalPageFilters,
-						symbol: signalPageFilters.symbol || "BTCUSDT",
-					}),
+					getSignalPageSearchParams(signalPageFilters),
 					controller.signal,
 				);
 
@@ -1758,12 +1682,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 							!isDemoStrategyTrader(signal.source),
 					);
 					setSignalPageSignals(visibleSignals);
-					setStatusCounts({
-						active: visibleSignals.filter((signal) => signal.status === "active")
-							.length,
-						history: visibleSignals.filter((signal) => signal.status === "history")
-							.length,
-					});
+					setStatusCounts(data.counts);
 					setIsSignalPageLoading(false);
 				}
 			} catch {
@@ -1914,16 +1833,16 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	useEffect(() => {
 		if (
 			!hasProAccess ||
-			hasManuallyChangedSourcesRef.current ||
-			!sourceFilters.length ||
-			!selectedSymbol
+			isSignalsLoading ||
+			defaultSourceSelectionInitializedRef.current ||
+			!sourceFilters.length
 		) {
 			return;
 		}
 
-		const allSourceIds = sourceFilters.map((source) => source.id);
-		setSelectedSourceIds(allSourceIds);
-	}, [hasProAccess, selectedSymbol, sourceFilters]);
+		setSelectedSourceIds(sourceFilters.slice(0, 5).map((source) => source.id));
+		defaultSourceSelectionInitializedRef.current = true;
+	}, [hasProAccess, isSignalsLoading, sourceFilters]);
 
 	useEffect(() => {
 		const visibleSourceIds = new Set(sourceFilters.map((source) => source.id));
@@ -2055,7 +1974,9 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	);
 
 	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
-	const chartSignals = filteredSignals;
+	const chartSignals = soloSignalId
+		? filteredSignals.filter((signal) => signal.id === soloSignalId)
+		: filteredSignals.filter((signal) => signal.symbol === selectedSymbol);
 
 	const candles = useMemo(() => {
 		if (
@@ -2123,34 +2044,37 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 	function focusSignal(signal: SignalChartSignal) {
 		setActiveSignalId(signal.id);
+		setSoloSignalId(null);
 	}
 
 	function selectSymbol(symbol: string) {
 		setSelectedSymbol(symbol);
-		setSelectedSourceIds([]);
-		const filters: SignalPageFilters = {
-			...signalPageFilters,
-			sourceIds: [],
-			symbol,
-		};
-		const nextSignal = signals.find((signal) => doesTradeSignalMatchFilters(signal, filters));
-		setActiveSignalId(nextSignal?.id ?? null);
+		setActiveSignalId(null);
+		setSoloSignalId(null);
 	}
 
 	function toggleSourceFilter(sourceId: string) {
-		hasManuallyChangedSourcesRef.current = true;
+		setSelectedSymbol("BTCUSDT");
 		setSelectedSourceIds((currentSourceIds) =>
 			currentSourceIds.includes(sourceId)
 				? currentSourceIds.filter((currentSourceId) => currentSourceId !== sourceId)
 				: [...currentSourceIds, sourceId],
 		);
 		setActiveSignalId(null);
+		setSoloSignalId(null);
 	}
 
 	function clearSourceFilters() {
-		hasManuallyChangedSourcesRef.current = true;
-		setSelectedSourceIds([]);
+		setSelectedSymbol("BTCUSDT");
+		setSelectedSourceIds(sourceFilters.map((source) => source.id));
 		setActiveSignalId(null);
+		setSoloSignalId(null);
+	}
+
+	function selectSignalFromList(signal: TradeSignal) {
+		setSelectedSymbol(signal.symbol);
+		setActiveSignalId(signal.id);
+		setSoloSignalId(signal.id);
 	}
 
 	function toggleSourceFollow(sourceId: string) {
@@ -2177,6 +2101,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		setSelectedTimeRange(draftTimeRange);
 		setSelectedEntryStatus(draftEntryStatus);
 		setActiveSignalId(null);
+		setSoloSignalId(null);
 		setIsMobileFiltersOpen(false);
 	}
 
@@ -3157,7 +3082,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 											<button
 												key={direction}
 												type="button"
-												onClick={() => setSelectedDirection(direction)}
+												onClick={() => {
+													setSelectedDirection(direction);
+													setActiveSignalId(null);
+													setSoloSignalId(null);
+												}}
 												className={cn(
 													"gap-1 px-2.5 py-1.5 text-xs font-semibold flex min-w-[52px] items-center justify-center rounded-md border transition-colors",
 													selectedDirection === direction
@@ -3193,7 +3122,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 													<DropdownMenuItem
 														key={range}
 														className="gap-2 text-xs cursor-pointer"
-														onClick={() => setSelectedTimeRange(range)}
+														onClick={() => {
+															setSelectedTimeRange(range);
+															setActiveSignalId(null);
+															setSoloSignalId(null);
+														}}
 													>
 														<CheckIcon
 															className={cn(
@@ -3229,7 +3162,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 													<DropdownMenuItem
 														key={es}
 														className="gap-2 text-xs cursor-pointer"
-														onClick={() => setSelectedEntryStatus(es)}
+														onClick={() => {
+															setSelectedEntryStatus(es);
+															setActiveSignalId(null);
+															setSoloSignalId(null);
+														}}
 													>
 														<CheckIcon
 															className={cn(
@@ -3678,14 +3615,8 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 										type="button"
 										onClick={() => {
 											setSelectedStatus(status);
-											const filters: SignalPageFilters = {
-												...signalPageFilters,
-												status,
-											};
-											const nextSignal = signals.find((signal) =>
-												doesTradeSignalMatchFilters(signal, filters),
-											);
-											setActiveSignalId(nextSignal?.id ?? null);
+											setActiveSignalId(null);
+											setSoloSignalId(null);
 										}}
 										className={cn(
 											"gap-1.5 px-4 py-2.5 text-sm font-medium after:h-0.5 after:w-9 relative transition-colors after:absolute after:bottom-[-1px] after:left-1/2 after:-translate-x-1/2 after:content-['']",
@@ -3839,7 +3770,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 											<button
 												key={signal.id}
 												type="button"
-												onClick={() => focusSignal(signal)}
+												onClick={() => selectSignalFromList(signal)}
 												className={cn(
 													"p-3 hover:bg-white/5 w-full bg-[#141414] text-left transition-colors",
 													signal.id === activeSignal?.id &&
