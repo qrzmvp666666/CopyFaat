@@ -836,6 +836,9 @@
 		"guide": {
 			"close": "稍后再看",
 			"finish": "开始使用",
+			"introEyebrow": "现在，开始专注于信号",
+			"introDescription": "关注交易员，查看他们的 BTC 交易信号。之后也可以随时调整。",
+			"introCta": "开始体验",
 			"login": "已有账号？直接登录",
 			"viewPlans": "查看会员套餐",
 			"preview": "实时行情预览，开通 Pro 后可查看完整信号。",

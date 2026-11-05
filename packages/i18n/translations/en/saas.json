@@ -836,6 +836,9 @@
 		"guide": {
 			"close": "Maybe later",
 			"finish": "Start using",
+			"introEyebrow": "Now, let's focus on signals.",
+			"introDescription": "Follow traders to explore their BTC signals. You can change your picks anytime.",
+			"introCta": "Get Started",
 			"login": "Already have an account? Log in",
 			"viewPlans": "View membership plans",
 			"preview": "Live market preview. Pro membership unlocks complete signals.",

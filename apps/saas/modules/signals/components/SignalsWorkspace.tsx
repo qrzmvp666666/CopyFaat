@@ -4068,6 +4068,94 @@ function SignalsGuideOverlay({
 		};
 	}, [step.target, stepIndex]);
 
+	if (stepIndex === 0) {
+		const kolNames = ["三马哥", "飞扬", "所长", "军长", "舒琴"];
+		const avatarSources = [
+			"/images/hero-floating/icon-1.png",
+			"/images/hero-floating/icon-2.png",
+			"/images/hero-floating/icon-3.png",
+			"/images/hero-floating/icon-4.png",
+			"/images/hero-floating/onboarding-kol-5.png",
+		];
+
+		return (
+			<div
+				className="inset-0 px-6 text-white fixed z-50 flex flex-col items-center overflow-y-auto bg-[#0b0b0b] pt-[max(9dvh,48px)] pb-[max(env(safe-area-inset-bottom),24px)]"
+				role="dialog"
+				aria-modal="true"
+				aria-label={step.title}
+			>
+				<div className="max-w-md mx-auto w-full text-center">
+					<p className="text-base font-medium text-white/60">{t("introEyebrow")}</p>
+					<h2 className="mt-5 text-3xl font-bold tracking-normal sm:text-4xl leading-[1.12]">
+						{step.title}
+					</h2>
+					<p className="mt-6 max-w-sm text-base leading-7 text-white/60 sm:text-lg mx-auto">
+						{t("introDescription")}
+					</p>
+				</div>
+
+				<div className="gap-x-5 gap-y-7 py-10 sm:gap-x-8 sm:gap-y-9 mx-auto my-auto grid w-full max-w-[390px] grid-cols-3">
+					{avatarSources.map((src, index) => (
+						<div
+							key={src}
+							className={cn(
+								"gap-2 flex flex-col items-center",
+								index === 1 && "translate-y-3",
+								index === 3 && "-translate-y-2",
+								index === 4 && "translate-y-2",
+							)}
+						>
+							<div
+								className={cn(
+									"border-white/15 p-1 sm:size-[88px] size-[76px] overflow-hidden rounded-[22px] border bg-[#171717]",
+									index % 2 === 0 ? "rotate-[-7deg]" : "rotate-[6deg]",
+								)}
+							>
+								<Image
+									src={src}
+									alt={kolNames[index]}
+									width={88}
+									height={88}
+									className="size-full rounded-[17px] object-cover"
+								/>
+							</div>
+							<span className="text-sm text-white/75">{kolNames[index]}</span>
+						</div>
+					))}
+				</div>
+
+				<div className="max-w-lg mx-auto mt-auto w-full">
+					{!isAuthenticated ? (
+						<Link
+							href={`${localizePath("/login", locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale))}`}
+							className="mb-3 text-sm font-medium text-white/65 hover:text-white block text-center"
+						>
+							{t("login")}
+						</Link>
+					) : null}
+					<Button
+						type="button"
+						variant="primary"
+						className="border-white bg-white text-lg font-semibold text-neutral-950 hover:bg-white/90 h-[68px] w-full rounded-full shadow-[0_12px_36px_rgba(255,255,255,0.08)]"
+						onClick={onNext}
+					>
+						{t("introCta")}
+					</Button>
+					{requiresMembership ? (
+						<button
+							type="button"
+							onClick={onClose}
+							className="mt-4 py-1 text-sm text-white/45 hover:text-white/75 w-full text-center"
+						>
+							{t("close")}
+						</button>
+					) : null}
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div
 			className="inset-0 pointer-events-none fixed z-50"
