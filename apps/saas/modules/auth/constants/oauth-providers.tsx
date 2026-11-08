@@ -39,4 +39,7 @@ export const oAuthProviders = {
 
 export type OAuthProvider = keyof typeof oAuthProviders;
 
-export const visibleOAuthProviderIds = ["google"] as const satisfies readonly OAuthProvider[];
+export const visibleOAuthProviderIds: OAuthProvider[] = [
+	...(process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED === "true" ? ["google" as const] : []),
+	...(process.env.NEXT_PUBLIC_AUTH_GITHUB_ENABLED === "true" ? ["github" as const] : []),
+];

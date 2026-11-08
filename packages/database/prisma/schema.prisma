@@ -209,6 +209,8 @@ model Purchase {
   attributionId     String?
   adPlatform        String?
   adClickId         String?
+  adRecord          String?
+  firstPaidPaymentId String?
   taliviaVisitorId  String?
   taliviaSessionId  String?
   priceId           String
@@ -393,6 +395,7 @@ model CheckoutAttribution {
   paymentLinkUrl String
   adPlatform String?
   adClickId String?
+  adRecord String?
   taliviaVisitorId String?
   taliviaSessionId String?
   utmSource String?
@@ -410,7 +413,14 @@ model AdConversion {
   provider String
   paymentId String
   attributionId String
-  amountUsd String
+  amountUsd String?
+  amountMinor Int?
+  currency String?
+  adPlatform String?
+  adClickId String?
+  adRecord String?
+  subscriptionId String?
+  goal String @default("first_purchase")
   status String @default("pending")
   attempts Int @default(0)
   lastError String?
@@ -418,5 +428,7 @@ model AdConversion {
   updatedAt DateTime @updatedAt
   @@unique([provider, paymentId])
   @@unique([provider, attributionId])
+  @@unique([provider, subscriptionId, goal])
+  @@unique([adPlatform, adRecord, goal])
   @@map("ad_conversion")
 }

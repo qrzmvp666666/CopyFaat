@@ -18,6 +18,7 @@ export async function resolvePaymentAttribution(
 		attributionId: record.id,
 		adPlatform: record.adPlatform,
 		adClickId: record.adClickId,
+		adRecord: record.adRecord,
 		taliviaVisitorId: record.taliviaVisitorId,
 		taliviaSessionId: record.taliviaSessionId,
 	};

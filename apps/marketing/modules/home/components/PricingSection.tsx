@@ -252,7 +252,7 @@ export function PricingSection() {
 							);
 							const hasBillingOptions =
 								plan.id === "pro" && weeklyPrice && yearlyPrice;
-							const yearlySavingsPercent = 86;
+							const yearlySavingsPercent = 79;
 							const trialPeriodDays =
 								plan.price &&
 								"trialPeriodDays" in plan.price &&
@@ -346,8 +346,8 @@ export function PricingSection() {
 																optionPrice.interval;
 															const optionAmount =
 																billingInterval === "year"
-																	? 49.99
-																	: 6.99;
+																	? 99.99
+																	: 8.99;
 															const isYearly =
 																billingInterval === "year";
 															const isSelected =
@@ -409,7 +409,7 @@ export function PricingSection() {
 																					"year" && (
 																					<span className="ml-2 text-sm font-normal line-through opacity-60">
 																						{format.number(
-																							6.99 *
+																							8.99 *
 																								52,
 																							{
 																								minimumFractionDigits: 2,
@@ -425,9 +425,9 @@ export function PricingSection() {
 																					{format.number(
 																						billingInterval ===
 																							"year"
-																							? 49.99 /
+																							? 99.99 /
 																									52
-																							: 6.99,
+																							: 8.99,
 																						{
 																							minimumFractionDigits: 2,
 																							maximumFractionDigits: 2,

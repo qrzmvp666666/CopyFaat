@@ -251,7 +251,9 @@ export function LoginForm() {
 					</Form>
 
 					{(authConfig.enablePasskeys ||
-						(authConfig.enableSignup && authConfig.enableSocialLogin)) && (
+						(authConfig.enableSignup &&
+							authConfig.enableSocialLogin &&
+							visibleOAuthProviderIds.length > 0)) && (
 						<>
 							<div className="my-6 h-4 relative">
 								<hr className="top-2 relative" />

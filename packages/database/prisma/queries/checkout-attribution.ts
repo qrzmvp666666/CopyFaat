@@ -23,3 +23,23 @@ export function findCheckoutAttribution(
 		orderBy: { createdAt: "desc" },
 	});
 }
+
+/** The first positive paid event owns acquisition; renewals cannot reopen it. */
+export async function recordFirstSubscriptionPayment(
+	provider: string,
+	subscriptionId: string,
+	paymentId: string,
+) {
+	await db.purchase.updateMany({
+		where: { provider, subscriptionId, firstPaidPaymentId: null },
+		data: { firstPaidPaymentId: paymentId },
+	});
+	const purchase = await db.purchase.findUnique({
+		where: { subscriptionId },
+		select: { provider: true, firstPaidPaymentId: true },
+	});
+	if (!purchase || purchase.provider !== provider) {
+		throw new Error("Subscription purchase is not available; retry webhook");
+	}
+	return purchase.firstPaidPaymentId === paymentId;
+}

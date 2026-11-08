@@ -243,16 +243,24 @@ export const auth = betterAuth({
 		},
 	},
 	socialProviders: {
-		google: {
-			clientId: process.env.GOOGLE_CLIENT_ID as string,
-			clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-			scope: ["email", "profile"],
-		},
-		github: {
-			clientId: process.env.GITHUB_CLIENT_ID as string,
-			clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-			scope: ["user:email"],
-		},
+		...(process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim()
+			? {
+					google: {
+						clientId: process.env.GOOGLE_CLIENT_ID as string,
+						clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+						scope: ["email", "profile"],
+					},
+				}
+			: {}),
+		...(process.env.GITHUB_CLIENT_ID?.trim() && process.env.GITHUB_CLIENT_SECRET?.trim()
+			? {
+					github: {
+						clientId: process.env.GITHUB_CLIENT_ID as string,
+						clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+						scope: ["user:email"],
+					},
+				}
+			: {}),
 	},
 	plugins: [
 		username(),

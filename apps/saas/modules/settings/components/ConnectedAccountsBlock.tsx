@@ -1,5 +1,9 @@
 "use client";
-import { type OAuthProvider, oAuthProviders } from "@auth/constants/oauth-providers";
+import {
+	type OAuthProvider,
+	oAuthProviders,
+	visibleOAuthProviderIds,
+} from "@auth/constants/oauth-providers";
 import { useUserAccountsQuery } from "@auth/lib/api";
 import { authClient } from "@repo/auth/client";
 import { Button } from "@repo/ui/components/button";
@@ -26,10 +30,13 @@ export function ConnectedAccountsBlock() {
 		}
 	};
 
+	if (visibleOAuthProviderIds.length === 0) return null;
+
 	return (
 		<SettingsItem title={t("settings.account.security.connectedAccounts.title")}>
 			<div className="gap-2 grid grid-cols-1">
-				{Object.entries(oAuthProviders).map(([provider, providerData]) => {
+				{visibleOAuthProviderIds.map((provider) => {
+					const providerData = oAuthProviders[provider];
 					const isLinked = isProviderLinked(provider as OAuthProvider);
 
 					return (

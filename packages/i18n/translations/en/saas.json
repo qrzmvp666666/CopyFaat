@@ -743,6 +743,7 @@
 			"attributionErrorTitle": "Could not prepare checkout",
 			"errorTitle": "Payment link unavailable",
 			"errorDescription": "Please contact support to finish setting up your payment.",
+			"back": "Back to previous step",
 			"close": "Close paywall",
 			"login": "Already have Pro? Sign in",
 			"description": "Live KOL signals, aggregated charts, and full trade details",
@@ -839,18 +840,39 @@
 				"label": "Signal filter demo",
 				"choose": "Filter signals by {dimension}",
 				"description": "A preview of focusing on signals that match your preferences.",
-				"compare": "Compare preview and Pro"
+				"compare": "Compare other groups and Pro"
+			},
+			"offerCountdown": {
+				"message": "We compared the options for you. Get our best limited-time offer.",
+				"deadline": "Limited-time offer · 7 days",
+				"remaining": "Offer ends in {days} days, {hours} hours, {minutes} minutes, and {seconds} seconds",
+				"days": "d"
 			},
 			"comparison": {
-				"title": "From market previews to complete signals",
-				"feature": "Features",
-				"free": "Preview",
-				"market": "Live markets and candles",
-				"signals": "Signals from your chosen KOLs",
-				"levels": "Entry, TP/SL and risk-reward",
-				"filters": "Direction, time and entry filters",
+				"feature": "Experience comparison",
+				"free": "Other groups",
+				"market": "Aggregated KOL signals",
+				"signals": "Chosen KOL details",
+				"levels": "Entry/exit · TP/SL · R:R",
+				"filters": "Direction · Time · Status",
 				"included": "Included",
-				"demo": "Demo only"
+				"varies": "Varies",
+				"price": "Price",
+				"otherPrice": "$49–199/mo",
+				"yearlyPrice": "$99/year",
+				"weeklyPrice": "8.99 USDT/wk",
+				"or": "or",
+				"priceNote": "Group prices are indicative. Pro pricing is confirmed at checkout.",
+				"savingTitle": "Save $489 a year on annual",
+				"savingDetail": "$8.25/month equivalent · ~83% less",
+				"savingBasis": "Compares $49/month × 12 for other groups with Pro at $99/year.",
+				"headline": "Stop overpaying for every trading community",
+				"otherFeatures": {
+					"market": "None",
+					"signals": "None",
+					"levels": "Manual switching",
+					"filters": "Manual aggregation"
+				}
 			},
 			"back": "Back",
 			"offerEntry": "Save up to 79%",
@@ -890,7 +912,8 @@
 				"filters": {
 					"title": "Filter signals",
 					"mobileDescription": "Filter by direction, time, and entry status.",
-					"description": "Filter by direction, time, and entry status."
+					"description": "Filter by direction, time, and entry status.",
+					"eyebrow": "Filter by preference to find the right signals"
 				},
 				"chart": {
 					"title": "Explore the chart",
@@ -898,7 +921,7 @@
 					"eyebrow": "Every community signal in view"
 				},
 				"signalList": {
-					"title": "Signal details for your favorite pairs and KOLs",
+					"title": "Signals for your favorite pairs and KOLs",
 					"description": "Review entry, take-profit, stop-loss, and status.",
 					"eyebrow": "Live risk-reward ratios and complete signal lists"
 				}

@@ -13,6 +13,7 @@ interface UpsertSubscriptionPurchaseInput {
 	attributionId?: string | null;
 	adPlatform?: string | null;
 	adClickId?: string | null;
+	adRecord?: string | null;
 	taliviaVisitorId?: string | null;
 	taliviaSessionId?: string | null;
 }
@@ -28,6 +29,7 @@ export async function upsertSubscriptionPurchase(input: UpsertSubscriptionPurcha
 			attributionId: input.attributionId,
 			adPlatform: input.adPlatform,
 			adClickId: input.adClickId,
+			adRecord: input.adRecord,
 			taliviaVisitorId: input.taliviaVisitorId,
 			taliviaSessionId: input.taliviaSessionId,
 		}).filter(([, value]) => value != null),

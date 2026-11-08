@@ -1,4 +1,5 @@
 import { streamToEventIterator } from "@orpc/client";
+import { ORPCError } from "@orpc/server";
 import { convertToModelMessages, streamText, textModel, type UIMessage } from "@repo/ai";
 import z from "zod";
 
@@ -18,6 +19,7 @@ export const streamMessage = protectedProcedure
 		}),
 	)
 	.handler(async ({ input }) => {
+		if (!process.env.OPENAI_API_KEY?.trim()) throw new ORPCError("NOT_FOUND");
 		const { messages } = input;
 
 		const response = streamText({

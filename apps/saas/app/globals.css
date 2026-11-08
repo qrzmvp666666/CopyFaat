@@ -23,6 +23,11 @@
 }
 
 @layer base {
+	html {
+		-webkit-text-size-adjust: 100%;
+		text-size-adjust: 100%;
+	}
+
 	html:has([data-pwa-theme-surface="signals"]),
 	body:has([data-pwa-theme-surface="signals"]) {
 		background-color: #121212;

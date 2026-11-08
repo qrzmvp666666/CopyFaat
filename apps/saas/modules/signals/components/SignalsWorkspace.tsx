@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@auth/hooks/use-session";
-import { trackTaliviaCheckoutStarted, trackTaliviaEvent } from "@auth/lib/talivia";
+import { trackTaliviaEvent } from "@auth/lib/talivia";
 import { localizePath } from "@i18n/routing";
 import { PricingTable } from "@payments/components/PricingTable";
 import type { Locale } from "@repo/i18n";
@@ -244,6 +244,15 @@ const SIGNALS_GUIDE_INTRO_STYLES = `
 	animation: signals-guide-enter-from-top 900ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
 
+.signals-guide-filter-options {
+	animation: signals-guide-filter-switch 160ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+@keyframes signals-guide-filter-switch {
+	from { opacity: 0; transform: translateY(8px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
 .signals-guide-intro-avatar {
 	animation: signals-guide-enter-from-top 760ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
 }
@@ -295,6 +304,7 @@ const SIGNALS_GUIDE_INTRO_STYLES = `
 
 @media (prefers-reduced-motion: reduce) {
 	.signals-guide-intro-top,
+	.signals-guide-filter-options,
 	.signals-guide-intro-avatar,
 	.signals-guide-intro-bottom,
 	.signals-guide-gift,
@@ -2429,7 +2439,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 					open={paywallOpen && isMobilePaywall}
 					onClose={() => {
 						setPaywallOpen(false);
-						if (!hasProAccess) replayGuide();
+						if (!hasProAccess) setGuideOpen(true);
 					}}
 				/>
 				<DialogContent
@@ -2440,7 +2450,6 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 					<DialogDescription>{t("paywall.description")}</DialogDescription>
 					<div className="mt-5 gap-3 flex flex-col">
 						<PricingTable
-							onCheckoutStarted={trackTaliviaCheckoutStarted}
 							planIds={["pro"]}
 							userId={isAuthenticated ? user?.id : undefined}
 						/>
@@ -4131,6 +4140,10 @@ function SignalsGuideOverlay({
 	const t = useTranslations("signals.guide");
 	const locale = useLocale() as Locale;
 	const isLastStep = stepIndex === totalSteps - 1;
+	const [isComparisonVisible, setIsComparisonVisible] = useState(false);
+	useEffect(() => {
+		if (stepIndex !== 3) setIsComparisonVisible(false);
+	}, [stepIndex]);
 	const [targetRect, setTargetRect] = useState<GuideTargetRect | null>(null);
 	const [cardTop, setCardTop] = useState<number | null>(null);
 	const [viewportSize, setViewportSize] = useState<GuideViewportSize>({
@@ -4146,6 +4159,7 @@ function SignalsGuideOverlay({
 		maxHeight: "calc(100dvh - max(env(safe-area-inset-top), 20px) - 40px)",
 		overflowY: "auto",
 	};
+	const canInteractDuringIntro = stepIndex === 3 && viewportSize.width < 768;
 
 	useEffect(() => {
 		const card = cardRef.current;
@@ -4207,6 +4221,7 @@ function SignalsGuideOverlay({
 		const isChartIntro = stepIndex === 1;
 		const isSignalIntro = stepIndex === 2;
 		const isFilterIntro = stepIndex === 3;
+		const showComparison = isFilterIntro && isComparisonVisible;
 		const kolNames = ["三马哥", "飞扬", "所长", "军长", "舒琴"];
 		const avatarSources = [
 			"/images/hero-floating/icon-1.png",
@@ -4289,17 +4304,31 @@ function SignalsGuideOverlay({
 									? "steps.chart.eyebrow"
 									: stepIndex === 2
 										? "steps.signalList.eyebrow"
-										: "introEyebrow",
+										: showComparison
+											? "comparison.savingTitle"
+											: "steps.filters.eyebrow",
 						)}
 					</p>
 					<h2 className="mt-5 text-3xl font-bold tracking-normal sm:text-4xl leading-[1.12]">
-						{step.title}
+						{showComparison ? t("comparison.headline") : step.title}
 					</h2>
+					{showComparison ? (
+						<div className="mt-4">
+							<p className="text-sm text-emerald-300">
+								{t("comparison.savingDetail")}
+							</p>
+							<p className="mt-2 text-xs leading-5 text-white/40">
+								{t("comparison.savingBasis")}
+							</p>
+						</div>
+					) : null}
 				</div>
 
 				{isFilterIntro ? (
 					<div key="intro-filters" className="py-10 mx-auto my-auto w-full max-w-[390px]">
-						<SignalsGuideIntroFilters />
+						<SignalsGuideIntroFilters
+							onComparisonVisibilityChange={setIsComparisonVisible}
+						/>
 					</div>
 				) : isChartIntro ? (
 					<div
@@ -4383,11 +4412,15 @@ function SignalsGuideOverlay({
 					key={`intro-bottom-${stepIndex}`}
 					className="signals-guide-intro-bottom max-w-lg mx-auto mt-auto w-full text-center"
 				>
-					<p className="mb-5 px-3 text-base leading-7 text-white/60 sm:text-lg">
-						{isFilterIntro || isChartIntro || isSignalIntro
-							? step.description
-							: t("introDescription")}
-					</p>
+					{showComparison ? (
+						<SignalsGuideOfferCountdown />
+					) : isFilterIntro ? null : (
+						<p className="mb-5 px-3 text-base leading-7 text-white/60 sm:text-lg">
+							{isChartIntro || isSignalIntro
+								? step.description
+								: t("introDescription")}
+						</p>
+					)}
 					<Button
 						type="button"
 						variant="primary"
@@ -4511,10 +4544,11 @@ function SignalsGuideOverlay({
 				ref={cardRef}
 				data-guide-card="true"
 				className={cn(
-					"text-white ease-out pointer-events-auto absolute z-10 transition-[opacity,transform] duration-700 [text-shadow:0_2px_10px_rgba(0,0,0,0.8)]",
-					isIntroComplete
+					"text-white ease-out absolute z-10 transition-[opacity,transform] duration-700 [text-shadow:0_2px_10px_rgba(0,0,0,0.8)]",
+					isIntroComplete || canInteractDuringIntro
 						? "translate-y-0 opacity-100"
 						: "-translate-y-3 pointer-events-none opacity-0",
+					(isIntroComplete || canInteractDuringIntro) && "pointer-events-auto",
 				)}
 				style={cardStyle}
 			>
@@ -4625,22 +4659,64 @@ function SignalsGuideFilterOptions({
 	);
 }
 
-function SignalsGuideIntroFilters() {
+function SignalsGuideOfferCountdown() {
+	const t = useTranslations("signals.guide.offerCountdown");
+	const [deadline, setDeadline] = useState<number | null>(null);
+	const [remaining, setRemaining] = useState(7 * 24 * 60 * 60 * 1000);
+
+	useEffect(() => {
+		const storageKey = "signalfast:signals-guide-offer-deadline:v1";
+		const storedDeadline = Number(window.localStorage.getItem(storageKey));
+		const nextDeadline =
+			Number.isFinite(storedDeadline) && storedDeadline > 0
+				? storedDeadline
+				: Date.now() + 7 * 24 * 60 * 60 * 1000;
+		if (storedDeadline !== nextDeadline) {
+			window.localStorage.setItem(storageKey, String(nextDeadline));
+		}
+		setDeadline(nextDeadline);
+		setRemaining(Math.max(0, nextDeadline - Date.now()));
+	}, []);
+
+	useEffect(() => {
+		if (deadline === null) return;
+		const timer = window.setInterval(() => {
+			setRemaining(Math.max(0, deadline - Date.now()));
+		}, 1000);
+		return () => window.clearInterval(timer);
+	}, [deadline]);
+
+	const days = Math.floor(remaining / 86_400_000);
+	const hours = Math.floor((remaining % 86_400_000) / 3_600_000);
+	const minutes = Math.floor((remaining % 3_600_000) / 60_000);
+	const seconds = Math.floor((remaining % 60_000) / 1000);
+	const format = (value: number) => String(value).padStart(2, "0");
+
+	return (
+		<div className="mb-5 px-3 text-center">
+			<p className="text-base font-semibold text-white sm:text-lg">{t("message")}</p>
+			<p
+				aria-label={t("remaining", { days, hours, minutes, seconds })}
+				className="mt-2 font-mono text-lg font-semibold text-emerald-300 tabular-nums"
+			>
+				{days}
+				{t("days")} {format(hours)}:{format(minutes)}:{format(seconds)}
+			</p>
+		</div>
+	);
+}
+
+function SignalsGuideIntroFilters({
+	onComparisonVisibilityChange,
+}: {
+	onComparisonVisibilityChange: (isVisible: boolean) => void;
+}) {
 	const t = useTranslations("signals");
 	const [frame, setFrame] = useState(0);
-	const [isReducedMotion, setIsReducedMotion] = useState(false);
+	const [isPaused, setIsPaused] = useState(false);
 	useEffect(() => {
-		const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-		const update = () => setIsReducedMotion(media.matches);
-		update();
-		media.addEventListener("change", update);
-		return () => media.removeEventListener("change", update);
-	}, []);
-	useEffect(() => {
-		if (isReducedMotion || frame >= 12) return;
-		const timer = window.setTimeout(() => setFrame((value) => value + 1), 1000);
-		return () => window.clearTimeout(timer);
-	}, [frame, isReducedMotion]);
+		onComparisonVisibilityChange(frame >= 12);
+	}, [frame, onComparisonVisibilityChange]);
 	const rows = [
 		{
 			label: t("filters.direction"),
@@ -4668,6 +4744,13 @@ function SignalsGuideIntroFilters() {
 		},
 		{ label: t("signalsPanel.expectedRr"), options: ["≥ 1:1", "≥ 2:1", "≥ 3:1"] },
 	];
+	useEffect(() => {
+		if (isPaused || frame >= 12) return;
+		const timer = window.setTimeout(() => {
+			setFrame((current) => (current >= 9 ? 12 : current + 3));
+		}, 1100);
+		return () => window.clearTimeout(timer);
+	}, [frame, isPaused]);
 	if (frame >= 12) return <SignalsGuidePlanComparison />;
 	const rowIndex = Math.floor(frame / 3);
 	const row = rows[rowIndex];
@@ -4679,7 +4762,10 @@ function SignalsGuideIntroFilters() {
 					<button
 						type="button"
 						key={item.label}
-						onClick={() => setFrame(index * 3)}
+						onClick={() => {
+							setIsPaused(true);
+							setFrame(index * 3);
+						}}
 						aria-pressed={rowIndex === index}
 						className={cn(
 							"h-8 px-2 text-xs rounded-full transition-colors",
@@ -4695,47 +4781,42 @@ function SignalsGuideIntroFilters() {
 			<p className="text-lg text-white/80">
 				{t("guide.filterDemo.choose", { dimension: row.label })}
 			</p>
-			<div
-				key={rowIndex}
-				className="signals-guide-intro-top my-6 gap-3 flex min-h-[240px] flex-col items-center justify-center"
-			>
-				{[-1, 0, 1].map((offset) => {
-					const index = (optionIndex + offset + row.options.length) % row.options.length;
-					return (
-						<button
-							type="button"
-							key={offset}
-							onClick={() => setFrame(rowIndex * 3 + index)}
-							aria-pressed={offset === 0}
-							className={cn(
-								"min-h-14 transition-all duration-500 motion-reduce:transition-none",
-								offset === 0
-									? "text-5xl font-bold sm:text-6xl text-[#b5f7b2]"
-									: "text-3xl font-semibold text-[#b5f7b2]/35 blur-[0.3px]",
-							)}
-						>
-							<span
-								key={`${rowIndex}-${index}`}
-								className={
+			<div className="my-6 gap-3 flex min-h-[240px] flex-col items-center justify-center">
+				<div
+					key={`${rowIndex}-${optionIndex}`}
+					className="signals-guide-filter-options gap-3 flex flex-col items-center justify-center"
+				>
+					{[-1, 0, 1].map((offset) => {
+						const index =
+							(optionIndex + offset + row.options.length) % row.options.length;
+						return (
+							<button
+								type="button"
+								key={offset}
+								onClick={() => setFrame(rowIndex * 3 + index)}
+								aria-pressed={offset === 0}
+								className={cn(
+									"min-h-14 transition-all duration-150 motion-reduce:transition-none",
 									offset === 0
-										? "signals-guide-intro-top inline-block"
-										: undefined
-								}
+										? "text-5xl font-bold sm:text-6xl text-[#b5f7b2]"
+										: "text-3xl font-semibold text-[#b5f7b2]/35 blur-[0.3px]",
+								)}
 							>
-								{row.options[index]}
-							</span>
-						</button>
-					);
-				})}
+								<span
+									key={`${rowIndex}-${index}`}
+									className={
+										offset === 0
+											? "signals-guide-intro-top inline-block"
+											: undefined
+									}
+								>
+									{row.options[index]}
+								</span>
+							</button>
+						);
+					})}
+				</div>
 			</div>
-			<p className="text-sm leading-6 text-white/45">{t("guide.filterDemo.description")}</p>
-			<button
-				type="button"
-				onClick={() => setFrame(isReducedMotion && rowIndex < 3 ? (rowIndex + 1) * 3 : 12)}
-				className="mt-5 min-h-11 px-4 text-sm text-white/60 hover:text-white"
-			>
-				{t(isReducedMotion && rowIndex < 3 ? "guide.next" : "guide.filterDemo.compare")}
-			</button>
 		</section>
 	);
 }
@@ -4744,13 +4825,10 @@ function SignalsGuidePlanComparison() {
 	const t = useTranslations("signals.guide.comparison");
 	return (
 		<div className="signals-guide-intro-bottom border-white/10 overflow-hidden rounded-2xl border bg-[#141414]">
-			<table className="text-sm w-full table-fixed">
-				<caption className="p-4 text-base font-semibold text-white text-left">
-					{t("title")}
-				</caption>
+			<table aria-label={t("feature")} className="text-sm w-full table-fixed">
 				<thead>
 					<tr className="border-white/10 text-white/55 border-b">
-						<th scope="col" className="px-4 py-3 font-medium w-[54%] text-left">
+						<th scope="col" className="px-4 py-3 font-medium w-[46%] text-left">
 							{t("feature")}
 						</th>
 						<th scope="col" className="px-1 py-3 font-medium">
@@ -4765,7 +4843,7 @@ function SignalsGuidePlanComparison() {
 					</tr>
 				</thead>
 				<tbody>
-					{(["market", "signals", "levels", "filters"] as const).map((feature, index) => (
+					{(["market", "signals", "levels", "filters"] as const).map((feature) => (
 						<tr key={feature} className="border-white/10 border-b last:border-0">
 							<th
 								scope="row"
@@ -4774,14 +4852,9 @@ function SignalsGuidePlanComparison() {
 								{t(feature)}
 							</th>
 							<td className="px-1 py-4 text-center">
-								{index === 0 ? (
-									<CheckIcon
-										aria-label={t("included")}
-										className="size-5 text-white/65 mx-auto"
-									/>
-								) : (
-									<span className="text-xs text-white/45">{t("demo")}</span>
-								)}
+								<span className="text-xs leading-5 text-white/45">
+									{t(`otherFeatures.${feature}`)}
+								</span>
 							</td>
 							<td className="bg-emerald-400/10 px-1 py-4 text-center">
 								<CheckIcon
@@ -4791,6 +4864,18 @@ function SignalsGuidePlanComparison() {
 							</td>
 						</tr>
 					))}
+					<tr className="border-white/10 border-t">
+						<th scope="row" className="px-4 py-4 font-normal text-white/80 text-left">
+							{t("price")}
+						</th>
+						<td className="px-2 py-4 text-xs leading-5 text-white/60 text-center">
+							{t("otherPrice")}
+						</td>
+						<td className="bg-emerald-400/10 px-2 py-4 text-xs font-semibold leading-6 text-emerald-300 text-center">
+							<span className="block whitespace-nowrap">{t("yearlyPrice")}</span>
+							<span className="block whitespace-nowrap">{t("weeklyPrice")}</span>
+						</td>
+					</tr>
 				</tbody>
 			</table>
 		</div>

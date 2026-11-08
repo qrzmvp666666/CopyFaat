@@ -162,14 +162,23 @@ export async function yolfiWebhookHandler(request: Request) {
 		);
 		const existing = await db.purchase.findUnique({
 			where: { subscriptionId },
-			select: { status: true },
 		});
+		const resolvedAttribution = existing?.attributionId
+			? {
+					attributionId: existing.attributionId,
+					adPlatform: existing.adPlatform,
+					adClickId: existing.adClickId,
+					adRecord: existing.adRecord,
+					taliviaVisitorId: existing.taliviaVisitorId,
+					taliviaSessionId: existing.taliviaSessionId,
+				}
+			: attribution;
 		const status = existing?.status === "canceled" ? "canceled" : "active";
 		const customerId = asString(object.customer) ?? `yolfi_${subscriptionId}`;
 
 		await upsertSubscriptionPurchase({
 			provider: "yolfi",
-			...attribution,
+			...resolvedAttribution,
 			priceId,
 			customerId,
 			status,
@@ -200,7 +209,8 @@ export async function yolfiWebhookHandler(request: Request) {
 				await reportAdConversion({
 					provider: "yolfi",
 					paymentId: object.id as string,
-					...attribution,
+					subscriptionId,
+					...resolvedAttribution,
 					amountMinor: object.amount_paid,
 					currency: object.currency,
 				});

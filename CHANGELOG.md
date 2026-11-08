@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-08
+
+- Unified purchase entry points on the existing weekly/yearly Stripe and Yolfi Payment Link paywall, including checkout attribution. Retired the legacy dynamic checkout endpoint and price environment settings while retaining historical purchase recognition.
+- Show social login and account linking only for configured OAuth providers. Removed local GitHub credentials and unused AI/environment settings.
+
+- feat: Capture AdsGram `record` through advertising landings and Stripe/Yolfi checkout, and send the first positive subscription payment as a server-side first-purchase conversion (`goaltype=2`). Configure `ADSGRAM_CONVERSION_TOKEN` and apply `20261108090000_adsgram_conversions` before deployment.
+- fix: Deduplicate subscription acquisition across checkout snapshots and AdsGram records across payment providers, preserve the original payload for delivery retries, and suppress trial/renewal conversions using an atomic first-payment marker. Keep historical paid subscriptions from converting again on renewal.
+
 ## 2026-10-29
 
 - feat: Allow public access to the signals onboarding preview. Only a signed-in user with verified paid access can skip the guide and use live workspace features; all other visitors are guided to membership plans on every visit.

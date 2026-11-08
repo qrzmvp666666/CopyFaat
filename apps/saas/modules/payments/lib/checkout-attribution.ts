@@ -17,16 +17,35 @@ export async function prepareAttributedPaymentLink(
 	}
 	try {
 		captureAdAttribution();
+		const adAttribution = readAdAttribution();
 		const identifiers = readTaliviaIdentifiers();
-		if (provider === "stripe" && identifiers.taliviaSessionId)
-			url.searchParams.set("client_reference_id", identifiers.taliviaSessionId);
+		const hasValidAdAttribution = Boolean(
+			adAttribution.utmSource || adAttribution.adClickId || adAttribution.adRecord,
+		);
+		if (!hasValidAdAttribution) {
+			if (provider === "stripe" && identifiers.taliviaSessionId)
+				url.searchParams.set("client_reference_id", identifiers.taliviaSessionId);
+			if (provider === "yolfi") {
+				if (identifiers.taliviaSessionId)
+					url.searchParams.set(
+						"metadata[talivia_session_id]",
+						identifiers.taliviaSessionId,
+					);
+				if (identifiers.taliviaVisitorId)
+					url.searchParams.set(
+						"metadata[talivia_visitor_id]",
+						identifiers.taliviaVisitorId,
+					);
+			}
+			return url.toString();
+		}
 		const response = await fetch("/api/payments/attribution", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				provider,
 				paymentLinkUrl: `${url.origin}${url.pathname.replace(/\/$/, "")}`,
-				...readAdAttribution(),
+				...adAttribution,
 				...identifiers,
 			}),
 			signal: AbortSignal.timeout(2500),

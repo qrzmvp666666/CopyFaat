@@ -220,26 +220,28 @@ export function SignupForm({ prefillEmail }: { prefillEmail?: string }) {
 						</form>
 					</Form>
 
-					{authConfig.enableSignup && authConfig.enableSocialLogin && (
-						<>
-							<div className="my-6 h-4 relative">
-								<hr className="top-2 relative" />
-								<p className="top-0 h-4 px-2 font-medium text-sm leading-tight absolute left-1/2 mx-auto inline-block -translate-x-1/2 bg-card text-center text-foreground/60">
-									{t("auth.login.continueWith")}
-								</p>
-							</div>
+					{authConfig.enableSignup &&
+						authConfig.enableSocialLogin &&
+						visibleOAuthProviderIds.length > 0 && (
+							<>
+								<div className="my-6 h-4 relative">
+									<hr className="top-2 relative" />
+									<p className="top-0 h-4 px-2 font-medium text-sm leading-tight absolute left-1/2 mx-auto inline-block -translate-x-1/2 bg-card text-center text-foreground/60">
+										{t("auth.login.continueWith")}
+									</p>
+								</div>
 
-							<div className="gap-2 grid grid-cols-1 items-stretch">
-								{visibleOAuthProviderIds.map((providerId) => (
-									<SocialSigninButton
-										key={providerId}
-										provider={providerId}
-										isSignup
-									/>
-								))}
-							</div>
-						</>
-					)}
+								<div className="gap-2 grid grid-cols-1 items-stretch">
+									{visibleOAuthProviderIds.map((providerId) => (
+										<SocialSigninButton
+											key={providerId}
+											provider={providerId}
+											isSignup
+										/>
+									))}
+								</div>
+							</>
+						)}
 				</>
 			)}
 

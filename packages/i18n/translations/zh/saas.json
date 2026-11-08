@@ -743,6 +743,7 @@
 			"attributionErrorTitle": "暂时无法开始支付",
 			"errorTitle": "支付链接未配置",
 			"errorDescription": "请联系支持团队完成支付配置",
+			"back": "返回上一步",
 			"close": "关闭付费墙",
 			"login": "已有权益？登录",
 			"description": "实时 KOL 信号、聚合 K 线与完整交易细节",
@@ -839,18 +840,39 @@
 				"label": "信号筛选演示",
 				"choose": "按{dimension}筛选信号",
 				"description": "筛选效果演示，按你的偏好聚焦信号。",
-				"compare": "查看免费与 Pro 对比"
+				"compare": "查看其他社群与 Pro 对比"
+			},
+			"offerCountdown": {
+				"message": "我们已帮你对比过了，全网最优限时特价",
+				"deadline": "限时优惠，有效期 7 天",
+				"remaining": "距离优惠结束还有 {days} 天 {hours} 小时 {minutes} 分 {seconds} 秒",
+				"days": "天"
 			},
 			"comparison": {
-				"title": "从行情预览到完整信号",
-				"feature": "功能对比",
-				"free": "免费预览",
-				"market": "实时行情与 K 线",
-				"signals": "自选 KOL 聚合信号",
-				"levels": "入场、止盈止损与盈亏比",
-				"filters": "方向、时间与入场状态筛选",
+				"feature": "效果对比",
+				"free": "其他社群",
+				"market": "KOL 信号聚合",
+				"signals": "自选 KOL 详情",
+				"levels": "入出场 · 止盈损 · 盈亏比",
+				"filters": "方向 · 时间 · 状态",
 				"included": "支持",
-				"demo": "仅演示"
+				"varies": "各不相同",
+				"price": "价格",
+				"otherPrice": "$49–199/月",
+				"yearlyPrice": "$99/年",
+				"weeklyPrice": "8.99U/周",
+				"or": "或",
+				"priceNote": "社群价格仅供参考；Pro 以结账页为准。",
+				"savingTitle": "年付每年省 $489",
+				"savingDetail": "折合 $8.25/月，约省 83%",
+				"savingBasis": "按其他社群 $49/月 × 12 对比 Pro $99/年计算。",
+				"headline": "你永远不应该给每个社群花更多冤枉钱",
+				"otherFeatures": {
+					"market": "无",
+					"signals": "无",
+					"levels": "手动切换",
+					"filters": "手动汇总"
+				}
 			},
 			"back": "返回",
 			"offerEntry": "最高省 79%",
@@ -883,14 +905,15 @@
 					"description": "这里会实时同步主流交易对价格和涨跌幅。为了行情、K 线和信号同步更稳定，建议先把网络或代理节点切换至日本或新加坡。"
 				},
 				"traders": {
-					"title": "全网聚合最全KOL实时信号",
+					"title": "聚合全网KOL实时信号",
 					"description": "选择头像，查看对应信号。",
 					"eyebrow": "现在，你不再需要反复切换TG和Discord社群"
 				},
 				"filters": {
 					"title": "筛选信号",
 					"mobileDescription": "按方向、时间和入场状态筛选。",
-					"description": "按方向、时间和入场状态筛选。"
+					"description": "按方向、时间和入场状态筛选。",
+					"eyebrow": "按偏好筛选，快速找到目标信号"
 				},
 				"chart": {
 					"title": "入场止盈止损，一图看清",
@@ -898,8 +921,8 @@
 					"eyebrow": "所有社群信号无所遁形"
 				},
 				"signalList": {
-					"title": "自选品种和KOL的信号详情",
-					"description": "开通 Pro，一览入场价、止盈止损与信号状态。",
+					"title": "自选品种和KOL的信号",
+					"description": "开通 Pro，一览入场价、止盈止损信号状态。",
 					"eyebrow": "实时计算盈亏比和完整信号列表"
 				}
 			}

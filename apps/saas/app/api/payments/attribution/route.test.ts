@@ -13,7 +13,7 @@ beforeEach(() => {
 	createCheckoutAttribution.mockResolvedValue(undefined);
 });
 
-function createRequest(origin: string, forwarded = true) {
+function createRequest(origin: string, forwarded = true, fields: Record<string, unknown> = {}) {
 	return new Request("http://0.0.0.0:4100/api/payments/attribution", {
 		method: "POST",
 		headers: {
@@ -32,6 +32,7 @@ function createRequest(origin: string, forwarded = true) {
 			paymentLinkUrl: "https://buy.stripe.com/test",
 			adPlatform: "propellerads",
 			adClickId: "abc789",
+			...fields,
 		}),
 	});
 }
@@ -54,4 +55,20 @@ describe("POST /api/payments/attribution", () => {
 		expect(response.status).toBe(403);
 		expect(createCheckoutAttribution).not.toHaveBeenCalled();
 	});
+});
+
+it("persists AdsGram record and rejects oversized opaque records", async () => {
+	const origin = "https://unwandering-paradisaical-marietta.ngrok-free.dev";
+	const response = await POST(
+		createRequest(origin, true, { adPlatform: "adsgram", adRecord: "R+001==" }),
+	);
+	expect(response.status).toBe(200);
+	expect(createCheckoutAttribution).toHaveBeenCalledWith(
+		expect.objectContaining({ adRecord: "R+001==", adPlatform: "adsgram" }),
+	);
+	createCheckoutAttribution.mockClear();
+	expect((await POST(createRequest(origin, true, { adRecord: "x".repeat(2049) }))).status).toBe(
+		400,
+	);
+	expect(createCheckoutAttribution).not.toHaveBeenCalled();
 });

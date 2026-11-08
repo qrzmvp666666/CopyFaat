@@ -312,7 +312,7 @@ export const webhookHandler: WebhookHandler = async (req) => {
 							userId: metadata.user_id,
 						});
 					}
-					await sendConversion();
+					// Subscription conversions are reported from the first paid invoice, not checkout.
 					break;
 				}
 
@@ -398,15 +398,35 @@ export const webhookHandler: WebhookHandler = async (req) => {
 				break;
 			}
 			case "invoice.paid": {
-				const subscriptionId = getInvoiceSubscriptionId(event.data.object);
+				const invoice = event.data.object;
+				const subscriptionId = getInvoiceSubscriptionId(invoice);
 				if (subscriptionId) {
 					const existingPurchase = await getPurchaseBySubscriptionId(subscriptionId);
+					if (!existingPurchase)
+						throw new Error("Subscription purchase is not available; retry webhook");
 					if (existingPurchase && existingPurchase.status !== "canceled") {
 						const subscription =
 							await stripeClient.subscriptions.retrieve(subscriptionId);
 						await updatePurchase({
 							id: existingPurchase.id,
 							status: subscription.status,
+						});
+					}
+					if (
+						existingPurchase?.type === "SUBSCRIPTION" &&
+						typeof invoice.amount_paid === "number" &&
+						typeof invoice.currency === "string"
+					) {
+						await reportAdConversion({
+							provider: "stripe",
+							paymentId: invoice.id,
+							subscriptionId,
+							attributionId: existingPurchase.attributionId,
+							adPlatform: existingPurchase.adPlatform,
+							adClickId: existingPurchase.adClickId,
+							adRecord: existingPurchase.adRecord,
+							amountMinor: invoice.amount_paid,
+							currency: invoice.currency,
 						});
 					}
 				}

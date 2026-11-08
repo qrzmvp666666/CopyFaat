@@ -5,14 +5,6 @@ import { PricingTable } from "@payments/components/PricingTable";
 import { listPurchases } from "@payments/lib/server";
 import { config as authConfig } from "@repo/auth/config";
 import type { Locale } from "@repo/i18n";
-import {
-	createCheckoutLink,
-	createQiXiangCheckoutLink,
-	findPriceByPlanId,
-	getCustomerIdFromEntity,
-	getProviderPriceIdByPlanId,
-	type PlanId,
-} from "@repo/payments";
 import { config as paymentsConfig } from "@repo/payments/config";
 import { createPurchasesHelper } from "@repo/payments/lib/helper";
 import { AuthWrapper } from "@shared/components/AuthWrapper";
@@ -37,16 +29,12 @@ export default async function ChoosePlanPage({
 }) {
 	const t = await getTranslations("choosePlan");
 	const locale = (await getLocale()) as Locale;
-	const { planId, interval, paymentMethod } = await searchParams;
+	const { planId, interval } = await searchParams;
 	const session = await getSession();
-	const selectedPaymentMethod =
-		paymentMethod === "wechat_person" || paymentMethod === "alipay_person"
-			? paymentMethod
-			: "card";
 
 	if (!session) {
 		const loginPath = planId
-			? `/login?redirectTo=${encodeURIComponent(`/choose-plan?planId=${planId}${interval ? `&interval=${interval}` : ""}&paymentMethod=${selectedPaymentMethod}`)}`
+			? `/login?redirectTo=${encodeURIComponent(`/choose-plan?planId=${planId}${interval ? `&interval=${interval}` : ""}`)}`
 			: "/login";
 		redirect(localizePath(loginPath, locale));
 	}
@@ -73,76 +61,6 @@ export default async function ChoosePlanPage({
 		return await redirectWithLocale("/");
 	}
 
-	// If planId is provided, skip the plan selection page and go directly to checkout
-	if (planId) {
-		const normalizedInterval = interval === "year" ? "year" : "week";
-		const price =
-			findPriceByPlanId(planId as PlanId, {
-				type: "subscription",
-				interval: normalizedInterval,
-				paymentMethod: selectedPaymentMethod,
-			}) ??
-			findPriceByPlanId(planId as PlanId, {
-				type: "one-time",
-				paymentMethod: selectedPaymentMethod,
-			});
-
-		const priceId = price
-			? getProviderPriceIdByPlanId(planId as PlanId, {
-					type: price.type,
-					interval: price.type === "subscription" ? price.interval : undefined,
-					paymentMethod: selectedPaymentMethod,
-				})
-			: null;
-
-		if (price && priceId) {
-			const appUrl =
-				process.env.NEXT_PUBLIC_SAAS_URL?.replace(/\/$/, "") ??
-				"http://signalfast.localhost:4100";
-			const redirectUrl = organizationId
-				? `${appUrl}${localizePath("/checkout-return", locale)}?organizationId=${organizationId}`
-				: `${appUrl}${localizePath("/checkout-return", locale)}`;
-
-			if (
-				selectedPaymentMethod === "wechat_person" ||
-				selectedPaymentMethod === "alipay_person"
-			) {
-				const { checkoutLink } = await createQiXiangCheckoutLink({
-					type: selectedPaymentMethod === "wechat_person" ? "wxpay" : "alipay",
-					amount: price.amount,
-					productName: planId,
-					notifyUrl: `${appUrl}/api/webhooks/payments/qixiang`,
-					returnUrl: redirectUrl,
-					param: JSON.stringify({
-						...(organizationId ? { organizationId } : { userId: session.user.id }),
-						priceId,
-					}),
-				});
-
-				redirect(checkoutLink);
-			}
-
-			const customerId = await getCustomerIdFromEntity(
-				organizationId ? { organizationId } : { userId: session.user.id },
-			);
-
-			const checkoutLink = await createCheckoutLink({
-				type: price.type,
-				priceId,
-				email: session.user.email,
-				name: session.user.name ?? "",
-				redirectUrl,
-				...(organizationId ? { organizationId } : { userId: session.user.id }),
-				trialPeriodDays: "trialPeriodDays" in price ? price.trialPeriodDays : undefined,
-				customerId: customerId ?? undefined,
-			});
-
-			if (checkoutLink) {
-				redirect(checkoutLink);
-			}
-		}
-	}
-
 	return (
 		<AuthWrapper contentClass="max-w-5xl">
 			<div className="mb-4 text-center">
@@ -152,6 +70,7 @@ export default async function ChoosePlanPage({
 
 			<div>
 				<PricingTable
+					initialPeriod={interval === "week" ? "week" : "year"}
 					{...(organizationId
 						? {
 								organizationId,

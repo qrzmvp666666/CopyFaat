@@ -1,5 +1,6 @@
 import { config } from "../config";
 import type { PaidPlan, PaymentMethod, PlanPrice } from "../types";
+import { legacyPriceMappings } from "./legacy-price-ids";
 import { findPriceByPlanId, type PlanId, type RecurringInterval } from "./plans";
 
 interface ProviderPriceMappingEntry {
@@ -26,6 +27,7 @@ function getProviderPriceMappings(): ProviderPriceMappingEntry[] {
 	});
 	return [
 		...configuredMappings,
+		...legacyPriceMappings,
 		{
 			planId: "pro",
 			type: "subscription",

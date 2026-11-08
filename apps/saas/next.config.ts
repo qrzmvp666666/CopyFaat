@@ -37,6 +37,18 @@ const allowedDevOrigins = new Set([
 ]);
 
 const nextConfig: NextConfig = {
+	env: {
+		NEXT_PUBLIC_AUTH_GOOGLE_ENABLED: String(
+			Boolean(
+				process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim(),
+			),
+		),
+		NEXT_PUBLIC_AUTH_GITHUB_ENABLED: String(
+			Boolean(
+				process.env.GITHUB_CLIENT_ID?.trim() && process.env.GITHUB_CLIENT_SECRET?.trim(),
+			),
+		),
+	},
 	transpilePackages: [
 		"@repo/api",
 		"@repo/auth",

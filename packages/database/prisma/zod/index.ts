@@ -66,7 +66,7 @@ export type InvitationScalarFieldEnum = z.infer<typeof InvitationScalarFieldEnum
 
 // File: PurchaseScalarFieldEnum.schema.ts
 
-export const PurchaseScalarFieldEnumSchema = z.enum(['id', 'organizationId', 'userId', 'type', 'provider', 'claimStatus', 'customerId', 'customerEmail', 'subscriptionId', 'paymentLinkId', 'visitorId', 'attributionId', 'adPlatform', 'adClickId', 'taliviaVisitorId', 'taliviaSessionId', 'priceId', 'status', 'createdAt', 'updatedAt'])
+export const PurchaseScalarFieldEnumSchema = z.enum(['id', 'organizationId', 'userId', 'type', 'provider', 'claimStatus', 'customerId', 'customerEmail', 'subscriptionId', 'paymentLinkId', 'visitorId', 'attributionId', 'adPlatform', 'adClickId', 'adRecord', 'firstPaidPaymentId', 'taliviaVisitorId', 'taliviaSessionId', 'priceId', 'status', 'createdAt', 'updatedAt'])
 
 export type PurchaseScalarFieldEnum = z.infer<typeof PurchaseScalarFieldEnumSchema>;
 
@@ -120,13 +120,13 @@ export type SignalScalarFieldEnum = z.infer<typeof SignalScalarFieldEnumSchema>;
 
 // File: CheckoutAttributionScalarFieldEnum.schema.ts
 
-export const CheckoutAttributionScalarFieldEnumSchema = z.enum(['id', 'provider', 'paymentLinkUrl', 'adPlatform', 'adClickId', 'taliviaVisitorId', 'taliviaSessionId', 'utmSource', 'utmMedium', 'utmCampaign', 'utmContent', 'utmTerm', 'createdAt'])
+export const CheckoutAttributionScalarFieldEnumSchema = z.enum(['id', 'provider', 'paymentLinkUrl', 'adPlatform', 'adClickId', 'adRecord', 'taliviaVisitorId', 'taliviaSessionId', 'utmSource', 'utmMedium', 'utmCampaign', 'utmContent', 'utmTerm', 'createdAt'])
 
 export type CheckoutAttributionScalarFieldEnum = z.infer<typeof CheckoutAttributionScalarFieldEnumSchema>;
 
 // File: AdConversionScalarFieldEnum.schema.ts
 
-export const AdConversionScalarFieldEnumSchema = z.enum(['id', 'provider', 'paymentId', 'attributionId', 'amountUsd', 'status', 'attempts', 'lastError', 'createdAt', 'updatedAt'])
+export const AdConversionScalarFieldEnumSchema = z.enum(['id', 'provider', 'paymentId', 'attributionId', 'amountUsd', 'amountMinor', 'currency', 'adPlatform', 'adClickId', 'adRecord', 'subscriptionId', 'goal', 'status', 'attempts', 'lastError', 'createdAt', 'updatedAt'])
 
 export type AdConversionScalarFieldEnum = z.infer<typeof AdConversionScalarFieldEnumSchema>;
 
@@ -350,6 +350,8 @@ export const PurchaseSchema = z.object({
   attributionId: z.string().nullish(),
   adPlatform: z.string().nullish(),
   adClickId: z.string().nullish(),
+  adRecord: z.string().nullish(),
+  firstPaidPaymentId: z.string().nullish(),
   taliviaVisitorId: z.string().nullish(),
   taliviaSessionId: z.string().nullish(),
   priceId: z.string(),
@@ -516,6 +518,7 @@ export const CheckoutAttributionSchema = z.object({
   paymentLinkUrl: z.string(),
   adPlatform: z.string().nullish(),
   adClickId: z.string().nullish(),
+  adRecord: z.string().nullish(),
   taliviaVisitorId: z.string().nullish(),
   taliviaSessionId: z.string().nullish(),
   utmSource: z.string().nullish(),
@@ -536,7 +539,14 @@ export const AdConversionSchema = z.object({
   provider: z.string(),
   paymentId: z.string(),
   attributionId: z.string(),
-  amountUsd: z.string(),
+  amountUsd: z.string().nullish(),
+  amountMinor: z.number().int().nullish(),
+  currency: z.string().nullish(),
+  adPlatform: z.string().nullish(),
+  adClickId: z.string().nullish(),
+  adRecord: z.string().nullish(),
+  subscriptionId: z.string().nullish(),
+  goal: z.string().default("first_purchase"),
   status: z.string().default("pending"),
   attempts: z.number().int(),
   lastError: z.string().nullish(),

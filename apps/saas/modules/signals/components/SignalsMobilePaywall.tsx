@@ -13,17 +13,20 @@ import {
 	CandlestickChartIcon,
 	CheckIcon,
 	CircleDotIcon,
+	ChevronLeftIcon,
 	UsersRoundIcon,
-	XIcon,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 interface SignalsMobilePaywallProps {
 	isAuthenticated: boolean;
 	open: boolean;
 	onClose: () => void;
+	embedded?: boolean;
+	initialPeriod?: "year" | "week";
+	onCheckoutStarted?: () => void;
 }
 
 const YOLFI_WEEKLY_PAYMENT_LINK =
@@ -53,17 +56,21 @@ export function SignalsMobilePaywall({
 	isAuthenticated,
 	onClose,
 	open,
+	embedded = false,
+	initialPeriod = "year",
+	onCheckoutStarted,
 }: SignalsMobilePaywallProps) {
 	const { user } = useSession();
 	const locale = useLocale() as Locale;
 	const t = useTranslations("signals.mobilePaywall");
 	const [paymentMethod, setPaymentMethod] = useState<"card" | "stablecoin">("card");
-	const [period, setPeriod] = useState<"year" | "week">("year");
+	const [period, setPeriod] = useState<"year" | "week">(initialPeriod);
 	const [isStartingCheckout, setIsStartingCheckout] = useState(false);
+	const checkoutInFlight = useRef(false);
 	if (!open) return null;
 
 	async function startCheckout() {
-		if (isStartingCheckout) return;
+		if (checkoutInFlight.current) return;
 		const provider = paymentMethod === "stablecoin" ? "yolfi" : "stripe";
 		const paymentLink =
 			provider === "yolfi"
@@ -77,6 +84,7 @@ export function SignalsMobilePaywall({
 			toastError(t("errorTitle"), t("errorDescription"));
 			return;
 		}
+		checkoutInFlight.current = true;
 		setIsStartingCheckout(true);
 		trackTaliviaCheckoutStarted();
 		const target =
@@ -88,15 +96,23 @@ export function SignalsMobilePaywall({
 					)
 				: getStripePaymentLinkUrl(paymentLink, user?.email);
 		try {
-			window.location.href = await prepareAttributedPaymentLink(target, provider, locale);
+			const checkoutUrl = await prepareAttributedPaymentLink(target, provider, locale);
+			onCheckoutStarted?.();
+			window.location.href = checkoutUrl;
 		} catch {
+			checkoutInFlight.current = false;
 			setIsStartingCheckout(false);
 			toastError(t("attributionErrorTitle"), t("attributionErrorDescription"));
 		}
 	}
 
 	return (
-		<div className="inset-0 text-white md:hidden fixed z-[60] bg-[#050506]">
+		<div
+			className={cn(
+				"text-white bg-[#050506]",
+				embedded ? "relative overflow-hidden rounded-2xl" : "inset-0 fixed z-[60]",
+			)}
+		>
 			<style>{`
 				@keyframes benefit-slide-left {
 					to { transform: translateX(-50%); }
@@ -106,16 +122,25 @@ export function SignalsMobilePaywall({
 					to { transform: translateX(0); }
 				}
 			`}</style>
-			<div className="mx-auto flex h-[100dvh] w-full max-w-[430px] flex-col">
+			<div
+				className={cn(
+					"mx-auto flex w-full max-w-[430px] flex-col",
+					embedded ? "min-h-[680px]" : "h-[100dvh]",
+				)}
+			>
 				<header className="px-5 h-14 flex shrink-0 items-center justify-between pt-[max(env(safe-area-inset-top),16px)]">
-					<button
-						aria-label={t("close")}
-						className="text-white/75 hover:text-white size-10 flex items-center justify-center"
-						onClick={onClose}
-						type="button"
-					>
-						<XIcon className="size-5" />
-					</button>
+					{!embedded ? (
+						<button
+							aria-label={t("back")}
+							className="text-white/75 hover:text-white size-10 flex items-center justify-center"
+							onClick={onClose}
+							type="button"
+						>
+							<ChevronLeftIcon className="size-5" />
+						</button>
+					) : (
+						<span className="w-10" />
+					)}
 					{!isAuthenticated ? (
 						<Link
 							className="text-sm font-medium text-white/70 hover:text-white"

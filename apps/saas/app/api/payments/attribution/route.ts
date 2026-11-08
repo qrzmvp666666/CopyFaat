@@ -10,6 +10,7 @@ const schema = z.object({
 	paymentLinkUrl: z.url().max(2048),
 	adPlatform: z.string().max(80).optional(),
 	adClickId: text,
+	adRecord: z.string().max(2048).optional(),
 	taliviaVisitorId: text,
 	taliviaSessionId: text,
 	utmSource: text,

@@ -4,6 +4,7 @@ const MAX_AGE = 30 * 24 * 60 * 60;
 export interface AdAttribution {
 	adPlatform?: string;
 	adClickId?: string;
+	adRecord?: string;
 	utmSource?: string;
 	utmMedium?: string;
 	utmCampaign?: string;
@@ -27,7 +28,8 @@ export function captureAdAttribution() {
 		params.get("fbclid") ??
 		params.get("ttclid") ??
 		params.get("msclkid");
-	if (!source && !clickId) return;
+	const record = params.get("record");
+	if (!source && !clickId && !record) return;
 	const data: AdAttribution = {
 		adPlatform:
 			source ??
@@ -41,6 +43,7 @@ export function captureAdAttribution() {
 							? "microsoft"
 							: undefined),
 		adClickId: clickId ?? undefined,
+		adRecord: source?.toLowerCase() === "adsgram" ? (record ?? undefined) : undefined,
 		utmSource: source ?? undefined,
 		utmMedium: params.get("utm_medium") ?? undefined,
 		utmCampaign: params.get("utm_campaign") ?? undefined,
