@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-09
+
+- Protect server-only checkout attribution and advertiser conversion tables with PostgreSQL row-level security when deploying to Supabase.
+
 ## 2026-11-08
 
 - Unified purchase entry points on the existing weekly/yearly Stripe and Yolfi Payment Link paywall, including checkout attribution. Retired the legacy dynamic checkout endpoint and price environment settings while retaining historical purchase recognition.
