@@ -928,6 +928,7 @@
 			}
 		},
 		"market": {
+			"futures": "Futures",
 			"eyebrow": "Market",
 			"noMatches": "No trading pairs found",
 			"search": "Search markets",

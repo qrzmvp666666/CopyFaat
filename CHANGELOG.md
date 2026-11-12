@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-12
+
+- fix: Load chart candles only for the selected trading pair; remove per-symbol candle probes that delayed signal rendering on page load.
+
+- fix: Use Binance USD-M Futures for historical candles, live candles, and ticker quotes in the signals workspace.
+
 ## 2026-11-09
 
 - Protect server-only checkout attribution and advertiser conversion tables with PostgreSQL row-level security when deploying to Supabase.

@@ -2,7 +2,7 @@ import type { SignalKline, SignalKlinesResponse } from "@signals/lib/signal-type
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-const BINANCE_KLINES_URL = "https://api.binance.com/api/v3/klines";
+const BINANCE_KLINES_URL = "https://fapi.binance.com/fapi/v1/klines";
 const SUPPORTED_INTERVALS = ["15m", "1h", "4h", "1d"] as const;
 
 const searchParamsSchema = z.object({
@@ -107,7 +107,7 @@ export async function getMarketKlines(request: Request) {
 		if (isBinanceUnknownSymbolError(responseBody)) {
 			return NextResponse.json(
 				{
-					error: "This symbol is unavailable on Binance.",
+					error: "This symbol is unavailable on Binance USD-M Futures.",
 					ok: false,
 				},
 				{ status: 404 },
@@ -116,7 +116,7 @@ export async function getMarketKlines(request: Request) {
 
 		return NextResponse.json(
 			{
-				error: "Failed to load Binance klines.",
+				error: "Failed to load Binance USD-M Futures klines.",
 				ok: false,
 				status: response.status,
 			},

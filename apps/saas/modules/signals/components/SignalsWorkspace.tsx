@@ -581,7 +581,7 @@ const INSTRUMENTS: Instrument[] = [
 	},
 ];
 
-const BINANCE_STREAM_BASE_URL = "wss://stream.binance.com:9443";
+const BINANCE_STREAM_BASE_URL = "wss://fstream.binance.com/market";
 const BINANCE_RECONNECT_DELAYS_MS = [1_000, 2_000, 5_000, 10_000] as const;
 const MIN_CHART_CANDLES = 20;
 const PRIORITY_SYMBOL_BASES = ["BTC", "ETH", "SOL"] as const;
@@ -716,37 +716,6 @@ function isCryptoTradingSymbol(symbol: StoredTradingSymbol) {
 		baseAsset !== "SPCX" &&
 		baseAsset !== "XAG"
 	);
-}
-
-async function canDisplaySymbolChart(
-	symbol: string,
-	signal?: AbortSignal,
-): Promise<boolean | null> {
-	try {
-		const params = new URLSearchParams({
-			interval: "1h",
-			limit: String(MIN_CHART_CANDLES),
-			symbol,
-		});
-		const response = await fetch(`/api/signals/klines?${params.toString()}`, {
-			cache: "no-store",
-			signal,
-		});
-
-		if (response.status === 404) {
-			return false;
-		}
-
-		if (!response.ok) {
-			return null;
-		}
-
-		const data = (await response.json()) as SignalKlinesResponse;
-
-		return data.klines.length >= MIN_CHART_CANDLES;
-	} catch {
-		return null;
-	}
 }
 
 function createSourceFilter(source: SignalsPreviewResponse["sources"][number]): Source {
@@ -1318,8 +1287,6 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const [supportedSymbols, setSupportedSymbols] = useState<Set<string> | null>(() =>
 		hasProAccess ? null : new Set(["BTCUSDT"]),
 	);
-	const symbolAvailabilityRef = useRef(new Map<string, boolean>());
-	const [symbolAvailabilityRetryVersion, setSymbolAvailabilityRetryVersion] = useState(0);
 
 	useEffect(() => {
 		const mediaQuery = window.matchMedia("(max-width: 767px)");
@@ -1589,16 +1556,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const signalPageFiltersRef = useRef(signalPageFilters);
 
 	useEffect(() => {
-		if (isSignalsLoading) {
-			return;
-		}
-
 		if (!hasProAccess) {
 			setSupportedSymbols(new Set(preview.tradingSymbols.map((symbol) => symbol.symbol)));
 			return;
 		}
 
-		const controller = new AbortController();
 		const tradingSymbols = new Map<string, StoredTradingSymbol>();
 
 		for (const symbol of databaseTradingSymbols) {
@@ -1621,65 +1583,8 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			pricePrecision: 2,
 		});
 
-		for (const symbol of tradingSymbols.values()) {
-			if (!isBinanceTradingSymbol(symbol)) {
-				symbolAvailabilityRef.current.set(symbol.symbol, false);
-			}
-		}
-
-		const symbolsToCheck = Array.from(tradingSymbols.values()).filter(
-			(symbol) =>
-				isBinanceTradingSymbol(symbol) && !symbolAvailabilityRef.current.has(symbol.symbol),
-		);
-
-		let retryTimer: number | undefined;
-
-		async function loadSymbolAvailability() {
-			const availability = await Promise.all(
-				symbolsToCheck.map(async (symbol) => {
-					const canDisplay = await canDisplaySymbolChart(
-						symbol.symbol,
-						controller.signal,
-					);
-
-					if (!controller.signal.aborted && canDisplay !== null) {
-						symbolAvailabilityRef.current.set(symbol.symbol, canDisplay);
-					}
-
-					return canDisplay;
-				}),
-			);
-
-			if (controller.signal.aborted) {
-				return;
-			}
-
-			setSupportedSymbols(new Set(tradingSymbols.keys()));
-
-			if (availability.some((canDisplay) => canDisplay === null)) {
-				retryTimer = window.setTimeout(() => {
-					setSymbolAvailabilityRetryVersion((version) => version + 1);
-				}, 5_000);
-			}
-		}
-
-		void loadSymbolAvailability();
-
-		return () => {
-			controller.abort();
-
-			if (retryTimer) {
-				window.clearTimeout(retryTimer);
-			}
-		};
-	}, [
-		hasProAccess,
-		isSignalsLoading,
-		databaseTradingSymbols,
-		preview.tradingSymbols,
-		symbolAvailabilityRetryVersion,
-		webhookSignals,
-	]);
+		setSupportedSymbols(new Set(tradingSymbols.keys()));
+	}, [hasProAccess, databaseTradingSymbols, preview.tradingSymbols, webhookSignals]);
 
 	useEffect(() => {
 		if (!hasProAccess) {
@@ -3528,6 +3433,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 												(isChartLoading
 													? t("chart.loadingSymbol")
 													: t("chart.emptyTitle"))}
+											{selectedSymbol ? (
+												<span className="rounded border-white/15 bg-white/5 px-1 py-0.5 font-sans font-medium text-white/60 shrink-0 border text-[10px] leading-none">
+													{t("market.futures")}
+												</span>
+											) : null}
 											<ChevronDownIcon className="size-4 text-white/45" />
 										</Button>
 										<SheetContent
@@ -3572,7 +3482,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 															>
 																<span
 																	className={cn(
-																		"size-10 text-sm font-bold text-white flex shrink-0 items-center justify-center overflow-hidden rounded-full",
+																		"size-10 text-sm font-bold text-white hidden shrink-0 items-center justify-center overflow-hidden rounded-full",
 																		instrument.accent,
 																	)}
 																>
@@ -3587,8 +3497,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 																	)}
 																</span>
 																<span className="min-w-0 flex-1">
-																	<span className="text-sm font-medium block">
+																	<span className="gap-1.5 text-sm font-medium flex items-center">
 																		{instrument.base}/USDT
+																		<span className="rounded border-white/15 bg-white/5 px-1 py-0.5 font-sans font-medium text-white/60 shrink-0 border text-[10px] leading-none">
+																			{t("market.futures")}
+																		</span>
 																	</span>
 																	<span className="text-xs text-white/45 block">
 																		{instrument.symbol}
