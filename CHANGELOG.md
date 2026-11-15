@@ -2,6 +2,8 @@
 
 ## 2026-11-15
 
+- fix: Temporarily hide the Discord button in the signals mobile header.
+
 - fix: Add logout to the mobile signals account menu and preserve the current locale after signing out.
 
 ## 2026-11-12

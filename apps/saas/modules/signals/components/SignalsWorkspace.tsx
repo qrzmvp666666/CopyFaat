@@ -2313,7 +2313,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 						rel="noopener noreferrer"
 						aria-label="Discord"
 						title="Discord"
-						className="size-10 hover:bg-white/8 flex items-center justify-center rounded-md"
+						className="size-10 hover:bg-white/8 hidden items-center justify-center rounded-md"
 					>
 						<Image
 							src="/images/contact/discord-monochrome.svg"
