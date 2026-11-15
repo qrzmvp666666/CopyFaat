@@ -14,8 +14,9 @@ import type { SignalsPreviewResponse } from "@signals/lib/signal-types";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, ChevronLeftIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface SignalsMobilePaywallProps {
 	isAuthenticated: boolean;
@@ -138,16 +139,32 @@ export function SignalsMobilePaywall({
 					) : (
 						<span className="w-10" />
 					)}
-					{!isAuthenticated ? (
-						<Link
-							className="text-sm font-medium text-white/70 hover:text-white"
-							href={`${localizePath("/login", locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale))}`}
+					<div className="gap-2 flex items-center">
+						{!isAuthenticated ? (
+							<Link
+								className="text-sm font-medium text-white/70 hover:text-white"
+								href={`${localizePath("/login", locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale))}`}
+							>
+								{t("login")}
+							</Link>
+						) : null}
+						<a
+							href="https://t.me/Michael_Qin"
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label="Telegram"
+							title="Telegram"
+							className="size-10 hover:bg-white/8 flex shrink-0 items-center justify-center rounded-md"
 						>
-							{t("login")}
-						</Link>
-					) : (
-						<span className="w-10" />
-					)}
+							<Image
+								src="/images/contact/telegram-monochrome.svg"
+								className="opacity-75 invert transition-opacity hover:opacity-100"
+								alt=""
+								width={24}
+								height={24}
+							/>
+						</a>
+					</div>
 				</header>
 
 				<div className="min-h-0 px-6 pb-6 flex-1 overflow-y-auto [scrollbar-width:none]">
@@ -267,7 +284,8 @@ export function SignalsMobilePaywall({
 					<PaywallPlanComparison />
 				</div>
 
-				<footer className="px-6 pt-3 bg-[#0c0c0e] pb-[max(env(safe-area-inset-bottom),16px)]">
+				<footer className="px-6 pt-3 shrink-0 bg-[#0c0c0e] pb-[max(env(safe-area-inset-bottom),16px)]">
+					<PaywallOfferCountdown />
 					<Button
 						className="h-12 text-base font-bold w-full rounded-full bg-gradient-to-r from-[#a4efff] to-[#e8baff] text-[#17131e] hover:brightness-105"
 						disabled={isStartingCheckout}
@@ -277,6 +295,54 @@ export function SignalsMobilePaywall({
 					</Button>
 				</footer>
 			</div>
+		</div>
+	);
+}
+
+const PAYWALL_OFFER_STORAGE_KEY = "signalfast:paywall-offer-deadline:v1";
+const PAYWALL_OFFER_DURATION = 7 * 24 * 60 * 60 * 1000;
+
+function PaywallOfferCountdown() {
+	const t = useTranslations("signals.mobilePaywall.countdown");
+	const [remaining, setRemaining] = useState<number | null>(null);
+	const deadlineRef = useRef<number | null>(null);
+
+	useEffect(() => {
+		let deadline = deadlineRef.current ?? Date.now() + PAYWALL_OFFER_DURATION;
+		try {
+			const stored = Number(window.localStorage.getItem(PAYWALL_OFFER_STORAGE_KEY));
+			if (Number.isFinite(stored) && stored > 0) deadline = stored;
+			else window.localStorage.setItem(PAYWALL_OFFER_STORAGE_KEY, String(deadline));
+		} catch {
+			// Keep the countdown usable when browser storage is unavailable.
+		}
+		deadlineRef.current = deadline;
+		function updateRemaining() {
+			setRemaining(Math.max(0, deadline - Date.now()));
+		}
+		updateRemaining();
+		const timer = window.setInterval(updateRemaining, 1000);
+		return () => window.clearInterval(timer);
+	}, []);
+
+	const totalSeconds = remaining === null ? null : Math.ceil(remaining / 1000);
+	const days = totalSeconds === null ? 7 : Math.floor(totalSeconds / 86400);
+	const hours = totalSeconds === null ? 0 : Math.floor((totalSeconds % 86400) / 3600);
+	const minutes = totalSeconds === null ? 0 : Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds === null ? 0 : totalSeconds % 60;
+	const format = (value: number) => String(value).padStart(2, "0");
+
+	return (
+		<div className="mb-3 gap-x-2 gap-y-1 text-xs flex flex-wrap items-center justify-center">
+			<span className="text-white/60">{remaining === 0 ? t("ended") : t("label")}</span>
+			<span
+				role="timer"
+				aria-label={t("remaining", { days, hours, minutes, seconds })}
+				className="font-mono font-semibold text-[#a4efff] tabular-nums"
+			>
+				{days}
+				{t("days")} {format(hours)}:{format(minutes)}:{format(seconds)}
+			</span>
 		</div>
 	);
 }

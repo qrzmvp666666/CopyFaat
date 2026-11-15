@@ -28,6 +28,51 @@ Set `SIGNAL_WEBHOOK_SECRET` to require callers to send `x-signal-webhook-secret`
 
 `POST /api/signals/webhook`
 
+## Batch requests and processing status
+
+The same endpoint accepts a single signal (existing behavior), an array of signals, or `{ "signals": [...] }`. Batches contain 1–100 items and use the same secret header and per-signal validation as single requests. Items are processed sequentially in submitted order, so send an opening signal before its updates. A failed item does not roll back successful items or prevent later items from running.
+
+Batch responses use HTTP 200 when all items are saved or ignored, and HTTP 207 when any item is invalid or fails storage. Always inspect the body: `ok` is false for partial failures, even though 207 is a 2xx status. An invalid batch container/size returns 422 before any writes. The existing single-signal response remains unchanged.
+
+```json
+{
+	"ok": false,
+	"receivedAt": "2026-11-15T09:00:00.000Z",
+	"total": 3,
+	"saved": 1,
+	"ignored": 0,
+	"invalid": 1,
+	"failed": 1,
+	"results": [
+		{
+			"index": 0,
+			"eventId": "discord:open-1",
+			"status": "saved",
+			"signal": { "id": "stored-signal-id", "eventId": "discord:open-1" }
+		},
+		{
+			"index": 1,
+			"eventId": "discord:open-2",
+			"status": "invalid",
+			"error": "Invalid signal webhook payload.",
+			"issues": {}
+		},
+		{
+			"index": 2,
+			"eventId": "discord:open-3",
+			"status": "failed",
+			"error": "Failed to store signal. Retry this item using the same eventId."
+		}
+	]
+}
+```
+
+The example abbreviates `signal` and `issues`; actual saved results include the full signal and validation failures include field errors. `index` is zero-based. `saved` covers both insertions and updates. `ignored` means the existing trader-name filter excluded the item. Save the response in the collection task, fix invalid items and retry failed items with stable event IDs. After a lost response, replaying the same batch with the same IDs is supported by existing upsert semantics. Replaying old updates can overwrite newer state: preserve event order and avoid replaying outdated batches.
+
+This is synchronous processing, not a background job. Each request now creates a persistent audit record and returns `logId` and `logStatus` (`recorded` or `unavailable`) alongside the existing response. `receivedAt` is the batch start timestamp. Confirm persisted content in the signals page; a saved result confirms storage, not delivery of an SSE notification. For serverless or multi-instance hosting, the current process-local SSE channel needs a shared event source for reliable cross-instance live updates.
+
+The webhook runs in the SaaS Next.js application and writes via Prisma using `DATABASE_URL`. Supabase can host the PostgreSQL database; it is not required to host this route as an Edge Function.
+
 ## Request Body
 
 ```json
@@ -175,3 +220,44 @@ OAuth login and account linking are shown only when both credentials for the pro
 Both desktop and mobile paywalls use the same pricing component, which repeats the four onboarding feature comparisons plus desktop/mobile support in a compact table below the plan cards. Pro feature checkmarks include an Auto label; the desktop/mobile row uses Included. Its Pro column follows the paywall’s cyan accent; pricing remains in the selectable plan cards above the table. The table stays in the scrollable content area above the fixed checkout footer and reuses the onboarding comparison translations.
 
 Desktop and mobile paywalls show two scrolling rows above payment methods: public KOL trader avatars/names first, then active contract symbols/logos. Both use `/api/signals/preview`, whose symbol metadata comes from the active trading-symbol catalog so contracts without recent signals remain visible. Loading uses a placeholder; failed or empty responses do not invent traders or symbols.
+
+The paywall footer shows a seven-day countdown above checkout on desktop and mobile. It starts on the first paywall visit and persists its deadline in `signalfast:paywall-offer-deadline:v1` localStorage. Expired deadlines stay expired. The timer is presentation only; it does not change provider prices or enforce offer eligibility.
+
+## Admin webhook call history
+
+Administrators can open `/zh/admin/webhook-logs` or `/en/admin/webhook-logs` from the SaaS admin menu. The page shows call totals, completed calls, calls needing attention, and processing calls; supports status filters, search by log ID/event ID/KOL/symbol, pagination, and per-item detail including signal IDs and validation errors. It refreshes every 15 seconds; a processing detail refreshes every 5 seconds. All displayed times use Asia/Shanghai. Only calls received after enabling logging are available.
+
+Both list and detail use `adminProcedure` under `admin.webhookLogs`; the page inherits the existing admin layout guard. The `signal_webhook_log` table is server-only with RLS enabled and no browser Data API policies. Apply `20261115120000_signal_webhook_logs` before deploying this version. No secrets, authorization headers, cookies, or raw malformed request bodies are stored. Submitted fields are allowlisted and bounded (note: 500 characters, other text: 200, source name/platform: 80); unknown fields are omitted. Logs are diagnostic snapshots, not lossless request archives or automatic replay payloads.
+
+Unauthenticated requests, malformed JSON and invalid batch envelopes appear as rejected calls with no submitted items. Authorized calls that cannot create an audit record return 503 without processing signals. If finalizing the audit record fails after signal processing, the actual processing response is preserved with `logStatus: "unavailable"`; server logs include the log ID, and the admin record may remain processing. Processing records with no completion can also indicate interrupted requests; verify signals before retrying. There is no automatic retry button or background queue.
+
+## Discord name-based KOL bindings
+
+Manage bindings under **Admin → KOL source bindings** (`/zh/admin/source-bindings`, or `/en/admin/source-bindings`). Each binding links platform + server name + channel name + optional category to an **existing** Trader. The desktop page uses a compact table for platform, server, channel, KOL, status, and actions; mobile uses a divided list. Admins can create, edit, search, or disable bindings; both procedures enforce the admin role. No Discord numeric IDs are needed.
+
+Discord submissions must include these source fields (alongside the existing signal contract):
+
+```json
+{
+	"source": {
+		"platform": "discord",
+		"serverName": "币圈策略搬运工",
+		"channelName": "三马哥合约",
+		"name": "三马哥"
+	}
+}
+```
+
+The binding determines KOL identity; submitted `name` or `id` cannot replace it. Existing Trader names, external IDs, and historical signals are preserved. Non-Discord submissions without named channel fields retain the legacy identity path.
+
+Names use Unicode NFKC, trim/collapse whitespace, remove zero-width characters, and ignore case. Channel names additionally ignore boundary 📈/📉 decorations. There is no fuzzy matching. If the same server/channel has multiple category bindings, provide `source.categoryName`; when provided, category must match exactly after normalization. Unknown sources never auto-create KOLs. A renamed channel needs its binding updated.
+
+Single-item source errors return HTTP 422 with `code`; batch items return `status: "invalid"` and the same code while other items continue:
+
+- `SOURCE_INCOMPLETE`: missing server/channel names.
+- `SOURCE_UNBOUND`: no matching binding.
+- `SOURCE_AMBIGUOUS`: multiple bindings; supply category.
+- `SOURCE_DISABLED`: binding or KOL disabled.
+- `EVENT_SOURCE_CONFLICT`: the explicit event ID belongs to another KOL.
+
+Webhook logs retain bounded source names and per-item codes for troubleshooting. Apply `20261115150000_signal_source_bindings` before deploying this version. The table has RLS enabled with server-only access; browser clients must use the admin API. On existing unbaselined development databases, apply only the reviewed additive migration and mark it resolved rather than replaying historical migrations.

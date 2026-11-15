@@ -451,6 +451,14 @@ export function NavBar() {
 							href: "/admin",
 							icon: ShieldUserIcon,
 							isActive: pathname.startsWith("/admin/"),
+							subItems: [
+								{ label: t("admin.menu.users"), href: "/admin/users" },
+								{ label: t("admin.menu.webhookLogs"), href: "/admin/webhook-logs" },
+								{
+									label: t("admin.menu.sourceBindings"),
+									href: "/admin/source-bindings",
+								},
+							],
 						},
 					]
 				: []),

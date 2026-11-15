@@ -130,6 +130,18 @@ export const AdConversionScalarFieldEnumSchema = z.enum(['id', 'provider', 'paym
 
 export type AdConversionScalarFieldEnum = z.infer<typeof AdConversionScalarFieldEnumSchema>;
 
+// File: SignalWebhookLogScalarFieldEnum.schema.ts
+
+export const SignalWebhookLogScalarFieldEnumSchema = z.enum(['id', 'mode', 'status', 'httpStatus', 'total', 'saved', 'ignored', 'invalid', 'failed', 'durationMs', 'error', 'searchText', 'items', 'createdAt', 'completedAt'])
+
+export type SignalWebhookLogScalarFieldEnum = z.infer<typeof SignalWebhookLogScalarFieldEnumSchema>;
+
+// File: SignalSourceBindingScalarFieldEnum.schema.ts
+
+export const SignalSourceBindingScalarFieldEnumSchema = z.enum(['id', 'platform', 'serverName', 'channelName', 'categoryName', 'platformKey', 'serverKey', 'channelKey', 'categoryKey', 'traderId', 'isActive', 'createdAt', 'updatedAt'])
+
+export type SignalSourceBindingScalarFieldEnum = z.infer<typeof SignalSourceBindingScalarFieldEnumSchema>;
+
 // File: SortOrder.schema.ts
 
 export const SortOrderSchema = z.enum(['asc', 'desc'])
@@ -555,4 +567,48 @@ export const AdConversionSchema = z.object({
 });
 
 export type AdConversionType = z.infer<typeof AdConversionSchema>;
+
+
+// File: SignalWebhookLog.schema.ts
+
+export const SignalWebhookLogSchema = z.object({
+  id: z.string(),
+  mode: z.string().default("single"),
+  status: z.string().default("processing"),
+  httpStatus: z.number().int().nullish(),
+  total: z.number().int(),
+  saved: z.number().int(),
+  ignored: z.number().int(),
+  invalid: z.number().int(),
+  failed: z.number().int(),
+  durationMs: z.number().int().nullish(),
+  error: z.string().nullish(),
+  searchText: z.string(),
+  items: z.unknown().refine((val) => { const getDepth = (obj: unknown, depth: number = 0): number => { if (depth > 10) return depth; if (obj === null || typeof obj !== 'object') return depth; const values = Object.values(obj as Record<string, unknown>); if (values.length === 0) return depth; return Math.max(...values.map(v => getDepth(v, depth + 1))); }; return getDepth(val) <= 10; }, "JSON nesting depth exceeds maximum of 10").default("[]"),
+  createdAt: z.date(),
+  completedAt: z.date().nullish(),
+});
+
+export type SignalWebhookLogType = z.infer<typeof SignalWebhookLogSchema>;
+
+
+// File: SignalSourceBinding.schema.ts
+
+export const SignalSourceBindingSchema = z.object({
+  id: z.string(),
+  platform: z.string(),
+  serverName: z.string(),
+  channelName: z.string(),
+  categoryName: z.string(),
+  platformKey: z.string(),
+  serverKey: z.string(),
+  channelKey: z.string(),
+  categoryKey: z.string(),
+  traderId: z.string(),
+  isActive: z.boolean().default(true),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type SignalSourceBindingType = z.infer<typeof SignalSourceBindingSchema>;
 

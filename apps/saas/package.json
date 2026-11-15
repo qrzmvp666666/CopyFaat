@@ -51,6 +51,7 @@
 		"js-cookie": "catalog:",
 		"lightweight-charts": "^5.2.0",
 		"lucide-react": "catalog:",
+		"mixpanel-browser": "^2.85.0",
 		"next": "^16.2.1",
 		"next-intl": "catalog:",
 		"next-themes": "catalog:",

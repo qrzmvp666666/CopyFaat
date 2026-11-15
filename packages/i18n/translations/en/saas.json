@@ -3,7 +3,9 @@
 		"menu": {
 			"organizations": "Organizations",
 			"users": "Users",
-			"redeemCodes": "Redeem codes"
+			"redeemCodes": "Redeem codes",
+			"webhookLogs": "Webhook logs",
+			"sourceBindings": "KOL source bindings"
 		},
 		"organizations": {
 			"backToList": "Back to organizations",
@@ -161,6 +163,111 @@
 					"actions": "Actions"
 				}
 			}
+		},
+		"webhookLogs": {
+			"title": "Webhook logs",
+			"description": "Review signal submissions, processing results, and failure details.",
+			"refresh": "Refresh",
+			"summary": {
+				"total": "Total calls",
+				"success": "Completed",
+				"attention": "Needs attention",
+				"processing": "Processing"
+			},
+			"search": "Search batch ID, eventId, KOL, or symbol",
+			"filter": "Filter processing status",
+			"all": "All statuses",
+			"statuses": {
+				"processing": "Processing",
+				"success": "Completed",
+				"partial": "Partial failure",
+				"rejected": "Rejected",
+				"failed": "Failed"
+			},
+			"itemStatuses": {
+				"pending": "Unconfirmed",
+				"saved": "Saved",
+				"ignored": "Ignored",
+				"invalid": "Invalid",
+				"failed": "Storage failed"
+			},
+			"columns": {
+				"call": "Time / batch",
+				"status": "Status",
+				"results": "Signal results",
+				"duration": "Duration",
+				"details": "Details"
+			},
+			"batch": "Batch",
+			"single": "Single",
+			"unknown": "Not accepted",
+			"waiting": "Awaiting completion",
+			"resultSummary": "{total} total · {saved} saved · {errors} failed",
+			"ignoredCount": "{count} more ignored",
+			"viewHint": "View individual results and submitted fields",
+			"duration": "{value} ms",
+			"view": "View details",
+			"viewCall": "View batch {id}",
+			"pagination": "{total} calls · Page {page} of {pages}",
+			"previous": "Previous page",
+			"next": "Next page",
+			"loading": "Loading logs…",
+			"loadError": "Could not load logs. Please try again.",
+			"retry": "Retry",
+			"emptyTitle": "No calls yet",
+			"emptyHint": "New signal requests appear here after logging is enabled.",
+			"noMatches": "No matching calls",
+			"noMatchesHint": "Try another keyword or clear the filters.",
+			"clear": "Clear filters",
+			"footnote": "Refreshes every 15 seconds · Beijing time (UTC+8) · Summary follows search, independently of the status filter.",
+			"detailTitle": "Call details",
+			"detailDescription": "Inspect each signal’s storage result, validation errors, and submitted fields.",
+			"copyId": "Copy batch ID",
+			"copied": "Copied",
+			"copyError": "Could not copy. Select the ID manually.",
+			"detailError": "This record could not be loaded. It may not exist or be temporarily unavailable.",
+			"processingHint": "No completion was recorded. This request may still be processing, have been interrupted, or have failed to update its log. Check saved signals before retrying.",
+			"itemsTitle": "Individual results ({count})",
+			"errorsOnly": "Failures only",
+			"showAll": "Show all",
+			"unknownSource": "Unknown source",
+			"signalId": "Signal ID",
+			"copySignalId": "Copy signal ID",
+			"ignoredHint": "The source name matched an existing exclusion rule. This item was not stored.",
+			"inputFields": "View submitted fields",
+			"noItemErrors": "There are no failed signals in this call."
+		},
+		"sourceBindings": {
+			"title": "KOL source bindings",
+			"description": "Connect platform, server and channel names to existing KOLs so captured signals reach the right trader.",
+			"hint": "Names match exactly after spacing and full-width normalization; edge 📈📉 decorations are ignored. Add a category for duplicate channel names. Unbound sources never create traders.",
+			"create": "Add binding",
+			"edit": "Edit",
+			"createTitle": "Add source binding",
+			"editTitle": "Edit source binding",
+			"formDescription": "Select an existing KOL. Update the name here when a channel is renamed.",
+			"platform": "Platform",
+			"serverName": "Server name",
+			"channelName": "Channel name",
+			"categoryName": "Category name (optional)",
+			"kol": "Local KOL",
+			"chooseKol": "Select an existing trader",
+			"enabled": "Enabled",
+			"disabled": "Disabled",
+			"boundTo": "Bound to",
+			"search": "Search channels, servers or KOLs",
+			"refresh": "Refresh",
+			"loading": "Loading source bindings…",
+			"loadError": "Could not load bindings. Refresh to try again.",
+			"empty": "No source bindings yet. Add one to get started.",
+			"noMatches": "No matching source bindings.",
+			"saved": "Source binding saved",
+			"duplicate": "This source already has a binding. Edit the existing record.",
+			"saveError": "Could not save. Check the source names and KOL and try again.",
+			"save": "Save binding",
+			"cancel": "Cancel",
+			"status": "Status",
+			"actions": "Actions"
 		}
 	},
 	"app": {
@@ -739,6 +846,12 @@
 	},
 	"signals": {
 		"mobilePaywall": {
+			"countdown": {
+				"label": "7-day offer · Ends in",
+				"ended": "Offer countdown ended",
+				"days": "d",
+				"remaining": "{days} days, {hours} hours, {minutes} minutes, {seconds} seconds remaining"
+			},
 			"attributionErrorDescription": "Please try again. Your checkout tracking could not be saved.",
 			"attributionErrorTitle": "Could not prepare checkout",
 			"errorTitle": "Payment link unavailable",

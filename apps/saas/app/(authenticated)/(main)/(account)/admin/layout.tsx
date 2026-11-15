@@ -4,7 +4,7 @@ import { config } from "@repo/auth/config";
 import { Logo } from "@repo/ui";
 import { SettingsMenu } from "@settings/components/SettingsMenu";
 import { PageHeader } from "@shared/components/PageHeader";
-import { Building2Icon, UsersIcon } from "lucide-react";
+import { Building2Icon, Link2Icon, UsersIcon, WebhookIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import type { PropsWithChildren } from "react";
 
@@ -35,6 +35,16 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
 								title: t("menu.users"),
 								href: "/admin/users",
 								icon: <UsersIcon className="size-4 opacity-50" />,
+							},
+							{
+								title: t("menu.webhookLogs"),
+								href: "/admin/webhook-logs",
+								icon: <WebhookIcon className="size-4 opacity-50" />,
+							},
+							{
+								title: t("menu.sourceBindings"),
+								href: "/admin/source-bindings",
+								icon: <Link2Icon className="size-4 opacity-50" />,
 							},
 							...(config.organizations.enable
 								? [

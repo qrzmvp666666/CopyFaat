@@ -1,0 +1,41 @@
+{
+	"signals": [
+		{
+			"eventId": "discord:1570071195645255791:BTCUSDT",
+			"source": {
+				"platform": "discord",
+				"serverName": "币圈策略搬运工",
+				"channelName": "三马哥合约",
+				"name": "三马哥"
+			},
+			"symbol": "BTCUSDT",
+			"direction": "short",
+			"entry": 73750,
+			"stopLoss": 75800,
+			"submittedAt": "2026-11-11T13:42:23.554Z",
+			"note": "采集于2026-11-15；已入场／已平仓；补仓74800；100倍；2%+3%；11/12 15:56明确73600现价全部止盈；原止盈目标：72788；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1570071195645255791",
+			"takeProfit": 72788,
+			"entryStatus": "entered",
+			"status": "history",
+			"outcome": "止盈"
+		},
+		{
+			"eventId": "discord:1570648314771279875:BTCUSDT",
+			"source": {
+				"platform": "discord",
+				"serverName": "币圈策略搬运工",
+				"channelName": "三马哥合约",
+				"name": "三马哥"
+			},
+			"symbol": "BTCUSDT",
+			"direction": "long",
+			"entry": 60888,
+			"stopLoss": 57800,
+			"submittedAt": "2026-11-13T03:55:39.476Z",
+			"note": "采集于2026-11-15；待入场（截至最后一条相关消息）；100倍5%；11/15 09:06称马上到了；成交后涨1000或2000点自行止盈，保留原文不计算新TP；原止盈目标：65000；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1570648314771279875",
+			"takeProfit": 65000,
+			"entryStatus": "pending",
+			"status": "active"
+		}
+	]
+}

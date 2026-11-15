@@ -2,11 +2,24 @@
 import { sessionQueryKey, useSessionQuery } from "@auth/lib/api";
 import { authClient } from "@repo/auth/client";
 import { useQueryClient } from "@tanstack/react-query";
+import mixpanel from "mixpanel-browser";
 import { useEffect, type ReactNode } from "react";
 
 import { useSession } from "../hooks/use-session";
 import { SessionContext } from "../lib/session-context";
 import { trackPendingTaliviaSignup } from "../lib/talivia";
+
+const mixpanelToken = process.env.NEXT_PUBLIC_MIXPANEL_TOKEN;
+const configuredReplaySampleRate = Number(process.env.NEXT_PUBLIC_MIXPANEL_REPLAY_SAMPLE_RATE);
+const replaySampleRate =
+	Number.isFinite(configuredReplaySampleRate) &&
+	configuredReplaySampleRate >= 0 &&
+	configuredReplaySampleRate <= 100
+		? configuredReplaySampleRate
+		: 100;
+const maskAllInputs = process.env.NEXT_PUBLIC_MIXPANEL_MASK_ALL_INPUTS !== "false";
+const trackPageviews = process.env.NEXT_PUBLIC_MIXPANEL_TRACK_PAGEVIEWS !== "false";
+let mixpanelInitialized = false;
 
 export function SessionProvider({ children }: { children: ReactNode }) {
 	const queryClient = useQueryClient();
@@ -42,6 +55,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
 function TaliviaSignupTracker() {
 	const { user, loaded } = useSession();
+	const userId = user?.id;
+
+	useEffect(() => {
+		if (!loaded || !mixpanelToken) return;
+
+		if (!mixpanelInitialized) {
+			mixpanel.init(mixpanelToken, {
+				record_sessions_percent: replaySampleRate,
+				record_mask_all_inputs: maskAllInputs,
+				track_pageview: trackPageviews,
+				persistence: "localStorage",
+			});
+			mixpanelInitialized = true;
+		}
+
+		if (userId) {
+			mixpanel.identify(userId);
+		} else {
+			mixpanel.reset();
+		}
+	}, [loaded, userId]);
 
 	useEffect(() => {
 		if (loaded && user) {

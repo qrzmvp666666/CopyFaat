@@ -740,3 +740,15 @@ Avoid `"use client"` for:
 - Ask for clarification on product requirements rather than guessing
 - Prefer incremental, well-scoped changes over sweeping rewrites
 - Follow the official documentation at [supastarter.dev/docs/nextjs](https://supastarter.dev/docs/nextjs)
+
+### Signal webhook audit workflow
+
+- Signal webhook ingestion is implemented in `apps/saas/app/api/signals/webhook/route.ts`; single and batch calls must create a persistent audit record before processing signals and return its `logId`.
+- Audit persistence and admin queries live in `packages/database/prisma/queries/signal-webhook-logs.ts`. The log table is server-only; never store auth headers, cookies, webhook secrets, or unbounded raw request bodies.
+- The SaaS admin log page is `/admin/webhook-logs`; both list and detail procedures must remain protected by `adminProcedure`. Logs with no completion are unconfirmed, not proof that signal writes failed.
+
+### Signal source binding workflow
+
+- Discord webhook sources must provide `platform`, `serverName`, and `channelName`; resolve these through `signal_source_binding` to an existing Trader. Never create a Discord KOL automatically or overwrite the bound Trader identity from submitted source labels.
+- Bindings are managed through admin-only `/admin/source-bindings`. Normalize names consistently with `getSignalSourceKeys`; category disambiguates duplicate channels. Unknown, disabled, incomplete, or ambiguous sources must return actionable item errors and remain visible in webhook logs.
+- Reject an explicit `eventId` that belongs to another Trader. Keep real collected candidates pending user confirmation; use isolated synthetic events for ingestion verification.

@@ -333,6 +333,7 @@ model Trader {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  sourceBindings SignalSourceBinding[]
   signals     Signal[]
 
   @@index([name])
@@ -431,4 +432,48 @@ model AdConversion {
   @@unique([provider, subscriptionId, goal])
   @@unique([adPlatform, adRecord, goal])
   @@map("ad_conversion")
+}
+
+// Server-only webhook audit records, accessible through admin procedures.
+model SignalWebhookLog {
+  id          String   @id
+  mode        String   @default("single")
+  status      String   @default("processing")
+  httpStatus  Int?
+  total       Int      @default(0)
+  saved       Int      @default(0)
+  ignored     Int      @default(0)
+  invalid     Int      @default(0)
+  failed      Int      @default(0)
+  durationMs  Int?
+  error       String?
+  searchText  String   @default("")
+  items       Json     @default("[]")
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+
+  @@index([createdAt, id])
+  @@index([status, createdAt])
+  @@map("signal_webhook_log")
+}
+
+model SignalSourceBinding {
+  id String @id @default(cuid())
+  platform String
+  serverName String
+  channelName String
+  categoryName String @default("")
+  platformKey String
+  serverKey String
+  channelKey String
+  categoryKey String @default("")
+  traderId String
+  trader Trader @relation(fields: [traderId], references: [id], onDelete: Restrict)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([platformKey, serverKey, channelKey, categoryKey], map: "signal_source_binding_platformKey_serverKey_channelKey_category")
+  @@index([traderId])
+  @@map("signal_source_binding")
 }

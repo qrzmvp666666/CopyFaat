@@ -1,0 +1,678 @@
+{
+	"signalCount": 10,
+	"submitted": false,
+	"secretConfigured": false,
+	"checks": [
+		{
+			"index": 1,
+			"schemaValid": true,
+			"issues": [],
+			"expectedTraderExternalId": "signalfast:三马哥",
+			"existingTraderExternalId": "signalfast-guide:san-ma-ge",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1569501523564699804:BTCUSDT",
+				"source": {
+					"name": "三马哥",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "long",
+				"entry": 74718,
+				"stopLoss": 71000,
+				"submittedAt": "2026-11-09T23:58:43.146Z",
+				"note": "补仓72688；100倍；保证金2%+3%；11/10 22:56是挂75500止盈指令，不是已平仓证据；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1569501523564699804"
+			}
+		},
+		{
+			"index": 2,
+			"schemaValid": true,
+			"issues": [],
+			"expectedTraderExternalId": "signalfast:三马哥",
+			"existingTraderExternalId": "signalfast-guide:san-ma-ge",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570071195645255791:BTCUSDT",
+				"source": {
+					"name": "三马哥",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "short",
+				"entry": 73750,
+				"stopLoss": 75800,
+				"submittedAt": "2026-11-11T13:42:23.554Z",
+				"note": "补仓74800；100倍；2%+3%；11/12 15:56明确73600现价全部止盈；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1570071195645255791",
+				"takeProfit": 72788
+			}
+		},
+		{
+			"index": 3,
+			"schemaValid": true,
+			"issues": [],
+			"expectedTraderExternalId": "signalfast:三马哥",
+			"existingTraderExternalId": "signalfast-guide:san-ma-ge",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570412189762855033:BTCUSDT",
+				"source": {
+					"name": "三马哥",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "long",
+				"entry": 73000,
+				"stopLoss": 70000,
+				"submittedAt": "2026-11-12T12:17:22.887Z",
+				"note": "原TP75500/77000；后续分30%/30%/40%退出目标；前两档低于入场，不能填入当前takeProfit；100倍2%预留3%；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1570412189762855033"
+			}
+		},
+		{
+			"index": 4,
+			"schemaValid": true,
+			"issues": [],
+			"expectedTraderExternalId": "signalfast:三马哥",
+			"existingTraderExternalId": "signalfast-guide:san-ma-ge",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570648314771279875:BTCUSDT",
+				"source": {
+					"name": "三马哥",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "long",
+				"entry": 60888,
+				"stopLoss": 57800,
+				"submittedAt": "2026-11-13T03:55:39.476Z",
+				"note": "100倍5%；11/15 09:06称马上到了；成交后涨1000或2000点自行止盈，保留原文不计算新TP；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1570648314771279875",
+				"takeProfit": 65000
+			}
+		},
+		{
+			"index": 5,
+			"schemaValid": true,
+			"issues": [],
+			"expectedTraderExternalId": "signalfast:三马哥",
+			"existingTraderExternalId": "signalfast-guide:san-ma-ge",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570794815778455744:BTCUSDT",
+				"source": {
+					"name": "三马哥",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "short",
+				"entry": 70888,
+				"stopLoss": 73800,
+				"submittedAt": "2026-11-13T13:37:48.038Z",
+				"note": "补仓72000；100倍2%+3%；BTC/ETH二选一，尚无明确成交或平仓证据；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1570794815778455744"
+			}
+		},
+		{
+			"index": 6,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["stopLoss"],
+					"message": "stopLoss must be different from entry"
+				},
+				{
+					"path": ["direction"],
+					"message": "For long signals, stopLoss must be below entry and takeProfit, when present, must be above entry. For short signals, stopLoss must be above entry and takeProfit, when present, must be below entry."
+				}
+			],
+			"expectedTraderExternalId": "signalfast:三马哥",
+			"existingTraderExternalId": "signalfast-guide:san-ma-ge",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570818234305741002:ETHUSDT",
+				"source": {
+					"name": "三马哥",
+					"platform": "SignalFast"
+				},
+				"symbol": "ETHUSDT",
+				"direction": "short",
+				"entry": 1940,
+				"stopLoss": 1940,
+				"submittedAt": "2026-11-13T15:10:51.450Z",
+				"note": "原SL2050；更新SL=入场1940，当前schema拒绝；补仓2018；100倍2%+3%；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1570818234305741002"
+			}
+		},
+		{
+			"index": 7,
+			"schemaValid": true,
+			"issues": [],
+			"expectedTraderExternalId": "signalfast:三马哥",
+			"existingTraderExternalId": "signalfast-guide:san-ma-ge",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570882975111848060:ETHUSDT",
+				"source": {
+					"name": "三马哥",
+					"platform": "SignalFast"
+				},
+				"symbol": "ETHUSDT",
+				"direction": "short",
+				"entry": 1963,
+				"stopLoss": 2050,
+				"submittedAt": "2026-11-13T19:28:06.861Z",
+				"note": "补仓2018；100倍2%+3%；不能断言是独立新单；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1570882975111848060"
+			}
+		},
+		{
+			"index": 8,
+			"schemaValid": true,
+			"issues": [],
+			"expectedTraderExternalId": "signalfast:三马哥",
+			"existingTraderExternalId": "signalfast-guide:san-ma-ge",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570953842370158603:ETHUSDT",
+				"source": {
+					"name": "三马哥",
+					"platform": "SignalFast"
+				},
+				"symbol": "ETHUSDT",
+				"direction": "short",
+				"entry": 1956,
+				"stopLoss": 2050,
+				"submittedAt": "2026-11-14T00:09:42.932Z",
+				"note": "补仓2018；100倍2%+3%；合并前须明确同单关系；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1570953842370158603"
+			}
+		},
+		{
+			"index": 9,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received null"
+				},
+				{
+					"path": ["stopLoss"],
+					"message": "Invalid input: expected number, received null"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:军长",
+			"existingTraderExternalId": "signalfast-guide:jun-zhang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570687801664606241:BTCUSDT",
+				"source": {
+					"name": "军长",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "long",
+				"entry": null,
+				"stopLoss": null,
+				"submittedAt": "2026-11-13T06:32:33.885Z",
+				"note": "不以之后加仓价冒充原始开仓价格；来源：https://discord.com/channels/1438538820357329100/1487791563839897690/1570687801664606241"
+			}
+		},
+		{
+			"index": 10,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received null"
+				},
+				{
+					"path": ["stopLoss"],
+					"message": "Invalid input: expected number, received null"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:军长",
+			"existingTraderExternalId": "signalfast-guide:jun-zhang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570687801664606241:ETHUSDT",
+				"source": {
+					"name": "军长",
+					"platform": "SignalFast"
+				},
+				"symbol": "ETHUSDT",
+				"direction": "long",
+				"entry": null,
+				"stopLoss": null,
+				"submittedAt": "2026-11-13T06:32:33.885Z",
+				"note": "不以之后加仓价冒充原始开仓价格；来源：https://discord.com/channels/1438538820357329100/1487791563839897690/1570687801664606241"
+			}
+		},
+		{
+			"index": 11,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received null"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:军长",
+			"existingTraderExternalId": "signalfast-guide:jun-zhang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570690964945772595:ZAMAUSDT",
+				"source": {
+					"name": "军长",
+					"platform": "SignalFast"
+				},
+				"symbol": "ZAMAUSDT",
+				"direction": "long",
+				"entry": null,
+				"stopLoss": 0.056,
+				"submittedAt": "2026-11-13T06:45:08.070Z",
+				"note": "11/14 12:17补充止损；无明确入场价；来源：https://discord.com/channels/1438538820357329100/1487791563839897690/1570690964945772595"
+			}
+		},
+		{
+			"index": 12,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received null"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:军长",
+			"existingTraderExternalId": "signalfast-guide:jun-zhang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570690964945772595:NEARUSDT",
+				"source": {
+					"name": "军长",
+					"platform": "SignalFast"
+				},
+				"symbol": "NEARUSDT",
+				"direction": "long",
+				"entry": null,
+				"stopLoss": 3.26,
+				"submittedAt": "2026-11-13T06:45:08.070Z",
+				"note": "11/14 12:17补充止损；无明确入场价；来源：https://discord.com/channels/1438538820357329100/1487791563839897690/1570690964945772595"
+			}
+		},
+		{
+			"index": 13,
+			"schemaValid": true,
+			"issues": [],
+			"expectedTraderExternalId": "signalfast:军长",
+			"existingTraderExternalId": "signalfast-guide:jun-zhang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1571015785055395911:BTCUSDT",
+				"source": {
+					"name": "军长",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "long",
+				"entry": 66000,
+				"stopLoss": 65000,
+				"submittedAt": "2026-11-14T04:15:51.219Z",
+				"note": "仅能作为加仓腿候选，不能替换原始入场价；未单列为可导入新开仓；来源：https://discord.com/channels/1438538820357329100/1487791563839897690/1571015785055395911"
+			}
+		},
+		{
+			"index": 14,
+			"schemaValid": true,
+			"issues": [],
+			"expectedTraderExternalId": "signalfast:军长",
+			"existingTraderExternalId": "signalfast-guide:jun-zhang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1571015785055395911:ETHUSDT",
+				"source": {
+					"name": "军长",
+					"platform": "SignalFast"
+				},
+				"symbol": "ETHUSDT",
+				"direction": "long",
+				"entry": 1850,
+				"stopLoss": 1799,
+				"submittedAt": "2026-11-14T04:15:51.219Z",
+				"note": "仅能作为加仓腿候选，不能替换原始入场价；未单列为可导入新开仓；来源：https://discord.com/channels/1438538820357329100/1487791563839897690/1571015785055395911"
+			}
+		},
+		{
+			"index": 15,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received null"
+				},
+				{
+					"path": ["stopLoss"],
+					"message": "Invalid input: expected number, received null"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:军长",
+			"existingTraderExternalId": "signalfast-guide:jun-zhang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1571462909744386050:BTCUSDT",
+				"source": {
+					"name": "军长",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "short",
+				"entry": null,
+				"stopLoss": null,
+				"submittedAt": "2026-11-15T09:52:34.052Z",
+				"note": "缺数字入场和止损；不使用采集时市价补齐；来源：https://discord.com/channels/1438538820357329100/1487791563839897690/1571462909744386050"
+			}
+		},
+		{
+			"index": 16,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received null"
+				},
+				{
+					"path": ["stopLoss"],
+					"message": "Invalid input: expected number, received null"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:军长",
+			"existingTraderExternalId": "signalfast-guide:jun-zhang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1571462909744386050:ETHUSDT",
+				"source": {
+					"name": "军长",
+					"platform": "SignalFast"
+				},
+				"symbol": "ETHUSDT",
+				"direction": "short",
+				"entry": null,
+				"stopLoss": null,
+				"submittedAt": "2026-11-15T09:52:34.052Z",
+				"note": "缺数字入场和止损；不使用采集时市价补齐；来源：https://discord.com/channels/1438538820357329100/1487791563839897690/1571462909744386050"
+			}
+		},
+		{
+			"index": 17,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["stopLoss"],
+					"message": "Invalid input: expected number, received string"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:所长",
+			"existingTraderExternalId": "signalfast-guide:suo-zhang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1571345048077865043:ETHUSDT",
+				"source": {
+					"name": "所长",
+					"platform": "SignalFast"
+				},
+				"symbol": "ETHUSDT",
+				"direction": "short",
+				"entry": 1800,
+				"stopLoss": "15分钟站稳1825",
+				"submittedAt": "2026-11-15T02:04:13.641Z",
+				"note": "条件止损不能转触价1825；10:26保护，10:53明确成本打掉；最终BE止损也不符合schema；来源：https://discord.com/channels/1438538820357329100/1487791360613417171/1571345048077865043"
+			}
+		},
+		{
+			"index": 18,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received string"
+				},
+				{
+					"path": ["stopLoss"],
+					"message": "Invalid input: expected number, received string"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:舒琴",
+			"existingTraderExternalId": "signalfast-guide:shu-qin",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570404599527903366:ETHUSDT",
+				"source": {
+					"name": "舒琴",
+					"platform": "SignalFast"
+				},
+				"symbol": "ETHUSDT",
+				"direction": "long",
+				"entry": "2000–2020",
+				"stopLoss": "小幅跌破1970一点",
+				"submittedAt": "2026-11-12T11:47:13.234Z",
+				"note": "区间入场＋模糊止损；5倍10%；与19:51记录关系待确认；来源：https://discord.com/channels/1438538820357329100/1487791223103164417/1570404599527903366"
+			}
+		},
+		{
+			"index": 19,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received string"
+				},
+				{
+					"path": ["stopLoss"],
+					"message": "Invalid input: expected number, received string"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:舒琴",
+			"existingTraderExternalId": "signalfast-guide:shu-qin",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570404720986693714:BTCUSDT",
+				"source": {
+					"name": "舒琴",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "long",
+				"entry": "72200–72800",
+				"stopLoss": "小幅跌破71500一点",
+				"submittedAt": "2026-11-12T11:47:42.192Z",
+				"note": "区间入场＋模糊止损；10倍10%；来源：https://discord.com/channels/1438538820357329100/1487791223103164417/1570404720986693714"
+			}
+		},
+		{
+			"index": 20,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received string"
+				},
+				{
+					"path": ["stopLoss"],
+					"message": "Invalid input: expected number, received string"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:舒琴",
+			"existingTraderExternalId": "signalfast-guide:shu-qin",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570405606026772571:ETHUSDT",
+				"source": {
+					"name": "舒琴",
+					"platform": "SignalFast"
+				},
+				"symbol": "ETHUSDT",
+				"direction": "long",
+				"entry": "2000–2020",
+				"stopLoss": "小幅跌破1970一点",
+				"submittedAt": "2026-11-12T11:51:13.202Z",
+				"note": "19:50有“二次探底还可做一次”，不可仅因同入场区间自动合并；5倍10%；来源：https://discord.com/channels/1438538820357329100/1487791223103164417/1570405606026772571"
+			}
+		},
+		{
+			"index": 21,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["stopLoss"],
+					"message": "Invalid input: expected number, received string"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:舒琴",
+			"existingTraderExternalId": "signalfast-guide:shu-qin",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570649360830824449:BTCUSDT",
+				"source": {
+					"name": "舒琴",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "long",
+				"entry": 68800,
+				"stopLoss": "小幅跌破67500一点",
+				"submittedAt": "2026-11-13T03:59:48.876Z",
+				"note": "5倍10%；模糊止损，不能擅自填67500；来源：https://discord.com/channels/1438538820357329100/1487791223103164417/1570649360830824449"
+			}
+		},
+		{
+			"index": 22,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received string"
+				},
+				{
+					"path": ["stopLoss"],
+					"message": "Invalid input: expected number, received string"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:舒琴",
+			"existingTraderExternalId": "signalfast-guide:shu-qin",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570653156029890562:BTCUSDT",
+				"source": {
+					"name": "舒琴",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "long",
+				"entry": "68500–68800",
+				"stopLoss": "小幅跌破一些",
+				"submittedAt": "2026-11-13T04:14:53.722Z",
+				"note": "自述加仓100万；无精确止损，不能假定仓位或杠杆倍数；来源：https://discord.com/channels/1438538820357329100/1487791223103164417/1570653156029890562"
+			}
+		},
+		{
+			"index": 23,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received string"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:飞扬",
+			"existingTraderExternalId": "signalfast-guide:fei-yang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570691527150145579:BTCUSDT",
+				"source": {
+					"name": "飞扬",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "short",
+				"entry": "69700–7000",
+				"stopLoss": 69700,
+				"submittedAt": "2026-11-13T06:47:22.110Z",
+				"note": "原SL72600；入场明显笔误不修正；22:07重复仅合并反馈；移动SL69700；11/14 23:37全平；来源：https://discord.com/channels/1438538820357329100/1487791958691807403/1570691527150145579",
+				"takeProfit": 64850
+			}
+		},
+		{
+			"index": 24,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received string"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:飞扬",
+			"existingTraderExternalId": "signalfast-guide:fei-yang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1570774573782405203:BTCUSDT",
+				"source": {
+					"name": "飞扬",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "short",
+				"entry": "69400–69700",
+				"stopLoss": 69700,
+				"submittedAt": "2026-11-13T12:17:21.970Z",
+				"note": "原SL72300；区间入场不能选一端；11/14 07:32止盈1600点不反算成交价；23:37全部清仓；来源：https://discord.com/channels/1438538820357329100/1487791958691807403/1570774573782405203",
+				"takeProfit": 64850
+			}
+		},
+		{
+			"index": 25,
+			"schemaValid": false,
+			"issues": [
+				{
+					"path": ["entry"],
+					"message": "Invalid input: expected number, received string"
+				}
+			],
+			"expectedTraderExternalId": "signalfast:飞扬",
+			"existingTraderExternalId": "signalfast-guide:fei-yang",
+			"identityMatches": false,
+			"submitAllowed": false,
+			"payloadForValidationOnly": {
+				"eventId": "discord:1571461868038529086:BTCUSDT",
+				"source": {
+					"name": "飞扬",
+					"platform": "SignalFast"
+				},
+				"symbol": "BTCUSDT",
+				"direction": "long",
+				"entry": "64300–64570",
+				"stopLoss": 62000,
+				"submittedAt": "2026-11-15T09:48:25.690Z",
+				"note": "区间入场不能选上沿、下沿或均价；没有后续成交证据；来源：https://discord.com/channels/1438538820357329100/1487791958691807403/1571461868038529086",
+				"takeProfit": 68310
+			}
+		}
+	]
+}

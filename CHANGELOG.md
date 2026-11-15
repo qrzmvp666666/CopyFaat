@@ -2,6 +2,18 @@
 
 ## 2026-11-15
 
+- feat: Show KOL source bindings in a compact desktop table consistent with webhook logs, with a responsive mobile list.
+
+- feat: Bind Discord server and channel names to existing KOLs, with admin binding management, explicit source errors, and cross-KOL event protection. Apply the signal source bindings migration before deployment.
+
+- feat: Add admin-only signal webhook call history with persistent audit records, searchable batch results, validation details, and request IDs. Apply the signal webhook logs migration before deployment.
+
+- feat: Accept up to 100 signals per webhook request with ordered processing and per-item saved, ignored, invalid, or failed results; preserve single-signal submissions.
+
+- feat: Add the signals page Telegram contact shortcut to desktop and mobile paywall headers.
+
+- feat: Display a persistent seven-day offer countdown above the paywall checkout button on desktop and mobile.
+
 - feat: Show supported KOL avatars and active contracts in the desktop and mobile paywall scrolling rows.
 
 - fix: Temporarily hide the onboarding comparison reveal before checkout while keeping the paywall feature comparison.

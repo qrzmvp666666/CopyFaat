@@ -3,7 +3,9 @@
 		"menu": {
 			"organizations": "组织管理",
 			"users": "用户管理",
-			"redeemCodes": "兑换码"
+			"redeemCodes": "兑换码",
+			"webhookLogs": "Webhook 日志",
+			"sourceBindings": "KOL 来源绑定"
 		},
 		"organizations": {
 			"backToList": "返回列表",
@@ -161,6 +163,111 @@
 					"actions": "操作"
 				}
 			}
+		},
+		"webhookLogs": {
+			"title": "Webhook 调用日志",
+			"description": "查看信号采集的每次提交、处理结果和失败原因。",
+			"refresh": "刷新",
+			"summary": {
+				"total": "调用总数",
+				"success": "处理完成",
+				"attention": "需要关注",
+				"processing": "处理中"
+			},
+			"search": "搜索批次 ID、eventId、KOL 或币种",
+			"filter": "筛选处理状态",
+			"all": "全部状态",
+			"statuses": {
+				"processing": "处理中",
+				"success": "处理完成",
+				"partial": "部分失败",
+				"rejected": "已拒绝",
+				"failed": "处理失败"
+			},
+			"itemStatuses": {
+				"pending": "待确认",
+				"saved": "已保存",
+				"ignored": "已忽略",
+				"invalid": "校验失败",
+				"failed": "写入失败"
+			},
+			"columns": {
+				"call": "调用时间 / 批次",
+				"status": "处理状态",
+				"results": "信号处理结果",
+				"duration": "耗时",
+				"details": "详情"
+			},
+			"batch": "批量提交",
+			"single": "单条提交",
+			"unknown": "请求未受理",
+			"waiting": "等待完成",
+			"resultSummary": "共 {total} 条 · 保存 {saved} · 失败 {errors}",
+			"ignoredCount": "另有 {count} 条被忽略",
+			"viewHint": "查看逐条结果与提交字段",
+			"duration": "{value} ms",
+			"view": "查看详情",
+			"viewCall": "查看批次 {id} 的详情",
+			"pagination": "共 {total} 次调用 · 第 {page} / {pages} 页",
+			"previous": "上一页",
+			"next": "下一页",
+			"loading": "正在加载日志…",
+			"loadError": "日志加载失败，请稍后重试。",
+			"retry": "重试",
+			"emptyTitle": "还没有调用记录",
+			"emptyHint": "启用日志后，新收到的信号请求会显示在这里。",
+			"noMatches": "没有匹配的调用",
+			"noMatchesHint": "试试其他关键词或清除筛选条件。",
+			"clear": "清除筛选",
+			"footnote": "每 15 秒自动刷新 · 北京时间（UTC+8）· 概览统计应用搜索条件，不受状态筛选影响。",
+			"detailTitle": "调用详情",
+			"detailDescription": "核对每条信号的保存状态、校验原因及提交字段。",
+			"copyId": "复制批次 ID",
+			"copied": "已复制",
+			"copyError": "复制失败，请手动选择 ID。",
+			"detailError": "无法加载这条记录，记录可能不存在或暂时不可用。",
+			"processingHint": "该请求尚无完成记录；可能仍在处理，也可能已中断或日志更新失败。请先核对信号数据，再决定是否重试。",
+			"itemsTitle": "逐条结果（{count}）",
+			"errorsOnly": "只看失败",
+			"showAll": "显示全部",
+			"unknownSource": "来源未识别",
+			"signalId": "信号 ID",
+			"copySignalId": "复制信号 ID",
+			"ignoredHint": "来源名称命中了现有过滤规则，此条未写入信号库。",
+			"inputFields": "查看提交字段",
+			"noItemErrors": "这次调用没有失败的信号。"
+		},
+		"sourceBindings": {
+			"title": "KOL 来源绑定",
+			"description": "按平台、服务器和频道名称关联已有博主，让采集信号归属到正确的 KOL。",
+			"hint": "名称精确匹配；忽略首尾空格、全角差异和频道两端的 📈📉 装饰。同名频道请填写分类，未绑定来源不会自动创建博主。",
+			"create": "新增绑定",
+			"edit": "编辑",
+			"createTitle": "新增来源绑定",
+			"editTitle": "编辑来源绑定",
+			"formDescription": "选择已有 KOL。频道改名后，请在这里更新名称。",
+			"platform": "平台",
+			"serverName": "服务器名称",
+			"channelName": "频道名称",
+			"categoryName": "分类名称（可选）",
+			"kol": "本地 KOL",
+			"chooseKol": "选择已有博主",
+			"enabled": "已启用",
+			"disabled": "已停用",
+			"boundTo": "绑定至",
+			"search": "搜索频道、服务器或 KOL",
+			"refresh": "刷新",
+			"loading": "正在加载来源绑定…",
+			"loadError": "加载失败，请点击刷新重试。",
+			"empty": "还没有来源绑定，点击“新增绑定”开始配置。",
+			"noMatches": "没有匹配的来源绑定。",
+			"saved": "来源绑定已保存",
+			"duplicate": "该来源已有绑定，请编辑现有记录。",
+			"saveError": "保存失败，请检查名称与 KOL 后重试。",
+			"save": "保存绑定",
+			"cancel": "取消",
+			"status": "状态",
+			"actions": "操作"
 		}
 	},
 	"app": {
@@ -739,6 +846,12 @@
 	},
 	"signals": {
 		"mobilePaywall": {
+			"countdown": {
+				"label": "七天限时优惠 · 剩余",
+				"ended": "本轮优惠倒计时已结束",
+				"days": "天",
+				"remaining": "剩余 {days} 天 {hours} 小时 {minutes} 分 {seconds} 秒"
+			},
 			"attributionErrorDescription": "结账归因信息暂时无法保存，请重试。",
 			"attributionErrorTitle": "暂时无法开始支付",
 			"errorTitle": "支付链接未配置",

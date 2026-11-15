@@ -11,6 +11,8 @@ import {
 	isDemoStrategyTrader,
 	normalizeSignalIdentityPart,
 } from "./signal-identity";
+import { SignalSourceError } from "./signal-source-error";
+import { resolveSignalSource } from "./signal-source-resolver";
 import type {
 	StoredSignal,
 	SignalsPreviewResponse,
@@ -403,31 +405,45 @@ export async function upsertStoredSignal(
 
 	const now = new Date();
 	const submittedAt = input.submittedAt ? new Date(input.submittedAt) : now;
-	const traderExternalId = getTraderExternalId(input);
+	const boundTrader = await resolveSignalSource(input.source);
+	const traderExternalId = boundTrader?.externalId ?? getTraderExternalId(input);
 	const eventId = input.eventId ?? getStableEventId(input, traderExternalId);
 	const businessKey = getSignalBusinessKey(input, traderExternalId);
 	const symbolAssets = getSymbolAssets(input.symbol);
-	const trader = await db.trader.upsert({
-		create: {
-			avatarUrl: input.source.avatarUrl,
-			bio: input.source.bio,
-			externalId: traderExternalId,
-			handle: input.source.handle,
-			name: input.source.name,
-			platform: input.source.platform,
-		},
-		update: {
-			avatarUrl: input.source.avatarUrl,
-			bio: input.source.bio,
-			handle: input.source.handle,
-			isActive: true,
-			name: input.source.name,
-			platform: input.source.platform,
-		},
-		where: {
-			externalId: traderExternalId,
-		},
-	});
+	const trader =
+		boundTrader ??
+		(await db.trader.upsert({
+			create: {
+				avatarUrl: input.source.avatarUrl,
+				bio: input.source.bio,
+				externalId: traderExternalId,
+				handle: input.source.handle,
+				name: input.source.name,
+				platform: input.source.platform,
+			},
+			update: {
+				avatarUrl: input.source.avatarUrl,
+				bio: input.source.bio,
+				handle: input.source.handle,
+				isActive: true,
+				name: input.source.name,
+				platform: input.source.platform,
+			},
+			where: {
+				externalId: traderExternalId,
+			},
+		}));
+	if (input.eventId) {
+		const existing = await db.signal.findUnique({
+			where: { eventId: input.eventId },
+			select: { traderId: true },
+		});
+		if (existing && existing.traderId !== trader.id)
+			throw new SignalSourceError(
+				"EVENT_SOURCE_CONFLICT",
+				"This eventId belongs to a different KOL. It cannot be reassigned by webhook.",
+			);
+	}
 	const tradingSymbol = await db.tradingSymbol.upsert({
 		create: {
 			baseAsset: symbolAssets.baseAsset,

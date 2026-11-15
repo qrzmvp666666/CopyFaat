@@ -1,0 +1,93 @@
+{
+	"httpStatus": 200,
+	"body": {
+		"ok": true,
+		"receivedAt": "2026-11-15T13:40:02.725Z",
+		"total": 2,
+		"saved": 2,
+		"ignored": 0,
+		"invalid": 0,
+		"failed": 0,
+		"results": [
+			{
+				"index": 0,
+				"eventId": "discord:1570071195645255791:BTCUSDT",
+				"status": "saved",
+				"signal": {
+					"chartPositionPct": 92,
+					"createdAt": "2026-11-15T13:40:02.754Z",
+					"direction": "short",
+					"entry": 73750,
+					"entryStatus": "entered",
+					"eventId": "discord:1570071195645255791:BTCUSDT",
+					"id": "cmwhvt9360002euo32xgq9c9n",
+					"note": "采集于2026-11-15；已入场／已平仓；补仓74800；100倍；2%+3%；11/12 15:56明确73600现价全部止盈；原止盈目标：72788；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1570071195645255791",
+					"outcome": "止盈",
+					"riskReward": 0.47,
+					"source": {
+						"avatarUrl": "/images/hero-floating/icon-1.png",
+						"bio": "SignalFast 演示信号，价格仅用于界面展示，不构成投资建议。",
+						"id": "signalfast-guide:san-ma-ge",
+						"name": "三马哥",
+						"platform": "SignalFast"
+					},
+					"status": "history",
+					"stopLoss": 75800,
+					"submittedAt": "2026-11-11T13:42:23.554Z",
+					"symbol": "BTCUSDT",
+					"takeProfit": 72788,
+					"tradingSymbol": {
+						"baseAsset": "BTC",
+						"displayName": "BTC/USDT",
+						"exchange": "binance",
+						"id": "cmqs8124p00055jo3m3r8j9o9",
+						"logoUrl": "/images/trading-symbols/btc.png",
+						"quoteAsset": "USDT",
+						"symbol": "BTCUSDT"
+					},
+					"updatedAt": "2026-11-15T13:40:02.754Z"
+				}
+			},
+			{
+				"index": 1,
+				"eventId": "discord:1570648314771279875:BTCUSDT",
+				"status": "saved",
+				"signal": {
+					"chartPositionPct": 92,
+					"createdAt": "2026-11-15T13:40:02.769Z",
+					"direction": "long",
+					"entry": 60888,
+					"entryStatus": "pending",
+					"eventId": "discord:1570648314771279875:BTCUSDT",
+					"id": "cmwhvt93l0004euo3nf7muzby",
+					"note": "采集于2026-11-15；待入场（截至最后一条相关消息）；100倍5%；11/15 09:06称马上到了；成交后涨1000或2000点自行止盈，保留原文不计算新TP；原止盈目标：65000；来源：https://discord.com/channels/1438538820357329100/1487791108447666197/1570648314771279875",
+					"riskReward": 1.33,
+					"source": {
+						"avatarUrl": "/images/hero-floating/icon-1.png",
+						"bio": "SignalFast 演示信号，价格仅用于界面展示，不构成投资建议。",
+						"id": "signalfast-guide:san-ma-ge",
+						"name": "三马哥",
+						"platform": "SignalFast"
+					},
+					"status": "active",
+					"stopLoss": 57800,
+					"submittedAt": "2026-11-13T03:55:39.476Z",
+					"symbol": "BTCUSDT",
+					"takeProfit": 65000,
+					"tradingSymbol": {
+						"baseAsset": "BTC",
+						"displayName": "BTC/USDT",
+						"exchange": "binance",
+						"id": "cmqs8124p00055jo3m3r8j9o9",
+						"logoUrl": "/images/trading-symbols/btc.png",
+						"quoteAsset": "USDT",
+						"symbol": "BTCUSDT"
+					},
+					"updatedAt": "2026-11-15T13:40:02.769Z"
+				}
+			}
+		],
+		"logId": "5518b78b-e805-49a1-8215-95d937670dae",
+		"logStatus": "recorded"
+	}
+}

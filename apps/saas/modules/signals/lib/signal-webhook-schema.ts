@@ -91,22 +91,32 @@ export const signalWebhookRequestSchema = z
 			normalizeSource,
 			z.object({
 				id: z.string().trim().min(1).max(80).optional(),
+				serverName: z.string().trim().min(1).max(160).optional(),
+				channelName: z.string().trim().min(1).max(160).optional(),
+				categoryName: z.string().trim().min(1).max(160).optional(),
 				name: z.string().trim().min(1).max(80),
 				avatarUrl: z.url().optional(),
-				bio: z.preprocess(emptyStringToUndefined, z.string().trim().min(1).max(500).optional()),
-				handle: z.preprocess(emptyStringToUndefined, z.string().trim().min(1).max(120).optional()),
-				platform: z.preprocess(emptyStringToUndefined, z.string().trim().min(1).max(80).optional()),
+				bio: z.preprocess(
+					emptyStringToUndefined,
+					z.string().trim().min(1).max(500).optional(),
+				),
+				handle: z.preprocess(
+					emptyStringToUndefined,
+					z.string().trim().min(1).max(120).optional(),
+				),
+				platform: z.preprocess(
+					emptyStringToUndefined,
+					z.string().trim().min(1).max(80).optional(),
+				),
 			}),
 		),
 		status: z.preprocess(normalizeStatus, z.enum(["active", "history"]).optional()),
 		stopLoss: z.preprocess(numberFromInput, z.number().positive()),
-		submittedAt: z.preprocess(normalizeSubmittedAt, z.iso.datetime({ offset: true }).optional()),
-		symbol: z
-			.string()
-			.trim()
-			.min(3)
-			.max(24)
-			.transform(normalizeSymbol),
+		submittedAt: z.preprocess(
+			normalizeSubmittedAt,
+			z.iso.datetime({ offset: true }).optional(),
+		),
+		symbol: z.string().trim().min(3).max(24).transform(normalizeSymbol),
 		takeProfit: z.preprocess(numberFromInput, z.number().positive().optional()),
 		timeframe: z.string().trim().min(1).max(12).optional(),
 	})

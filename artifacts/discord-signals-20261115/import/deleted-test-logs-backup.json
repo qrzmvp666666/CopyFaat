@@ -1,0 +1,1054 @@
+[
+	{
+		"id": "654e6817-01ac-43c8-982e-5c91e665bbe1",
+		"mode": "batch",
+		"status": "success",
+		"httpStatus": 200,
+		"total": 1,
+		"saved": 0,
+		"ignored": 1,
+		"invalid": 0,
+		"failed": 0,
+		"durationMs": 13,
+		"error": null,
+		"searchText": "qa:webhook-log:ignored Unknown BTCUSDT",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"note": "Local webhook logging verification only.",
+					"entry": 100,
+					"status": "history",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:webhook-log:ignored",
+					"platform": "qa",
+					"stopLoss": 90,
+					"direction": "long",
+					"sourceName": "Unknown"
+				},
+				"errors": [],
+				"status": "ignored",
+				"eventId": "qa:webhook-log:ignored"
+			}
+		],
+		"createdAt": "2026-11-15T04:19:25.766Z",
+		"completedAt": "2026-11-15T04:19:25.776Z"
+	},
+	{
+		"id": "86e020ab-8f3d-4dd6-975f-cc26cdb1bba0",
+		"mode": "batch",
+		"status": "partial",
+		"httpStatus": 207,
+		"total": 2,
+		"saved": 0,
+		"ignored": 1,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 2,
+		"error": null,
+		"searchText": "qa:webhook-log:ignored Unknown BTCUSDT qa:webhook-log:invalid 日志验证（测试） BTCUSDT",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"note": "Local webhook logging verification only.",
+					"entry": 100,
+					"status": "history",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:webhook-log:ignored",
+					"platform": "qa",
+					"stopLoss": 90,
+					"direction": "long",
+					"sourceName": "Unknown"
+				},
+				"errors": [],
+				"status": "ignored",
+				"eventId": "qa:webhook-log:ignored"
+			},
+			{
+				"index": 1,
+				"input": {
+					"entry": 100,
+					"symbol": "BTCUSDT",
+					"eventId": "qa:webhook-log:invalid",
+					"direction": "long",
+					"sourceName": "日志验证（测试）"
+				},
+				"errors": [
+					"Invalid signal webhook payload.",
+					"stopLoss: Invalid input: expected number, received undefined"
+				],
+				"status": "invalid",
+				"eventId": "qa:webhook-log:invalid"
+			}
+		],
+		"createdAt": "2026-11-15T04:19:25.788Z",
+		"completedAt": "2026-11-15T04:19:25.790Z"
+	},
+	{
+		"id": "acd7de72-d71f-4240-ba6e-d1e3942a1dd0",
+		"mode": "single",
+		"status": "rejected",
+		"httpStatus": 422,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 1,
+		"error": "Invalid signal webhook payload.",
+		"searchText": "qa:webhook-log:rejected Unknown BTCUSDT",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"note": "Local webhook logging verification only.",
+					"entry": 100,
+					"status": "history",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:webhook-log:rejected",
+					"platform": "qa",
+					"stopLoss": -1,
+					"direction": "long",
+					"sourceName": "Unknown"
+				},
+				"errors": [
+					"Invalid signal webhook payload.",
+					"stopLoss: Too small: expected number to be >0"
+				],
+				"status": "invalid",
+				"eventId": "qa:webhook-log:rejected"
+			}
+		],
+		"createdAt": "2026-11-15T04:19:25.795Z",
+		"completedAt": "2026-11-15T04:19:25.796Z"
+	},
+	{
+		"id": "28db1f91-3532-451e-8b0c-e9e65d06cccb",
+		"mode": "single",
+		"status": "failed",
+		"httpStatus": 500,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 0,
+		"failed": 1,
+		"durationMs": 358,
+		"error": "Failed to store signal. Retry this item using the same eventId.",
+		"searchText": "qa-source-unbound-no-write 三马哥 BTCUSDT 不存在的测试来源 不存在的测试频道",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"entry": 100,
+					"symbol": "BTCUSDT",
+					"eventId": "qa-source-unbound-no-write",
+					"platform": "discord",
+					"stopLoss": 90,
+					"direction": "long",
+					"serverName": "不存在的测试来源",
+					"sourceName": "三马哥",
+					"channelName": "不存在的测试频道"
+				},
+				"errors": ["Failed to store signal. Retry this item using the same eventId."],
+				"status": "failed",
+				"eventId": "qa-source-unbound-no-write"
+			}
+		],
+		"createdAt": "2026-11-15T05:04:36.221Z",
+		"completedAt": "2026-11-15T05:04:36.577Z"
+	},
+	{
+		"id": "5e858539-c3f6-4d9a-94ed-ea6bca278fbf",
+		"mode": "batch",
+		"status": "partial",
+		"httpStatus": 207,
+		"total": 3,
+		"saved": 1,
+		"ignored": 0,
+		"invalid": 2,
+		"failed": 0,
+		"durationMs": 62,
+		"error": null,
+		"searchText": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:main cmwhumcsn0001cpo300lwrz0p 三马哥合约 BTCUSDT 币圈策略搬运工 📈三马哥合约📈 qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:unbound 三马哥合约 BTCUSDT 币圈策略搬运工 未绑定测试频道 SOURCE_UNBOUND qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:bad-price 三马哥合约 BTCUSDT 币圈策略搬运工 📈三马哥合约📈",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:main",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "📈三马哥合约📈",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [],
+				"status": "saved",
+				"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:main",
+				"signalId": "cmwhumcsn0001cpo300lwrz0p"
+			},
+			{
+				"code": "SOURCE_UNBOUND",
+				"index": 1,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:unbound",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "未绑定测试频道",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [
+					"Source is not bound to a KOL. Configure its server and channel names in administration."
+				],
+				"status": "invalid",
+				"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:unbound"
+			},
+			{
+				"index": 2,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:bad-price",
+					"platform": "discord",
+					"stopLoss": 200,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "📈三马哥合约📈",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [
+					"Invalid signal webhook payload.",
+					"direction: For long signals, stopLoss must be below entry and takeProfit, when present, must be above entry. For short signals, stopLoss must be above entry and takeProfit, when present, must be below entry."
+				],
+				"status": "invalid",
+				"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:bad-price"
+			}
+		],
+		"createdAt": "2026-11-15T05:06:41.303Z",
+		"completedAt": "2026-11-15T05:06:41.360Z"
+	},
+	{
+		"id": "790432e9-5d4d-4076-8bab-a42f064c5af3",
+		"mode": "single",
+		"status": "success",
+		"httpStatus": 201,
+		"total": 1,
+		"saved": 1,
+		"ignored": 0,
+		"invalid": 0,
+		"failed": 0,
+		"durationMs": 30,
+		"error": null,
+		"searchText": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:main cmwhumcsn0001cpo300lwrz0p 三马哥合约 BTCUSDT 币圈策略搬运工 📈三马哥合约📈",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"note": "仅供测试：重复事件更新，测试后清理。",
+					"entry": 123.456,
+					"status": "history",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:main",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "📈三马哥合约📈",
+					"entryStatus": "entered",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [],
+				"status": "saved",
+				"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:main",
+				"signalId": "cmwhumcsn0001cpo300lwrz0p"
+			}
+		],
+		"createdAt": "2026-11-15T05:06:41.370Z",
+		"completedAt": "2026-11-15T05:06:41.399Z"
+	},
+	{
+		"id": "6e91875e-0a8d-42a3-a787-3a3185f85363",
+		"mode": "single",
+		"status": "rejected",
+		"httpStatus": 422,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 7,
+		"error": "This eventId belongs to a different KOL. It cannot be reassigned by webhook.",
+		"searchText": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:main 军长 BTCUSDT 币圈策略搬运工 比特币军长 EVENT_SOURCE_CONFLICT",
+		"items": [
+			{
+				"code": "EVENT_SOURCE_CONFLICT",
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:main",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "军长",
+					"takeProfit": 145.678,
+					"channelName": "比特币军长",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [
+					"This eventId belongs to a different KOL. It cannot be reassigned by webhook."
+				],
+				"status": "invalid",
+				"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:main"
+			}
+		],
+		"createdAt": "2026-11-15T05:06:41.410Z",
+		"completedAt": "2026-11-15T05:06:41.417Z"
+	},
+	{
+		"id": "7951c6b5-6e33-40c0-a4eb-3802ece29621",
+		"mode": "single",
+		"status": "rejected",
+		"httpStatus": 422,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 2,
+		"error": "Named sources require platform, serverName and channelName.",
+		"searchText": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:incomplete 三马哥 BTCUSDT SOURCE_INCOMPLETE",
+		"items": [
+			{
+				"code": "SOURCE_INCOMPLETE",
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:incomplete",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"sourceName": "三马哥",
+					"takeProfit": 145.678,
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": ["Named sources require platform, serverName and channelName."],
+				"status": "invalid",
+				"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:incomplete"
+			}
+		],
+		"createdAt": "2026-11-15T05:06:41.422Z",
+		"completedAt": "2026-11-15T05:06:41.423Z"
+	},
+	{
+		"id": "b7cf608f-293e-43ea-8fe7-95ffb2e20571",
+		"mode": "single",
+		"status": "rejected",
+		"httpStatus": 422,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 4,
+		"error": "Source is not bound to a KOL. Configure its server and channel names in administration.",
+		"searchText": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:disabled 三马哥合约 BTCUSDT QA来源核验 qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430 停用频道 SOURCE_UNBOUND",
+		"items": [
+			{
+				"code": "SOURCE_UNBOUND",
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:disabled",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "QA来源核验 qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "停用频道",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [
+					"Source is not bound to a KOL. Configure its server and channel names in administration."
+				],
+				"status": "invalid",
+				"eventId": "qa:source-binding:7abfd4c4-0b7d-4b36-bec3-8b73fbaec430:disabled"
+			}
+		],
+		"createdAt": "2026-11-15T05:06:41.431Z",
+		"completedAt": "2026-11-15T05:06:41.434Z"
+	},
+	{
+		"id": "96d64527-3743-4753-95ae-782406dd839f",
+		"mode": "batch",
+		"status": "partial",
+		"httpStatus": 207,
+		"total": 3,
+		"saved": 1,
+		"ignored": 0,
+		"invalid": 2,
+		"failed": 0,
+		"durationMs": 41,
+		"error": null,
+		"searchText": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:main cmwhun9qg0004cpo3t6tx5f6o 三马哥合约 BTCUSDT 币圈策略搬运工 📈三马哥合约📈 qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:unbound 三马哥合约 BTCUSDT 币圈策略搬运工 未绑定测试频道 SOURCE_UNBOUND qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:bad-price 三马哥合约 BTCUSDT 币圈策略搬运工 📈三马哥合约📈",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:main",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "📈三马哥合约📈",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [],
+				"status": "saved",
+				"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:main",
+				"signalId": "cmwhun9qg0004cpo3t6tx5f6o"
+			},
+			{
+				"code": "SOURCE_UNBOUND",
+				"index": 1,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:unbound",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "未绑定测试频道",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [
+					"Source is not bound to a KOL. Configure its server and channel names in administration."
+				],
+				"status": "invalid",
+				"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:unbound"
+			},
+			{
+				"index": 2,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:bad-price",
+					"platform": "discord",
+					"stopLoss": 200,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "📈三马哥合约📈",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [
+					"Invalid signal webhook payload.",
+					"direction: For long signals, stopLoss must be below entry and takeProfit, when present, must be above entry. For short signals, stopLoss must be above entry and takeProfit, when present, must be below entry."
+				],
+				"status": "invalid",
+				"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:bad-price"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:24.008Z",
+		"completedAt": "2026-11-15T05:07:24.049Z"
+	},
+	{
+		"id": "ccb7e132-6b22-4aa0-8bde-9d28c500e61f",
+		"mode": "single",
+		"status": "success",
+		"httpStatus": 201,
+		"total": 1,
+		"saved": 1,
+		"ignored": 0,
+		"invalid": 0,
+		"failed": 0,
+		"durationMs": 9,
+		"error": null,
+		"searchText": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:main cmwhun9qg0004cpo3t6tx5f6o 三马哥合约 BTCUSDT 币圈策略搬运工 📈三马哥合约📈",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"note": "仅供测试：重复事件更新，测试后清理。",
+					"entry": 123.456,
+					"status": "history",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:main",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "📈三马哥合约📈",
+					"entryStatus": "entered",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [],
+				"status": "saved",
+				"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:main",
+				"signalId": "cmwhun9qg0004cpo3t6tx5f6o"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:24.058Z",
+		"completedAt": "2026-11-15T05:07:24.066Z"
+	},
+	{
+		"id": "46764812-7247-4c15-b793-43282bd45b3e",
+		"mode": "single",
+		"status": "rejected",
+		"httpStatus": 422,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 5,
+		"error": "This eventId belongs to a different KOL. It cannot be reassigned by webhook.",
+		"searchText": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:main 军长 BTCUSDT 币圈策略搬运工 比特币军长 EVENT_SOURCE_CONFLICT",
+		"items": [
+			{
+				"code": "EVENT_SOURCE_CONFLICT",
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:main",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "军长",
+					"takeProfit": 145.678,
+					"channelName": "比特币军长",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [
+					"This eventId belongs to a different KOL. It cannot be reassigned by webhook."
+				],
+				"status": "invalid",
+				"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:main"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:24.070Z",
+		"completedAt": "2026-11-15T05:07:24.075Z"
+	},
+	{
+		"id": "30d1dced-22b7-49f8-80fc-0ff620aa3d36",
+		"mode": "single",
+		"status": "rejected",
+		"httpStatus": 422,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 2,
+		"error": "Named sources require platform, serverName and channelName.",
+		"searchText": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:incomplete 三马哥 BTCUSDT SOURCE_INCOMPLETE",
+		"items": [
+			{
+				"code": "SOURCE_INCOMPLETE",
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:incomplete",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"sourceName": "三马哥",
+					"takeProfit": 145.678,
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": ["Named sources require platform, serverName and channelName."],
+				"status": "invalid",
+				"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:incomplete"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:24.079Z",
+		"completedAt": "2026-11-15T05:07:24.081Z"
+	},
+	{
+		"id": "a4fd81d8-2a66-49c2-951f-2a769029b558",
+		"mode": "single",
+		"status": "rejected",
+		"httpStatus": 422,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 3,
+		"error": "Source is not bound to a KOL. Configure its server and channel names in administration.",
+		"searchText": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:disabled 三马哥合约 BTCUSDT QA来源核验 qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed 停用频道 SOURCE_UNBOUND",
+		"items": [
+			{
+				"code": "SOURCE_UNBOUND",
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:disabled",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "QA来源核验 qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "停用频道",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [
+					"Source is not bound to a KOL. Configure its server and channel names in administration."
+				],
+				"status": "invalid",
+				"eventId": "qa:source-binding:091f31ef-7c47-472e-8051-c0f1e3fc05ed:disabled"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:24.086Z",
+		"completedAt": "2026-11-15T05:07:24.088Z"
+	},
+	{
+		"id": "4802c8f9-39e0-4c3c-a66f-4d23f6636f1d",
+		"mode": "batch",
+		"status": "partial",
+		"httpStatus": 207,
+		"total": 3,
+		"saved": 1,
+		"ignored": 0,
+		"invalid": 2,
+		"failed": 0,
+		"durationMs": 32,
+		"error": null,
+		"searchText": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main cmwhunklr0007cpo3tuju2aev 三马哥合约 BTCUSDT 币圈策略搬运工 📈三马哥合约📈 qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:unbound 三马哥合约 BTCUSDT 币圈策略搬运工 未绑定测试频道 SOURCE_UNBOUND qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:bad-price 三马哥合约 BTCUSDT 币圈策略搬运工 📈三马哥合约📈",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "📈三马哥合约📈",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [],
+				"status": "saved",
+				"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+				"signalId": "cmwhunklr0007cpo3tuju2aev"
+			},
+			{
+				"code": "SOURCE_UNBOUND",
+				"index": 1,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:unbound",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "未绑定测试频道",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [
+					"Source is not bound to a KOL. Configure its server and channel names in administration."
+				],
+				"status": "invalid",
+				"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:unbound"
+			},
+			{
+				"index": 2,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:bad-price",
+					"platform": "discord",
+					"stopLoss": 200,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "📈三马哥合约📈",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [
+					"Invalid signal webhook payload.",
+					"direction: For long signals, stopLoss must be below entry and takeProfit, when present, must be above entry. For short signals, stopLoss must be above entry and takeProfit, when present, must be below entry."
+				],
+				"status": "invalid",
+				"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:bad-price"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:38.100Z",
+		"completedAt": "2026-11-15T05:07:38.132Z"
+	},
+	{
+		"id": "56bceee9-1d17-4a1b-9ff3-8fa01220c012",
+		"mode": "single",
+		"status": "success",
+		"httpStatus": 201,
+		"total": 1,
+		"saved": 1,
+		"ignored": 0,
+		"invalid": 0,
+		"failed": 0,
+		"durationMs": 10,
+		"error": null,
+		"searchText": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main cmwhunklr0007cpo3tuju2aev 三马哥合约 BTCUSDT 币圈策略搬运工 📈三马哥合约📈",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"note": "仅供测试：重复事件更新，测试后清理。",
+					"entry": 123.456,
+					"status": "history",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "📈三马哥合约📈",
+					"entryStatus": "entered",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [],
+				"status": "saved",
+				"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+				"signalId": "cmwhunklr0007cpo3tuju2aev"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:38.139Z",
+		"completedAt": "2026-11-15T05:07:38.149Z"
+	},
+	{
+		"id": "d01d364f-0a80-45a3-9d6c-79ed1a7d6650",
+		"mode": "single",
+		"status": "rejected",
+		"httpStatus": 422,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 5,
+		"error": "This eventId belongs to a different KOL. It cannot be reassigned by webhook.",
+		"searchText": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main 军长 BTCUSDT 币圈策略搬运工 比特币军长 EVENT_SOURCE_CONFLICT",
+		"items": [
+			{
+				"code": "EVENT_SOURCE_CONFLICT",
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "币圈策略搬运工",
+					"sourceName": "军长",
+					"takeProfit": 145.678,
+					"channelName": "比特币军长",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [
+					"This eventId belongs to a different KOL. It cannot be reassigned by webhook."
+				],
+				"status": "invalid",
+				"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:38.155Z",
+		"completedAt": "2026-11-15T05:07:38.159Z"
+	},
+	{
+		"id": "b5fb3840-9d1d-47a9-899c-956d88ba470a",
+		"mode": "single",
+		"status": "rejected",
+		"httpStatus": 422,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 1,
+		"error": "Named sources require platform, serverName and channelName.",
+		"searchText": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:incomplete 三马哥 BTCUSDT SOURCE_INCOMPLETE",
+		"items": [
+			{
+				"code": "SOURCE_INCOMPLETE",
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:incomplete",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"sourceName": "三马哥",
+					"takeProfit": 145.678,
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": ["Named sources require platform, serverName and channelName."],
+				"status": "invalid",
+				"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:incomplete"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:38.162Z",
+		"completedAt": "2026-11-15T05:07:38.163Z"
+	},
+	{
+		"id": "ce0d9605-4709-425e-ab63-da8b6572d53b",
+		"mode": "single",
+		"status": "rejected",
+		"httpStatus": 422,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 3,
+		"error": "Source binding or its KOL is disabled.",
+		"searchText": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:disabled 三马哥合约 BTCUSDT qa来源核验 qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c 停用频道 SOURCE_DISABLED",
+		"items": [
+			{
+				"code": "SOURCE_DISABLED",
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:disabled",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "qa来源核验 qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "停用频道",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": ["Source binding or its KOL is disabled."],
+				"status": "invalid",
+				"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:disabled"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:38.169Z",
+		"completedAt": "2026-11-15T05:07:38.172Z"
+	},
+	{
+		"id": "8f1556e9-5664-4c26-8402-0ebfab6a0c05",
+		"mode": "single",
+		"status": "rejected",
+		"httpStatus": 422,
+		"total": 1,
+		"saved": 0,
+		"ignored": 0,
+		"invalid": 1,
+		"failed": 0,
+		"durationMs": 2,
+		"error": "Multiple channels match. Supply categoryName to identify the source.",
+		"searchText": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:ambiguous 三马哥合约 BTCUSDT qa来源核验 qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c 重名频道 SOURCE_AMBIGUOUS",
+		"items": [
+			{
+				"code": "SOURCE_AMBIGUOUS",
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:ambiguous",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "qa来源核验 qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "重名频道",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": ["Multiple channels match. Supply categoryName to identify the source."],
+				"status": "invalid",
+				"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:ambiguous"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:38.176Z",
+		"completedAt": "2026-11-15T05:07:38.178Z"
+	},
+	{
+		"id": "c9eb80c3-171e-4b57-b070-4945d4392420",
+		"mode": "single",
+		"status": "success",
+		"httpStatus": 201,
+		"total": 1,
+		"saved": 1,
+		"ignored": 0,
+		"invalid": 0,
+		"failed": 0,
+		"durationMs": 11,
+		"error": null,
+		"searchText": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:category cmwhunklr0007cpo3tuju2aev 三马哥合约 BTCUSDT qa来源核验 qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c 重名频道 分类a",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:category",
+					"platform": "discord",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "qa来源核验 qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": "重名频道",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00",
+					"categoryName": "分类a"
+				},
+				"errors": [],
+				"status": "saved",
+				"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:category",
+				"signalId": "cmwhunklr0007cpo3tuju2aev"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:38.181Z",
+		"completedAt": "2026-11-15T05:07:38.192Z"
+	},
+	{
+		"id": "79c749e1-04d5-4fef-aacb-9804849a7cdf",
+		"mode": "single",
+		"status": "success",
+		"httpStatus": 201,
+		"total": 1,
+		"saved": 1,
+		"ignored": 0,
+		"invalid": 0,
+		"failed": 0,
+		"durationMs": 9,
+		"error": null,
+		"searchText": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main cmwhunklr0007cpo3tuju2aev 三马哥合约 BTCUSDT   币圈策略搬运工    📈三马哥合约📈 ",
+		"items": [
+			{
+				"index": 0,
+				"input": {
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"entry": 123.456,
+					"status": "active",
+					"symbol": "BTCUSDT",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+					"platform": "ＤＩＳＣＯＲＤ",
+					"stopLoss": 111.111,
+					"direction": "long",
+					"serverName": "  币圈策略搬运工  ",
+					"sourceName": "三马哥合约",
+					"takeProfit": 145.678,
+					"channelName": " 📈三马哥合约📈 ",
+					"entryStatus": "pending",
+					"submittedAt": "2026-11-15T12:00:00+08:00"
+				},
+				"errors": [],
+				"status": "saved",
+				"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+				"signalId": "cmwhunklr0007cpo3tuju2aev"
+			}
+		],
+		"createdAt": "2026-11-15T05:07:38.196Z",
+		"completedAt": "2026-11-15T05:07:38.205Z"
+	}
+]

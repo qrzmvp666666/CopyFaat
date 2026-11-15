@@ -9,8 +9,12 @@ import {
 	listCodes,
 	stats,
 } from "./procedures/redeem-codes";
+import { listSourceBindings, saveSourceBinding } from "./procedures/signal-source-bindings";
+import { listWebhookLogs, findWebhookLog } from "./procedures/signal-webhook-logs";
 
 export const adminRouter = {
+	sourceBindings: { list: listSourceBindings, save: saveSourceBinding },
+	webhookLogs: { list: listWebhookLogs, find: findWebhookLog },
 	users: {
 		list: listUsers,
 	},

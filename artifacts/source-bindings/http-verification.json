@@ -1,0 +1,279 @@
+{
+	"testedAt": "2026-11-15T13:07:38.222Z",
+	"prefix": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c",
+	"checks": [
+		{
+			"case": "mixed batch: bound / unbound / invalid price",
+			"status": 207,
+			"data": {
+				"ok": false,
+				"receivedAt": "2026-11-15T13:07:38.109Z",
+				"total": 3,
+				"saved": 1,
+				"ignored": 0,
+				"invalid": 2,
+				"failed": 0,
+				"results": [
+					{
+						"index": 0,
+						"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+						"status": "saved",
+						"signal": {
+							"chartPositionPct": 92,
+							"createdAt": "2026-11-15T13:07:38.127Z",
+							"direction": "long",
+							"entry": 123.456,
+							"entryStatus": "pending",
+							"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+							"id": "cmwhunklr0007cpo3tuju2aev",
+							"note": "仅供来源绑定自动化测试，测试后清理。",
+							"riskReward": 1.8,
+							"source": {
+								"avatarUrl": "/images/hero-floating/icon-1.png",
+								"bio": "SignalFast 演示信号，价格仅用于界面展示，不构成投资建议。",
+								"id": "signalfast-guide:san-ma-ge",
+								"name": "三马哥",
+								"platform": "SignalFast"
+							},
+							"status": "active",
+							"stopLoss": 111.111,
+							"submittedAt": "2026-11-15T04:00:00.000Z",
+							"symbol": "BTCUSDT",
+							"takeProfit": 145.678,
+							"tradingSymbol": {
+								"baseAsset": "BTC",
+								"displayName": "BTC/USDT",
+								"exchange": "binance",
+								"id": "cmqs8124p00055jo3m3r8j9o9",
+								"logoUrl": "/images/trading-symbols/btc.png",
+								"quoteAsset": "USDT",
+								"symbol": "BTCUSDT"
+							},
+							"updatedAt": "2026-11-15T13:07:38.127Z"
+						}
+					},
+					{
+						"index": 1,
+						"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:unbound",
+						"status": "invalid",
+						"code": "SOURCE_UNBOUND",
+						"error": "Source is not bound to a KOL. Configure its server and channel names in administration."
+					},
+					{
+						"index": 2,
+						"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:bad-price",
+						"status": "invalid",
+						"error": "Invalid signal webhook payload.",
+						"issues": {
+							"formErrors": [],
+							"fieldErrors": {
+								"direction": [
+									"For long signals, stopLoss must be below entry and takeProfit, when present, must be above entry. For short signals, stopLoss must be above entry and takeProfit, when present, must be below entry."
+								]
+							}
+						}
+					}
+				],
+				"logId": "4802c8f9-39e0-4c3c-a66f-4d23f6636f1d",
+				"logStatus": "recorded"
+			}
+		},
+		{
+			"case": "repeat event updates same signal",
+			"status": 201,
+			"data": {
+				"ok": true,
+				"receivedAt": "2026-11-15T13:07:38.149Z",
+				"signal": {
+					"chartPositionPct": 92,
+					"createdAt": "2026-11-15T13:07:38.127Z",
+					"direction": "long",
+					"entry": 123.456,
+					"entryStatus": "entered",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+					"id": "cmwhunklr0007cpo3tuju2aev",
+					"note": "仅供测试：重复事件更新，测试后清理。",
+					"riskReward": 1.8,
+					"source": {
+						"avatarUrl": "/images/hero-floating/icon-1.png",
+						"bio": "SignalFast 演示信号，价格仅用于界面展示，不构成投资建议。",
+						"id": "signalfast-guide:san-ma-ge",
+						"name": "三马哥",
+						"platform": "SignalFast"
+					},
+					"status": "history",
+					"stopLoss": 111.111,
+					"submittedAt": "2026-11-15T04:00:00.000Z",
+					"symbol": "BTCUSDT",
+					"takeProfit": 145.678,
+					"tradingSymbol": {
+						"baseAsset": "BTC",
+						"displayName": "BTC/USDT",
+						"exchange": "binance",
+						"id": "cmqs8124p00055jo3m3r8j9o9",
+						"logoUrl": "/images/trading-symbols/btc.png",
+						"quoteAsset": "USDT",
+						"symbol": "BTCUSDT"
+					},
+					"updatedAt": "2026-11-15T13:07:38.147Z"
+				},
+				"logId": "56bceee9-1d17-4a1b-9ff3-8fa01220c012",
+				"logStatus": "recorded"
+			}
+		},
+		{
+			"case": "cross-KOL event reassignment rejected",
+			"status": 422,
+			"data": {
+				"ok": false,
+				"error": "This eventId belongs to a different KOL. It cannot be reassigned by webhook.",
+				"code": "EVENT_SOURCE_CONFLICT",
+				"logId": "d01d364f-0a80-45a3-9d6c-79ed1a7d6650",
+				"logStatus": "recorded"
+			}
+		},
+		{
+			"case": "missing names rejected",
+			"status": 422,
+			"data": {
+				"ok": false,
+				"error": "Named sources require platform, serverName and channelName.",
+				"code": "SOURCE_INCOMPLETE",
+				"logId": "b5fb3840-9d1d-47a9-899c-956d88ba470a",
+				"logStatus": "recorded"
+			}
+		},
+		{
+			"case": "disabled source rejected",
+			"status": 422,
+			"data": {
+				"ok": false,
+				"error": "Source binding or its KOL is disabled.",
+				"code": "SOURCE_DISABLED",
+				"logId": "ce0d9605-4709-425e-ab63-da8b6572d53b",
+				"logStatus": "recorded"
+			}
+		},
+		{
+			"case": "ambiguous channel rejected",
+			"status": 422,
+			"data": {
+				"ok": false,
+				"error": "Multiple channels match. Supply categoryName to identify the source.",
+				"code": "SOURCE_AMBIGUOUS",
+				"logId": "8f1556e9-5664-4c26-8402-0ebfab6a0c05",
+				"logStatus": "recorded"
+			}
+		},
+		{
+			"case": "explicit category resolves ambiguity",
+			"status": 201,
+			"data": {
+				"ok": true,
+				"receivedAt": "2026-11-15T13:07:38.192Z",
+				"signal": {
+					"chartPositionPct": 92,
+					"createdAt": "2026-11-15T13:07:38.127Z",
+					"direction": "long",
+					"entry": 123.456,
+					"entryStatus": "pending",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+					"id": "cmwhunklr0007cpo3tuju2aev",
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"riskReward": 1.8,
+					"source": {
+						"avatarUrl": "/images/hero-floating/icon-1.png",
+						"bio": "SignalFast 演示信号，价格仅用于界面展示，不构成投资建议。",
+						"id": "signalfast-guide:san-ma-ge",
+						"name": "三马哥",
+						"platform": "SignalFast"
+					},
+					"status": "active",
+					"stopLoss": 111.111,
+					"submittedAt": "2026-11-15T04:00:00.000Z",
+					"symbol": "BTCUSDT",
+					"takeProfit": 145.678,
+					"tradingSymbol": {
+						"baseAsset": "BTC",
+						"displayName": "BTC/USDT",
+						"exchange": "binance",
+						"id": "cmqs8124p00055jo3m3r8j9o9",
+						"logoUrl": "/images/trading-symbols/btc.png",
+						"quoteAsset": "USDT",
+						"symbol": "BTCUSDT"
+					},
+					"updatedAt": "2026-11-15T13:07:38.190Z"
+				},
+				"logId": "c9eb80c3-171e-4b57-b070-4945d4392420",
+				"logStatus": "recorded"
+			}
+		},
+		{
+			"case": "normalized names and decorations resolve existing KOL",
+			"status": 201,
+			"data": {
+				"ok": true,
+				"receivedAt": "2026-11-15T13:07:38.205Z",
+				"signal": {
+					"chartPositionPct": 92,
+					"createdAt": "2026-11-15T13:07:38.127Z",
+					"direction": "long",
+					"entry": 123.456,
+					"entryStatus": "pending",
+					"eventId": "qa:source-binding:2e9b819c-828a-4bcc-b315-70411019788c:main",
+					"id": "cmwhunklr0007cpo3tuju2aev",
+					"note": "仅供来源绑定自动化测试，测试后清理。",
+					"riskReward": 1.8,
+					"source": {
+						"avatarUrl": "/images/hero-floating/icon-1.png",
+						"bio": "SignalFast 演示信号，价格仅用于界面展示，不构成投资建议。",
+						"id": "signalfast-guide:san-ma-ge",
+						"name": "三马哥",
+						"platform": "SignalFast"
+					},
+					"status": "active",
+					"stopLoss": 111.111,
+					"submittedAt": "2026-11-15T04:00:00.000Z",
+					"symbol": "BTCUSDT",
+					"takeProfit": 145.678,
+					"tradingSymbol": {
+						"baseAsset": "BTC",
+						"displayName": "BTC/USDT",
+						"exchange": "binance",
+						"id": "cmqs8124p00055jo3m3r8j9o9",
+						"logoUrl": "/images/trading-symbols/btc.png",
+						"quoteAsset": "USDT",
+						"symbol": "BTCUSDT"
+					},
+					"updatedAt": "2026-11-15T13:07:38.202Z"
+				},
+				"logId": "79c749e1-04d5-4fef-aacb-9804849a7cdf",
+				"logStatus": "recorded"
+			}
+		},
+		{
+			"case": "database rejects duplicate normalized source",
+			"passed": true
+		},
+		{
+			"case": "anonymous admin list denied",
+			"status": 401
+		},
+		{
+			"case": "audit stores source names and per-item error code",
+			"passed": true
+		},
+		{
+			"case": "no duplicate KOLs; names / platforms / identity keys unchanged",
+			"passed": true
+		},
+		{
+			"case": "source binding RLS enabled",
+			"passed": true
+		},
+		{
+			"case": "test signals and temporary bindings cleaned",
+			"remainingSignals": 10
+		}
+	]
+}

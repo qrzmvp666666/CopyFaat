@@ -7,6 +7,9 @@ export type WebhookSignalEntryStatus = (typeof WEBHOOK_SIGNAL_ENTRY_STATUSES)[nu
 export type WebhookSignalStatus = (typeof WEBHOOK_SIGNAL_STATUSES)[number];
 
 export interface SignalWebhookSource {
+	serverName?: string;
+	channelName?: string;
+	categoryName?: string;
 	id?: string;
 	name: string;
 	avatarUrl?: string;
@@ -103,6 +106,8 @@ export interface SignalKlinesResponse {
 }
 
 export interface SignalWebhookSuccessResponse {
+	logId?: string;
+	logStatus?: "recorded" | "unavailable";
 	ignored?: boolean;
 	ok: true;
 	receivedAt: string;
@@ -110,7 +115,33 @@ export interface SignalWebhookSuccessResponse {
 }
 
 export interface SignalWebhookErrorResponse {
+	code?: string;
+	logId?: string;
+	logStatus?: "recorded" | "unavailable";
 	error: string;
 	issues?: unknown;
 	ok: false;
+}
+
+export interface SignalWebhookBatchItemResult {
+	index: number;
+	eventId?: string;
+	status: "saved" | "ignored" | "invalid" | "failed";
+	code?: string;
+	signal?: StoredSignal;
+	error?: string;
+	issues?: unknown;
+}
+
+export interface SignalWebhookBatchResponse {
+	logId?: string;
+	logStatus?: "recorded" | "unavailable";
+	ok: boolean;
+	receivedAt: string;
+	total: number;
+	saved: number;
+	ignored: number;
+	invalid: number;
+	failed: number;
+	results: SignalWebhookBatchItemResult[];
 }

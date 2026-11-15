@@ -11,6 +11,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			"@config": path.resolve(import.meta.dirname, "./config"),
+			"@signals": path.resolve(import.meta.dirname, "./modules/signals"),
 			"@shared": path.resolve(import.meta.dirname, "./modules/shared"),
 			"@auth": path.resolve(import.meta.dirname, "./modules/auth"),
 			"@organizations": path.resolve(import.meta.dirname, "./modules/organizations"),
