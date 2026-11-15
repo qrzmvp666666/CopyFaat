@@ -5,17 +5,14 @@ import { trackTaliviaCheckoutStarted } from "@auth/lib/talivia";
 import { localizePath } from "@i18n/routing";
 import { prepareAttributedPaymentLink } from "@payments/lib/checkout-attribution";
 import type { Locale } from "@repo/i18n";
+import { config as storageConfig } from "@repo/storage/config";
 import { cn } from "@repo/ui";
+import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar";
 import { Button } from "@repo/ui/components/button";
 import { toastError } from "@repo/ui/components/toast";
-import {
-	ArrowUpRightIcon,
-	CandlestickChartIcon,
-	CheckIcon,
-	CircleDotIcon,
-	ChevronLeftIcon,
-	UsersRoundIcon,
-} from "lucide-react";
+import type { SignalsPreviewResponse } from "@signals/lib/signal-types";
+import { useQuery } from "@tanstack/react-query";
+import { CheckIcon, ChevronLeftIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRef, useState } from "react";
@@ -63,7 +60,7 @@ export function SignalsMobilePaywall({
 	const { user } = useSession();
 	const locale = useLocale() as Locale;
 	const t = useTranslations("signals.mobilePaywall");
-	const [paymentMethod, setPaymentMethod] = useState<"card" | "stablecoin">("card");
+	const [paymentMethod, setPaymentMethod] = useState<"card" | "stablecoin">("stablecoin");
 	const [period, setPeriod] = useState<"year" | "week">(initialPeriod);
 	const [isStartingCheckout, setIsStartingCheckout] = useState(false);
 	const checkoutInFlight = useRef(false);
@@ -164,56 +161,9 @@ export function SignalsMobilePaywall({
 						<p className="mt-2 text-sm leading-6 text-white/65">{t("description")}</p>
 					</section>
 
-					<div
-						aria-label={t("benefitsLabel")}
-						className="mt-7 -mx-6 space-y-2 overflow-hidden"
-					>
-						<div className="flex w-max animate-[benefit-slide-left_24s_linear_infinite] motion-reduce:animate-none">
-							<div className="gap-2 px-3 flex shrink-0">
-								<BenefitPill icon={ArrowUpRightIcon}>
-									{t("liveSignals")}
-								</BenefitPill>
-								<BenefitPill icon={CandlestickChartIcon}>
-									{t("aggregatedChart")}
-								</BenefitPill>
-								<BenefitPill icon={CircleDotIcon}>{t("fullSignals")}</BenefitPill>
-							</div>
-							<div aria-hidden="true" className="gap-2 px-3 flex shrink-0">
-								<BenefitPill icon={ArrowUpRightIcon}>
-									{t("liveSignals")}
-								</BenefitPill>
-								<BenefitPill icon={CandlestickChartIcon}>
-									{t("aggregatedChart")}
-								</BenefitPill>
-								<BenefitPill icon={CircleDotIcon}>{t("fullSignals")}</BenefitPill>
-							</div>
-						</div>
-						<div className="flex w-max animate-[benefit-slide-right_28s_linear_infinite] motion-reduce:animate-none">
-							<div className="gap-2 px-3 flex shrink-0">
-								<BenefitPill icon={CheckIcon}>{t("noAds")}</BenefitPill>
-								<BenefitPill icon={UsersRoundIcon}>{t("community")}</BenefitPill>
-								<BenefitPill icon={ArrowUpRightIcon}>{t("tracking")}</BenefitPill>
-							</div>
-							<div aria-hidden="true" className="gap-2 px-3 flex shrink-0">
-								<BenefitPill icon={CheckIcon}>{t("noAds")}</BenefitPill>
-								<BenefitPill icon={UsersRoundIcon}>{t("community")}</BenefitPill>
-								<BenefitPill icon={ArrowUpRightIcon}>{t("tracking")}</BenefitPill>
-							</div>
-						</div>
-					</div>
+					<PaywallSupportedMarkets />
 
 					<div className="mt-7 h-10 p-1 text-xs grid grid-cols-2 rounded-full bg-[#1b1a20]">
-						<button
-							aria-pressed={paymentMethod === "card"}
-							className={cn(
-								"rounded-full text-[#9a97a1]",
-								paymentMethod === "card" && "text-white bg-[#414047]",
-							)}
-							onClick={() => setPaymentMethod("card")}
-							type="button"
-						>
-							{t("card")}
-						</button>
 						<button
 							aria-pressed={paymentMethod === "stablecoin"}
 							className={cn(
@@ -224,6 +174,17 @@ export function SignalsMobilePaywall({
 							type="button"
 						>
 							{t("stablecoin")}
+						</button>
+						<button
+							aria-pressed={paymentMethod === "card"}
+							className={cn(
+								"rounded-full text-[#9a97a1]",
+								paymentMethod === "card" && "text-white bg-[#414047]",
+							)}
+							onClick={() => setPaymentMethod("card")}
+							type="button"
+						>
+							{t("card")}
 						</button>
 					</div>
 
@@ -303,6 +264,7 @@ export function SignalsMobilePaywall({
 							<span className="text-sm font-bold shrink-0">{t("perWeek")}</span>
 						</button>
 					</div>
+					<PaywallPlanComparison />
 				</div>
 
 				<footer className="px-6 pt-3 bg-[#0c0c0e] pb-[max(env(safe-area-inset-bottom),16px)]">
@@ -319,17 +281,146 @@ export function SignalsMobilePaywall({
 	);
 }
 
-function BenefitPill({
-	children,
-	icon: Icon,
-}: {
-	children: string;
-	icon: typeof ArrowUpRightIcon;
-}) {
+function PaywallSupportedMarkets() {
+	const t = useTranslations("signals.mobilePaywall");
+	const { data, isPending } = useQuery<SignalsPreviewResponse>({
+		queryKey: ["signals", "paywall-preview"],
+		queryFn: async () => {
+			const response = await fetch("/api/signals/preview");
+			if (!response.ok) throw new Error("Unable to load supported markets");
+			return response.json();
+		},
+		staleTime: 60_000,
+	});
+
+	if (isPending) {
+		return (
+			<div
+				aria-hidden="true"
+				className="mt-7 animate-pulse bg-white/5 h-[88px] rounded-2xl"
+			/>
+		);
+	}
+	if (!data || (!data.sources.length && !data.tradingSymbols.length)) return null;
+
 	return (
-		<div className="h-10 gap-2 px-4 text-xs font-medium text-white/90 flex shrink-0 items-center rounded-2xl bg-[#242329]">
-			<Icon aria-hidden="true" className="size-4 text-white/75 shrink-0" />
-			<span>{children}</span>
+		<div className="mt-7 -mx-6 space-y-2 overflow-hidden">
+			{[
+				{
+					label: t("supportedKols"),
+					animation: "animate-[benefit-slide-left_24s_linear_infinite]",
+					items: data.sources.map((source) => ({
+						id: source.id ?? source.name,
+						name: source.name,
+						image: source.avatarUrl,
+					})),
+				},
+				{
+					label: t("supportedContracts"),
+					animation: "animate-[benefit-slide-right_28s_linear_infinite]",
+					items: data.tradingSymbols.map((symbol) => ({
+						id: symbol.id,
+						name: symbol.displayName ?? symbol.symbol,
+						image: symbol.logoUrl,
+					})),
+				},
+			].map((row) =>
+				row.items.length ? (
+					<div key={row.label} role="group" aria-label={row.label}>
+						<div className={cn("flex w-max motion-reduce:animate-none", row.animation)}>
+							{[false, true].map((duplicate) => (
+								<div
+									key={String(duplicate)}
+									aria-hidden={duplicate || undefined}
+									className="gap-2 px-1 flex shrink-0"
+								>
+									{row.items.map((item) => (
+										<div
+											key={item.id}
+											className="h-10 gap-2 py-1.5 pl-1.5 pr-4 text-xs font-medium text-white/90 flex shrink-0 items-center rounded-full bg-[#242329]"
+										>
+											<Avatar className="size-7 shrink-0 rounded-full">
+												<AvatarImage
+													alt=""
+													src={
+														item.image &&
+														!item.image.startsWith("/") &&
+														!item.image.startsWith("http")
+															? `/image-proxy/${storageConfig.bucketNames.avatars}/${item.image}`
+															: item.image
+													}
+												/>
+												<AvatarFallback className="bg-white/10 text-white/75 text-[10px]">
+													{item.name.slice(0, 2)}
+												</AvatarFallback>
+											</Avatar>
+											<span>{item.name}</span>
+										</div>
+									))}
+								</div>
+							))}
+						</div>
+					</div>
+				) : null,
+			)}
+		</div>
+	);
+}
+
+function PaywallPlanComparison() {
+	const t = useTranslations("signals.guide.comparison");
+
+	return (
+		<div className="mt-5 border-white/10 overflow-hidden rounded-2xl border bg-[#101014]">
+			<table aria-label={t("feature")} className="leading-4 w-full table-fixed text-[11px]">
+				<thead>
+					<tr className="border-white/10 text-white/60 border-b">
+						<th scope="col" className="px-3 py-2.5 font-medium w-[48%] text-left">
+							{t("feature")}
+						</th>
+						<th scope="col" className="px-1 py-2.5 font-medium w-[30%]">
+							{t("free")}
+						</th>
+						<th
+							scope="col"
+							className="px-1 py-2.5 font-semibold bg-[#a4efff]/[0.08] text-[#a4efff]"
+						>
+							Pro
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					{(["market", "signals", "levels", "filters", "devices"] as const).map(
+						(feature) => (
+							<tr
+								key={feature}
+								className="border-white/[0.06] border-b last:border-0"
+							>
+								<th
+									scope="row"
+									className="px-3 py-2.5 font-normal text-white/80 text-left"
+								>
+									{t(feature)}
+								</th>
+								<td className="px-1 py-2.5 text-white/50 text-center">
+									{t(`otherFeatures.${feature}`)}
+								</td>
+								<td className="px-1 py-2.5 bg-[#a4efff]/[0.08] text-center">
+									<span className="gap-1 inline-flex flex-wrap items-center justify-center text-[#a4efff]">
+										<CheckIcon
+											aria-hidden="true"
+											className="size-3.5 shrink-0"
+										/>
+										<span>
+											{t(feature === "devices" ? "included" : "automatic")}
+										</span>
+									</span>
+								</td>
+							</tr>
+						),
+					)}
+				</tbody>
+			</table>
 		</div>
 	);
 }

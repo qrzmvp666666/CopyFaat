@@ -76,6 +76,8 @@ import type {
 import type { SignalChartSignal } from "./TradingViewSignalChart";
 import { TradingViewSignalChart } from "./TradingViewSignalChart";
 
+const SHOW_GUIDE_PLAN_COMPARISON = false;
+
 const SUPPORTED_TIMEFRAMES = ["15m", "1h", "4h", "1d"] as const;
 const SIGNAL_DIRECTIONS = ["all", "long", "short"] as const;
 const SIGNAL_STATUSES = ["active", "history"] as const;
@@ -4648,7 +4650,7 @@ function SignalsGuideIntroFilters({
 	const [frame, setFrame] = useState(0);
 	const [isPaused, setIsPaused] = useState(false);
 	useEffect(() => {
-		onComparisonVisibilityChange(frame >= 12);
+		onComparisonVisibilityChange(SHOW_GUIDE_PLAN_COMPARISON && frame >= 12);
 	}, [frame, onComparisonVisibilityChange]);
 	const rows = [
 		{
@@ -4684,8 +4686,8 @@ function SignalsGuideIntroFilters({
 		}, 1100);
 		return () => window.clearTimeout(timer);
 	}, [frame, isPaused]);
-	if (frame >= 12) return <SignalsGuidePlanComparison />;
-	const rowIndex = Math.floor(frame / 3);
+	if (SHOW_GUIDE_PLAN_COMPARISON && frame >= 12) return <SignalsGuidePlanComparison />;
+	const rowIndex = Math.min(Math.floor(frame / 3), rows.length - 1);
 	const row = rows[rowIndex];
 	const optionIndex = frame % 3;
 	return (

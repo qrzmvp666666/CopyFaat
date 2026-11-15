@@ -2,6 +2,14 @@
 
 ## 2026-11-15
 
+- feat: Show supported KOL avatars and active contracts in the desktop and mobile paywall scrolling rows.
+
+- fix: Temporarily hide the onboarding comparison reveal before checkout while keeping the paywall feature comparison.
+
+- feat: Place stablecoin payment first and select it by default on desktop and mobile paywalls, preserving provider-specific checkout links.
+
+- feat: Show a compact other-communities versus Pro feature comparison below the mobile paywall plans.
+
 - fix: Temporarily hide the Discord button in the signals mobile header.
 
 - fix: Add logout to the mobile signals account menu and preserve the current locale after signing out.
