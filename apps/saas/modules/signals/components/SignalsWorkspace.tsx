@@ -2,8 +2,10 @@
 
 import { useSession } from "@auth/hooks/use-session";
 import { trackTaliviaEvent } from "@auth/lib/talivia";
+import { config } from "@config";
 import { localizePath } from "@i18n/routing";
 import { PricingTable } from "@payments/components/PricingTable";
+import { authClient } from "@repo/auth/client";
 import type { Locale } from "@repo/i18n";
 import { Button, cn } from "@repo/ui";
 import {
@@ -1228,6 +1230,7 @@ interface SignalsWorkspaceProps {
 export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorkspaceProps) {
 	const { user, loaded: sessionLoaded } = useSession();
 	const t = useTranslations("signals");
+	const userMenuT = useTranslations("app.userMenu");
 	const sourcePickerT = useTranslations("signals.sourcePicker");
 	const locale = useLocale();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
@@ -2256,6 +2259,23 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 									>
 										{t("accountMenu.purchases")}
 									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									onSelect={async () => {
+										await authClient.signOut({
+											fetchOptions: {
+												onSuccess: () => {
+													window.location.href = localizePath(
+														config.redirectAfterLogout,
+														locale as Locale,
+													);
+												},
+											},
+										});
+									}}
+								>
+									{userMenuT("logout")}
 								</DropdownMenuItem>
 							</>
 						) : (

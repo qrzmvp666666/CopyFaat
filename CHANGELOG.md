@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-15
+
+- fix: Add logout to the mobile signals account menu and preserve the current locale after signing out.
+
 ## 2026-11-12
 
 - fix: Load chart candles only for the selected trading pair; remove per-symbol candle probes that delayed signal rendering on page load.
