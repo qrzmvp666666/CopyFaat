@@ -29,7 +29,7 @@ export function LoginModeSwitch({
 					aria-selected={activeMode === mode}
 					onClick={() => onChange(mode)}
 					className={cn(
-						"-mb-0.5 flex-1 px-3 py-2 font-medium text-sm inline-flex items-center justify-center border-b-2 border-transparent whitespace-nowrap text-foreground/60 ring-offset-background transition-all hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden",
+						"-mb-0.5 px-3 py-2 font-medium text-sm inline-flex flex-1 items-center justify-center border-b-2 border-transparent whitespace-nowrap text-foreground/60 ring-offset-background transition-all hover:text-foreground/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden",
 						activeMode === mode && "border-primary text-card-foreground",
 					)}
 				>

@@ -1,47 +1,47 @@
 [
-  {
-    "slug": "douyin",
-    "name": "抖音",
-    "bundle": "com.ss.iphone.ugc.Aweme",
-    "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/17/79/44/1779447f-f515-d225-6b79-a641e912a5e9/AppIcon-0-0-1x_U007emarketing-0-0-0-7-0-0-85-220.png/512x512bb.jpg",
-    "sourcePath": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/douyin-appstore-source.jpg",
-    "png256": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-douyin-256.png",
-    "png96": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-douyin-96.png"
-  },
-  {
-    "slug": "kuaishou",
-    "name": "快手",
-    "bundle": "com.jiangjia.gif",
-    "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/a8/fa/38/a8fa3891-93d0-5ad3-73f1-e2cc0697c996/AppIcon-0-0-1x_U007emarketing-0-8-0-sRGB-85-220.png/512x512bb.jpg",
-    "sourcePath": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/kuaishou-appstore-source.jpg",
-    "png256": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-kuaishou-256.png",
-    "png96": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-kuaishou-96.png"
-  },
-  {
-    "slug": "wechat",
-    "name": "微信",
-    "bundle": "com.tencent.xin",
-    "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/e4/4f/16/e44f16cb-0a64-464e-13f2-05091f930c79/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-0-85-220.png/512x512bb.jpg",
-    "sourcePath": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/wechat-appstore-source.jpg",
-    "png256": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-wechat-256.png",
-    "png96": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-wechat-96.png"
-  },
-  {
-    "slug": "weibo",
-    "name": "微博",
-    "bundle": "com.sina.weibo",
-    "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/96/1d/fd/961dfd24-557e-2d3e-8881-b9923a87ca0f/WeiboAppIcon-0-0-1x_U007epad-0-1-0-0-85-220.png/512x512bb.jpg",
-    "sourcePath": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/weibo-appstore-source.jpg",
-    "png256": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-weibo-256.png",
-    "png96": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-weibo-96.png"
-  },
-  {
-    "slug": "xiaohongshu",
-    "name": "小红书",
-    "bundle": "com.xingin.discover",
-    "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/99/77/06/99770682-eb54-f8d5-751d-d79ab33e7ed9/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
-    "sourcePath": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/xiaohongshu-appstore-source.jpg",
-    "png256": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-xiaohongshu-256.png",
-    "png96": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-xiaohongshu-96.png"
-  }
+	{
+		"slug": "douyin",
+		"name": "抖音",
+		"bundle": "com.ss.iphone.ugc.Aweme",
+		"url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/17/79/44/1779447f-f515-d225-6b79-a641e912a5e9/AppIcon-0-0-1x_U007emarketing-0-0-0-7-0-0-85-220.png/512x512bb.jpg",
+		"sourcePath": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/douyin-appstore-source.jpg",
+		"png256": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-douyin-256.png",
+		"png96": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-douyin-96.png"
+	},
+	{
+		"slug": "kuaishou",
+		"name": "快手",
+		"bundle": "com.jiangjia.gif",
+		"url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/a8/fa/38/a8fa3891-93d0-5ad3-73f1-e2cc0697c996/AppIcon-0-0-1x_U007emarketing-0-8-0-sRGB-85-220.png/512x512bb.jpg",
+		"sourcePath": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/kuaishou-appstore-source.jpg",
+		"png256": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-kuaishou-256.png",
+		"png96": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-kuaishou-96.png"
+	},
+	{
+		"slug": "wechat",
+		"name": "微信",
+		"bundle": "com.tencent.xin",
+		"url": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/e4/4f/16/e44f16cb-0a64-464e-13f2-05091f930c79/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-0-85-220.png/512x512bb.jpg",
+		"sourcePath": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/wechat-appstore-source.jpg",
+		"png256": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-wechat-256.png",
+		"png96": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-wechat-96.png"
+	},
+	{
+		"slug": "weibo",
+		"name": "微博",
+		"bundle": "com.sina.weibo",
+		"url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/96/1d/fd/961dfd24-557e-2d3e-8881-b9923a87ca0f/WeiboAppIcon-0-0-1x_U007epad-0-1-0-0-85-220.png/512x512bb.jpg",
+		"sourcePath": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/weibo-appstore-source.jpg",
+		"png256": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-weibo-256.png",
+		"png96": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-weibo-96.png"
+	},
+	{
+		"slug": "xiaohongshu",
+		"name": "小红书",
+		"bundle": "com.xingin.discover",
+		"url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/99/77/06/99770682-eb54-f8d5-751d-d79ab33e7ed9/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+		"sourcePath": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/xiaohongshu-appstore-source.jpg",
+		"png256": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-xiaohongshu-256.png",
+		"png96": "/Users/qrz/Desktop/SignalFast/assets/design/domestic-app-icons/youxin-app-icon-xiaohongshu-96.png"
+	}
 ]

@@ -17,6 +17,7 @@ import { MailCheckIcon, MailIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+
 import { submitContactForm } from "../../../app/[locale]/contact/actions";
 
 export function ContactForm() {

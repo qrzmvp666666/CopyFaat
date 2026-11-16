@@ -10,7 +10,10 @@ export function createRedeemCode() {
 }
 
 export function normalizeRedeemCode(code: string) {
-	return code.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+	return code
+		.trim()
+		.toUpperCase()
+		.replace(/[^A-Z0-9]/g, "");
 }
 
 export function hashRedeemCode(code: string) {

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
 	resolve: vi.fn(),
 	traderUpsert: vi.fn(),
+	traderFindMany: vi.fn(),
 	symbolUpsert: vi.fn(),
 	find: vi.fn(),
 	create: vi.fn(),
@@ -9,7 +10,7 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("@repo/database", () => ({
 	db: {
-		trader: { upsert: mocks.traderUpsert },
+		trader: { upsert: mocks.traderUpsert, findMany: mocks.traderFindMany },
 		tradingSymbol: { upsert: mocks.symbolUpsert },
 		signal: {
 			findUnique: mocks.find,
@@ -20,7 +21,7 @@ vi.mock("@repo/database", () => ({
 	},
 }));
 vi.mock("./signal-source-resolver", () => ({ resolveSignalSource: mocks.resolve }));
-import { upsertStoredSignal } from "./signal-store";
+import { listActiveSignalTraders, upsertStoredSignal } from "./signal-store";
 const trader = {
 	id: "existing-kol",
 	externalId: "signalfast-guide:san-ma-ge",
@@ -82,5 +83,49 @@ describe("binding-aware signal persistence", () => {
 		expect(mocks.symbolUpsert).not.toHaveBeenCalled();
 		expect(mocks.create).not.toHaveBeenCalled();
 		expect(mocks.update).not.toHaveBeenCalled();
+	});
+});
+
+describe("active signal KOL catalog", () => {
+	it("includes enabled KOLs with no signals and excludes demo or blocked profiles", async () => {
+		mocks.traderFindMany.mockResolvedValue([
+			{
+				avatarUrl: null,
+				displayName: "三马哥",
+				externalId: "discord:三马哥",
+				handle: null,
+				name: "三马哥合约",
+				platform: "discord",
+			},
+			{
+				avatarUrl: null,
+				displayName: "演示策略 01",
+				externalId: "demo:01",
+				handle: null,
+				name: "演示策略 01",
+				platform: "demo",
+			},
+			{
+				avatarUrl: null,
+				displayName: "未知交易员",
+				externalId: "unknown:1",
+				handle: null,
+				name: "未知交易员",
+				platform: "webhook",
+			},
+		]);
+
+		await expect(listActiveSignalTraders()).resolves.toEqual([
+			{
+				avatarUrl: undefined,
+				handle: undefined,
+				id: "discord:三马哥",
+				name: "三马哥",
+				platform: "discord",
+			},
+		]);
+		expect(mocks.traderFindMany).toHaveBeenCalledWith(
+			expect.objectContaining({ where: { isActive: true } }),
+		);
 	});
 });

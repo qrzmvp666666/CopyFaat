@@ -1237,6 +1237,9 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const locale = useLocale();
 	const [webhookSignals, setWebhookSignals] = useState<StoredSignal[]>([]);
 	const [signalPageSignals, setSignalPageSignals] = useState<StoredSignal[]>([]);
+	const [configuredSources, setConfiguredSources] = useState<SignalsPreviewResponse["sources"]>(
+		[],
+	);
 	const [databaseTradingSymbols, setDatabaseTradingSymbols] = useState<StoredTradingSymbol[]>([]);
 	const [statusCounts, setStatusCounts] = useState<Record<SignalStatus, number>>({
 		active: 0,
@@ -1266,11 +1269,12 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const [draftTimeRange, setDraftTimeRange] = useState<TimeRange>("7d");
 	const [draftEntryStatus, setDraftEntryStatus] = useState<EntryStatus>("all");
 	const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
-	const [soloSignalId, setSoloSignalId] = useState<string | null>(null);
+	const [selectedSignalIds, setSelectedSignalIds] = useState<string[]>([]);
 	const [isSignalPanelCollapsed, setIsSignalPanelCollapsed] = useState(false);
 	const [isChartCollapsed, setIsChartCollapsed] = useState(false);
 	const [isChartFullscreenOpen, setIsChartFullscreenOpen] = useState(false);
 	const [isSignalsLoading, setIsSignalsLoading] = useState(hasProAccess);
+	const [isSignalSourcesLoading, setIsSignalSourcesLoading] = useState(hasProAccess);
 	const preview = GUIDE_DEMO_PREVIEW;
 	const [isSignalPageLoading, setIsSignalPageLoading] = useState(hasProAccess);
 	const [isKlinesLoading, setIsKlinesLoading] = useState(false);
@@ -1410,16 +1414,11 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 				const filter = createSourceFilter(source);
 				sources.set(filter.id, filter);
 			}
-		}
-
-		for (const signal of visibleWebhookSignals) {
-			const source = createSourceFilter(signal.source);
-			const existingSource = sources.get(source.id);
-			sources.set(source.id, {
-				...source,
-				avatar: existingSource?.avatar ?? source.avatar,
-				handle: existingSource?.handle || source.handle,
-			});
+		} else {
+			for (const source of configuredSources) {
+				const filter = createSourceFilter(source);
+				sources.set(filter.id, filter);
+			}
 		}
 
 		return Array.from(sources.values()).sort((a, b) => {
@@ -1428,9 +1427,9 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 			return nameA < nameB ? -1 : nameA > nameB ? 1 : a.id.localeCompare(b.id);
 		});
-	}, [hasProAccess, preview.sources, visibleWebhookSignals]);
+	}, [configuredSources, hasProAccess, preview.sources]);
 	const pageSourceFilters = useMemo(() => {
-		if (!hasProAccess || !followedSourceIds?.length) {
+		if (!hasProAccess || followedSourceIds === null) {
 			return sourceFilters;
 		}
 
@@ -1548,11 +1547,12 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			sourceIds: selectedSourceIds,
 			status: selectedStatus,
 			submittedAfter: getSubmittedAfterForTimeRange(selectedTimeRange),
-			symbol: "",
+			symbol: selectedSymbol,
 		}),
 		[
 			selectedDirection,
 			selectedEntryStatus,
+			selectedSymbol,
 			selectedSourceIds,
 			selectedStatus,
 			selectedTimeRange,
@@ -1595,6 +1595,8 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		if (!hasProAccess) {
 			setDatabaseTradingSymbols([]);
 			setWebhookSignals([]);
+			setConfiguredSources([]);
+			setIsSignalSourcesLoading(false);
 			setIsSignalsLoading(false);
 			return;
 		}
@@ -1617,6 +1619,24 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			}
 		}
 
+		async function loadConfiguredSources() {
+			try {
+				const response = await fetch("/api/signals/sources", {
+					cache: "no-store",
+					signal: controller.signal,
+				});
+				if (!response.ok) return;
+				const data = (await response.json()) as {
+					sources: SignalsPreviewResponse["sources"];
+				};
+				if (isMounted) setConfiguredSources(data.sources);
+			} catch {
+				// Keep the signal workspace usable if the KOL catalog is unavailable.
+			} finally {
+				if (isMounted) setIsSignalSourcesLoading(false);
+			}
+		}
+
 		async function loadWebhookSignals() {
 			try {
 				const data = await fetchAllStoredSignals(new URLSearchParams(), controller.signal);
@@ -1636,6 +1656,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		}
 
 		void loadDatabaseTradingSymbols();
+		void loadConfiguredSources();
 		void loadWebhookSignals();
 		const eventSource = new EventSource("/api/signals/events");
 
@@ -1647,6 +1668,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 				}
 
 				if (isMounted) {
+					void loadConfiguredSources();
 					setWebhookSignals((currentSignals) =>
 						upsertWebhookSignal(currentSignals, signal),
 					);
@@ -1865,14 +1887,15 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			!hasProAccess ||
 			isSignalsLoading ||
 			defaultSourceSelectionInitializedRef.current ||
+			isSignalSourcesLoading ||
 			!sourceFilters.length
 		) {
 			return;
 		}
 
-		setSelectedSourceIds(sourceFilters.slice(0, 5).map((source) => source.id));
+		setSelectedSourceIds(sourceFilters.map((source) => source.id));
 		defaultSourceSelectionInitializedRef.current = true;
-	}, [hasProAccess, isSignalsLoading, sourceFilters]);
+	}, [hasProAccess, isSignalSourcesLoading, isSignalsLoading, sourceFilters]);
 
 	useEffect(() => {
 		const visibleSourceIds = new Set(sourceFilters.map((source) => source.id));
@@ -2003,10 +2026,12 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 			visiblePageSourceIds.has(signal.sourceId),
 	);
 
-	const activeSignal = getSelectedSignal(filteredSignals, activeSignalId);
-	const chartSignals = soloSignalId
-		? filteredSignals.filter((signal) => signal.id === soloSignalId)
-		: filteredSignals.filter((signal) => signal.symbol === selectedSymbol);
+	const chartSignals = filteredSignals.filter(
+		(signal) =>
+			signal.symbol === selectedSymbol &&
+			(selectedSignalIds.length === 0 || selectedSignalIds.includes(signal.id)),
+	);
+	const activeSignal = getSelectedSignal(chartSignals, activeSignalId);
 
 	const candles = useMemo(() => {
 		if (
@@ -2074,13 +2099,12 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 
 	function focusSignal(signal: SignalChartSignal) {
 		setActiveSignalId(signal.id);
-		setSoloSignalId(null);
 	}
 
 	function selectSymbol(symbol: string) {
 		setSelectedSymbol(symbol);
 		setActiveSignalId(null);
-		setSoloSignalId(null);
+		setSelectedSignalIds([]);
 	}
 
 	function toggleSourceFilter(sourceId: string) {
@@ -2091,20 +2115,32 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 				: [...currentSourceIds, sourceId],
 		);
 		setActiveSignalId(null);
-		setSoloSignalId(null);
+		setSelectedSignalIds([]);
 	}
 
 	function clearSourceFilters() {
 		setSelectedSymbol("BTCUSDT");
 		setSelectedSourceIds(sourceFilters.map((source) => source.id));
 		setActiveSignalId(null);
-		setSoloSignalId(null);
+		setSelectedSignalIds([]);
 	}
 
 	function selectSignalFromList(signal: TradeSignal) {
+		if (signal.symbol !== selectedSymbol) {
+			setSelectedSymbol(signal.symbol);
+			setSelectedSignalIds([signal.id]);
+			setActiveSignalId(signal.id);
+			return;
+		}
+
 		setSelectedSymbol(signal.symbol);
-		setActiveSignalId(signal.id);
-		setSoloSignalId(signal.id);
+		const isSelected = selectedSignalIds.includes(signal.id);
+		const nextIds = isSelected
+			? selectedSignalIds.filter((id) => id !== signal.id)
+			: [...selectedSignalIds, signal.id];
+
+		setSelectedSignalIds(nextIds);
+		setActiveSignalId(isSelected ? (nextIds.at(-1) ?? null) : signal.id);
 	}
 
 	function toggleSourceFollow(sourceId: string) {
@@ -2131,7 +2167,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		setSelectedTimeRange(draftTimeRange);
 		setSelectedEntryStatus(draftEntryStatus);
 		setActiveSignalId(null);
-		setSoloSignalId(null);
+		setSelectedSignalIds([]);
 		setIsMobileFiltersOpen(false);
 	}
 
@@ -3143,7 +3179,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 												onClick={() => {
 													setSelectedDirection(direction);
 													setActiveSignalId(null);
-													setSoloSignalId(null);
+													setSelectedSignalIds([]);
 												}}
 												className={cn(
 													"gap-1 px-2.5 py-1.5 text-xs font-semibold flex min-w-[52px] items-center justify-center rounded-md border transition-colors",
@@ -3183,7 +3219,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 														onClick={() => {
 															setSelectedTimeRange(range);
 															setActiveSignalId(null);
-															setSoloSignalId(null);
+															setSelectedSignalIds([]);
 														}}
 													>
 														<CheckIcon
@@ -3223,7 +3259,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 														onClick={() => {
 															setSelectedEntryStatus(es);
 															setActiveSignalId(null);
-															setSoloSignalId(null);
+															setSelectedSignalIds([]);
 														}}
 													>
 														<CheckIcon
@@ -3682,7 +3718,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 										onClick={() => {
 											setSelectedStatus(status);
 											setActiveSignalId(null);
-											setSoloSignalId(null);
+											setSelectedSignalIds([]);
 										}}
 										className={cn(
 											"gap-1.5 px-4 py-2.5 text-sm font-medium after:h-0.5 after:w-9 relative transition-colors after:absolute after:bottom-[-1px] after:left-1/2 after:-translate-x-1/2 after:content-['']",
@@ -3831,16 +3867,18 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 											},
 										);
 										const StatusIcon = statusPresentation.icon;
+										const isSelected = selectedSignalIds.includes(signal.id);
 
 										return (
 											<button
 												key={signal.id}
 												type="button"
+												aria-pressed={isSelected}
 												onClick={() => selectSignalFromList(signal)}
 												className={cn(
 													"p-3 hover:bg-white/5 w-full bg-[#141414] text-left transition-colors",
-													signal.id === activeSignal?.id &&
-														"bg-white/5 rounded-xl",
+													isSelected &&
+														"bg-white/5 ring-white/90 rounded-xl ring-1",
 												)}
 											>
 												<div className="mb-3 gap-2 grid grid-cols-[minmax(0,1fr)_auto] items-start">
@@ -3863,9 +3901,7 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 																{signal.sourceName}
 															</p>
 															<p className="text-xs truncate text-muted-foreground">
-																{selectedInstrument?.symbol ??
-																	signal.symbol}{" "}
-																·{" "}
+																{signal.symbol} ·{" "}
 																{t(`direction.${signal.direction}`)}
 															</p>
 														</div>

@@ -293,6 +293,34 @@ export async function listSignalPreviewTraders(): Promise<SignalsPreviewResponse
 		.slice(0, 8);
 }
 
+export async function listActiveSignalTraders(): Promise<SignalsPreviewResponse["sources"]> {
+	const traders = await db.trader.findMany({
+		where: { isActive: true },
+		select: {
+			avatarUrl: true,
+			displayName: true,
+			externalId: true,
+			handle: true,
+			name: true,
+			platform: true,
+		},
+		orderBy: [{ displayName: "asc" }, { name: "asc" }],
+	});
+
+	return traders
+		.filter((trader) => {
+			const source = { name: trader.displayName ?? trader.name };
+			return !isBlockedSignalTrader(source) && !isDemoStrategyTrader(source);
+		})
+		.map((trader) => ({
+			avatarUrl: trader.avatarUrl ?? undefined,
+			handle: trader.handle ?? undefined,
+			id: trader.externalId,
+			name: trader.displayName ?? trader.name,
+			platform: trader.platform ?? undefined,
+		}));
+}
+
 export async function listActiveTradingSymbols() {
 	const symbols = await db.tradingSymbol.findMany({
 		where: { isActive: true },

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-16
+
+- feat: Allow selecting multiple signal cards with white selection outlines to compare same-contract signals on the chart.
+- fix: Filter signal lists by the selected contract and display each signal’s actual symbol.
+- fix: Load enabled KOLs from the configured catalog, including zero-signal profiles, while showing followed KOLs in the top row.
+
 ## 2026-11-15
 
 - feat: Show KOL source bindings in a compact desktop table consistent with webhook logs, with a responsive mobile list.

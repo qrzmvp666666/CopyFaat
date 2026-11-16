@@ -1,5 +1,5 @@
-import { Resend } from "resend";
 import { logger } from "@repo/logs";
+import { Resend } from "resend";
 
 import { config } from "../config";
 import type { SendEmailHandler } from "../types";
