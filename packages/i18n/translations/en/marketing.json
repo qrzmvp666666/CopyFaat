@@ -239,6 +239,119 @@
 					"initials": "JD"
 				}
 			}
+		},
+		"island": {
+			"line1": "Your trading world.",
+			"line2": "One clear signal.",
+			"intro": "Markets, traders, and the signals that matter.",
+			"intro2": "All together. Always in view.",
+			"start": "Open SignalFast",
+			"plans": "View pricing",
+			"demoTitle": "Every signal. One glance.",
+			"demoDescription": "Follow your favorite traders without losing sight of the market.",
+			"tabs": ["Overview", "Markets", "Signals", "Watch demo"],
+			"trusted": "YOUR COMMUNITIES. ONE PLACE.",
+			"featuresTitle": "Everything in sight. Nothing in the way.",
+			"features": [
+				[
+					"All your traders, together",
+					"Bring KOL signals into one organized feed. Spend less time switching between channels."
+				],
+				[
+					"Live market quotes",
+					"Keep an eye on crypto prices alongside the signals you follow."
+				],
+				[
+					"Signals on the chart",
+					"See aggregated KOL activity in context, directly on the price chart."
+				],
+				[
+					"Follow the conversation",
+					"Keep track of trading ideas from Telegram and Discord communities."
+				],
+				[
+					"A clearer timeline",
+					"Read signal updates in order and return to the original context."
+				],
+				[
+					"Trader discovery",
+					"Explore KOL profiles and find the traders you want to follow."
+				],
+				["Stay up to date", "Follow new signals and important updates in your workspace."],
+				[
+					"Built for focus",
+					"A calm, ad-free workspace that keeps the important information close."
+				],
+				["Your market workspace", "Quotes, charts, and trader signals in one place."]
+			],
+			"reviewsTitle": "A little signal from our community.",
+			"reviewsDescription": "What SignalFast users are saying.",
+			"faqTitle": "Frequently asked questions",
+			"faq": [
+				[
+					"What is SignalFast?",
+					"SignalFast brings crypto market quotes and KOL signals into one workspace, so you can follow traders and read their ideas in context."
+				],
+				[
+					"Where do the signals come from?",
+					"Signals are collected from supported Telegram and Discord sources and organized by trader. Available sources can change."
+				],
+				[
+					"How is this different from a chat group?",
+					"Messages are organized into a signal feed and shown alongside market data, reducing the need to search through conversations."
+				],
+				[
+					"What is aggregated KOL chart tracking?",
+					"It places trader signals alongside a price chart so you can understand when an idea was shared and what happened around it."
+				],
+				[
+					"Is SignalFast suitable for beginners?",
+					"You can use it to follow market information and learn how traders communicate ideas. You remain responsible for understanding the risks of each trade."
+				],
+				[
+					"Does a signal guarantee a profit?",
+					"No. Signals are information, not investment advice or a guarantee of returns. Crypto markets are volatile; make your own decisions."
+				],
+				[
+					"Can I choose a weekly subscription?",
+					"Yes. Pro is available with weekly or yearly billing. You can compare the current prices below."
+				],
+				[
+					"Where can I get help?",
+					"Visit the contact page for our support and community channels."
+				]
+			],
+			"pricingTitle": "Less noise. More clarity.",
+			"pricingDescription": "One plan. Your entire signal workspace.",
+			"planDescription": "Everything you need to follow the market.",
+			"periods": ["Yearly", "Weekly"],
+			"perYear": "/ year",
+			"perWeek": "/ week",
+			"billing": "Billed in USD. Subscription renews until canceled.",
+			"benefits": [
+				"Ad-free experience",
+				"Real-time crypto market quotes",
+				"Aggregated KOL chart tracking",
+				"KOL signal feed",
+				"Dedicated support",
+				"Community notifications"
+			],
+			"subscribe": "Get SignalFast Pro",
+			"questions": "Questions before getting started?",
+			"contact": "Talk to us",
+			"footerDescription": "A clearer view of the crypto market.",
+			"product": "Product",
+			"resources": "Resources",
+			"legal": "Legal",
+			"featuresLabel": "Features",
+			"blog": "Blog",
+			"changelog": "Changelog",
+			"privacy": "Privacy policy",
+			"terms": "Terms of service",
+			"rights": "All rights reserved.",
+			"videoLabel": "SignalFast product demo",
+			"close": "Close demo",
+			"navigation": "Main navigation"
 		}
 	},
 	"newsletter": {

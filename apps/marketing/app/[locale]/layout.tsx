@@ -10,17 +10,10 @@ import { NavBar } from "@shared/components/NavBar";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
-import { Figtree } from "next/font/google";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import Script from "next/script";
 import type { PropsWithChildren } from "react";
-
-const sansFont = Figtree({
-	weight: ["300", "400", "500", "600", "700"],
-	subsets: ["latin"],
-	variable: "--font-sans",
-});
 
 const locales = Object.keys(i18nConfig.locales) as string[];
 const taliviaWebsiteId = process.env.TALIVIA_WEBSITE_ID;
@@ -56,11 +49,7 @@ export default async function MarketingLayout({
 	const consentCookie = cookieStore.get("consent");
 
 	return (
-		<html
-			lang={locale}
-			suppressHydrationWarning
-			className={cn(sansFont.variable, config.defaultTheme)}
-		>
+		<html lang={locale} suppressHydrationWarning className={cn(config.defaultTheme)}>
 			<body className={cn("min-h-screen bg-background text-foreground antialiased")}>
 				<AdAttributionTracker />
 				{taliviaWebsiteId && taliviaDomain && (

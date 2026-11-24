@@ -1,4 +1,3 @@
-import { EarlyAccessSection } from "@home/components/EarlyAccessSection";
 import { FaqSection } from "@home/components/FaqSection";
 import { HeroSection } from "@home/components/HeroSection";
 import { PricingSection } from "@home/components/PricingSection";
@@ -14,10 +13,9 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
 		<>
 			<HeroSection />
 			<ValuePillarsSection />
-			<PricingSection />
 			<TestimonialsSection />
 			<FaqSection />
-			<EarlyAccessSection />
+			<PricingSection />
 		</>
 	);
 }
