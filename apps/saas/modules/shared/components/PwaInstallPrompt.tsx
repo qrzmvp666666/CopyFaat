@@ -115,7 +115,7 @@ export function PwaInstallPrompt() {
 
 				<div className="mt-5 gap-3 sm:flex-row flex flex-col">
 					<Button className="flex-1" asChild variant="outline">
-						<Link href="/signals">
+						<Link href="/settings/billing">
 							{isZh ? "直接使用网页版" : "Continue to web app"}
 							<ExternalLinkIcon className="ml-2 size-4" />
 						</Link>

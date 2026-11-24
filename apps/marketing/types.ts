@@ -17,6 +17,14 @@ export interface MarketingConfig {
 	 */
 	saasUrl?: string;
 	/**
+	 * Public download URLs for the desktop installers.
+	 */
+	downloadUrls?: {
+		windows?: string;
+		macAppleSilicon?: string;
+		macIntel?: string;
+	};
+	/**
 	 * Theme options available on the marketing site.
 	 */
 	enabledThemes: readonly Theme[];

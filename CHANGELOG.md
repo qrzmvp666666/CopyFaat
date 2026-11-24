@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-11-24
+
+- feat: Add a localized blog navigation entry and align blog listing and article styles with the CopyFast marketing site, including mobile layouts.
+
+- style: Align SaaS branding, neutral surfaces, typography, and billing accents with the CopyFast marketing site.
+- fix: Remove the KOL source binding admin page and navigation entry.
+
+- fix: Retire aggregated K-line pages and redirect legacy URLs, app launch, and default sign-in to plan entitlements.
+
+- fix: Remove automatic signal workspace onboarding, its replay controls, and the aggregated K-line navigation entry.
+
+- docs: Replace legacy SignalFast documentation and comparison posts with a concise CopyFast introduction, quick-start guide, and introductory blog in Chinese and English; update documentation branding.
+
 ## 2026-11-16
 
 - feat: Allow selecting multiple signal cards with white selection outlines to compare same-contract signals on the chart.

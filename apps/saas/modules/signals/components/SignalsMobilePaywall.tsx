@@ -107,7 +107,7 @@ export function SignalsMobilePaywall({
 	return (
 		<div
 			className={cn(
-				"text-white bg-[#050506]",
+				"text-white bg-[#191919]",
 				embedded ? "relative overflow-hidden rounded-2xl" : "inset-0 fixed z-[60]",
 			)}
 		>
@@ -143,7 +143,7 @@ export function SignalsMobilePaywall({
 						{!isAuthenticated ? (
 							<Link
 								className="text-sm font-medium text-white/70 hover:text-white"
-								href={`${localizePath("/login", locale)}?redirectTo=${encodeURIComponent(localizePath("/signals", locale))}`}
+								href={`${localizePath("/login", locale)}?redirectTo=${encodeURIComponent(localizePath("/settings/billing", locale))}`}
 							>
 								{t("login")}
 							</Link>
@@ -169,23 +169,25 @@ export function SignalsMobilePaywall({
 
 				<div className="min-h-0 px-6 pb-6 flex-1 overflow-y-auto [scrollbar-width:none]">
 					<section className="pt-8 text-center">
-						<img
-							alt="SignalFast"
-							className="size-14 mx-auto rounded-2xl object-contain"
-							src="/images/paywall/signalfast-logo.png"
+						<Image
+							alt="CopyFast"
+							className="mx-auto object-contain"
+							src="/images/brand/copyfast-logo.svg"
+							width={48}
+							height={48}
 						/>
-						<h1 className="mt-3 font-bold leading-8 text-[26px]">SignalFast Pro</h1>
+						<h1 className="mt-3 font-bold leading-8 text-[26px]">CopyFast Pro</h1>
 						<p className="mt-2 text-sm leading-6 text-white/65">{t("description")}</p>
 					</section>
 
 					<PaywallSupportedMarkets />
 
-					<div className="mt-7 h-10 p-1 text-xs grid grid-cols-2 rounded-full bg-[#1b1a20]">
+					<div className="mt-7 h-10 p-1 text-xs grid grid-cols-2 rounded-full bg-[#242424]">
 						<button
 							aria-pressed={paymentMethod === "stablecoin"}
 							className={cn(
-								"rounded-full text-[#9a97a1]",
-								paymentMethod === "stablecoin" && "text-white bg-[#414047]",
+								"rounded-full text-[#929293]",
+								paymentMethod === "stablecoin" && "text-white bg-[#363636]",
 							)}
 							onClick={() => setPaymentMethod("stablecoin")}
 							type="button"
@@ -195,8 +197,8 @@ export function SignalsMobilePaywall({
 						<button
 							aria-pressed={paymentMethod === "card"}
 							className={cn(
-								"rounded-full text-[#9a97a1]",
-								paymentMethod === "card" && "text-white bg-[#414047]",
+								"rounded-full text-[#929293]",
+								paymentMethod === "card" && "text-white bg-[#363636]",
 							)}
 							onClick={() => setPaymentMethod("card")}
 							type="button"
@@ -212,39 +214,39 @@ export function SignalsMobilePaywall({
 								className={cn(
 									"gap-3 px-4 py-3 flex min-h-[82px] w-full items-center rounded-2xl border text-left transition-colors",
 									period === "year"
-										? "border-[#b5f2ff] bg-[#101014]"
-										: "border-[#38363f] bg-[#09090c]",
+										? "border-[#71c684] bg-[#202020]"
+										: "border-[#383838] bg-[#191919]",
 								)}
 								onClick={() => setPeriod("year")}
 								type="button"
 							>
 								<span
 									className={cn(
-										"size-5 p-1 shrink-0 rounded-full border-2 border-[#b9ebff]",
-										period === "year" && "border-[#d8baff]",
+										"size-5 p-1 shrink-0 rounded-full border-2 border-[#71c684]",
+										period === "year" && "border-[#71c684]",
 									)}
 								>
 									<span
 										className={cn(
 											"block size-full rounded-full",
-											period === "year" && "bg-[#d8baff]",
+											period === "year" && "bg-[#71c684]",
 										)}
 									/>
 								</span>
 								<span className="min-w-0 flex-1">
 									<span className="text-sm font-bold block">{t("yearly")}</span>
-									<span className="mt-1 text-xs block text-[#aaa6b1]">
+									<span className="mt-1 text-xs block text-[#a3a3a5]">
 										{t("perYear")}
 									</span>
 								</span>
 								<span className="shrink-0 text-right">
 									<span className="text-sm font-bold block">US$1.92</span>
-									<span className="mt-1 block text-[10px] text-[#aaa6b1]">
+									<span className="mt-1 block text-[10px] text-[#a3a3a5]">
 										{t("weeklyEquivalent")}
 									</span>
 								</span>
 							</button>
-							<span className="right-3 top-0 px-3 py-1 font-bold absolute z-10 -translate-y-1/2 rounded-full bg-gradient-to-r from-[#9ceeff] to-[#e7b9ff] text-[10px] leading-none text-[#17131e]">
+							<span className="right-3 top-0 px-3 py-1 font-bold absolute z-10 -translate-y-1/2 rounded-full bg-gradient-to-r from-[#71c684] to-[#71c684] text-[10px] leading-none text-[#171717]">
 								{t("bestValue")}
 							</span>
 						</div>
@@ -253,28 +255,28 @@ export function SignalsMobilePaywall({
 							className={cn(
 								"gap-3 px-4 py-3 flex min-h-[72px] items-center rounded-2xl border text-left transition-colors",
 								period === "week"
-									? "border-[#b5f2ff] bg-[#101014]"
-									: "border-[#38363f] bg-[#09090c]",
+									? "border-[#71c684] bg-[#202020]"
+									: "border-[#383838] bg-[#191919]",
 							)}
 							onClick={() => setPeriod("week")}
 							type="button"
 						>
 							<span
 								className={cn(
-									"size-5 p-1 shrink-0 rounded-full border-2 border-[#77737e]",
-									period === "week" && "border-[#d8baff]",
+									"size-5 p-1 shrink-0 rounded-full border-2 border-[#777777]",
+									period === "week" && "border-[#71c684]",
 								)}
 							>
 								<span
 									className={cn(
 										"block size-full rounded-full",
-										period === "week" && "bg-[#d8baff]",
+										period === "week" && "bg-[#71c684]",
 									)}
 								/>
 							</span>
 							<span className="min-w-0 flex-1">
 								<span className="text-sm font-bold block">{t("weekly")}</span>
-								<span className="mt-1 text-xs block text-[#aaa6b1]">
+								<span className="mt-1 text-xs block text-[#a3a3a5]">
 									{t("payWeekly")}
 								</span>
 							</span>
@@ -284,10 +286,10 @@ export function SignalsMobilePaywall({
 					<PaywallPlanComparison />
 				</div>
 
-				<footer className="px-6 pt-3 shrink-0 bg-[#0c0c0e] pb-[max(env(safe-area-inset-bottom),16px)]">
+				<footer className="px-6 pt-3 shrink-0 bg-[#191919] pb-[max(env(safe-area-inset-bottom),16px)]">
 					<PaywallOfferCountdown />
 					<Button
-						className="h-12 text-base font-bold w-full rounded-full bg-gradient-to-r from-[#a4efff] to-[#e8baff] text-[#17131e] hover:brightness-105"
+						className="h-12 text-base font-bold hover:bg-white w-full rounded-lg bg-[#f1f1f1] text-[#171717]"
 						disabled={isStartingCheckout}
 						onClick={startCheckout}
 					>
@@ -338,7 +340,7 @@ function PaywallOfferCountdown() {
 			<span
 				role="timer"
 				aria-label={t("remaining", { days, hours, minutes, seconds })}
-				className="font-mono font-semibold text-[#a4efff] tabular-nums"
+				className="font-mono font-semibold text-[#71c684] tabular-nums"
 			>
 				{days}
 				{t("days")} {format(hours)}:{format(minutes)}:{format(seconds)}
@@ -403,7 +405,7 @@ function PaywallSupportedMarkets() {
 									{row.items.map((item) => (
 										<div
 											key={item.id}
-											className="h-10 gap-2 py-1.5 pl-1.5 pr-4 text-xs font-medium text-white/90 flex shrink-0 items-center rounded-full bg-[#242329]"
+											className="h-10 gap-2 py-1.5 pl-1.5 pr-4 text-xs font-medium text-white/90 flex shrink-0 items-center rounded-full bg-[#282828]"
 										>
 											<Avatar className="size-7 shrink-0 rounded-full">
 												<AvatarImage
@@ -437,7 +439,7 @@ function PaywallPlanComparison() {
 	const t = useTranslations("signals.guide.comparison");
 
 	return (
-		<div className="mt-5 border-white/10 overflow-hidden rounded-2xl border bg-[#101014]">
+		<div className="mt-5 border-white/10 overflow-hidden rounded-2xl border bg-[#202020]">
 			<table aria-label={t("feature")} className="leading-4 w-full table-fixed text-[11px]">
 				<thead>
 					<tr className="border-white/10 text-white/60 border-b">
@@ -449,7 +451,7 @@ function PaywallPlanComparison() {
 						</th>
 						<th
 							scope="col"
-							className="px-1 py-2.5 font-semibold bg-[#a4efff]/[0.08] text-[#a4efff]"
+							className="px-1 py-2.5 font-semibold bg-[#71c684]/[0.08] text-[#71c684]"
 						>
 							Pro
 						</th>
@@ -471,8 +473,8 @@ function PaywallPlanComparison() {
 								<td className="px-1 py-2.5 text-white/50 text-center">
 									{t(`otherFeatures.${feature}`)}
 								</td>
-								<td className="px-1 py-2.5 bg-[#a4efff]/[0.08] text-center">
-									<span className="gap-1 inline-flex flex-wrap items-center justify-center text-[#a4efff]">
+								<td className="px-1 py-2.5 bg-[#71c684]/[0.08] text-center">
+									<span className="gap-1 inline-flex flex-wrap items-center justify-center text-[#71c684]">
 										<CheckIcon
 											aria-hidden="true"
 											className="size-3.5 shrink-0"

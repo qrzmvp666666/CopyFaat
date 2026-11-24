@@ -10,9 +10,9 @@ export function PostListItem({ post }: { post: Post }) {
 	const { title, excerpt, authorName, image, date, path, authorImage, tags } = post;
 
 	return (
-		<div className="p-6 flex h-full flex-col rounded-4xl border bg-card">
+		<div className="island-blog-card">
 			{image && (
-				<div className="mb-4 aspect-video -mx-2 -mt-2 relative overflow-hidden rounded-2xl">
+				<div className="island-blog-card-image">
 					<Image
 						src={image}
 						alt={title}
@@ -20,29 +20,30 @@ export function PostListItem({ post }: { post: Post }) {
 						sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
 						className="object-cover object-center"
 					/>
-					<LocaleLink href={`/blog/${path}`} className="inset-0 absolute" />
+					<LocaleLink
+						href={`/blog/${path}`}
+						className="inset-0 absolute"
+						aria-label={title}
+					/>
 				</div>
 			)}
 
 			{tags && (
-				<div className="mb-2 gap-2 flex flex-wrap">
+				<div className="island-blog-tags">
 					{tags.map((tag) => (
-						<span
-							key={tag}
-							className="font-semibold text-xs tracking-wider text-primary uppercase"
-						>
+						<span key={tag} className="island-blog-tag">
 							#{tag}
 						</span>
 					))}
 				</div>
 			)}
 
-			<LocaleLink href={`/blog/${path}`} className="font-semibold text-xl">
+			<LocaleLink href={`/blog/${path}`} className="island-blog-card-title">
 				{title}
 			</LocaleLink>
-			{excerpt && <p className="flex-1 opacity-50">{excerpt}</p>}
+			{excerpt && <p className="island-blog-excerpt">{excerpt}</p>}
 
-			<div className="pt-4 mt-auto flex items-center justify-between">
+			<div className="island-blog-meta">
 				{authorName && (
 					<div className="flex items-center">
 						{authorImage && (
@@ -57,15 +58,15 @@ export function PostListItem({ post }: { post: Post }) {
 							</div>
 						)}
 						<div>
-							<p className="font-semibold text-sm opacity-50">{authorName}</p>
+							<p className="island-blog-author">{authorName}</p>
 						</div>
 					</div>
 				)}
 
 				<div className="mr-0 ml-auto">
-					<p className="text-sm opacity-30">
-						{Intl.DateTimeFormat(locale).format(new Date(date))}
-					</p>
+					<time dateTime={date}>
+						{Intl.DateTimeFormat(locale, { timeZone: "UTC" }).format(new Date(date))}
+					</time>
 				</div>
 			</div>
 		</div>

@@ -162,11 +162,286 @@ body {
 .island-button-secondary:hover {
 	background: #ffffff10;
 }
+.island-download-trigger {
+	border: 0;
+	cursor: pointer;
+}
+.island-download-menu {
+	min-width: 232px;
+	background: #202022;
+	border-color: #ffffff20;
+	color: #e7e7e8;
+}
+.island-download-menu [data-disabled] {
+	color: #77777a;
+}
 .island-demo {
-	max-width: 1108px;
+	max-width: 1280px;
 	margin: 0 auto;
 	text-align: center;
-	padding: 0 24px 66px;
+	padding: 20px 32px 80px;
+}
+.island-demo-desktop {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 1.9;
+	min-height: 440px;
+	overflow: hidden;
+	border: 1px solid #ffffff24;
+	border-radius: 22px;
+	background: #0d111b;
+	box-shadow: 0 30px 90px #0008;
+	isolation: isolate;
+}
+.island-demo-wallpaper {
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(ellipse at 57% 8%, #ffd28c 0, transparent 34%),
+		radial-gradient(ellipse at 8% 85%, #224da9 0, transparent 44%),
+		radial-gradient(ellipse at 92% 74%, #b1785e 0, transparent 43%),
+		linear-gradient(134deg, #555d9e 0%, #c17d75 45%, #d99b6c 63%, #343e6e 100%);
+	z-index: -1;
+}
+.island-demo-menubar {
+	position: absolute;
+	inset: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: 22px;
+	min-height: 42px;
+	padding: 0 22px;
+	background: #0d1016a6;
+	color: #f0f0f1;
+	font-size: 12px;
+	text-align: left;
+}
+.island-demo-brand {
+	font-family: "Departure Mono", monospace;
+	letter-spacing: 1px;
+}
+.island-demo-clock {
+	margin-left: auto;
+	color: #dedee1;
+}
+.island-demo-status {
+	position: absolute;
+	top: 40px;
+	left: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	width: min(310px, 38%);
+	min-height: 54px;
+	transform: translateX(-50%);
+	border-radius: 0 0 16px 16px;
+	background: #090a0d;
+	color: var(--island-green);
+	font-size: 14px;
+	font-weight: 600;
+	box-shadow: 0 8px 24px #0007;
+}
+.island-demo-status-dot,
+.island-demo-live i {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--island-green);
+	box-shadow: 0 0 12px #71c6849c;
+}
+.island-demo-window {
+	position: absolute;
+	overflow: hidden;
+	border: 1px solid #ffffff34;
+	border-radius: 13px;
+	background: #17191fd9;
+	box-shadow: 0 24px 60px #0007;
+	backdrop-filter: blur(14px);
+	text-align: left;
+}
+.island-demo-window-back {
+	top: 26%;
+	left: 13%;
+	width: 42%;
+	height: 58%;
+	color: #d6d6d8;
+	font: 13px/1.8 var(--font-sans);
+}
+.island-demo-window-front {
+	top: 36%;
+	left: 31%;
+	width: 56%;
+	min-height: 62%;
+}
+.island-demo-window-bar {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	height: 36px;
+	padding: 0 13px;
+	border-bottom: 1px solid #ffffff15;
+	color: #aaaab0;
+	font: 11px/1 var(--font-sans);
+}
+.island-demo-window-bar i {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #ff6258;
+}
+.island-demo-window-bar i:nth-child(2) {
+	background: #ffbd4a;
+}
+.island-demo-window-bar i:nth-child(3) {
+	background: #35c96f;
+}
+.island-demo-window-bar span {
+	margin-left: 8px;
+}
+.island-demo-window-content {
+	display: grid;
+	gap: 10px;
+	padding: 20px 24px;
+}
+.island-demo-channel {
+	color: #8d8d95;
+	font-size: 11px;
+}
+.island-demo-channel-dot {
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	margin-right: 9px;
+	border-radius: 50%;
+	background: var(--island-green);
+}
+.island-demo-app {
+	display: flex;
+	min-height: 330px;
+	color: #e6e6e8;
+	font-family: var(--font-sans);
+}
+.island-demo-sidebar {
+	display: flex;
+	flex: 0 0 54px;
+	flex-direction: column;
+	align-items: center;
+	gap: 20px;
+	padding: 18px 0;
+	border-right: 1px solid #ffffff12;
+	background: #101115;
+	color: #929298;
+}
+.island-demo-sidebar b {
+	display: grid;
+	width: 29px;
+	aspect-ratio: 1;
+	place-items: center;
+	border-radius: 8px;
+	background: #71c684;
+	color: #111;
+	font: 700 11px var(--font-sans);
+}
+.island-demo-main {
+	flex: 1;
+	min-width: 0;
+	padding: 20px 24px;
+}
+.island-demo-heading {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+.island-demo-heading small,
+.island-demo-stats small {
+	display: block;
+	color: #929298;
+	font-size: 10px;
+}
+.island-demo-heading strong {
+	display: block;
+	margin-top: 4px;
+	font-size: 18px;
+}
+.island-demo-live {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	color: #83d393;
+	font-size: 10px;
+}
+.island-demo-live i {
+	width: 6px;
+	height: 6px;
+}
+.island-demo-stats {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 10px;
+	margin: 18px 0 22px;
+}
+.island-demo-stats > div {
+	padding: 11px 12px;
+	border: 1px solid #ffffff12;
+	border-radius: 7px;
+	background: #ffffff06;
+}
+.island-demo-stats strong {
+	display: block;
+	margin-top: 5px;
+	font-size: 17px;
+}
+.island-demo-feed-title {
+	margin-bottom: 8px;
+	color: #c9c9cc;
+	font-size: 11px;
+	font-weight: 600;
+}
+.island-demo-message {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 0;
+	border-top: 1px solid #ffffff10;
+}
+.island-demo-avatar {
+	display: grid;
+	flex: 0 0 30px;
+	aspect-ratio: 1;
+	place-items: center;
+	border-radius: 9px;
+	background: #5865f2;
+	color: white;
+	font-size: 9px;
+	font-weight: 700;
+}
+.island-demo-avatar-telegram {
+	background: #2798cb;
+}
+.island-demo-message > div {
+	min-width: 0;
+	flex: 1;
+}
+.island-demo-message strong {
+	display: block;
+	font-size: 10px;
+}
+.island-demo-message p {
+	overflow: hidden;
+	margin: 4px 0;
+	color: #c2c2c6;
+	font-size: 10px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.island-demo-message small {
+	color: #85858c;
+	font-size: 9px;
+}
+.island-demo-check {
+	color: #81d391;
+	font-size: 14px;
 }
 .island-product-frame {
 	border: 5px solid #252526;
@@ -266,12 +541,8 @@ body {
 	opacity: 0.65;
 }
 .island-community img {
-	filter: grayscale(1);
-}
-.island-community .island-community-word {
-	font-family: "Departure Mono", monospace;
-	font-size: 22px;
-	letter-spacing: 2px;
+	filter: grayscale(1) invert(1);
+	opacity: 0.72;
 }
 .island-features {
 	padding: 80px 0;
@@ -423,34 +694,201 @@ body {
 .island-pricing .island-section-heading p {
 	font-size: 15px;
 }
-.island-pricing-card {
+.island-cost-value {
 	position: relative;
-	isolation: isolate;
-	max-width: 380px;
-	margin: auto;
-	padding: 36px;
-	background: #232325;
-	border: 1px solid #ffffff14;
-	border-radius: 16px;
+	max-width: 1000px;
+	margin: 0 auto;
+}
+.island-cost-comparison {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+	align-items: stretch;
+	max-width: 1000px;
+	margin: 64px auto 28px;
 	text-align: left;
-	overflow: hidden;
 }
-.island-pricing-scatter {
-	position: absolute;
-	inset: 0;
-	background: url("/images/v6-price-scatter.png") top right/380px 515px no-repeat;
-	opacity: 0.4;
-	z-index: -1;
-	pointer-events: none;
+.island-cost-side {
+	min-width: 0;
+	padding: 28px;
+	border: 1px solid #ffffff18;
+	border-radius: 12px;
+	background: #1d1d1f;
 }
-.island-plan-name {
-	font-size: 15px;
+.island-cost-copyfast {
+	border-color: #71bd8155;
+}
+.island-cost-eyebrow {
+	margin: 0 0 8px;
+	color: #e5e5e7;
+	font-size: 17px;
 	font-weight: 600;
 }
-.island-plan-description {
+.island-cost-description {
+	margin: 0;
+	color: #99999d;
 	font-size: 12px;
+	line-height: 1.7;
+}
+.island-cost-versus {
+	align-self: center;
+	justify-self: center;
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	border: 1px solid #ffffff26;
+	border-radius: 50%;
+	background: #151516;
+	color: #aaa;
+	font-size: 12px;
+	font-weight: 700;
+}
+.island-cost-equation {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr) 20px minmax(0, 1.1fr);
+	align-items: center;
+	gap: 9px;
+	margin-top: 32px;
+}
+.island-cost-equation > div {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.island-cost-equation > div > span {
+	color: #99999d;
+	font-size: 11px;
+	line-height: 1.45;
+}
+.island-cost-equation strong {
+	font-size: 18px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+.island-cost-equation small {
 	color: #89898d;
-	margin: 8px 0 22px;
+	font-size: 11px;
+	white-space: nowrap;
+}
+.island-cost-operator {
+	color: #7bc58c;
+	font-size: 19px;
+	font-weight: 600;
+	text-align: center;
+}
+.island-cost-equation-total {
+	padding-left: 9px;
+	border-left: 1px solid #ffffff20;
+}
+.island-price-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin: 25px 0 18px;
+}
+.island-cost-copyfast .island-price {
+	margin: 0;
+}
+.island-cost-copyfast .island-price strong {
+	font-size: 42px;
+}
+.island-cost-copyfast > .island-button {
+	width: 100%;
+	min-height: 42px;
+	font-size: 12px;
+	padding: 10px;
+}
+.island-cost-savings,
+.island-cost-footnote {
+	grid-column: 1 / -1;
+	text-align: center;
+}
+.island-cost-savings {
+	position: relative;
+	width: fit-content;
+	margin: 20px auto 0 !important;
+	max-width: 1000px;
+	color: #75c58a !important;
+	font-size: 22px !important;
+	font-weight: 600;
+}
+.island-payment-methods {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 20px;
+	margin: 0;
+	flex-shrink: 0;
+	color: #d7d7d9;
+}
+.island-payment-visa,
+.island-payment-mastercard {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 20px;
+	min-width: 32px;
+	padding: 2px 5px;
+	border: 1px solid #ffffff20;
+	border-radius: 4px;
+	background: #f5f5f5;
+}
+.island-payment-visa {
+	color: #173a75;
+	font-family: Arial, sans-serif;
+	font-size: 10px;
+	font-style: italic;
+	font-weight: 800;
+}
+.island-payment-mastercard {
+	gap: 0;
+}
+.island-payment-mastercard i {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: #eb001b;
+}
+.island-payment-mastercard i + i {
+	margin-left: -4px;
+	background: #f79e1b;
+}
+.island-payment-usdt {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: #53ae94;
+	font-size: 9px;
+	font-weight: 700;
+}
+.island-payment-usdt svg {
+	width: 20px;
+	height: 20px;
+	fill: #53ae94;
+	stroke: #fff;
+	stroke-width: 0.9;
+}
+.island-payment-tron {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	color: #e84142;
+}
+.island-payment-tron svg {
+	width: 19px;
+	height: 19px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linejoin: round;
+}
+.island-cost-footnote {
+	margin: 16px 0 0 !important;
+	font-size: 11px !important;
 }
 .island-price {
 	display: flex;
@@ -495,37 +933,67 @@ body {
 	color: #757579;
 	margin-top: 12px;
 }
-.island-pricing-card ul {
-	list-style: none;
-	margin: 25px 0 28px;
-	padding: 0;
+.island-cost-benefits {
 	display: grid;
-	gap: 15px;
+	grid-auto-rows: minmax(36px, auto);
+	gap: 13px;
+	margin: 22px 0 25px;
+	padding: 0;
+	list-style: none;
 }
-.island-pricing-card li {
-	display: flex;
-	align-items: center;
+.island-cost-benefits li {
+	display: grid;
+	grid-template-columns: 16px minmax(0, 1fr);
+	align-items: start;
 	gap: 10px;
-	color: #bdbdc0;
-	font-size: 12px;
+	color: #c2c2c5;
+	font-size: 13px;
+	line-height: 1.55;
 }
-.island-pricing-card li svg {
+.island-cost-benefits svg {
+	margin-top: 2px;
 	color: #71bd81;
 }
-.island-pricing-card > .island-button {
-	width: 100%;
-	min-height: 42px;
-	font-size: 12px;
-	padding: 10px;
+.island-cost-limitations {
+	margin-top: 46px;
+}
+.island-cost-copyfast .island-cost-benefits {
+	margin-top: 44px;
+}
+.island-cost-limitations svg {
+	color: #d87878;
 }
 .island-pricing-contact {
 	font-size: 12px;
 	color: #757578;
-	margin-top: 24px;
+	margin-top: 34px;
 }
 .island-pricing-contact a {
 	color: #d2b28e;
 	margin-left: 4px;
+}
+.island-contact-grid {
+	max-width: 1000px;
+	margin-inline: auto;
+}
+.island-contact-card {
+	min-width: 0;
+	min-height: 112px;
+	gap: 20px;
+	padding: 20px;
+	display: flex;
+	align-items: center;
+	border: 1px solid #ffffff18;
+	border-radius: 12px;
+	background: #1d1d1f;
+	text-align: left;
+	transition:
+		background-color 160ms ease,
+		border-color 160ms ease;
+}
+.island-contact-card:hover {
+	border-color: #71bd8155;
+	background: #222224;
 }
 .island-footer {
 	padding: 48px 0 20px;
@@ -680,6 +1148,105 @@ body {
 	.island-demo {
 		padding: 0 12px 30px;
 	}
+	.island-demo-desktop {
+		min-height: 330px;
+		aspect-ratio: 1.1;
+		border-radius: 13px;
+	}
+	.island-demo-menubar {
+		min-height: 33px;
+		gap: 10px;
+		padding-inline: 11px;
+		font-size: 9px;
+	}
+	.island-demo-status {
+		top: 32px;
+		min-height: 39px;
+		font-size: 10px;
+	}
+	.island-demo-window-back {
+		top: 22%;
+		left: 5%;
+		width: 68%;
+		height: 55%;
+		font-size: 10px;
+	}
+	.island-demo-window-front {
+		top: 39%;
+		left: 13%;
+		width: 83%;
+		min-height: 58%;
+	}
+	.island-demo-window-bar {
+		height: 27px;
+		gap: 5px;
+		padding-inline: 9px;
+		font-size: 9px;
+	}
+	.island-demo-window-bar i {
+		width: 6px;
+		height: 6px;
+	}
+	.island-demo-window-content {
+		gap: 6px;
+		padding: 12px;
+	}
+	.island-demo-app {
+		min-height: 270px;
+	}
+	.island-demo-sidebar {
+		flex-basis: 38px;
+		gap: 15px;
+		padding-top: 12px;
+	}
+	.island-demo-sidebar b {
+		width: 24px;
+	}
+	.island-demo-main {
+		padding: 14px 12px;
+	}
+	.island-demo-heading strong {
+		font-size: 14px;
+	}
+	.island-demo-heading small,
+	.island-demo-stats small {
+		font-size: 8px;
+	}
+	.island-demo-live {
+		gap: 4px;
+		font-size: 8px;
+	}
+	.island-demo-stats {
+		gap: 5px;
+		margin: 13px 0 15px;
+	}
+	.island-demo-stats > div {
+		padding: 8px 6px;
+	}
+	.island-demo-stats strong {
+		font-size: 12px;
+	}
+	.island-demo-feed-title {
+		font-size: 9px;
+	}
+	.island-demo-message {
+		gap: 7px;
+		padding: 8px 0;
+	}
+	.island-demo-avatar {
+		flex-basis: 24px;
+		font-size: 8px;
+	}
+	.island-demo-message strong,
+	.island-demo-message p {
+		font-size: 8px;
+	}
+	.island-demo-message small {
+		font-size: 7px;
+	}
+	.island-demo-check {
+		font-size: 11px;
+	}
 	.island-product-frame {
 		aspect-ratio: 1.28;
 		border-width: 3px;
@@ -716,9 +1283,6 @@ body {
 		gap: 20px 27px;
 	}
 	.island-community span {
-		font-size: 17px;
-	}
-	.island-community .island-community-word {
 		font-size: 17px;
 	}
 	.island-width {
@@ -774,8 +1338,32 @@ body {
 	.island-pricing .island-section-heading p {
 		font-size: 13px;
 	}
-	.island-pricing-card {
-		padding: 30px;
+	.island-cost-comparison {
+		margin-top: 30px;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 12px;
+	}
+	.island-cost-side {
+		padding: 22px;
+	}
+	.island-cost-versus {
+		width: 38px;
+		height: 38px;
+	}
+	.island-cost-equation strong {
+		font-size: 15px;
+	}
+	.island-cost-copyfast .island-cost-benefits {
+		margin-top: 22px;
+	}
+	.island-price-row {
+		align-items: flex-start;
+		flex-direction: column;
+		gap: 0;
+	}
+	.island-cost-savings,
+	.island-cost-footnote {
+		grid-column: 1;
 	}
 	.island-footer {
 		padding-top: 35px;
@@ -838,4 +1426,152 @@ body {
 }
 .island-nav {
 	z-index: 50;
+}
+
+.island-nav-blog[aria-current="page"] {
+	color: var(--island-green);
+}
+.island-blog {
+	width: min(960px, calc(100% - 48px));
+	margin-inline: auto;
+	padding-block: 160px 100px;
+}
+.island-blog-heading {
+	text-align: center;
+	margin-bottom: 56px;
+}
+.island-blog-title {
+	color: var(--island-text);
+	font-size: clamp(30px, 4.5vw, 48px);
+	font-weight: 500;
+	line-height: 1.4;
+	letter-spacing: -0.03em;
+	text-wrap: balance;
+}
+.island-blog-description {
+	margin-top: 20px;
+	color: var(--island-muted);
+	font-size: 16px;
+	line-height: 1.9;
+}
+.island-blog-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
+	gap: 24px;
+}
+.island-blog-card {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	padding: clamp(24px, 4vw, 40px);
+	border: 1px solid #ffffff14;
+	border-radius: 14px;
+	background: linear-gradient(135deg, #ffffff06, #ffffff02);
+	transition: border-color 0.2s;
+}
+.island-blog-card:hover {
+	border-color: #71c68455;
+}
+.island-blog-card-title {
+	font-size: clamp(22px, 3vw, 28px);
+	font-weight: 500;
+	line-height: 1.6;
+	color: var(--island-text);
+}
+.island-blog-card-title:hover,
+.island-blog-back a:hover {
+	color: var(--island-green);
+}
+.island-blog-excerpt {
+	flex: 1;
+	color: var(--island-muted);
+	font-size: 15px;
+	line-height: 1.9;
+	max-width: 680px;
+}
+.island-blog-meta {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 16px 24px;
+	color: var(--island-muted);
+	font-size: 12px;
+}
+.island-blog-card .island-blog-meta {
+	margin-top: 8px;
+	padding-top: 24px;
+	border-top: 1px solid #ffffff14;
+}
+.island-blog-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 16px;
+}
+.island-blog-tag {
+	font-size: 12px;
+	color: var(--island-green);
+}
+.island-blog-author {
+	font-size: 12px;
+	font-weight: 400;
+}
+.island-blog-post {
+	max-width: 760px;
+}
+.island-blog-back {
+	margin-bottom: 40px;
+	font-size: 13px;
+	color: var(--island-muted);
+}
+.island-blog-post-heading {
+	padding-bottom: 32px;
+	border-bottom: 1px solid #ffffff14;
+}
+.island-blog-post-heading .island-blog-meta {
+	margin-top: 24px;
+}
+.island-blog-prose {
+	max-width: none;
+	margin-top: 40px;
+	color: #b5b5b8;
+	font-size: 16px;
+	line-height: 2;
+	--tw-prose-headings: var(--island-text);
+	--tw-prose-links: var(--island-green);
+	--tw-prose-bold: var(--island-text);
+}
+.island-blog-prose h2 {
+	font-size: 24px;
+	font-weight: 500;
+	margin-top: 2em;
+}
+.island-blog-prose a {
+	color: var(--island-green);
+	text-underline-offset: 4px;
+}
+.island-blog-card-image,
+.island-blog-cover {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	overflow: hidden;
+	border-radius: 10px;
+}
+.island-blog-cover {
+	margin-top: 32px;
+}
+@media (max-width: 760px) {
+	.island-nav-blog {
+		display: inline-flex;
+		font-size: 11px;
+	}
+	.island-blog {
+		padding-block: 125px 64px;
+	}
+	.island-blog-heading {
+		margin-bottom: 32px;
+	}
+	.island-blog-description,
+	.island-blog-prose {
+		font-size: 14px;
+	}
 }

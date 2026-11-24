@@ -18,7 +18,7 @@ export default function manifest(): MetadataRoute.Manifest {
 		],
 		name: "SignalFast",
 		short_name: "SignalFast",
-		start_url: "/signals",
+		start_url: "/settings/billing",
 		scope: "/",
 		theme_color: "#121212",
 	};

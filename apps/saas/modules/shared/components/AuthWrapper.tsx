@@ -1,7 +1,8 @@
 import { config } from "@config";
-import { cn, Logo } from "@repo/ui";
+import { cn } from "@repo/ui";
 import type { PropsWithChildren } from "react";
 
+import { BrandLogo } from "./BrandLogo";
 import { Footer } from "./Footer";
 import { LocaleSwitch } from "./LocaleSwitch";
 
@@ -16,7 +17,7 @@ export function AuthWrapper({
 				<div className="relative z-0 container">
 					<div className="flex items-center justify-between">
 						<a href={config.marketingUrl ?? "/"} className="block">
-							<Logo />
+							<BrandLogo />
 						</a>
 
 						<div className="gap-2 flex items-center justify-end">
@@ -29,7 +30,8 @@ export function AuthWrapper({
 					<main
 						className={cn(
 							"pointer-events-auto relative z-10 w-full",
-							!unframed && "max-w-md p-6 lg:p-8 rounded-3xl border bg-card",
+							!unframed &&
+								"max-w-md p-6 lg:p-8 shadow-xl shadow-black/10 rounded-2xl border bg-card",
 							contentClass,
 						)}
 					>

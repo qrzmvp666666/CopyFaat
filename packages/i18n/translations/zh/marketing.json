@@ -1,6 +1,6 @@
 {
 	"blog": {
-		"description": "阅读 SignalFast 的交易信号对比、平台选择和风险识别指南",
+		"description": "CopyFast 使用指南与社群运营心得，让 Telegram 与 Discord 消息同步更简单。",
 		"title": "博客",
 		"back": "返回博客"
 	},
@@ -241,84 +241,142 @@
 			}
 		},
 		"island": {
-			"line1": "交易世界，尽收眼底。",
-			"line2": "让信号更清晰。",
-			"intro": "实时行情、你关注的交易员，以及真正重要的信号。",
-			"intro2": "汇聚一处，始终在眼前。",
-			"start": "打开 SignalFast",
+			"line1": "TG / DC 群克隆，",
+			"line2": "告别手动搬运消息。",
+			"intro": "自动监控 Telegram 与 Discord 来源频道，",
+			"intro2": "将新消息持续同步到自己的社群，省去反复查看和复制转发。",
+			"start": "立即下载",
+			"download": "立即下载",
+			"loginRegister": "登录注册",
+			"downloadOptions": {
+				"windows": "Windows 版",
+				"macAppleSilicon": "Mac 版（Apple 芯片）",
+				"macIntel": "Mac 版（Intel 芯片）"
+			},
+			"demo": {
+				"label": "CopyFast 社群同步界面预览",
+				"menu": "文件　编辑　视图",
+				"status": "监控运行中",
+				"monitoring": "社群自动同步已开启",
+				"source": "来源频道",
+				"channels": "监控频道",
+				"channelOne": "产品公告",
+				"channelTwo": "社区动态",
+				"syncActivity": "同步动态",
+				"workspace": "工作区 · CopyFast",
+				"overview": "同步总览",
+				"live": "运行中",
+				"monitoredChannels": "监控频道",
+				"syncedToday": "今日同步",
+				"destinations": "目标社群",
+				"unlimited": "不限数量",
+				"automatic": "自动同步",
+				"yourCommunities": "自有社群",
+				"recentActivity": "最近同步内容",
+				"discordSource": "Discord · 产品更新",
+				"telegramSource": "Telegram · 社区公告",
+				"messageOne": "新版本已发布，欢迎查看本次更新内容。",
+				"messageTwo": "本周活动安排已更新，详情请查看置顶消息。",
+				"justNow": "刚刚",
+				"minutesAgo": "3 分钟前",
+				"forwarded": "已转发到目标社群"
+			},
+			"docs": "文档",
 			"plans": "查看价格",
-			"demoTitle": "每一个信号，一目了然。",
-			"demoDescription": "关注交易员的每一步，同时掌握市场全貌。",
-			"tabs": ["总览", "实时行情", "交易信号", "观看演示"],
-			"trusted": "你的交易社区，汇聚一处",
-			"featuresTitle": "重要信息，始终在眼前。",
+			"trusted": "适用于 Discord 与 Telegram 社群",
+			"featuresTitle": "让群组克隆更简单。",
 			"features": [
 				[
-					"交易员信号，一处汇聚",
-					"将 KOL 信号整理在同一个信息流中，减少在不同频道间来回切换。"
+					"支持 Discord 与 Telegram",
+					"在常用社群平台间灵活协作，减少切换工具与重复整理的时间。"
 				],
-				["实时市场行情", "关注交易信号的同时，掌握加密市场的价格变化。"],
-				["在 K 线上看信号", "把 KOL 动态放回价格图表，理解每个交易观点的市场背景。"],
-				["连接交易社区", "持续关注来自 Telegram 与 Discord 社区的交易观点。"],
-				["清晰的信号时间线", "按时间阅读信号与更新，随时回到观点出现时的上下文。"],
-				["发现值得关注的交易员", "浏览 KOL 资料，找到你希望持续关注的交易员。"],
-				["跟进最新动态", "在工作台中查看新的交易信号与重要更新。"],
-				["专注重要信息", "无广告的简洁工作台，让行情与交易观点始终触手可及。"],
-				["你的市场工作台", "实时行情、价格图表与交易员信号，在同一个空间协同呈现。"]
+				[
+					"支持 Mac 和 Windows",
+					"无论团队使用 Mac 还是 Windows，都能在熟悉的电脑上处理社群运营。"
+				],
+				[
+					"7×24 小时 AI 自动监控",
+					"自动跟进新消息，减少反复查看来源频道的时间，重要动态更容易及时掌握。"
+				],
+				[
+					"无需自行配置 IP 代理",
+					"减少自行寻找和维护代理配置的麻烦；实际连接仍取决于网络环境与平台规则。"
+				],
+				[
+					"减少个人 Discord 账号依赖",
+					"降低个人账号的配置与维护负担；平台规则仍适用，账号风险无法保证为零。"
+				],
+				["快速克隆社群", "减少重复搭建所花的时间，更快整理出符合团队需要的社群空间。"],
+				["频道数量不设限", "集中跟进多个频道动态，不必在来源之间来回切换。"],
+				["随时启停，自定义频率", "按运营节奏灵活调整监控状态与频率，减少不必要的打扰。"],
+				["转发到自己的社群", "把关注的内容送达目标社群，帮助成员及时获取相关信息。"]
 			],
-			"reviewsTitle": "听听社区的声音。",
-			"reviewsDescription": "来自 SignalFast 用户的使用反馈。",
 			"faqTitle": "常见问题",
 			"faq": [
 				[
-					"SignalFast 是什么？",
-					"SignalFast 将加密市场实时行情与 KOL 信号汇聚到一个工作台中，让你在市场背景下持续关注交易员的观点。"
+					"CopyFast 适合哪些社群？",
+					"CopyFast 面向使用 Discord 与 Telegram 的社群运营者与团队。"
 				],
 				[
-					"信号数据来自哪里？",
-					"信号来自支持的 Telegram 与 Discord 来源，并按交易员整理。实际可用来源会随服务更新调整。"
+					"可以处理哪些社群内容？",
+					"不同平台的内容类型与访问权限有所不同，请联系我们确认适用范围。"
 				],
 				[
-					"与直接看聊天群有什么不同？",
-					"SignalFast 将分散的消息整理成信号流，并与市场行情一起呈现，减少在聊天记录中查找信息的时间。"
+					"需要代理或个人 Discord 账号吗？",
+					"网络连接取决于所在地区与平台规则；账号使用也应遵循 Discord 和 Telegram 的服务条款。请联系我们了解具体接入方式。"
 				],
 				[
-					"什么是 KOL 聚合 K 线跟踪？",
-					"将交易员信号与价格图表一起展示，帮助你了解观点发布的时间和前后的市场变化。"
+					"监控频道数量有限制吗？",
+					"可用频道数量与具体服务方案有关，请联系我们确认适合团队的配置。"
 				],
 				[
-					"新手可以使用吗？",
-					"你可以用它关注市场信息、了解交易员表达观点的方式。交易前仍需要自行理解每笔交易的风险。"
+					"可以完整复制成员和聊天记录吗？",
+					"各平台对成员信息和历史消息的访问均有不同限制，具体可处理的数据范围请联系我们确认。"
 				],
 				[
-					"跟随信号一定能盈利吗？",
-					"不能。信号仅供信息参考，不构成投资建议或收益保证。加密市场波动较大，请独立判断。"
-				],
-				[
-					"可以选择按周订阅吗？",
-					"可以。Pro 提供周付与年付方案，你可以在下方比较当前价格。"
+					"如何选择价格方案？",
+					"页面展示年付与周付价格。下单前可联系我们确认服务范围、计费周期与开通方式。"
 				],
 				["遇到问题如何联系？", "请前往联系页面，查看我们的客服与社区联系方式。"]
 			],
-			"pricingTitle": "少一点噪音，多一点清晰。",
-			"pricingDescription": "一个方案，完整的交易信号工作台。",
-			"planDescription": "关注市场所需的一切。",
+			"pricingTitle": "价格方案",
+			"pricingDescription": "对比其他方案与 CopyFast，社群运营成本一目了然。",
+			"alternativeTitle": "其他方案",
+			"costDescription": "市面上多数系统依赖专用 DC 账号更换监控消息，每月至少需要 2 个账号，按每个 $20 估算；AI 模型 Token 每月至少 $20。",
+			"ourPlanTitle": "我们的方案 · CopyFast",
+			"accountCost": "专用 DC 账号（2 个）",
+			"aiCost": "AI 模型 Token（至少）",
+			"alternativeTotal": "替代配置合计",
+			"perMonth": "/月",
+			"estimatedSavings": "选择 CopyFast，预计每年少支出 {amount}",
+			"estimatedExtraCost": "按当前所选 CopyFast 价格估算，每年成本高于该基准 {amount}",
+			"costFootnote": "替代配置约 {annualCost}/年。实际费用因账号、用量与服务商而异。",
+			"planDescription": "适用于 Discord 与 Telegram 社群运营，持续更新迭代，未来拓展其他渠道功能优先享用。",
+			"alternativeHighlights": [
+				"通常只支持 Telegram 或 Discord 其中一个平台",
+				"通常仅支持 Mac 或 Windows 其中一种系统",
+				"AI 模型 Token 费用另计，至少约 $20/月",
+				"可监控频道数量受方案限制，扩容可能增加成本",
+				"监控启停与频率设置通常较受限",
+				"消息转发目标与流程需要自行配置",
+				"需自行准备账号，并处理代理与日常维护"
+			],
+			"planHighlights": [
+				"一个方案同时支持 Discord 与 Telegram",
+				"Mac 与 Windows 桌面端均可使用",
+				"7×24 小时 AI 自动监控并同步消息",
+				"可同时监控不限数量的频道",
+				"随时启停，并按需自定义监控频率",
+				"将关注内容直接转发到自己的社群",
+				"减少个人 Discord 账号依赖与代理配置工作"
+			],
 			"periods": ["年付", "周付"],
 			"perYear": "/ 年",
 			"perWeek": "/ 周",
-			"billing": "以美元计费。订阅将自动续费，直至取消。",
-			"benefits": [
-				"无广告体验",
-				"币圈实时市场报价",
-				"KOL 聚合 K 线跟踪",
-				"KOL 交易信号流",
-				"专属客服支持",
-				"社区通知"
-			],
-			"subscribe": "开通 SignalFast Pro",
+			"subscribe": "咨询方案",
 			"questions": "开始之前，还有疑问？",
 			"contact": "联系我们",
-			"footerDescription": "让加密市场的每一个信号，更清晰。",
+			"footerDescription": "让 Discord 与 Telegram 社群迁移准备更有条理。",
 			"product": "产品",
 			"resources": "资源",
 			"legal": "法律信息",
@@ -328,8 +386,8 @@
 			"privacy": "隐私政策",
 			"terms": "服务条款",
 			"rights": "保留所有权利。",
-			"videoLabel": "SignalFast 产品演示",
-			"close": "关闭演示",
+			"videoLabel": "CopyFast 产品规划",
+			"close": "关闭",
 			"navigation": "主导航"
 		}
 	},

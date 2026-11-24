@@ -10,13 +10,13 @@ export interface ContactMethod {
 
 export const CONTACT_METHODS: ContactMethod[] = [
 	{
-		account: "@Michael_Qin",
+		account: "CopyFast",
 		href: "https://t.me/Michael_Qin",
 		icon: "telegram",
 		label: "电报",
 	},
 	{
-		account: "SignalFast",
+		account: "CopyFast",
 		href: "https://discord.gg/signalfast",
 		icon: "discord",
 		label: "Discord",
@@ -30,7 +30,7 @@ interface ContactChannelsProps {
 
 export function ContactChannels({ className, compact = false }: ContactChannelsProps) {
 	return (
-		<div className={className ?? "gap-4 md:grid-cols-2 grid"}>
+		<div className={className ?? "island-contact-grid gap-4 md:grid-cols-2 grid"}>
 			{CONTACT_METHODS.map((method) => (
 				<a
 					key={method.label}
@@ -38,7 +38,7 @@ export function ContactChannels({ className, compact = false }: ContactChannelsP
 					className={
 						compact
 							? "group min-h-16 gap-3 p-3 flex items-center rounded-xl border bg-background/40 text-left transition-colors hover:border-primary/40 hover:bg-secondary/30"
-							: "group min-h-28 gap-5 p-5 flex items-center rounded-2xl border bg-card/80 text-left transition-colors hover:border-primary/40 hover:bg-secondary/30"
+							: "island-contact-card group"
 					}
 					target={method.href.startsWith("http") ? "_blank" : undefined}
 					rel={method.href.startsWith("http") ? "noopener noreferrer" : undefined}

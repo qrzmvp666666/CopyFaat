@@ -1,7 +1,7 @@
 {
 	"blog": {
-		"description": "Read SignalFast guides on trading signal sources, platform comparisons, and risk awareness.",
-		"title": "SignalFast Blog",
+		"description": "CopyFast guides and community workflows for simpler Telegram and Discord message syncing.",
+		"title": "CopyFast Blog",
 		"back": "Back to blog"
 	},
 	"changelog": {
@@ -241,105 +241,157 @@
 			}
 		},
 		"island": {
-			"line1": "Your trading world.",
-			"line2": "One clear signal.",
-			"intro": "Markets, traders, and the signals that matter.",
-			"intro2": "All together. Always in view.",
-			"start": "Open SignalFast",
+			"line1": "Clone TG / DC groups,",
+			"line2": "skip the manual forwarding.",
+			"intro": "Automatically monitor Telegram and Discord source channels,",
+			"intro2": "and sync new messages to your own communities without repeatedly checking and copying posts.",
+			"start": "Download now",
+			"download": "Download now",
+			"loginRegister": "Log in / Sign up",
+			"downloadOptions": {
+				"windows": "Windows",
+				"macAppleSilicon": "Mac (Apple silicon)",
+				"macIntel": "Mac (Intel)"
+			},
+			"demo": {
+				"label": "CopyFast community sync preview",
+				"menu": "File　Edit　View",
+				"status": "Monitoring active",
+				"monitoring": "Community sync is on",
+				"source": "Source channels",
+				"channels": "Monitored channels",
+				"channelOne": "Product updates",
+				"channelTwo": "Community news",
+				"syncActivity": "Sync activity",
+				"workspace": "Workspace · CopyFast",
+				"overview": "Sync overview",
+				"live": "Active",
+				"monitoredChannels": "Monitored channels",
+				"syncedToday": "Synced today",
+				"destinations": "Destinations",
+				"unlimited": "Unlimited",
+				"automatic": "Automatic",
+				"yourCommunities": "Yours",
+				"recentActivity": "Recent synced messages",
+				"discordSource": "Discord · Product updates",
+				"telegramSource": "Telegram · Community news",
+				"messageOne": "A new version is available. See what's included in this update.",
+				"messageTwo": "This week's event schedule has been updated. See the pinned post.",
+				"justNow": "Just now",
+				"minutesAgo": "3 min ago",
+				"forwarded": "Forwarded to destination"
+			},
+			"docs": "Docs",
 			"plans": "View pricing",
-			"demoTitle": "Every signal. One glance.",
-			"demoDescription": "Follow your favorite traders without losing sight of the market.",
-			"tabs": ["Overview", "Markets", "Signals", "Watch demo"],
-			"trusted": "YOUR COMMUNITIES. ONE PLACE.",
-			"featuresTitle": "Everything in sight. Nothing in the way.",
+			"trusted": "For Discord and Telegram communities",
+			"featuresTitle": "A simpler way to clone communities.",
 			"features": [
 				[
-					"All your traders, together",
-					"Bring KOL signals into one organized feed. Spend less time switching between channels."
+					"Discord and Telegram support",
+					"Work across the communities your audience already uses, with less tool switching and manual organization."
 				],
 				[
-					"Live market quotes",
-					"Keep an eye on crypto prices alongside the signals you follow."
+					"Mac and Windows support",
+					"Handle community operations from the Mac or Windows computer your team already uses."
 				],
 				[
-					"Signals on the chart",
-					"See aggregated KOL activity in context, directly on the price chart."
+					"24/7 AI monitoring and message sync",
+					"Stay on top of new messages with less repeated checking, so important community updates are easier to catch."
 				],
 				[
-					"Follow the conversation",
-					"Keep track of trading ideas from Telegram and Discord communities."
+					"No manual proxy setup",
+					"Spend less time sourcing and maintaining proxy settings. Connectivity still depends on local conditions and platform policies."
 				],
 				[
-					"A clearer timeline",
-					"Read signal updates in order and return to the original context."
+					"Less reliance on a personal Discord account",
+					"Reduce personal-account setup and maintenance. Platform rules still apply, and account risks cannot be ruled out."
 				],
 				[
-					"Trader discovery",
-					"Explore KOL profiles and find the traders you want to follow."
+					"Quick community cloning",
+					"Spend less time rebuilding the same setup and get a community space organized sooner."
 				],
-				["Stay up to date", "Follow new signals and important updates in your workspace."],
 				[
-					"Built for focus",
-					"A calm, ad-free workspace that keeps the important information close."
+					"No channel-count limit",
+					"Keep up with multiple channels in one place instead of switching between sources."
 				],
-				["Your market workspace", "Quotes, charts, and trader signals in one place."]
+				[
+					"Start, pause, and set your frequency",
+					"Match monitoring to your operating rhythm and reduce unnecessary interruptions."
+				],
+				[
+					"Forward to your own communities",
+					"Deliver relevant updates to the communities where your members need them."
+				]
 			],
-			"reviewsTitle": "A little signal from our community.",
-			"reviewsDescription": "What SignalFast users are saying.",
 			"faqTitle": "Frequently asked questions",
 			"faq": [
 				[
-					"What is SignalFast?",
-					"SignalFast brings crypto market quotes and KOL signals into one workspace, so you can follow traders and read their ideas in context."
+					"Who is CopyFast for?",
+					"CopyFast is for teams and operators of Discord and Telegram communities."
 				],
 				[
-					"Where do the signals come from?",
-					"Signals are collected from supported Telegram and Discord sources and organized by trader. Available sources can change."
+					"What community content can it handle?",
+					"Content types and access permissions vary by platform. Contact us to confirm the applicable scope."
 				],
 				[
-					"How is this different from a chat group?",
-					"Messages are organized into a signal feed and shown alongside market data, reducing the need to search through conversations."
+					"Do I need a proxy or my own Discord account?",
+					"Network access depends on your location and platform policies. Account use should comply with Discord and Telegram terms. Contact us for details about access options."
 				],
 				[
-					"What is aggregated KOL chart tracking?",
-					"It places trader signals alongside a price chart so you can understand when an idea was shared and what happened around it."
+					"How many channels can I monitor?",
+					"Available channel capacity depends on the service configuration. Contact us to discuss your team's needs."
 				],
 				[
-					"Is SignalFast suitable for beginners?",
-					"You can use it to follow market information and learn how traders communicate ideas. You remain responsible for understanding the risks of each trade."
+					"Will it copy members and chat history?",
+					"Each platform has different limits for member information and message history. Contact us to confirm which data can be handled."
 				],
 				[
-					"Does a signal guarantee a profit?",
-					"No. Signals are information, not investment advice or a guarantee of returns. Crypto markets are volatile; make your own decisions."
-				],
-				[
-					"Can I choose a weekly subscription?",
-					"Yes. Pro is available with weekly or yearly billing. You can compare the current prices below."
+					"How do I choose a pricing option?",
+					"The page shows yearly and weekly billing. Contact us before ordering to confirm service scope, billing period, and activation details."
 				],
 				[
 					"Where can I get help?",
 					"Visit the contact page for our support and community channels."
 				]
 			],
-			"pricingTitle": "Less noise. More clarity.",
-			"pricingDescription": "One plan. Your entire signal workspace.",
-			"planDescription": "Everything you need to follow the market.",
+			"pricingTitle": "Pricing",
+			"pricingDescription": "Compare common alternatives with CopyFast and see the operating costs at a glance.",
+			"alternativeTitle": "Other options",
+			"costDescription": "Many systems rely on dedicated Discord accounts to switch monitored messages: at least two accounts per month at an estimated $20 each, plus at least $20/month for AI model tokens.",
+			"ourPlanTitle": "Our option · CopyFast",
+			"accountCost": "Dedicated Discord accounts (2)",
+			"aiCost": "AI model tokens (minimum)",
+			"alternativeTotal": "Estimated alternative total",
+			"perMonth": "/mo",
+			"estimatedSavings": "Choose CopyFast and save an estimated {amount} per year",
+			"estimatedExtraCost": "At the selected CopyFast price, the annual cost is {amount} above this baseline",
+			"costFootnote": "Alternative setup is about {annualCost}/year. Actual costs vary by accounts, usage, and providers.",
+			"planDescription": "For Discord and Telegram communities, with ongoing updates and priority access to future channel features.",
+			"alternativeHighlights": [
+				"Usually supports either Telegram or Discord, not both",
+				"Usually supports either Mac or Windows, not both",
+				"AI model tokens are extra, from about $20/month",
+				"Channel capacity is often limited by the plan",
+				"Monitoring controls and frequency options are often limited",
+				"Forwarding destinations and workflows require manual setup",
+				"You manage account setup, proxies, and ongoing maintenance"
+			],
+			"planHighlights": [
+				"Use Discord and Telegram together in one plan",
+				"Available on both Mac and Windows",
+				"24/7 AI monitoring with automatic message sync",
+				"Monitor unlimited channels at the same time",
+				"Start or pause anytime and customize monitoring frequency",
+				"Forward selected content directly to your own communities",
+				"Less reliance on personal Discord accounts and proxy setup"
+			],
 			"periods": ["Yearly", "Weekly"],
 			"perYear": "/ year",
 			"perWeek": "/ week",
-			"billing": "Billed in USD. Subscription renews until canceled.",
-			"benefits": [
-				"Ad-free experience",
-				"Real-time crypto market quotes",
-				"Aggregated KOL chart tracking",
-				"KOL signal feed",
-				"Dedicated support",
-				"Community notifications"
-			],
-			"subscribe": "Get SignalFast Pro",
+			"subscribe": "Ask about this plan",
 			"questions": "Questions before getting started?",
 			"contact": "Talk to us",
-			"footerDescription": "A clearer view of the crypto market.",
+			"footerDescription": "A more organized way to prepare Discord and Telegram community migrations.",
 			"product": "Product",
 			"resources": "Resources",
 			"legal": "Legal",
@@ -349,8 +401,8 @@
 			"privacy": "Privacy policy",
 			"terms": "Terms of service",
 			"rights": "All rights reserved.",
-			"videoLabel": "SignalFast product demo",
-			"close": "Close demo",
+			"videoLabel": "CopyFast product plans",
+			"close": "Close",
 			"navigation": "Main navigation"
 		}
 	},

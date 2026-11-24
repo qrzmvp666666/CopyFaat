@@ -9,7 +9,7 @@ export function SettingsList({ children }: PropsWithChildren) {
 	}
 
 	return (
-		<div className="gap-3 @container flex flex-col">
+		<div className="gap-6 @container flex flex-col">
 			{validChildren.map((child, i) => (
 				<div key={`settings-item-${i}`}>{child}</div>
 			))}

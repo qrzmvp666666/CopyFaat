@@ -1,10 +1,10 @@
 import { getSession } from "@auth/lib/server";
 import { redirectWithLocale } from "@i18n/redirect";
 import { config } from "@repo/auth/config";
-import { Logo } from "@repo/ui";
 import { SettingsMenu } from "@settings/components/SettingsMenu";
+import { BrandLogo } from "@shared/components/BrandLogo";
 import { PageHeader } from "@shared/components/PageHeader";
-import { Building2Icon, Link2Icon, UsersIcon, WebhookIcon } from "lucide-react";
+import { Building2Icon, UsersIcon, WebhookIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import type { PropsWithChildren } from "react";
 
@@ -28,7 +28,7 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
 				className="mb-6"
 				menuItems={[
 					{
-						avatar: <Logo className="size-8" withLabel={false} />,
+						avatar: <BrandLogo className="size-8" withLabel={false} />,
 						title: t("title"),
 						items: [
 							{
@@ -40,11 +40,6 @@ export default async function AdminLayout({ children }: PropsWithChildren) {
 								title: t("menu.webhookLogs"),
 								href: "/admin/webhook-logs",
 								icon: <WebhookIcon className="size-4 opacity-50" />,
-							},
-							{
-								title: t("menu.sourceBindings"),
-								href: "/admin/source-bindings",
-								icon: <Link2Icon className="size-4 opacity-50" />,
 							},
 							...(config.organizations.enable
 								? [

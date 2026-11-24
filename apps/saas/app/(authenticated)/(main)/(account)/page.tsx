@@ -23,5 +23,5 @@ export default async function AppStartPage() {
 		return await redirectWithLocale(`/${organization.slug}`);
 	}
 
-	return await redirectWithLocale("/signals");
+	return await redirectWithLocale("/settings/billing");
 }

@@ -6,7 +6,9 @@ import type { Metadata } from "next";
 import { source } from "@/lib/source";
 
 export const metadata: Metadata = {
-	metadataBase: new URL(process.env.NEXT_PUBLIC_DOCS_URL ?? "http://signalfast.localhost:4102"),
+	title: "CopyFast 文档",
+	description: "了解 CopyFast 的 Telegram 与 Discord 社群消息监控和同步流程。",
+	metadataBase: new URL(process.env.NEXT_PUBLIC_DOCS_URL ?? "http://localhost:4102"),
 };
 
 export default function Layout({ children }: LayoutProps<"/">) {
@@ -30,14 +32,14 @@ export default function Layout({ children }: LayoutProps<"/">) {
 							title: (
 								<span className="gap-2 font-semibold flex items-center text-foreground">
 									<img
-										src="/images/brand/signalfast-logo-mark.png"
+										src="/images/brand/copyfast-logo.svg"
 										alt=""
 										aria-hidden
 										width={32}
 										height={32}
 										className="size-8 object-contain"
 									/>
-									<span>SignalFast</span>
+									<span>CopyFast</span>
 								</span>
 							),
 						}}

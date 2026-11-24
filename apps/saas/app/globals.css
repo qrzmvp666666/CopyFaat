@@ -88,3 +88,78 @@
 		background-color: #121212;
 	}
 }
+
+@font-face {
+	font-family: "Departure Mono";
+	src: url("/fonts/DepartureMono-Regular.woff2") format("woff2");
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+}
+
+@theme {
+	--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	--font-mono: "Departure Mono", monospace;
+}
+
+@layer base {
+	:root {
+		--background: #f5f5f5;
+		--foreground: #202020;
+		--card: #ffffff;
+		--card-foreground: #202020;
+		--popover: #ffffff;
+		--popover-foreground: #202020;
+		--primary: #202020;
+		--primary-foreground: #ffffff;
+		--secondary: #e9e9e9;
+		--secondary-foreground: #202020;
+		--muted: #eeeeee;
+		--muted-foreground: #666666;
+		--accent: #e5ede7;
+		--accent-foreground: #244c2e;
+		--border: #dedede;
+		--input: #d4d4d4;
+		--ring: #71c684;
+		--radius: 0.625rem;
+	}
+
+	.dark {
+		--background: #151515;
+		--foreground: #e7e7e8;
+		--card: #1b1b1b;
+		--card-foreground: #e7e7e8;
+		--popover: #202020;
+		--popover-foreground: #e7e7e8;
+		--primary: #f1f1f1;
+		--primary-foreground: #171717;
+		--secondary: #292929;
+		--secondary-foreground: #d6d6d7;
+		--muted: #242424;
+		--muted-foreground: #a3a3a5;
+		--accent: #29372d;
+		--accent-foreground: #a6dfb3;
+		--border: #ffffff1f;
+		--input: #ffffff26;
+		--ring: #71c684;
+		--success: #71c684;
+		--success-foreground: #151515;
+	}
+
+	body {
+		font-family: var(--font-sans);
+	}
+
+	.auth-dark-shell,
+	.saas-shell {
+		background-image: radial-gradient(ellipse at 50% 0%, #26232c33, transparent 45%);
+	}
+}
+
+/* Match the marketing site's compact controls without changing round avatars. */
+.saas-shell button.rounded-full,
+.auth-dark-shell button.rounded-full,
+.saas-shell a.rounded-full,
+.auth-dark-shell a.rounded-full {
+	border-radius: 9px;
+}

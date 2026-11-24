@@ -18,13 +18,13 @@ export default async function BlogListPage(props: { params: Promise<{ locale: st
 	const posts = await getAllPosts(locale);
 
 	return (
-		<div className="max-w-6xl py-16 container">
-			<div className="mb-12 pt-8 text-center">
-				<h1 className="mb-2 font-bold text-5xl">{t("title")}</h1>
-				<p className="text-lg opacity-50">{t("description")}</p>
+		<div className="island-blog">
+			<div className="island-blog-heading">
+				<h1 className="island-blog-title">{t("title")}</h1>
+				<p className="island-blog-description">{t("description")}</p>
 			</div>
 
-			<div className="gap-8 md:grid-cols-2 grid">
+			<div className="island-blog-grid">
 				{posts.map((post) => (
 					<PostListItem post={post} key={post.path} />
 				))}

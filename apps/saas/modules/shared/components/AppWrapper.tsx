@@ -13,7 +13,7 @@ function AppContent({ children }: PropsWithChildren) {
 	const isSignalsWorkspace = pathname === "/signals" || pathname.endsWith("/signals");
 
 	return (
-		<div className="md:h-screen md:overflow-hidden bg-background">
+		<div className="saas-shell md:h-screen md:overflow-hidden bg-background">
 			<NavBar />
 			<div
 				className={cn(
@@ -27,10 +27,10 @@ function AppContent({ children }: PropsWithChildren) {
 			>
 				<main
 					className={cn(
-						"md:border md:rounded-2xl w-full bg-card",
+						"md:border md:rounded-2xl shadow-xl shadow-black/5 w-full bg-card",
 						isSignalsWorkspace
 							? "p-0 md:h-full md:overflow-y-auto xl:overflow-hidden min-h-full overflow-visible"
-							: "py-6 md:overflow-y-auto h-full border-t",
+							: "py-8 md:py-10 md:overflow-y-auto h-full border-t",
 					)}
 				>
 					<div className={cn(isSignalsWorkspace ? "min-h-0 h-full" : "container")}>

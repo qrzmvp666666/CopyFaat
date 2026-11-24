@@ -233,7 +233,7 @@ Unauthenticated requests, malformed JSON and invalid batch envelopes appear as r
 
 ## Discord name-based KOL bindings
 
-Manage bindings under **Admin → KOL source bindings** (`/zh/admin/source-bindings`, or `/en/admin/source-bindings`). Each binding links platform + server name + channel name + optional category to an **existing** Trader. The desktop page uses a compact table for platform, server, channel, KOL, status, and actions; mobile uses a divided list. Admins can create, edit, search, or disable bindings; both procedures enforce the admin role. No Discord numeric IDs are needed.
+Source bindings remain part of webhook ingestion. The SaaS source-binding management page and navigation have been removed; manage existing bindings through the protected admin API.
 
 Discord submissions must include these source fields (alongside the existing signal contract):
 

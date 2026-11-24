@@ -54,16 +54,17 @@ export default async function BlogPostPage(props: { params: Promise<Params> }) {
 	const { title, date, authorName, authorImage, tags, image, body } = post;
 
 	return (
-		<div className="py-16 container">
+		<div className="island-blog island-blog-post">
 			<div className="">
-				<div className="mb-12">
+				<div className="island-blog-back">
 					<LocaleLink href="/blog">&larr; {t("back")}</LocaleLink>
 				</div>
 
-				<div className="max-w-2xl mx-auto text-center">
-					<h1 className="font-bold text-4xl">{title}</h1>
+				<div className="island-blog-post-heading">
+					<h1 className="island-blog-title">{title}</h1>
+					{post.excerpt && <p className="island-blog-description">{post.excerpt}</p>}
 
-					<div className="mt-4 gap-6 flex items-center justify-center">
+					<div className="island-blog-meta">
 						{authorName && (
 							<div className="flex items-center">
 								{authorImage && (
@@ -78,24 +79,23 @@ export default async function BlogPostPage(props: { params: Promise<Params> }) {
 									</div>
 								)}
 								<div>
-									<p className="font-semibold text-sm opacity-50">{authorName}</p>
+									<p className="island-blog-author">{authorName}</p>
 								</div>
 							</div>
 						)}
 
 						<div className="mr-0">
-							<p className="text-sm opacity-30">
-								{Intl.DateTimeFormat("en-US").format(new Date(date))}
-							</p>
+							<time dateTime={date}>
+								{Intl.DateTimeFormat(locale, { timeZone: "UTC" }).format(
+									new Date(date),
+								)}
+							</time>
 						</div>
 
 						{tags && (
-							<div className="gap-2 flex flex-wrap">
+							<div className="island-blog-tags">
 								{tags.map((tag) => (
-									<span
-										key={tag}
-										className="font-semibold text-xs tracking-wider text-primary uppercase"
-									>
+									<span key={tag} className="island-blog-tag">
 										#{tag}
 									</span>
 								))}
@@ -106,7 +106,7 @@ export default async function BlogPostPage(props: { params: Promise<Params> }) {
 			</div>
 
 			{image && (
-				<div className="mt-6 aspect-video p-4 lg:p-6 relative overflow-hidden rounded-4xl bg-primary/10">
+				<div className="island-blog-cover">
 					<Image
 						src={image}
 						alt={title}

@@ -8,7 +8,7 @@ export function Footer() {
 			<div className="island-footer-grid">
 				<div>
 					<LocaleLink href="/" className="island-footer-brand">
-						SignalFast
+						CopyFast
 					</LocaleLink>
 					<p>{t("footerDescription")}</p>
 				</div>
@@ -21,7 +21,6 @@ export function Footer() {
 				<div>
 					<h3>{t("resources")}</h3>
 					<LocaleLink href="/blog">{t("blog")}</LocaleLink>
-					<LocaleLink href="/changelog">{t("changelog")}</LocaleLink>
 					<LocaleLink href="/contact">{t("contact")}</LocaleLink>
 				</div>
 				<div>
@@ -32,9 +31,9 @@ export function Footer() {
 			</div>
 			<div className="island-footer-bottom">
 				<span>
-					© {new Date().getFullYear()} SignalFast. {t("rights")}
+					© {new Date().getFullYear()} CopyFast. {t("rights")}
 				</span>
-				<span>Telegram · Discord · Crypto</span>
+				<span>Telegram · Discord</span>
 			</div>
 		</footer>
 	);

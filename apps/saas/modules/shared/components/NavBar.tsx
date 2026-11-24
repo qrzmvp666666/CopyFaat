@@ -17,7 +17,6 @@ import {
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
-	Logo,
 	Sheet,
 	SheetContent,
 	SheetHeader,
@@ -36,7 +35,6 @@ import { UserMenu } from "@shared/components/UserMenu";
 import {
 	BotMessageSquareIcon,
 	BadgeCheckIcon,
-	ChartCandlestickIcon,
 	ChevronRightIcon,
 	CrownIcon,
 	MenuIcon,
@@ -54,6 +52,7 @@ import { useMemo, useState } from "react";
 import { OrganzationSelect } from "../../organizations/components/OrganizationSelect";
 import { useIsMobile } from "../hooks/use-media-query";
 import { useSidebar } from "../lib/sidebar-context";
+import { BrandLogo } from "./BrandLogo";
 
 interface NavSubItem {
 	label: string;
@@ -409,12 +408,6 @@ export function NavBar() {
 						},
 					]
 				: []),
-			{
-				label: t("app.menu.signals"),
-				href: `${basePath}/signals`,
-				icon: ChartCandlestickIcon,
-				isActive: pathname === `${basePath}/signals`,
-			},
 			...(organizationSubItems
 				? [
 						{
@@ -454,10 +447,6 @@ export function NavBar() {
 							subItems: [
 								{ label: t("admin.menu.users"), href: "/admin/users" },
 								{ label: t("admin.menu.webhookLogs"), href: "/admin/webhook-logs" },
-								{
-									label: t("admin.menu.sourceBindings"),
-									href: "/admin/source-bindings",
-								},
 							],
 						},
 					]
@@ -522,7 +511,7 @@ export function NavBar() {
 									</SheetContent>
 								</Sheet>
 								<Link href={localizePath("/", locale)} className="block shrink-0">
-									<Logo withLabel={false} />
+									<BrandLogo withLabel={!isCollapsedEffective} />
 								</Link>
 							</div>
 

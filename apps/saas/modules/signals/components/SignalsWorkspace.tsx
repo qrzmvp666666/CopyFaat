@@ -45,7 +45,6 @@ import {
 	ChevronRightIcon,
 	ChevronUpIcon,
 	Clock3Icon,
-	CompassIcon,
 	CrownIcon,
 	Maximize2Icon,
 	RadioIcon,
@@ -1279,13 +1278,13 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 	const [isSignalPageLoading, setIsSignalPageLoading] = useState(hasProAccess);
 	const [isKlinesLoading, setIsKlinesLoading] = useState(false);
 	const [klinesRefreshKey, setKlinesRefreshKey] = useState(0);
-	const [guideOpen, setGuideOpen] = useState(!hasProAccess);
+	const [guideOpen, setGuideOpen] = useState(false);
 	const [guideCardHeight, setGuideCardHeight] = useState(300);
 	const [guideAvatarRevealCount, setGuideAvatarRevealCount] = useState(0);
 	const [guideActiveSourceId, setGuideActiveSourceId] = useState<string | null>(null);
 	const [guideFilterRevealCount, setGuideFilterRevealCount] = useState(0);
 	const [guideActiveFilterOption, setGuideActiveFilterOption] = useState<number | null>(null);
-	const [guideIntroAnimating, setGuideIntroAnimating] = useState(!hasProAccess);
+	const [guideIntroAnimating, setGuideIntroAnimating] = useState(false);
 	const [paywallOpen, setPaywallOpen] = useState(false);
 	const [isMobilePaywall, setIsMobilePaywall] = useState(false);
 	const [guideStepIndex, setGuideStepIndex] = useState(0);
@@ -2177,12 +2176,6 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 		setDraftEntryStatus("all");
 	}
 
-	function replayGuide() {
-		setIsSignalPanelCollapsed(false);
-		setGuideStepIndex(0);
-		setGuideOpen(true);
-	}
-
 	function closeGuide() {
 		setGuideOpen(false);
 		if (!hasProAccess) {
@@ -2394,7 +2387,6 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 				open={paywallOpen && !isMobilePaywall}
 				onOpenChange={(open) => {
 					setPaywallOpen(open);
-					if (!open && !hasProAccess) replayGuide();
 				}}
 			>
 				<SignalsMobilePaywall
@@ -2402,7 +2394,6 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 					open={paywallOpen && isMobilePaywall}
 					onClose={() => {
 						setPaywallOpen(false);
-						if (!hasProAccess) setGuideOpen(true);
 					}}
 				/>
 				<DialogContent
@@ -3133,17 +3124,6 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 										type="button"
 										size="icon"
 										variant="ghost"
-										aria-label={t("guide.replay")}
-										title={t("guide.replay")}
-										className="size-9 text-white/55 hover:bg-white/5 hover:text-white"
-										onClick={replayGuide}
-									>
-										<CompassIcon className="size-4" />
-									</Button>
-									<Button
-										type="button"
-										size="icon"
-										variant="ghost"
 										aria-label={t(
 											isChartCollapsed
 												? "actions.expandChart"
@@ -3299,15 +3279,6 @@ export function SignalsWorkspace({ isAuthenticated, hasProAccess }: SignalsWorks
 										) : (
 											<ChevronUpIcon className="size-4" />
 										)}
-									</Button>
-									<Button
-										size="icon"
-										variant="ghost"
-										aria-label={t("guide.replay")}
-										title={t("guide.replay")}
-										onClick={replayGuide}
-									>
-										<CompassIcon className="size-4" />
 									</Button>
 									<Button
 										size="icon"

@@ -1,26 +1,26 @@
 import {
-	BellIcon,
-	ChartCandlestickIcon,
-	CircleDollarSignIcon,
+	CopyIcon,
 	LayersIcon,
+	MonitorIcon,
 	MessagesSquareIcon,
-	PanelTopIcon,
 	RadioIcon,
 	ScanEyeIcon,
+	ShieldCheckIcon,
 	UsersIcon,
+	WorkflowIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 const FEATURE_ICONS = [
 	LayersIcon,
-	CircleDollarSignIcon,
-	ChartCandlestickIcon,
-	MessagesSquareIcon,
-	RadioIcon,
-	UsersIcon,
-	BellIcon,
+	MonitorIcon,
 	ScanEyeIcon,
-	PanelTopIcon,
+	ShieldCheckIcon,
+	UsersIcon,
+	CopyIcon,
+	RadioIcon,
+	WorkflowIcon,
+	MessagesSquareIcon,
 ];
 export function ValuePillarsSection() {
 	const t = useTranslations("home.island");
