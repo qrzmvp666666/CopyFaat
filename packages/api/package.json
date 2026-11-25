@@ -39,7 +39,7 @@
 		"@repo/tsconfig": "workspace:*",
 		"@types/react": "catalog:",
 		"@vitest/coverage-v8": "catalog:",
-		"encoding": "^0.1.13",
+		"encoding": "^0.1.14",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
 	}
