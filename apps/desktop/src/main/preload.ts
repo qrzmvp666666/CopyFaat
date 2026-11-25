@@ -11,7 +11,6 @@ const api: DesktopApi = {
 	chooseCollector: async () => null,
 	openExternal: (target) => ipcRenderer.invoke("open-external", target),
 	showWorkspace: (taskId, tab) => ipcRenderer.invoke("show-workspace", taskId, tab),
-	setIsland: (expanded) => ipcRenderer.invoke("set-island", expanded),
 	windowAction: (action) => ipcRenderer.invoke("window-action", action),
 	onState: (callback) => {
 		const listener = (

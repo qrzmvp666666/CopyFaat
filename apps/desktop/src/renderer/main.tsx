@@ -7,6 +7,6 @@ import "./ui/styles.css";
 
 createRoot(document.getElementById("root")!).render(
 	<StrictMode>
-		<App island={location.hash === "#/island"} />
+		<App />
 	</StrictMode>,
 );

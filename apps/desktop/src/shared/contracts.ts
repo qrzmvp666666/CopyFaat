@@ -138,7 +138,6 @@ export interface DesktopApi {
 	chooseCollector(): Promise<string | null>;
 	openExternal(target: "telegram" | "discord" | "support" | "permissions"): Promise<void>;
 	showWorkspace(taskId?: string, tab?: string): Promise<void>;
-	setIsland(expanded: boolean): Promise<void>;
 	windowAction(action: "minimize" | "maximize" | "close"): Promise<void>;
 	onState(callback: (state: PublicState) => void): () => void;
 	onNavigate(callback: (target: { taskId?: string; tab?: string }) => void): () => void;

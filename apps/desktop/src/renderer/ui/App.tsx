@@ -1,16 +1,12 @@
 import {
-	Activity,
 	ChevronDown,
 	CircleAlert,
 	ExternalLink,
 	Filter,
 	List,
-	MessageSquareText,
 	Plus,
 	RefreshCw,
 	Settings2,
-	SlidersHorizontal,
-	X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -56,6 +52,53 @@ const sampleTasks: DisplayTask[] = [
 		target: "TG / 我的资讯 / #团队公告",
 		lastRunAt: "3 分钟前",
 	},
+	{
+		id: "sample-community",
+		name: "社区公告同步",
+		platform: "discord",
+		status: "running",
+		source: "开发者社区 · 2 个频道",
+		target: "DC / 我的工作室 / #社区公告",
+		lastRunAt: "14:30:12",
+	},
+	{
+		id: "sample-overseas",
+		name: "海外资讯",
+		platform: "telegram",
+		status: "running",
+		source: "海外资讯 · 1 个频道",
+		target: "DC / 我的工作室 / #海外资讯",
+		lastRunAt: "14:31:22",
+	},
+	{
+		id: "sample-events",
+		name: "活动通知",
+		platform: "telegram",
+		status: "paused",
+		source: "活动频道 · 1 个频道",
+		target: "DC / 我的工作室 / #活动",
+		lastRunAt: "昨天",
+	},
+];
+
+type MessageRow = {
+	id: string;
+	taskName: string;
+	platform: "discord" | "telegram";
+	source: string;
+	author: string;
+	time: string;
+	text: string;
+	target: string;
+	status: string;
+};
+
+const previewMessages: MessageRow[] = [
+	{ id: "preview-1", taskName: "行业快讯", platform: "telegram", source: "行业观察 / #行业快讯", author: "Atlas", time: "14:32:08", text: "本周产品更新已发布，完整更新说明见频道置顶。", target: "my-tg / #行业快讯", status: "synced" },
+	{ id: "preview-2", taskName: "产品更新汇总", platform: "discord", source: "产品社区 / #产品更新", author: "Mia", time: "14:31:45", text: "桌面端新增多频道选择，现已开放测试。", target: "my-dc / #产品资讯", status: "synced" },
+	{ id: "preview-3", taskName: "海外资讯", platform: "telegram", source: "海外资讯 / #news", author: "Nova", time: "14:31:22", text: "开发者活动将于周五开始，报名入口已更新。", target: "my-dc / #海外资讯", status: "pending" },
+	{ id: "preview-4", taskName: "团队公告", platform: "discord", source: "团队空间 / #公告", author: "Alex", time: "14:30:52", text: "团队周会记录已整理，请在本周内确认。", target: "my-tg / #团队公告", status: "failed" },
+	{ id: "preview-5", taskName: "社区公告同步", platform: "discord", source: "开发者社区 / #公告", author: "Ryan", time: "14:30:12", text: "社区文档更新完成，请使用最新链接。", target: "my-dc / #社区公告", status: "synced" },
 ];
 function toDisplayTask(task: PublicTask): DisplayTask {
 	return {
@@ -69,11 +112,10 @@ function toDisplayTask(task: PublicTask): DisplayTask {
 	};
 }
 
-export function App({ island }: { island: boolean }) {
+export function App() {
 	const [state, setState] = useState<PublicState>(emptyState);
 	const [tab, setTab] = useState("messages");
 	const [selected, setSelected] = useState<string>();
-	const [expanded, setExpanded] = useState(false);
 	const [createOpen, setCreateOpen] = useState(false);
 	const [prototypeTasks, setPrototypeTasks] = useState<PublicTask[]>([]);
 	useEffect(() => {
@@ -88,18 +130,6 @@ export function App({ island }: { island: boolean }) {
 			}),
 		[],
 	);
-	if (island)
-		return (
-			<Island
-				state={state}
-				expanded={expanded}
-				setExpanded={setExpanded}
-				onSelect={(task) => {
-					setSelected(task);
-					void window.copyfast.showWorkspace(task, "messages");
-				}}
-			/>
-		);
 	const tasks = state.tasks.length
 		? state.tasks.map(toDisplayTask)
 		: [...prototypeTasks.map(toDisplayTask), ...sampleTasks];
@@ -111,22 +141,21 @@ export function App({ island }: { island: boolean }) {
 		state.tasks.find((t) => t.id === current?.id) ??
 		prototypeTasks.find((t) => t.id === current?.id) ??
 		state.tasks[0];
+	const isPreview =
+		state.tasks.length === 0 &&
+		state.messages.length === 0 &&
+		state.logs.length === 0 &&
+		prototypeTasks.length === 0;
 	return (
 		<main className="app-shell">
 			<header className="titlebar">
-				<span className="traffic">● ● ●</span>
+				<span className="traffic" aria-hidden="true" />
 				<strong>CopyFast</strong>
-				<span className="window-status">
-					{running} 运行 · {attention} 需处理
-				</span>
-				<button onClick={() => window.copyfast.windowAction("minimize")}>
-					<X size={15} />
-				</button>
 			</header>
 			<div className="workspace">
 				<aside className="sidebar">
 					<div className="brand">
-						CF <span>CopyFast</span>
+						<span className="brand-mark">CF</span> CopyFast
 					</div>
 					<div className="eyebrow">工作台</div>
 					<div className="nav-active">
@@ -135,7 +164,7 @@ export function App({ island }: { island: boolean }) {
 					</div>
 					<div className="nav-muted">
 						<Settings2 size={16} />
-						本机设置
+						连接与权限
 					</div>
 					<div className="task-label">
 						全部任务 <span>{total}</span>
@@ -158,12 +187,12 @@ export function App({ island }: { island: boolean }) {
 						))}
 					</div>
 					<div className="sidebar-bottom">
-						<div className="eyebrow">平台连接（界面示例）</div>
+						<div className="eyebrow">已连接平台</div>
 						<div className="connection">
-							<b>TG</b>Telegram <small>未连接</small>
+							<b>TG</b>Telegram <small>{isPreview ? "已连接" : "未连接"}</small>
 						</div>
 						<div className="connection">
-							<b>DC</b>Discord <small>未连接</small>
+							<b>DC</b>Discord <small>{isPreview ? "已连接" : "未连接"}</small>
 						</div>
 						<button
 							className="support"
@@ -177,12 +206,10 @@ export function App({ island }: { island: boolean }) {
 				<section className="content">
 					<div className="content-head">
 						<div>
-							<div className="eyebrow">工作区 / 本机任务</div>
+							<div className="eyebrow">工作区 / 采集与同步</div>
 							<h1>采集工作台</h1>
 							<p>
-								{current
-									? `${current.name} · ${current.source} → ${current.target}`
-									: "统一查看多平台任务、采集日志与消息记录。"}
+								统一查看多平台采集结果，追踪每一次采集与同步。
 							</p>
 						</div>
 						<button className="primary" onClick={() => setCreateOpen(true)}>
@@ -191,41 +218,50 @@ export function App({ island }: { island: boolean }) {
 						</button>
 					</div>
 					<div className="metrics">
-						<Metric label="运行任务" value={`${running} / ${total}`} />
-						<Metric label="今日采集" value={String(state.messages.length)} />
+						<Metric label="运行任务" value={isPreview ? "4 / 6" : `${running} / ${total}`} />
+						<Metric label="今日采集" value={isPreview ? "128" : String(state.messages.length)} />
 						<Metric
 							label="已同步"
 							value={String(
-								state.messages.filter((m) => m.status === "synced").length,
+								isPreview
+									? 124
+									: state.messages.filter((m) => m.status === "synced").length,
 							)}
 						/>
-						<Metric label="待处理" value={String(attention)} />
+						<Metric label="待处理" value={isPreview ? "4" : String(attention)} />
 					</div>
 					<div className="tabs">
 						<button
 							className={tab === "messages" ? "tab-active" : ""}
 							onClick={() => setTab("messages")}
 						>
-							<MessageSquareText size={15} />
-							消息列表 <b>{state.messages.length}</b>
+							消息列表 <b>{isPreview ? "128" : state.messages.length}</b>
 						</button>
 						<button
 							className={tab === "logs" ? "tab-active" : ""}
 							onClick={() => setTab("logs")}
 						>
-							<Activity size={15} />
-							任务日志 <b>{state.logs.length}</b>
+							任务日志 <b>{isPreview ? "24" : state.logs.length}</b>
 						</button>
 						<button
 							className={tab === "rules" ? "tab-active" : ""}
 							onClick={() => setTab("rules")}
 						>
-							<SlidersHorizontal size={15} />
 							采集范围与规则
 						</button>
+						<span className="window-status">
+							最近更新 14:32:08
+							<button
+								className="refresh-action"
+								aria-label="刷新"
+								onClick={() => void window.copyfast.state().then(setState)}
+							>
+								<RefreshCw size={12} /> 刷新
+							</button>
+						</span>
 					</div>
 					{tab === "messages" ? (
-						<MessageList state={state} />
+						<MessageList state={state} task={currentTask} preview={isPreview} />
 					) : tab === "logs" ? (
 						<LogList state={state} />
 					) : (
@@ -275,50 +311,102 @@ function Metric({ label, value }: { label: string; value: string }) {
 		</div>
 	);
 }
-function MessageList({ state }: { state: PublicState }) {
-	const rows = state.messages.length ? state.messages : [];
+function MessageList({
+	state,
+	task,
+	preview,
+}: {
+	state: PublicState;
+	task: PublicTask | undefined;
+	preview: boolean;
+}) {
+	const rows: MessageRow[] = preview
+		? previewMessages
+		: state.messages.slice(-8).reverse().map((message) => {
+				const sourceTask = state.tasks.find((item) => item.id === message.taskId);
+				const sourceChannel = sourceTask?.source.channels.find(
+					(channel) => channel.id === message.channelId,
+				);
+				const targetChannel = sourceTask?.target.channels[0];
+				return {
+					id: message.key,
+					taskName: sourceTask?.name ?? task?.name ?? "采集任务",
+					platform: sourceTask?.source.platform ?? task?.source.platform ?? "discord",
+					source: `${sourceTask?.source.server.name ?? "来源服务器"} / #${sourceChannel?.name ?? message.channelId}`,
+					author: message.author || "未知作者",
+					time: new Date(message.sentAt).toLocaleTimeString(),
+					text: message.text || (message.attachments.length ? "附件消息" : "无文本内容"),
+					target: `${sourceTask?.target.server.name ?? "我的服务器"} / #${targetChannel?.name ?? "目标频道"}`,
+					status: message.status,
+				};
+			});
+	const statusText: Record<string, string> = {
+		synced: "已同步",
+		pending: "待同步",
+		sending: "同步中",
+		failed: "同步失败",
+		uncertain: "需核对",
+		filtered: "已过滤",
+	};
 	return (
 		<Panel>
 			<div className="filters">
 				<button>
-					全部平台 <ChevronDown size={14} />
+					全部平台 <ChevronDown size={13} />
 				</button>
 				<button>
-					全部任务 <ChevronDown size={14} />
+					全部任务 <ChevronDown size={13} />
 				</button>
 				<button>
-					全部状态 <ChevronDown size={14} />
+					全部状态 <ChevronDown size={13} />
+				</button>
+				<button>
+					今天 <ChevronDown size={13} />
 				</button>
 				<span>
 					<Filter size={14} />
 					搜索消息、作者或频道
 				</span>
 			</div>
+			<div className="table-head">
+				<span>消息 / 来源</span>
+				<span>消息内容</span>
+				<span>同步状态</span>
+				<span>详情</span>
+			</div>
 			{rows.length ? (
-				rows
-					.slice(-8)
-					.reverse()
-					.map((m) => (
-						<div className="data-row" key={m.key}>
-							<i className="platform">消息</i>
-							<div>
-								<b>{m.author || "未知作者"}</b>
-								<small>
-									{m.channelId} · {new Date(m.sentAt).toLocaleTimeString()}
-								</small>
+				<>
+					{rows.map((message) => (
+							<div className="data-row" key={message.id}>
+								<div className="row-source">
+									<i className={`platform ${message.platform}`}>
+										{message.platform === "telegram" ? "TG" : "DC"}
+									</i>
+									<div>
+										<b>{message.taskName}</b>
+										<small>{message.source} · {message.author} · {message.time}</small>
+									</div>
+								</div>
+								<div className="message-copy">
+									<span>{message.text}</span>
+								</div>
+								<strong className={`state ${message.status}`}>
+									<span>{statusText[message.status] ?? message.status}</span>
+									<small>{message.target}</small>
+								</strong>
+								<button className="row-action">查看</button>
 							</div>
-							<p>{m.text || "附件消息"}</p>
-							<strong className={`state ${m.status}`}>
-								{m.status === "synced"
-									? "已同步"
-									: m.status === "uncertain"
-										? "需核对"
-										: m.status === "failed"
-											? "同步失败"
-											: "待同步"}
-							</strong>
+						))}
+					<div className="pagination">
+						<span>显示 1–5 条，共 {preview ? 128 : rows.length} 条消息</span>
+						<span>‹　1　2　3　…　{preview ? 26 : 1}　›</span>
+					</div>
+					{preview && (
+						<div className="preview-note">
+						示例数据 · 任务状态、采集记录与消息同步结果在此统一查看
 						</div>
-					))
+					)}
+				</>
 			) : (
 				<Empty
 					title="等待采集消息"
@@ -429,72 +517,6 @@ function Empty({ title, detail }: { title: string; detail: string }) {
 			<CircleAlert size={22} />
 			<b>{title}</b>
 			<span>{detail}</span>
-		</div>
-	);
-}
-function Island({
-	state,
-	expanded,
-	setExpanded,
-	onSelect,
-}: {
-	state: PublicState;
-	expanded: boolean;
-	setExpanded: (value: boolean) => void;
-	onSelect: (task: string) => void;
-}) {
-	const tasks = state.tasks.length ? state.tasks.map(toDisplayTask) : sampleTasks;
-	const running = tasks.filter((t) => t.status === "running").length;
-	const paused = tasks.filter((t) => t.status === "paused").length;
-	const attention = tasks.filter((t) => t.status === "attention").length;
-	const telegram = tasks.filter((t) => t.platform === "telegram").length;
-	const discord = tasks.filter((t) => t.platform === "discord").length;
-	return (
-		<div className={`island ${expanded ? "island-expanded" : ""}`}>
-			<div className="island-head">
-				<b>CF</b>
-				<span>
-					<strong>{running} 运行</strong>
-					<small>
-						TG {telegram} · DC {discord}
-					</small>
-				</span>
-				<span className="island-status">
-					Ⅱ {paused}　! {attention}
-				</span>
-				<button
-					onClick={(event) => {
-						event.stopPropagation();
-						setExpanded(!expanded);
-					}}
-				>
-					{expanded ? "收起" : "⌄"}
-				</button>
-			</div>
-			{expanded && (
-				<div className="island-tasks">
-					{tasks.map((task) => (
-						<button key={task.id} onClick={() => onSelect(task.id)}>
-							<i className={`platform ${task.platform}`}>
-								{task.platform === "telegram" ? "TG" : "DC"}
-							</i>
-							<span>
-								<b>{task.name}</b>
-								<small>
-									{task.source} → {task.target}
-								</small>
-							</span>
-							<strong className={`state ${task.status}`}>
-								{task.status === "attention"
-									? "! 需处理"
-									: task.status === "paused"
-										? "Ⅱ 已暂停"
-										: "⟳ 运行中"}
-							</strong>
-						</button>
-					))}
-				</div>
-			)}
 		</div>
 	);
 }

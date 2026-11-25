@@ -10,7 +10,6 @@ import { createSecretStore } from "./secret-store";
 import { createStore } from "./store";
 
 let workspace: BrowserWindow | undefined;
-let island: BrowserWindow | undefined;
 let engine: ReturnType<typeof createEngine> | undefined;
 let store: Awaited<ReturnType<typeof createStore>> | undefined;
 let secrets: Awaited<ReturnType<typeof createSecretStore>> | undefined;
@@ -40,19 +39,21 @@ function publicState(state: AppState) {
 function sendState(state: AppState) {
 	const data = publicState(state);
 	workspace?.webContents.send("state", data);
-	island?.webContents.send("state", data);
 }
 
 function createWindows() {
 	workspace = new BrowserWindow({
-		width: 1440,
-		height: 900,
+		width: 1480,
+		height: 830,
 		minWidth: 1100,
 		minHeight: 700,
 		show: false,
 		title: "CopyFast",
-		backgroundColor: "#111315",
+		transparent: true,
+		backgroundColor: "#00000000",
 		titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
+		vibrancy: process.platform === "darwin" ? "hud" : undefined,
+		backgroundMaterial: process.platform === "win32" ? "acrylic" : undefined,
 		webPreferences: {
 			preload: join(__dirname, "preload.cjs"),
 			contextIsolation: true,
@@ -64,33 +65,6 @@ function createWindows() {
 	workspace.once("ready-to-show", () => workspace?.show());
 	workspace.on("closed", () => {
 		workspace = undefined;
-	});
-	island = new BrowserWindow({
-		width: 520,
-		height: 88,
-		minWidth: 420,
-		maxWidth: 760,
-		minHeight: 74,
-		maxHeight: 720,
-		transparent: true,
-		frame: false,
-		resizable: false,
-		alwaysOnTop: true,
-		skipTaskbar: true,
-		show: false,
-		vibrancy: process.platform === "darwin" ? "under-window" : undefined,
-		backgroundMaterial: process.platform === "win32" ? "acrylic" : undefined,
-		webPreferences: {
-			preload: join(__dirname, "preload.cjs"),
-			contextIsolation: true,
-			nodeIntegration: false,
-			sandbox: true,
-		},
-	});
-	void island.loadURL(rendererUrl("/island"));
-	island.once("ready-to-show", () => island?.showInactive());
-	island.on("closed", () => {
-		island = undefined;
 	});
 }
 
@@ -132,9 +106,6 @@ function registerIpc() {
 		workspace?.focus();
 		workspace?.webContents.send("navigate", { taskId, tab });
 	});
-	ipcMain.handle("set-island", (_event, expanded: boolean) =>
-		island?.setSize(520, expanded ? 720 : 88),
-	);
 	ipcMain.handle("window-action", (_event, action: "minimize" | "maximize" | "close") => {
 		if (action === "minimize") workspace?.minimize();
 		else if (action === "maximize") {
