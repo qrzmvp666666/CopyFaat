@@ -1,4 +1,4 @@
-import { Check, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 import { useState } from "react";
 
 import type { Platform, Scope, TaskInput } from "../../shared/contracts";
@@ -7,6 +7,7 @@ import "./task-dialog.css";
 
 type Props = { onClose: () => void; onSaved: (input: TaskInput) => void };
 type ScopeDraft = { platform: Platform; serverId: string; serverName: string; channels: string };
+const STEPS = ["任务与来源", "同步目标", "采集规则"];
 
 const emptyScope = (platform: Platform): ScopeDraft => ({
 	platform,
@@ -41,16 +42,58 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 	const [exclude, setExclude] = useState("");
 	const [error, setError] = useState("");
 	const [saving, setSaving] = useState(false);
+	const [step, setStep] = useState(0);
+
+	function validateStep(stepToValidate: number) {
+		if (stepToValidate === 0) {
+			if (!name.trim()) return "请填写任务名称";
+			if (!source.serverName.trim() || !source.serverId.trim())
+				return "请填写采集来源的服务器名称和 ID";
+			if (parseChannels(source.channels).length === 0) return "请至少添加一个采集频道";
+		}
+		if (stepToValidate === 1) {
+			if (!target.serverName.trim() || !target.serverId.trim())
+				return "请填写同步目标的服务器名称和 ID";
+			if (parseChannels(target.channels).length === 0) return "请至少添加一个同步目标频道";
+			if (!endpoint.trim()) return "请填写目标地址";
+			try {
+				new URL(endpoint.trim());
+			} catch {
+				return "请输入有效的目标地址";
+			}
+			if (!secret.trim()) return "请输入目标平台密钥";
+			if (deliveryKind === "telegram-bot" && !chatId.trim())
+				return "Telegram 同步需要目标 chat ID";
+		}
+		if (stepToValidate === 2) {
+			if (!collector.trim()) return "请填写本机采集程序路径";
+			if (interval < 10 || interval > 86400) return "采集间隔需在 10 到 86400 秒之间";
+		}
+		return "";
+	}
+
+	function goToStep(nextStep: number) {
+		if (nextStep > step) {
+			const validationError = validateStep(step);
+			if (validationError) {
+				setError(validationError);
+				return;
+			}
+		}
+		setError("");
+		setStep(nextStep);
+	}
 
 	async function submit(event: React.FormEvent) {
 		event.preventDefault();
 		setError("");
+		const validationError = validateStep(step);
+		if (validationError) {
+			setError(validationError);
+			return;
+		}
 		setSaving(true);
 		try {
-			if (!collector.trim()) throw new Error("请选择本机采集程序");
-			if (!secret.trim()) throw new Error("请输入目标平台密钥");
-			if (deliveryKind === "telegram-bot" && !chatId.trim())
-				throw new Error("Telegram 同步需要目标 chat ID");
 			const input: TaskInput = {
 				name,
 				source: toScope(source),
@@ -90,7 +133,7 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 				if (event.target === event.currentTarget) onClose();
 			}}
 		>
-			<form className="task-dialog" onSubmit={submit}>
+			<form className="task-dialog" onSubmit={submit} noValidate>
 				<header className="dialog-head">
 					<div>
 						<span className="eyebrow">本地任务配置</span>
@@ -105,128 +148,163 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 						<X size={18} />
 					</button>
 				</header>
+				<nav className="dialog-steps" aria-label="新建任务步骤">
+					{STEPS.map((title, index) => (
+						<button
+							aria-current={step === index ? "step" : undefined}
+							className={
+								step === index
+									? "dialog-step active"
+									: step > index
+										? "dialog-step complete"
+										: "dialog-step"
+							}
+							key={title}
+							type="button"
+							onClick={() => index < step && goToStep(index)}
+						>
+							<span>{step > index ? <Check size={13} /> : index + 1}</span>
+							{title}
+						</button>
+					))}
+				</nav>
 				<div className="dialog-body">
-					<label className="field">
-						任务名称
-						<input
-							value={name}
-							onChange={(event) => setName(event.target.value)}
-							placeholder="例如：产品社区更新"
-							required
-							maxLength={80}
-						/>
-					</label>
-					<div className="scope-columns">
-						<ScopeFields title="采集来源" value={source} onChange={setSource} />
-						<ScopeFields title="同步目标" value={target} onChange={setTarget} />
-					</div>
-					<section className="form-section">
-						<div className="section-heading">
-							<b>采集程序</b>
-							<span>界面原型，稍后接入本机执行</span>
-						</div>
-						<div className="file-picker">
-							<input
-								value={collector}
-								onChange={(event) => setCollector(event.target.value)}
-								placeholder="例如：/path/to/collector"
-								required
-							/>
-						</div>
-						<small>此阶段仅演示配置界面，不会启动该程序。</small>
-					</section>
-					<section className="form-section">
-						<div className="section-heading">
-							<b>同步配置</b>
-							<span>凭据加密保存在本机系统安全存储中</span>
-						</div>
-						<div className="form-grid">
+					{step === 0 && (
+						<>
 							<label className="field">
-								同步方式
-								<select
-									value={deliveryKind}
-									onChange={(event) =>
-										setDeliveryKind(
-											event.target.value as TaskInput["delivery"]["kind"],
-										)
-									}
-								>
-									<option value="discord-webhook">Discord Webhook</option>
-									<option value="telegram-bot">Telegram Bot</option>
-									<option value="signal-webhook">CopyFast 信号 Webhook</option>
-								</select>
-							</label>
-							<label className="field">
-								目标地址
+								任务名称
 								<input
-									value={endpoint}
-									onChange={(event) => setEndpoint(event.target.value)}
-									placeholder={
-										deliveryKind === "telegram-bot"
-											? "https://api.telegram.org"
-											: "https://…"
-									}
+									value={name}
+									onChange={(event) => setName(event.target.value)}
+									placeholder="例如：产品社区更新"
 									required
-									type="url"
+									maxLength={80}
 								/>
 							</label>
-							<label className="field">
-								访问密钥
-								<input
-									value={secret}
-									onChange={(event) => setSecret(event.target.value)}
-									type="password"
-									autoComplete="new-password"
-									required
-									placeholder="不会写入任务文件"
-								/>
-							</label>
-							{deliveryKind === "telegram-bot" && (
-								<label className="field">
-									目标 chat ID
+							<div className="scope-columns">
+								<ScopeFields title="采集来源" value={source} onChange={setSource} />
+							</div>
+						</>
+					)}
+					{step === 1 && (
+						<>
+							<div className="scope-columns">
+								<ScopeFields title="同步目标" value={target} onChange={setTarget} />
+							</div>
+							<section className="form-section">
+								<div className="section-heading">
+									<b>同步方式</b>
+									<span>凭据暂存在当前前端原型流程中</span>
+								</div>
+								<div className="form-grid">
+									<label className="field">
+										同步方式
+										<select
+											value={deliveryKind}
+											onChange={(event) =>
+												setDeliveryKind(
+													event.target
+														.value as TaskInput["delivery"]["kind"],
+												)
+											}
+										>
+											<option value="discord-webhook">Discord Webhook</option>
+											<option value="telegram-bot">Telegram Bot</option>
+											<option value="signal-webhook">
+												CopyFast 信号 Webhook
+											</option>
+										</select>
+									</label>
+									<label className="field">
+										目标地址
+										<input
+											value={endpoint}
+											onChange={(event) => setEndpoint(event.target.value)}
+											placeholder={
+												deliveryKind === "telegram-bot"
+													? "https://api.telegram.org"
+													: "https://…"
+											}
+										/>
+									</label>
+									<label className="field">
+										访问密钥
+										<input
+											value={secret}
+											onChange={(event) => setSecret(event.target.value)}
+											type="password"
+											autoComplete="new-password"
+											placeholder="输入目标平台密钥"
+										/>
+									</label>
+									{deliveryKind === "telegram-bot" && (
+										<label className="field">
+											目标 chat ID
+											<input
+												value={chatId}
+												onChange={(event) => setChatId(event.target.value)}
+											/>
+										</label>
+									)}
+								</div>
+							</section>
+						</>
+					)}
+					{step === 2 && (
+						<>
+							<section className="form-section">
+								<div className="section-heading">
+									<b>采集程序</b>
+									<span>界面原型，稍后接入本机执行</span>
+								</div>
+								<div className="file-picker">
 									<input
-										value={chatId}
-										onChange={(event) => setChatId(event.target.value)}
+										value={collector}
+										onChange={(event) => setCollector(event.target.value)}
+										placeholder="例如：/path/to/collector"
 										required
 									/>
-								</label>
-							)}
-						</div>
-					</section>
-					<section className="form-section">
-						<div className="section-heading">
-							<b>采集规则</b>
-							<span>保存后可在任务规则页继续调整</span>
-						</div>
-						<div className="form-grid">
-							<label className="field">
-								采集间隔（秒）
-								<input
-									type="number"
-									min={10}
-									max={86400}
-									value={interval}
-									onChange={(event) => setInterval(Number(event.target.value))}
-								/>
-							</label>
-							<label className="field">
-								仅包含关键词
-								<input
-									value={include}
-									onChange={(event) => setInclude(event.target.value)}
-									placeholder="逗号分隔，可留空"
-								/>
-							</label>
-							<label className="field">
-								排除关键词
-								<input
-									value={exclude}
-									onChange={(event) => setExclude(event.target.value)}
-									placeholder="逗号分隔，可留空"
-								/>
-							</label>
-						</div>
-					</section>
+								</div>
+								<small>此阶段仅演示配置界面，不会启动该程序。</small>
+							</section>
+							<section className="form-section">
+								<div className="section-heading">
+									<b>采集规则</b>
+									<span>保存后可在任务规则页继续调整</span>
+								</div>
+								<div className="form-grid">
+									<label className="field">
+										采集间隔（秒）
+										<input
+											type="number"
+											min={10}
+											max={86400}
+											value={interval}
+											onChange={(event) =>
+												setInterval(Number(event.target.value))
+											}
+										/>
+									</label>
+									<label className="field">
+										仅包含关键词
+										<input
+											value={include}
+											onChange={(event) => setInclude(event.target.value)}
+											placeholder="逗号分隔，可留空"
+										/>
+									</label>
+									<label className="field">
+										排除关键词
+										<input
+											value={exclude}
+											onChange={(event) => setExclude(event.target.value)}
+											placeholder="逗号分隔，可留空"
+										/>
+									</label>
+								</div>
+							</section>
+						</>
+					)}
 					{error && (
 						<div className="form-error" role="alert">
 							{error}
@@ -234,14 +312,35 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 					)}
 				</div>
 				<footer className="dialog-footer">
-					<span>新任务会先以暂停状态保存到本机</span>
+					<span>新任务会先以暂停状态保存在本机</span>
+					{step > 0 && (
+						<button
+							type="button"
+							className="secondary"
+							onClick={() => goToStep(step - 1)}
+						>
+							<ArrowLeft size={14} />
+							上一步
+						</button>
+					)}
 					<button type="button" className="secondary" onClick={onClose}>
 						取消
 					</button>
-					<button className="primary" disabled={saving}>
-						<Check size={15} />
-						{saving ? "保存中…" : "保存任务"}
-					</button>
+					{step < STEPS.length - 1 ? (
+						<button
+							type="button"
+							className="primary"
+							onClick={() => goToStep(step + 1)}
+						>
+							下一步
+							<ArrowRight size={14} />
+						</button>
+					) : (
+						<button className="primary" disabled={saving}>
+							<Check size={15} />
+							{saving ? "保存中…" : "保存任务"}
+						</button>
+					)}
 				</footer>
 			</form>
 		</div>

@@ -1,4 +1,6 @@
-import { join } from "node:path";
+import { access, readdir } from "node:fs/promises";
+import { homedir } from "node:os";
+import { delimiter, join } from "node:path";
 
 import { app, BrowserWindow, ipcMain, shell, systemPreferences } from "electron";
 
@@ -19,7 +21,7 @@ function isDev() {
 }
 function rendererUrl(route = "") {
 	return isDev()
-		? `http://localhost:5173/#${route || "/"}`
+		? `http://localhost:${process.env.COPYFAST_DEV_PORT ?? "5173"}/#${route || "/"}`
 		: `file://${join(__dirname, "../renderer/index.html")}${route ? `#${route}` : ""}`;
 }
 function publicState(state: AppState) {
@@ -41,6 +43,75 @@ function sendState(state: AppState) {
 	workspace?.webContents.send("state", data);
 }
 
+async function firstExistingPath(paths: string[]) {
+	for (const path of paths) {
+		try {
+			await access(path);
+			return path;
+		} catch {
+			// Continue through known install locations.
+		}
+	}
+	return undefined;
+}
+
+async function desktopAppPath(target: "telegram" | "discord") {
+	const home = homedir();
+	if (process.platform === "darwin") {
+		const appName = target === "telegram" ? "Telegram.app" : "Discord.app";
+		return firstExistingPath([
+			join("/Applications", appName),
+			join(home, "Applications", appName),
+		]);
+	}
+	if (process.platform === "win32") {
+		const local = process.env.LOCALAPPDATA ?? "";
+		const roaming = process.env.APPDATA ?? "";
+		if (target === "telegram")
+			return firstExistingPath([
+				join(roaming, "Telegram Desktop", "Telegram.exe"),
+				join(local, "Programs", "Telegram Desktop", "Telegram.exe"),
+			]);
+		const discordDir = join(local, "Discord");
+		let versions: string[] = [];
+		try {
+			versions = (await readdir(discordDir)).filter((name) => name.startsWith("app-"));
+		} catch {
+			return undefined;
+		}
+		return firstExistingPath(
+			versions
+				.sort()
+				.reverse()
+				.map((version) => join(discordDir, version, "Discord.exe")),
+		);
+	}
+	const candidates = target === "telegram" ? ["telegram-desktop", "Telegram"] : ["discord"];
+	const searchPaths = (process.env.PATH ?? "").split(delimiter);
+	return firstExistingPath(
+		searchPaths.flatMap((directory) => candidates.map((name) => join(directory, name))),
+	);
+}
+
+async function runtimeInfo() {
+	const [telegram, discord] = await Promise.all([
+		desktopAppPath("telegram"),
+		desktopAppPath("discord"),
+	]);
+	return {
+		platform: process.platform,
+		version: app.getVersion(),
+		permissions: {
+			accessibility:
+				process.platform !== "darwin" ||
+				systemPreferences.isTrustedAccessibilityClient(false),
+			screen: "not-required",
+		},
+		systemSupported: process.platform === "darwin" || process.platform === "win32",
+		apps: { telegram: Boolean(telegram), discord: Boolean(discord) },
+	};
+}
+
 function createWindows() {
 	workspace = new BrowserWindow({
 		width: 1480,
@@ -50,7 +121,7 @@ function createWindows() {
 		show: false,
 		title: "CopyFast",
 		transparent: true,
-		backgroundColor: "#00000000",
+		backgroundColor: "#141415",
 		titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
 		vibrancy: process.platform === "darwin" ? "hud" : undefined,
 		backgroundMaterial: process.platform === "win32" ? "acrylic" : undefined,
@@ -70,16 +141,21 @@ function createWindows() {
 
 function registerIpc() {
 	ipcMain.handle("state", () => store?.read());
-	ipcMain.handle("runtime", () => ({
-		platform: process.platform,
-		version: app.getVersion(),
-		permissions: {
-			accessibility:
-				process.platform !== "darwin" ||
-				systemPreferences.isTrustedAccessibilityClient(false),
-			screen: "unknown",
-		},
-	}));
+	ipcMain.handle("runtime", runtimeInfo);
+	ipcMain.handle("launch-desktop-app", async (_event, target: "telegram" | "discord") => {
+		const path = await desktopAppPath(target);
+		if (!path) return false;
+		return !(await shell.openPath(path));
+	});
+	ipcMain.handle("request-accessibility-permission", async () => {
+		if (process.platform !== "darwin") return true;
+		const isTrusted = systemPreferences.isTrustedAccessibilityClient(true);
+		if (!isTrusted)
+			await shell.openExternal(
+				"x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
+			);
+		return isTrusted;
+	});
 	ipcMain.handle("save-task", async (_event, input: TaskInput, id?: string) =>
 		engine!.saveTask(input, id),
 	);
@@ -92,7 +168,7 @@ function registerIpc() {
 	ipcMain.handle("open-external", async (_event, target: string) => {
 		const urls: Record<string, string> = {
 			telegram: "https://desktop.telegram.org/",
-			discord: "https://discord.com/app",
+			discord: "https://discord.com/download",
 			support: "https://t.me/Michael_Qin",
 		};
 		if (target === "permissions" && process.platform === "darwin")

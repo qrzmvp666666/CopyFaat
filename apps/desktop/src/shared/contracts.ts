@@ -128,6 +128,8 @@ export interface RuntimeInfo {
 	platform: string;
 	version: string;
 	permissions: { accessibility: boolean; screen: string };
+	systemSupported: boolean;
+	apps: { telegram: boolean; discord: boolean };
 }
 export interface DesktopApi {
 	state(): Promise<PublicState>;
@@ -136,6 +138,8 @@ export interface DesktopApi {
 	taskAction(id: string, action: "pause" | "resume" | "run"): Promise<void>;
 	saveSecret(id: string, value: string): Promise<void>;
 	chooseCollector(): Promise<string | null>;
+	launchDesktopApp(target: "telegram" | "discord"): Promise<boolean>;
+	requestAccessibilityPermission(): Promise<boolean>;
 	openExternal(target: "telegram" | "discord" | "support" | "permissions"): Promise<void>;
 	showWorkspace(taskId?: string, tab?: string): Promise<void>;
 	windowAction(action: "minimize" | "maximize" | "close"): Promise<void>;

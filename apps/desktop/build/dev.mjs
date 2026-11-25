@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import { build } from "esbuild";
 import { createServer } from "vite";
 const require = createRequire(import.meta.url);
+const port = Number(process.env.COPYFAST_DEV_PORT ?? 5173);
 await mkdir("dist/main", { recursive: true });
 await build({
 	entryPoints: ["src/main/main.ts"],
@@ -28,7 +29,7 @@ await build({
 });
 const server = await createServer({
 	root: "src/renderer",
-	server: { port: 5173, strictPort: true },
+	server: { port, strictPort: true },
 });
 await server.listen();
 const child = spawn(require.resolve("electron/cli.js"), ["dist/main/index.cjs"], {
