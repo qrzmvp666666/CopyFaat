@@ -1,4 +1,5 @@
 import { DownloadMenu } from "@home/components/DownloadMenu";
+import { HeroAtmosphere } from "@home/components/HeroAtmosphere";
 import { ProductDemoSection } from "@home/components/ProductDemoSection";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
@@ -8,7 +9,7 @@ export function HeroSection() {
 	return (
 		<>
 			<section className="island-hero">
-				<div className="island-scatter" aria-hidden="true" />
+				<HeroAtmosphere />
 				<h1>
 					<span>{t("line1")}</span>
 					<span className="island-green">{t("line2")}</span>
@@ -24,6 +25,7 @@ export function HeroSection() {
 						{t("plans")}
 					</a>
 				</div>
+				<div className="island-hero-platforms">{t("supportedPlatforms")}</div>
 			</section>
 			<ProductDemoSection />
 			<div className="island-community">

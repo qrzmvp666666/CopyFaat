@@ -2,6 +2,10 @@
 	"name": "signalfast",
 	"private": true,
 	"scripts": {
+		"desktop:dev": "pnpm --filter @repo/desktop dev",
+		"desktop:build": "pnpm --filter @repo/desktop build",
+		"desktop:type-check": "pnpm --filter @repo/desktop type-check",
+		"desktop:test": "pnpm --filter @repo/desktop test",
 		"build": "dotenv -c -- turbo build",
 		"dev": "dotenv -c -- turbo dev --concurrency 15",
 		"type-check": "dotenv -c -- turbo type-check",
@@ -31,6 +35,7 @@
 	"packageManager": "pnpm@10.28.2",
 	"pnpm": {
 		"onlyBuiltDependencies": [
+			"agent-desktop",
 			"@parcel/watcher",
 			"@prisma/client",
 			"@prisma/engines",

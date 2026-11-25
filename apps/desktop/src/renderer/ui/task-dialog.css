@@ -1,0 +1,204 @@
+.modal-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	display: grid;
+	place-items: center;
+	padding: 28px;
+	background: #05070bcc;
+	backdrop-filter: blur(18px);
+}
+.task-dialog {
+	width: min(940px, 100%);
+	max-height: min(900px, calc(100vh - 56px));
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	background: linear-gradient(145deg, #25262bef, #17191df5 58%, #28231ff2);
+	border: 1px solid #ffffff25;
+	border-radius: 18px;
+	box-shadow:
+		0 32px 100px #000b,
+		inset 0 1px #ffffff16;
+}
+.dialog-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 24px 30px 20px;
+	border-bottom: 1px solid #ffffff12;
+}
+.dialog-head h2 {
+	margin: 6px 0 0;
+	font-size: 23px;
+}
+.icon-button {
+	display: grid;
+	place-items: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 9px;
+	background: #ffffff0c;
+	color: #aaa;
+}
+.dialog-body {
+	display: grid;
+	gap: 18px;
+	padding: 22px 30px;
+	overflow: auto;
+}
+.field {
+	display: grid;
+	gap: 8px;
+	color: #a8a9ad;
+	font-size: 12px;
+}
+.field input,
+.field select,
+.field textarea,
+.section-heading select {
+	width: 100%;
+	min-width: 0;
+	border: 1px solid #ffffff18;
+	border-radius: 8px;
+	background: #0c0e12b8;
+	color: #eee;
+	padding: 11px 12px;
+	font: inherit;
+	outline: none;
+}
+.field textarea {
+	resize: vertical;
+	line-height: 1.55;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus,
+.section-heading select:focus {
+	border-color: #ffffff55;
+	box-shadow: 0 0 0 3px #ffffff0c;
+}
+.scope-columns {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px;
+}
+.scope-form,
+.form-section {
+	display: grid;
+	gap: 13px;
+	padding: 16px;
+	background: #ffffff08;
+	border: 1px solid #ffffff12;
+	border-radius: 11px;
+}
+.section-heading {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+}
+.section-heading > b {
+	font-size: 13px;
+	color: #e6e6e8;
+}
+.section-heading > span,
+.form-section > small,
+.scope-form > small {
+	font-size: 11px;
+	color: #777;
+	line-height: 1.45;
+}
+.section-heading select {
+	width: auto;
+	min-width: 120px;
+	padding: 7px 9px;
+}
+.scope-form .form-grid {
+	grid-template-columns: 1fr 1fr;
+}
+.form-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
+}
+.file-picker {
+	display: flex;
+	gap: 8px;
+}
+.file-picker input {
+	flex: 1;
+	min-width: 0;
+	border: 1px solid #ffffff18;
+	border-radius: 8px;
+	background: #0c0e12b8;
+	color: #eee;
+	padding: 11px 12px;
+}
+.form-error {
+	padding: 11px 13px;
+	border: 1px solid #ffffff24;
+	border-radius: 8px;
+	color: #eee;
+	background: #ffffff0c;
+	font-size: 12px;
+}
+.dialog-footer {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	padding: 16px 30px 20px;
+	border-top: 1px solid #ffffff12;
+}
+.dialog-footer > span {
+	margin-right: auto;
+	color: #777;
+	font-size: 11px;
+}
+.secondary {
+	padding: 10px 14px;
+	border: 1px solid #ffffff20;
+	border-radius: 8px;
+	background: #ffffff08;
+	color: #bbb;
+}
+.dialog-footer .primary {
+	padding: 10px 14px;
+}
+.primary:disabled {
+	opacity: 0.55;
+	cursor: wait;
+}
+@media (max-width: 760px) {
+	.modal-backdrop {
+		padding: 12px;
+	}
+	.task-dialog {
+		max-height: calc(100vh - 24px);
+	}
+	.dialog-head {
+		padding: 18px;
+	}
+	.dialog-body {
+		padding: 16px 18px;
+	}
+	.scope-columns,
+	.form-grid,
+	.scope-form .form-grid {
+		grid-template-columns: 1fr;
+	}
+	.dialog-footer {
+		padding: 14px 18px;
+		flex-wrap: wrap;
+	}
+	.dialog-footer > span {
+		flex-basis: 100%;
+	}
+	.section-heading {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+	.section-heading select {
+		width: 100%;
+	}
+}

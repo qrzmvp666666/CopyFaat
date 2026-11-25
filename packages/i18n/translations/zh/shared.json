@@ -32,8 +32,7 @@
 			"free": {
 				"description": "登录后即可使用完整信号工作区。",
 				"features": {
-					"freeAccess": "信号工作区完整访问",
-					"fullWorkspaceAccess": "信号工作区完整访问"
+					"freeAccess": "信号工作区完整访问"
 				},
 				"price": "0 USD",
 				"title": "免费"
@@ -92,5 +91,46 @@
 			"wechat_person": "微信支付",
 			"alipay_person": "支付宝"
 		}
+	},
+	"pricingComparison": {
+		"pricingTitle": "价格方案",
+		"pricingDescription": "对比其他方案与 CopyFast，社群运营成本一目了然。",
+		"estimatedSavings": "选择 CopyFast，预计每年少支出 {amount}",
+		"estimatedExtraCost": "按当前所选 CopyFast 价格估算，每年成本高于该基准 {amount}",
+		"alternativeTitle": "其他方案",
+		"costDescription": "市面上多数系统依赖专用 DC 账号更换监控消息，每月至少需要 2 个账号，按每个 $20 估算；AI 模型 Token 每月至少 $20。",
+		"accountCost": "专用 DC 账号（2 个）",
+		"perYear": "/ 年",
+		"perMonth": "/月",
+		"aiCost": "AI 模型 Token（至少）",
+		"alternativeTotal": "替代配置合计",
+		"ourPlanTitle": "我们的方案 · CopyFast",
+		"planDescription": "适用于 Discord 与 Telegram 社群运营，持续更新迭代，未来拓展其他渠道功能优先享用。",
+		"plans": "查看价格",
+		"costFootnote": "替代配置约 {annualCost}/年。实际费用因账号、用量与服务商而异。",
+		"perWeek": "/ 周",
+		"periods": ["年付", "周付"],
+		"alternativeHighlights": [
+			"通常只支持 Telegram 或 Discord 其中一个平台",
+			"通常仅支持 Mac 或 Windows 其中一种系统",
+			"AI 模型 Token 费用另计，至少约 $20/月",
+			"可监控频道数量受方案限制，扩容可能增加成本",
+			"监控启停与频率设置通常较受限",
+			"消息转发目标与流程需要自行配置",
+			"需自行准备账号，并处理代理与日常维护"
+		],
+		"planHighlights": [
+			"一个方案同时支持 Discord 与 Telegram",
+			"Mac 与 Windows 桌面端均可使用",
+			"7×24 小时 AI 自动监控并同步消息",
+			"可同时监控不限数量的频道",
+			"随时启停，并按需自定义监控频率",
+			"将关注内容直接转发到自己的社群",
+			"减少个人 Discord 账号依赖与代理配置工作"
+		],
+		"offerDays": "{count}天",
+		"remainingSpots": "仅剩 {count} 个名额",
+		"offerEnds": "优惠剩余",
+		"offerEnded": "优惠已结束"
 	}
 }

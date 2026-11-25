@@ -1,0 +1,76 @@
+{
+	"name": "@repo/desktop",
+	"version": "0.1.0",
+	"private": true,
+	"description": "CopyFast desktop collection workspace and multi-task island",
+	"main": "dist/main/index.cjs",
+	"scripts": {
+		"dev": "node build/dev.mjs",
+		"build": "node build/build.mjs",
+		"type-check": "tsc --noEmit",
+		"test": "vitest run",
+		"pack": "pnpm build && electron-builder --dir",
+		"dist:mac": "pnpm build && electron-builder --mac",
+		"dist:win": "pnpm build && electron-builder --win"
+	},
+	"dependencies": {
+		"lucide-react": "catalog:",
+		"react": "catalog:",
+		"react-dom": "catalog:",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"electron": "45.5.0",
+		"electron-builder": "26.18.0",
+		"esbuild": "^0.27.0",
+		"typescript": "catalog:",
+		"vite": "7.3.1",
+		"vitest": "catalog:"
+	},
+	"build": {
+		"appId": "cn.copyfast.desktop",
+		"productName": "CopyFast",
+		"directories": {
+			"output": "release"
+		},
+		"files": [
+			"dist/**/*",
+			"package.json"
+		],
+		"mac": {
+			"category": "public.app-category.productivity",
+			"target": [
+				{
+					"target": "dmg",
+					"arch": [
+						"arm64",
+						"x64"
+					]
+				}
+			],
+			"extendInfo": {
+				"NSMicrophoneUsageDescription": "CopyFast does not record audio.",
+				"NSScreenCaptureUsageDescription": "选择采集范围时展示屏幕内容。"
+			}
+		},
+		"win": {
+			"target": [
+				{
+					"target": "nsis",
+					"arch": [
+						"x64",
+						"arm64"
+					]
+				}
+			]
+		},
+		"nsis": {
+			"oneClick": false,
+			"allowToChangeInstallationDirectory": true,
+			"perMachine": false
+		}
+	}
+}

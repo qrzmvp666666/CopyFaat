@@ -32,8 +32,7 @@
 			"free": {
 				"description": "Sign in to access the full signals workspace.",
 				"features": {
-					"freeAccess": "Full signals workspace access",
-					"fullWorkspaceAccess": "Full signals workspace access"
+					"freeAccess": "Full signals workspace access"
 				},
 				"price": "0 USD",
 				"title": "Free"
@@ -92,5 +91,46 @@
 			"wechat_person": "WeChat Pay",
 			"alipay_person": "Alipay"
 		}
+	},
+	"pricingComparison": {
+		"pricingTitle": "Pricing",
+		"pricingDescription": "Compare common alternatives with CopyFast and see the operating costs at a glance.",
+		"estimatedSavings": "Choose CopyFast and save an estimated {amount} per year",
+		"estimatedExtraCost": "At the selected CopyFast price, the annual cost is {amount} above this baseline",
+		"alternativeTitle": "Other options",
+		"costDescription": "Many systems rely on dedicated Discord accounts to switch monitored messages: at least two accounts per month at an estimated $20 each, plus at least $20/month for AI model tokens.",
+		"accountCost": "Dedicated Discord accounts (2)",
+		"perYear": "/ year",
+		"perMonth": "/mo",
+		"aiCost": "AI model tokens (minimum)",
+		"alternativeTotal": "Estimated alternative total",
+		"ourPlanTitle": "Our option · CopyFast",
+		"planDescription": "For Discord and Telegram communities, with ongoing updates and priority access to future channel features.",
+		"plans": "View pricing",
+		"costFootnote": "Alternative setup is about {annualCost}/year. Actual costs vary by accounts, usage, and providers.",
+		"perWeek": "/ week",
+		"periods": ["Yearly", "Weekly"],
+		"alternativeHighlights": [
+			"Usually supports either Telegram or Discord, not both",
+			"Usually supports either Mac or Windows, not both",
+			"AI model tokens are extra, from about $20/month",
+			"Channel capacity is often limited by the plan",
+			"Monitoring controls and frequency options are often limited",
+			"Forwarding destinations and workflows require manual setup",
+			"You manage account setup, proxies, and ongoing maintenance"
+		],
+		"planHighlights": [
+			"Use Discord and Telegram together in one plan",
+			"Available on both Mac and Windows",
+			"24/7 AI monitoring with automatic message sync",
+			"Monitor unlimited channels at the same time",
+			"Start or pause anytime and customize monitoring frequency",
+			"Forward selected content directly to your own communities",
+			"Less reliance on personal Discord accounts and proxy setup"
+		],
+		"offerDays": "{count}d",
+		"remainingSpots": "Only {count} spots remaining",
+		"offerEnds": "Offer ends in",
+		"offerEnded": "Offer ended"
 	}
 }

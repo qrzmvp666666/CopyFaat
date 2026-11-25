@@ -14,6 +14,7 @@ export function ChangePlan({
 }) {
 	return (
 		<PricingTable
+			className="billing-pricing"
 			organizationId={organizationId}
 			userId={userId}
 			activePlanId={activePlanId}

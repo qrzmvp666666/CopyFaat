@@ -1,6 +1,18 @@
 # Changelog
 
+## 2026-11-25
+
+- fix: Align sitemap URLs with locale-prefixed marketing routes, exclude unpublished posts, and rename the local marketing host to copyfast.localhost.
+
+- feat: Add soft overhead light beams and pointer-driven digit ripples to the marketing hero, with reduced-motion support.
+
 ## 2026-11-24
+
+- fix: Use a native localized pricing anchor so navigation reliably scrolls to homepage plans.
+
+- feat: Add a localized pricing link to the marketing navigation that anchors to homepage plans with clearance for the fixed header.
+
+- feat: Show Mac (Intel / Apple silicon) and Windows support beneath the marketing hero download buttons in Chinese and English.
 
 - feat: Add a localized blog navigation entry and align blog listing and article styles with the CopyFast marketing site, including mobile layouts.
 

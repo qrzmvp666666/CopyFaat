@@ -22,6 +22,9 @@ export function NavBar() {
 					<span>COPYFAST</span>
 				</LocaleLink>
 				<div className="island-nav-links">
+					<a className="island-nav-text" href={`/${locale}#pricing`}>
+						{t("pricing")}
+					</a>
 					<LocaleLink className="island-nav-text" href="/contact">
 						{t("contact")}
 					</LocaleLink>

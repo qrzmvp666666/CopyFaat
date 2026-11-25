@@ -248,6 +248,7 @@
 			"start": "Download now",
 			"download": "Download now",
 			"loginRegister": "Log in / Sign up",
+			"supportedPlatforms": "Supports Mac (Intel / Apple silicon) and Windows",
 			"downloadOptions": {
 				"windows": "Windows",
 				"macAppleSilicon": "Mac (Apple silicon)",
@@ -354,6 +355,7 @@
 					"Visit the contact page for our support and community channels."
 				]
 			],
+			"pricing": "Pricing",
 			"pricingTitle": "Pricing",
 			"pricingDescription": "Compare common alternatives with CopyFast and see the operating costs at a glance.",
 			"alternativeTitle": "Other options",

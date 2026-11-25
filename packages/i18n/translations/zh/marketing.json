@@ -248,6 +248,7 @@
 			"start": "立即下载",
 			"download": "立即下载",
 			"loginRegister": "登录注册",
+			"supportedPlatforms": "支持 Mac（Intel / Apple 芯片）及 Windows",
 			"downloadOptions": {
 				"windows": "Windows 版",
 				"macAppleSilicon": "Mac 版（Apple 芯片）",
@@ -339,6 +340,7 @@
 				],
 				["遇到问题如何联系？", "请前往联系页面，查看我们的客服与社区联系方式。"]
 			],
+			"pricing": "定价",
 			"pricingTitle": "价格方案",
 			"pricingDescription": "对比其他方案与 CopyFast，社群运营成本一目了然。",
 			"alternativeTitle": "其他方案",

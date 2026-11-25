@@ -1,0 +1,408 @@
+.copyfast-pricing .island-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 9px;
+	min-height: 46px;
+	padding: 12px 22px;
+	border-radius: 9px;
+	font-size: 14px;
+	font-weight: 500;
+	text-decoration: none;
+	transition:
+		background 0.2s,
+		transform 0.2s;
+}
+.copyfast-pricing .island-button:hover {
+	transform: translateY(-1px);
+}
+.copyfast-pricing .island-button-primary {
+	background: #f1f1f1;
+	color: #171717;
+}
+.copyfast-pricing .island-button-primary:hover {
+	background: white;
+}
+
+.copyfast-pricing .island-section-heading {
+	text-align: center;
+	margin-bottom: 36px;
+}
+.copyfast-pricing .island-section-heading h2 {
+	font-weight: 600;
+	line-height: 1.6;
+}
+.copyfast-pricing .island-section-heading p {
+	color: #99999d;
+	margin-top: 8px;
+}
+.copyfast-pricing.island-pricing {
+	text-align: center;
+	padding: 95px 24px 110px;
+}
+.copyfast-pricing.island-pricing .island-section-heading h2 {
+	font-size: 28px;
+}
+.copyfast-pricing.island-pricing .island-section-heading p {
+	font-size: 15px;
+}
+.copyfast-pricing .island-cost-value {
+	position: relative;
+	max-width: 1000px;
+	margin: 0 auto;
+}
+.copyfast-pricing .island-cost-comparison {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+	align-items: stretch;
+	max-width: 1000px;
+	margin: 64px auto 28px;
+	text-align: left;
+}
+.copyfast-pricing .island-cost-side {
+	min-width: 0;
+	padding: 28px;
+	border: 1px solid #ffffff18;
+	border-radius: 12px;
+	background: #1d1d1f;
+}
+.copyfast-pricing .island-cost-copyfast {
+	border-color: #71bd8155;
+}
+.copyfast-pricing .island-cost-eyebrow {
+	margin: 0 0 8px;
+	color: #e5e5e7;
+	font-size: 17px;
+	font-weight: 600;
+}
+.copyfast-pricing .island-cost-description {
+	margin: 0;
+	color: #99999d;
+	font-size: 12px;
+	line-height: 1.7;
+}
+.copyfast-pricing .island-cost-versus {
+	align-self: center;
+	justify-self: center;
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	border: 1px solid #ffffff26;
+	border-radius: 50%;
+	background: #151516;
+	color: #aaa;
+	font-size: 12px;
+	font-weight: 700;
+}
+.copyfast-pricing .island-cost-equation {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr) 20px minmax(0, 1.1fr);
+	align-items: center;
+	gap: 9px;
+	margin-top: 32px;
+}
+.copyfast-pricing .island-cost-equation > div {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+.copyfast-pricing .island-cost-equation > div > span {
+	color: #99999d;
+	font-size: 11px;
+	line-height: 1.45;
+}
+.copyfast-pricing .island-cost-equation strong {
+	font-size: 18px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+.copyfast-pricing .island-cost-equation small {
+	color: #89898d;
+	font-size: 11px;
+	white-space: nowrap;
+}
+.copyfast-pricing .island-cost-operator {
+	color: #7bc58c;
+	font-size: 19px;
+	font-weight: 600;
+	text-align: center;
+}
+.copyfast-pricing .island-cost-equation-total {
+	padding-left: 9px;
+	border-left: 1px solid #ffffff20;
+}
+.copyfast-pricing .island-price-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin: 25px 0 18px;
+}
+.copyfast-pricing .island-cost-copyfast .island-price {
+	margin: 0;
+}
+.copyfast-pricing .island-cost-copyfast .island-price strong {
+	font-size: 42px;
+}
+.copyfast-pricing .island-cost-copyfast > .island-button {
+	width: 100%;
+	min-height: 42px;
+	font-size: 12px;
+	padding: 10px;
+}
+.copyfast-pricing .island-cost-savings,
+.copyfast-pricing .island-cost-footnote {
+	grid-column: 1 / -1;
+	text-align: center;
+}
+.copyfast-pricing .island-cost-savings {
+	position: relative;
+	width: fit-content;
+	margin: 20px auto 0 !important;
+	max-width: 1000px;
+	color: #75c58a !important;
+	font-size: 22px !important;
+	font-weight: 600;
+}
+.copyfast-pricing .island-payment-methods {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 20px;
+	margin: 0;
+	flex-shrink: 0;
+	color: #d7d7d9;
+}
+.copyfast-pricing .island-payment-visa,
+.copyfast-pricing .island-payment-mastercard {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 20px;
+	min-width: 32px;
+	padding: 2px 5px;
+	border: 1px solid #ffffff20;
+	border-radius: 4px;
+	background: #f5f5f5;
+}
+.copyfast-pricing .island-payment-visa {
+	color: #173a75;
+	font-family: Arial, sans-serif;
+	font-size: 10px;
+	font-style: italic;
+	font-weight: 800;
+}
+.copyfast-pricing .island-payment-mastercard {
+	gap: 0;
+}
+.copyfast-pricing .island-payment-mastercard i {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: #eb001b;
+}
+.copyfast-pricing .island-payment-mastercard i + i {
+	margin-left: -4px;
+	background: #f79e1b;
+}
+.copyfast-pricing .island-payment-usdt {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	color: #53ae94;
+	font-size: 9px;
+	font-weight: 700;
+}
+.copyfast-pricing .island-payment-usdt svg {
+	width: 20px;
+	height: 20px;
+	fill: #53ae94;
+	stroke: #fff;
+	stroke-width: 0.9;
+}
+.copyfast-pricing .island-payment-tron {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	color: #e84142;
+}
+.copyfast-pricing .island-payment-tron svg {
+	width: 19px;
+	height: 19px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linejoin: round;
+}
+.copyfast-pricing .island-cost-footnote {
+	margin: 16px 0 0 !important;
+	font-size: 11px !important;
+}
+.copyfast-pricing .island-price {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	margin-bottom: 23px;
+	white-space: nowrap;
+}
+.copyfast-pricing .island-price strong {
+	font-size: 48px;
+	font-weight: 600;
+	letter-spacing: -2px;
+	line-height: 1.2;
+}
+.copyfast-pricing .island-price > span {
+	font-size: 12px;
+	color: #939397;
+}
+.copyfast-pricing .island-billing-switch {
+	display: flex;
+	padding: 4px;
+	border-radius: 8px;
+	background: #181819;
+	border: 1px solid #ffffff08;
+}
+.copyfast-pricing .island-billing-switch button {
+	flex: 1;
+	border-radius: 5px;
+	font-size: 12px;
+	padding: 7px;
+	cursor: pointer;
+	color: #919196;
+}
+.copyfast-pricing .island-billing-switch button[aria-pressed="true"] {
+	background: #3c3c3e;
+	color: #e7e7e9;
+	box-shadow: 0 1px 2px #0005;
+}
+.copyfast-pricing .island-billing-note {
+	font-size: 10px;
+	line-height: 1.6;
+	color: #757579;
+	margin-top: 12px;
+}
+.copyfast-pricing .island-cost-benefits {
+	display: grid;
+	grid-auto-rows: minmax(36px, auto);
+	gap: 13px;
+	margin: 22px 0 25px;
+	padding: 0;
+	list-style: none;
+}
+.copyfast-pricing .island-cost-benefits li {
+	display: grid;
+	grid-template-columns: 16px minmax(0, 1fr);
+	align-items: start;
+	gap: 10px;
+	color: #c2c2c5;
+	font-size: 13px;
+	line-height: 1.55;
+}
+.copyfast-pricing .island-cost-benefits svg {
+	margin-top: 2px;
+	color: #71bd81;
+}
+.copyfast-pricing .island-cost-limitations {
+	margin-top: 46px;
+}
+.copyfast-pricing .island-cost-copyfast .island-cost-benefits {
+	margin-top: 44px;
+}
+.copyfast-pricing .island-cost-limitations svg {
+	color: #d87878;
+}
+.copyfast-pricing.island-pricing-contact {
+	font-size: 12px;
+	color: #757578;
+	margin-top: 34px;
+}
+.copyfast-pricing.island-pricing-contact a {
+	color: #d2b28e;
+	margin-left: 4px;
+}
+
+@media (max-width: 760px) {
+	.copyfast-pricing.island-pricing {
+		padding: 60px 22px 80px;
+	}
+	.copyfast-pricing.island-pricing .island-section-heading h2 {
+		font-size: 24px;
+	}
+	.copyfast-pricing.island-pricing .island-section-heading p {
+		font-size: 13px;
+	}
+	.copyfast-pricing .island-cost-comparison {
+		margin-top: 30px;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 12px;
+	}
+	.copyfast-pricing .island-cost-side {
+		padding: 22px;
+	}
+	.copyfast-pricing .island-cost-versus {
+		width: 38px;
+		height: 38px;
+	}
+	.copyfast-pricing .island-cost-equation strong {
+		font-size: 15px;
+	}
+	.copyfast-pricing .island-cost-copyfast .island-cost-benefits {
+		margin-top: 22px;
+	}
+	.copyfast-pricing .island-price-row {
+		align-items: flex-start;
+		flex-direction: column;
+		gap: 0;
+	}
+	.copyfast-pricing .island-cost-savings,
+	.copyfast-pricing .island-cost-footnote {
+		grid-column: 1;
+	}
+}
+.copyfast-pricing .island-button:disabled {
+	opacity: 0.6;
+	cursor: wait;
+}
+.copyfast-pricing .island-offer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin: 18px 0;
+	color: #99999d;
+	font-size: 12px;
+}
+.copyfast-pricing .island-offer-time {
+	font-family: monospace;
+	font-variant-numeric: tabular-nums;
+	color: #75c58a;
+}
+.copyfast-pricing .island-offer-spots {
+	padding: 3px 8px;
+	border-radius: 999px;
+	background: #71bd8118;
+	color: #75c58a;
+}
+
+.billing-pricing .copyfast-pricing.island-pricing {
+	padding: 16px 0 32px;
+}
+.billing-pricing .copyfast-pricing .island-section-heading {
+	margin-bottom: 24px;
+}
+.billing-pricing .copyfast-pricing .island-cost-comparison {
+	margin-top: 32px;
+}
+@media (max-width: 760px) {
+	.billing-pricing .copyfast-pricing.island-pricing {
+		padding: 8px 0 24px;
+	}
+	.billing-pricing .copyfast-pricing .island-cost-comparison {
+		margin-top: 24px;
+	}
+}

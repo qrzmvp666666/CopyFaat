@@ -12,7 +12,7 @@ const localNetworkOrigins = Object.values(networkInterfaces())
 	.filter((address) => address !== "127.0.0.1");
 
 const nextConfig: NextConfig = {
-	allowedDevOrigins: localNetworkOrigins,
+	allowedDevOrigins: ["copyfast.localhost", ...localNetworkOrigins],
 	transpilePackages: ["@repo/i18n", "@repo/ui", "@repo/mail", "@repo/logs"],
 	images: {
 		unoptimized: true,

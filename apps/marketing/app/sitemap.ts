@@ -6,17 +6,15 @@ import type { MetadataRoute } from "next";
 
 const baseUrl = getBaseUrl();
 const locales = Object.keys(i18nConfig.locales);
-const defaultLocale = i18nConfig.defaultLocale;
 
 function localePath(locale: string, path: string): string {
-	const prefix = locale === defaultLocale ? "" : `/${locale}`;
-	return `${prefix}${path}`;
+	return `/${locale}${path}`;
 }
 
 const staticMarketingPages = ["", "/blog", "/changelog", "/contact"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-	const postPaths = getUniqueBasePaths(allPosts);
+	const postPaths = getUniqueBasePaths(allPosts.filter((post) => post.published));
 	const legalPaths = getUniqueBasePaths(allLegalPages);
 
 	return [

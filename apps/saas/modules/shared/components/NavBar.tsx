@@ -36,7 +36,6 @@ import {
 	BotMessageSquareIcon,
 	BadgeCheckIcon,
 	ChevronRightIcon,
-	CrownIcon,
 	MenuIcon,
 	PanelLeftCloseIcon,
 	PanelLeftOpenIcon,
@@ -287,34 +286,6 @@ function NavMenuList({
 	);
 }
 
-function MembershipLinkButton({ href, className }: { href: string; className?: string }) {
-	const locale = useLocale() as Locale;
-	const t = useTranslations("app.menu");
-
-	return (
-		<TooltipProvider delayDuration={0}>
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<Button
-						asChild
-						variant="outline"
-						size="icon"
-						className={cn(
-							"border-amber-400/25 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20 hover:text-amber-200 shrink-0",
-							className,
-						)}
-					>
-						<Link href={localizePath(href, locale)} aria-label={t("openEntitlements")}>
-							<CrownIcon className="size-4" />
-						</Link>
-					</Button>
-				</TooltipTrigger>
-				<TooltipContent>{t("openEntitlements")}</TooltipContent>
-			</Tooltip>
-		</TooltipProvider>
-	);
-}
-
 function SidebarEntitlementCountdown() {
 	const { activePlan } = usePurchases();
 	const activePlanEntitlement =
@@ -351,10 +322,6 @@ export function NavBar() {
 	const isCollapsedEffective = isCollapsed && !isMobile;
 
 	const basePath = activeOrganization ? `/${activeOrganization.slug}` : "";
-	const entitlementsHref =
-		paymentsConfig.billingAttachedTo === "organization" && activeOrganization
-			? `${basePath}/settings/billing`
-			: "/settings/billing";
 	const isSignalsWorkspace = pathname === `${basePath}/signals`;
 
 	const menuItems: NavMenuItem[] = useMemo(() => {
@@ -534,7 +501,6 @@ export function NavBar() {
 									)}
 								</Button>
 
-								<MembershipLinkButton href={entitlementsHref} />
 								<LocaleSwitch />
 								<NotificationCenter className="shrink-0" />
 							</div>
@@ -561,7 +527,6 @@ export function NavBar() {
 					</div>
 
 					<div className="mr-0 gap-2 md:hidden ml-auto flex items-center justify-end">
-						<MembershipLinkButton href={entitlementsHref} />
 						<NotificationCenter className="shrink-0" />
 						<UserMenu />
 					</div>

@@ -94,15 +94,38 @@ body {
 	pointer-events: none;
 	z-index: -1;
 }
-.island-scatter {
+.island-hero-atmosphere {
 	position: absolute;
-	inset: 60px 0 0;
-	max-width: 1060px;
-	margin: auto;
-	background: url("/images/v6-hero-scatter.png") center top/1060px 460px no-repeat;
-	opacity: 0.42;
+	inset: 0;
 	z-index: -1;
+	overflow: hidden;
 	pointer-events: none;
+	mask-image: linear-gradient(#000 70%, transparent);
+}
+.island-hero-light {
+	position: absolute;
+	inset: 0;
+	background:
+		radial-gradient(ellipse at 50% -18%, #f2f4e94d, transparent 64%),
+		conic-gradient(
+			from 155deg at 32% -15%,
+			transparent 0deg,
+			#e4ede51a 12deg,
+			transparent 25deg
+		),
+		conic-gradient(
+			from 165deg at 68% -20%,
+			transparent 0deg,
+			#edf2e824 14deg,
+			transparent 30deg
+		),
+		conic-gradient(from 158deg at 48% -25%, transparent 0deg, #edf2e81a 9deg, transparent 23deg);
+	filter: blur(12px);
+}
+.island-hero-digits {
+	display: block;
+	width: 100%;
+	height: 100%;
 }
 .island-hero h1 {
 	font-family: "Departure Mono", var(--font-sans);
@@ -128,6 +151,13 @@ body {
 	display: flex;
 	justify-content: center;
 	gap: 12px;
+}
+.island-hero-platforms {
+	margin-top: 18px;
+	color: #99999d;
+	font-size: 12px;
+	line-height: 1.7;
+	text-wrap: balance;
 }
 .island-button {
 	display: inline-flex;

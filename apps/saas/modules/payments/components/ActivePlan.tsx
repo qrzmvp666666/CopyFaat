@@ -3,7 +3,7 @@
 import { usePlanData } from "@payments/hooks/plan-data";
 import { usePurchases } from "@payments/hooks/purchases";
 import { SettingsItem } from "@shared/components/SettingsItem";
-import { BadgeCheckIcon, CheckIcon } from "lucide-react";
+import { BadgeCheckIcon } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 
 import { CustomerPortalButton } from "../../settings/components/CustomerPortalButton";
@@ -44,17 +44,6 @@ export function ActivePlan({ organizationId }: { organizationId?: string; seats?
 							)}
 						</div>
 					</div>
-
-					{!!activePlanData.features?.length && (
-						<ul className="mt-2 gap-2 text-sm grid list-none">
-							{activePlanData.features.map((feature, key) => (
-								<li key={key} className="flex items-center justify-start">
-									<CheckIcon className="mr-2 size-4 text-primary" />
-									<span>{feature}</span>
-								</li>
-							))}
-						</ul>
-					)}
 
 					{price && (
 						<strong
