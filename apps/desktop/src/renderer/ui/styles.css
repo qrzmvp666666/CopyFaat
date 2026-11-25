@@ -994,6 +994,50 @@ button:disabled {
 	gap: 8px;
 	min-height: 42px;
 }
+.filters select,
+.filters input {
+	font: inherit;
+	min-width: 110px;
+	height: 31px;
+	padding: 0 10px;
+	border: 1px solid #ffffff0a;
+	border-radius: 6px;
+	outline: 0;
+	color: #c8c8cd;
+	background: linear-gradient(120deg, #ffffff0d, #ffffff08);
+	font-size: 10px;
+}
+.filters select {
+	appearance: none;
+	padding-right: 28px;
+	background-image:
+		linear-gradient(45deg, transparent 50%, #9e9ea6 50%),
+		linear-gradient(135deg, #9e9ea6 50%, transparent 50%),
+		linear-gradient(120deg, #ffffff0d, #ffffff08);
+	background-position:
+		calc(100% - 14px) 13px,
+		calc(100% - 10px) 13px,
+		0 0;
+	background-size:
+		4px 4px,
+		4px 4px,
+		100% 100%;
+	background-repeat: no-repeat;
+}
+.filters input {
+	min-width: 230px;
+}
+.filters select:hover,
+.filters input:hover,
+.filters select:focus,
+.filters input:focus {
+	border-color: #ffffff20;
+	background-color: #ffffff12;
+}
+.filters select option {
+	color: #d8d8dc;
+	background: #202023;
+}
 .filters button {
 	display: flex;
 	align-items: center;
