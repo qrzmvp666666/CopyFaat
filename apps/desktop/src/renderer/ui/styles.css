@@ -167,14 +167,15 @@ button:focus-visible {
 .brand {
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	margin: 0 10px 32px;
+	gap: 10px;
+	margin: 0 2px 32px 4px;
 	color: #e7e7e9;
 	font-size: 20px;
 	font-weight: 650;
 	line-height: 36px;
 }
 .brand-mark {
+	flex-shrink: 0;
 	display: grid;
 	place-items: center;
 	width: 36px;
@@ -205,41 +206,29 @@ button:focus-visible {
 	align-items: center;
 	gap: 10px;
 	width: 100%;
-	margin-top: 16px;
+	height: 42px;
+	flex-shrink: 0;
+	margin-top: 8px;
 	padding: 10px 13px;
 	border-radius: 9px;
 	color: #a4a4ab;
+	background: transparent;
 	font-size: 14px;
+	font-weight: 550;
 	text-align: left;
 }
+.sidebar > .eyebrow + button {
+	margin-top: 16px;
+}
 .nav-active {
-	height: 42px;
 	color: #eeeeef;
 	background: linear-gradient(100deg, #ffffff19, #ffffff0d);
 	box-shadow: inset 0 1px #ffffff0c;
-	font-size: 14px;
-	font-weight: 650;
-}
-.nav-active.task-context {
-	color: #a4a4ab;
-	background: transparent;
-	box-shadow: none;
-	font-weight: 450;
 }
 .nav-active svg,
 .nav-muted svg {
+	flex-shrink: 0;
 	color: #b9b9c0;
-}
-.nav-active.task-context svg {
-	color: #96969e;
-}
-.nav-muted {
-	height: 38px;
-	margin-top: 8px;
-	padding-left: 13px;
-	font-size: 13px;
-	background: transparent;
-	text-align: left;
 }
 .nav-muted:hover {
 	color: #eeeeef;
@@ -358,6 +347,41 @@ button:focus-visible {
 	margin-left: auto;
 	color: #898990;
 	font-size: 9px;
+}
+.connection small.connection-ready {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: #b8e6c8;
+	text-shadow: 0 0 8px #78d99a40;
+}
+.connection-ready::before {
+	width: 5px;
+	height: 5px;
+	flex: 0 0 5px;
+	border-radius: 50%;
+	background: #91dbaa;
+	box-shadow: 0 0 6px #91dbaa80;
+	content: "";
+	animation: connection-pulse 2.6s ease-out infinite;
+}
+@keyframes connection-pulse {
+	0% {
+		box-shadow:
+			0 0 6px #91dbaa80,
+			0 0 0 0 #91dbaa60;
+	}
+	75%,
+	100% {
+		box-shadow:
+			0 0 6px #91dbaa80,
+			0 0 0 6px #91dbaa00;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.connection-ready::before {
+		animation: none;
+	}
 }
 .support {
 	display: flex;
@@ -1448,4 +1472,77 @@ button:disabled {
 	.panel {
 		min-height: 360px;
 	}
+}
+
+.sidebar-toggle {
+	display: grid;
+	flex: 0 0 26px;
+	place-items: center;
+	width: 26px;
+	height: 28px;
+	margin-left: auto;
+	padding: 0;
+	border-radius: 6px;
+	color: #96969e;
+	background: transparent;
+}
+.sidebar-toggle:hover {
+	color: #eeeeef;
+	background: #ffffff0c;
+}
+.sidebar-toggle:focus-visible {
+	outline: 2px solid #b4b4bc;
+	outline-offset: 2px;
+}
+.task-label .task-label-text {
+	margin-left: 0;
+	color: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+}
+.sidebar.sidebar-collapsed {
+	flex-basis: 68px;
+	min-width: 0;
+	padding-right: 10px;
+	padding-left: 10px;
+}
+.sidebar-collapsed .sidebar-label,
+.sidebar-collapsed .connection small {
+	display: none;
+}
+.sidebar-collapsed .brand {
+	flex-direction: column;
+	gap: 12px;
+	margin-right: 0;
+	margin-bottom: 24px;
+	margin-left: 0;
+}
+.sidebar-collapsed .sidebar-toggle {
+	flex-basis: 28px;
+	margin-left: 0;
+}
+.sidebar-collapsed .nav-active,
+.sidebar-collapsed .nav-muted,
+.sidebar-collapsed .task-list button {
+	justify-content: center;
+	width: 44px;
+	padding-right: 0;
+	padding-left: 0;
+}
+.sidebar-collapsed .task-label {
+	margin-top: 28px;
+	padding: 0;
+}
+.sidebar-collapsed .task-label button {
+	right: 9px;
+}
+.sidebar-collapsed .sidebar-bottom {
+	padding: 0;
+}
+.sidebar-collapsed .connection {
+	justify-content: center;
+}
+.sidebar-collapsed .support {
+	justify-content: center;
+	padding: 0;
 }

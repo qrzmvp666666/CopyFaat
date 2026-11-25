@@ -6,6 +6,8 @@ Run from the repository root:
 pnpm desktop:dev
 ```
 
+On macOS, development starts a locally signed `dist/dev/CopyFast.app`, using the CopyFast name, icon, application identifier and package version. The first launch prepares this bundle; subsequent launches reuse it. Grant accessibility access to this CopyFast app when prompted. Existing development task records are copied from the previous data directory only when the CopyFast data file does not exist.
+
 The workspace groups channels by task. Selecting a task opens its first channel; selecting a channel scopes both the message list and the collection log. The “全部频道” entry combines the current scope. Switching between messages and logs retains the selected channel. Task rules, pause/run, and deletion remain in the task header.
 
 Message lists support author/content search, time filtering, pagination and a detail dialog. Each channel log records its batch, discovered messages, saved messages and skipped messages. Empty completed rounds show “无新增”; interrupted rounds leave counts unconfirmed. Older task logs remain labeled as task batch totals. Deleting a task preserves its messages and channel history.

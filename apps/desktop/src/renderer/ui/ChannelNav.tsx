@@ -19,10 +19,6 @@ export function ChannelNav({ channels, selectedKey, onSelect }: ChannelNavProps)
 	const groups = [...new Set(visible.map((channel) => channel.taskId))];
 	return (
 		<aside className="channel-nav" aria-label="频道导航">
-			<div className="channel-nav-title">
-				<strong>采集频道</strong>
-				<span>{channels.length}</span>
-			</div>
 			<label className="channel-search">
 				<Search size={13} />
 				<input

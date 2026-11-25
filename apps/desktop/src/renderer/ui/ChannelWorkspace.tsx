@@ -92,11 +92,6 @@ export function ChannelWorkspace({
 			<ChannelNav channels={channels} selectedKey={channel?.key} onSelect={changeChannel} />
 			<section className="channel-content" aria-label="频道内容">
 				<header className="channel-heading">
-					<small>
-						{channel
-							? `${channel.serverName} · ${channel.platform === "discord" ? "Discord" : "Telegram"}`
-							: "跨任务查看 · 本机已保存记录"}
-					</small>
 					<h2>{channel ? `# ${channel.name}` : "全部频道"}</h2>
 					<div className="channel-summary">
 						{channel && latest && (

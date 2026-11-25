@@ -15,14 +15,6 @@
 	border-right: 1px solid #29292c;
 	min-width: 0;
 }
-.channel-nav-title {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 0 8px 18px;
-	font-size: 13px;
-}
-.channel-nav-title span,
 .channel-nav small {
 	color: #828288;
 	font-size: 11px;
@@ -94,14 +86,10 @@
 	min-width: 0;
 	padding: 28px 28px 12px;
 }
-.channel-heading small {
-	font-size: 11px;
-	color: #898990;
-}
 .channel-heading h2 {
 	font-size: 24px;
 	letter-spacing: -0.5px;
-	margin: 12px 0 14px;
+	margin: 0 0 10px;
 	font-weight: 600;
 }
 .channel-summary {
@@ -144,7 +132,7 @@
 	align-items: center;
 	gap: 26px;
 	border-bottom: 1px solid #29292d;
-	margin-top: 24px;
+	margin-top: 8px;
 }
 .channel-tabs button {
 	background: transparent;

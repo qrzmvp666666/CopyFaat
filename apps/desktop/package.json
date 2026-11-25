@@ -1,6 +1,6 @@
 {
 	"name": "@repo/desktop",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"private": true,
 	"description": "CopyFast desktop collection workspace and multi-task island",
 	"main": "dist/main/index.cjs",

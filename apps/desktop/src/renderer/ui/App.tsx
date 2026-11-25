@@ -3,6 +3,7 @@ import {
 	Crown,
 	ExternalLink,
 	List,
+	PanelLeft,
 	Pause,
 	Play,
 	Plus,
@@ -21,6 +22,9 @@ import { TaskDialog } from "./TaskDialog";
 const emptyState: PublicState = { version: 1, tasks: [], messages: [], logs: [] };
 export function App() {
 	const [state, setState] = useState<PublicState>(emptyState);
+	const [sidebarCollapsed, setSidebarCollapsed] = useState(
+		() => localStorage.getItem("copyfast-sidebar-collapsed") === "true",
+	);
 	const [page, setPage] = useState<"workspace" | "connections">("workspace");
 	const [runtimeInfo, setRuntimeInfo] = useState<RuntimeInfo>();
 	const [isCheckingRuntime, setIsCheckingRuntime] = useState(false);
@@ -179,17 +183,35 @@ export function App() {
 				</div>
 			</header>
 			<div className="workspace">
-				<aside className="sidebar">
+				<aside className={`sidebar${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
 					<div className="brand">
-						<span className="brand-mark">CF</span> CopyFast
+						<span className="brand-mark">CF</span>
+						<span className="sidebar-label brand-text">CopyFast</span>
+						<button
+							type="button"
+							className="sidebar-toggle"
+							aria-label={sidebarCollapsed ? "展开侧边栏" : "折叠侧边栏"}
+							title={sidebarCollapsed ? "展开侧边栏" : "折叠侧边栏"}
+							aria-expanded={!sidebarCollapsed}
+							onClick={() => {
+								setSidebarCollapsed(!sidebarCollapsed);
+								localStorage.setItem(
+									"copyfast-sidebar-collapsed",
+									String(!sidebarCollapsed),
+								);
+							}}
+						>
+							<PanelLeft size={17} />
+						</button>
 					</div>
-					<div className="eyebrow">工作台</div>
+					<div className="eyebrow sidebar-label">工作台</div>
 					<button
 						type="button"
+						aria-label="采集工作台"
+						title={sidebarCollapsed ? "采集工作台" : undefined}
+						aria-current={page === "workspace" && !selectedTask ? "page" : undefined}
 						className={
-							page === "workspace" && !selectedTask
-								? "nav-active"
-								: "nav-active task-context"
+							page === "workspace" && !selectedTask ? "nav-active" : "nav-muted"
 						}
 						onClick={() => {
 							setPage("workspace");
@@ -198,10 +220,13 @@ export function App() {
 						}}
 					>
 						<List size={16} />
-						采集工作台
+						<span className="sidebar-label">采集工作台</span>
 					</button>
 					<button
 						type="button"
+						aria-label="连接与权限"
+						title={sidebarCollapsed ? "连接与权限" : undefined}
+						aria-current={page === "connections" ? "page" : undefined}
 						className={page === "connections" ? "nav-active" : "nav-muted"}
 						onClick={() => {
 							completeOnboarding();
@@ -210,18 +235,35 @@ export function App() {
 						}}
 					>
 						<Settings2 size={16} />
-						连接与权限
+						<span className="sidebar-label">连接与权限</span>
 					</button>
 					<div className="task-label">
-						全部任务 <span>{total}</span>
-						<button aria-label="新建采集任务" onClick={() => setCreateOpen(true)}>
+						<span className="sidebar-label task-label-text">
+							全部任务 <span>{total}</span>
+						</span>
+						<button
+							title="新建采集任务"
+							aria-label="新建采集任务"
+							onClick={() => setCreateOpen(true)}
+						>
 							<Plus size={16} />
 						</button>
 					</div>
 					<div className="task-list">
 						{tasks.map((task) => (
 							<button
-								className={selected === task.id ? "task-selected" : ""}
+								aria-label={task.name}
+								title={sidebarCollapsed ? task.name : undefined}
+								aria-current={
+									page === "workspace" && selected === task.id
+										? "page"
+										: undefined
+								}
+								className={
+									page === "workspace" && selected === task.id
+										? "task-selected"
+										: ""
+								}
 								key={task.id}
 								onClick={() => {
 									setPage("workspace");
@@ -232,15 +274,20 @@ export function App() {
 								<i className={`platform ${task.source.platform}`}>
 									{task.source.platform === "telegram" ? "TG" : "DC"}
 								</i>
-								{task.name}
+								<span className="sidebar-label">{task.name}</span>
 							</button>
 						))}
 					</div>
 					<div className="sidebar-bottom">
-						<div className="eyebrow">桌面应用</div>
-						<div className="connection">
-							<b>TG</b>Telegram{" "}
-							<small>
+						<div className="eyebrow sidebar-label">桌面应用</div>
+						<div className="connection" title="Telegram">
+							<b>TG</b>
+							<span className="sidebar-label">Telegram</span>
+							<small
+								className={
+									runtimeInfo?.apps.telegram ? "connection-ready" : undefined
+								}
+							>
 								{runtimeInfo
 									? runtimeInfo.apps.telegram
 										? "已安装"
@@ -248,9 +295,14 @@ export function App() {
 									: "未检测"}
 							</small>
 						</div>
-						<div className="connection">
-							<b>DC</b>Discord{" "}
-							<small>
+						<div className="connection" title="Discord">
+							<b>DC</b>
+							<span className="sidebar-label">Discord</span>
+							<small
+								className={
+									runtimeInfo?.apps.discord ? "connection-ready" : undefined
+								}
+							>
 								{runtimeInfo
 									? runtimeInfo.apps.discord
 										? "已安装"
@@ -260,10 +312,12 @@ export function App() {
 						</div>
 						<button
 							className="support"
+							aria-label="Telegram 客服"
+							title="Telegram 客服"
 							onClick={() => window.copyfast.openExternal("support")}
 						>
 							<ExternalLink size={14} />
-							Telegram 客服
+							<span className="sidebar-label">Telegram 客服</span>
 						</button>
 					</div>
 				</aside>

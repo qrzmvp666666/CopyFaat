@@ -1,10 +1,10 @@
 import { spawn } from "node:child_process";
 import { copyFile, mkdir } from "node:fs/promises";
-import { createRequire } from "node:module";
 
 import { build } from "esbuild";
 import { createServer } from "vite";
-const require = createRequire(import.meta.url);
+
+import { prepareDevRuntime } from "./dev-runtime.mjs";
 const port = Number(process.env.COPYFAST_DEV_PORT ?? 5173);
 await mkdir("dist/main", { recursive: true });
 await mkdir("dist/assets", { recursive: true });
@@ -29,12 +29,13 @@ await build({
 	sourcemap: true,
 	tsconfig: "tsconfig.json",
 });
+const runtime = await prepareDevRuntime();
 const server = await createServer({
 	root: "src/renderer",
 	server: { port, strictPort: true },
 });
 await server.listen();
-const child = spawn(require.resolve("electron/cli.js"), ["dist/main/index.cjs"], {
+const child = spawn(runtime.executable, runtime.args, {
 	stdio: "inherit",
 	env: { ...process.env, COPYFAST_DEV: "1", ELECTRON_ENABLE_LOGGING: "1" },
 });

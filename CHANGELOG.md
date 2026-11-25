@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-26
+
+- feat: Add a persistent icon-only desktop sidebar mode and simplify the connection settings by removing the unused screen recording item and bottom setup guide.
+
+- fix: Use the CopyFast application identity for local macOS development and set the desktop version to 1.0.0. Preserve existing development task records when switching application identities.
+
 ## 2026-11-25
 
 - feat: Browse desktop messages and collection logs by channel, with channel counts, search, pagination and task-level rules. Save per-channel collection results and retry failed rounds using the configured retry policy.

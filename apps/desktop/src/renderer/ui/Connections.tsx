@@ -1,6 +1,4 @@
 import {
-	ArrowRight,
-	Check,
 	CheckCircle2,
 	CircleAlert,
 	ExternalLink,
@@ -169,7 +167,7 @@ export function Connections({
 							<h2>系统权限</h2>
 							<p>
 								{isMac
-									? "桌面操作需要辅助功能权限；屏幕录制目前不是必需项。"
+									? "允许 CopyFast 读取和操作桌面应用。"
 									: "权限状态由当前系统管理，检测结果会显示在这里。"}
 							</p>
 						</div>
@@ -201,57 +199,8 @@ export function Connections({
 							</button>
 						)}
 					</div>
-					<div className="permission-row permission-optional">
-						<div className="permission-icon">
-							<Check size={16} />
-						</div>
-						<div className="permission-copy">
-							<strong>屏幕录制</strong>
-							<span>暂不需要 · 仅在后续功能需要时提示</span>
-						</div>
-					</div>
 				</section>
 			</div>
-
-			<section className="connection-section connection-flow">
-				<div className="section-heading">
-					<div>
-						<h2>设置步骤</h2>
-						<p>完成环境检查后，按顺序连接应用并开始采集。</p>
-					</div>
-					<button className="text-action" onClick={onDismissSetup}>
-						隐藏引导
-					</button>
-				</div>
-				<div className="connection-steps">
-					<Step
-						number="1"
-						title="检测本机环境"
-						description="确认系统支持，并检查桌面应用与必要权限。"
-						active={!runtimeInfo}
-						done={Boolean(
-							runtimeInfo?.systemSupported && (!isMac || permissionGranted),
-						)}
-					/>
-					<Step
-						number="2"
-						title="连接桌面应用"
-						description="启动 Telegram 或 Discord，并确认已登录。"
-						active={Boolean(runtimeInfo?.systemSupported && installedCount > 0)}
-						done={false}
-					/>
-					<Step
-						number="3"
-						title="开始采集"
-						description="回到工作台选择任务，查看本机采集结果。"
-						active={false}
-						done={false}
-					/>
-				</div>
-			</section>
-			<p className="connections-footnote">
-				应用与授权状态仅用于本机任务设置。你可以随时在系统设置中撤销授权。
-			</p>
 		</section>
 	);
 }
@@ -284,33 +233,6 @@ function AppRow({
 				{installed === undefined ? "检测状态" : installed ? "启动应用" : "获取应用"}
 				{installed === false && <ExternalLink size={12} />}
 			</button>
-		</div>
-	);
-}
-
-function Step({
-	number,
-	title,
-	description,
-	active,
-	done,
-}: {
-	number: string;
-	title: string;
-	description: string;
-	active: boolean;
-	done: boolean;
-}) {
-	return (
-		<div
-			className={`connection-step ${active ? "step-active" : ""} ${done ? "step-done" : ""}`}
-		>
-			<div className="step-number">{done ? <Check size={13} /> : number}</div>
-			<div>
-				<strong>{title}</strong>
-				<span>{description}</span>
-			</div>
-			{number !== "3" && <ArrowRight className="step-arrow" size={14} />}
 		</div>
 	);
 }

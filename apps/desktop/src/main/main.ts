@@ -9,6 +9,8 @@ import { runCollector } from "./collector";
 import { createEngine } from "./engine";
 import { createStore } from "./store";
 
+app.setName("CopyFast");
+
 let workspace: BrowserWindow | undefined;
 let engine: ReturnType<typeof createEngine> | undefined;
 let store: Awaited<ReturnType<typeof createStore>> | undefined;
