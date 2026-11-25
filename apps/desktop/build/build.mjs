@@ -1,7 +1,9 @@
-import { mkdir } from "node:fs/promises";
+import { copyFile, mkdir } from "node:fs/promises";
 
 import { build } from "esbuild";
 await mkdir("dist/main", { recursive: true });
+await mkdir("dist/assets", { recursive: true });
+await copyFile("assets/icon.png", "dist/assets/icon.png");
 await mkdir("dist/renderer", { recursive: true });
 await build({
 	entryPoints: ["src/main/main.ts"],
@@ -32,5 +34,4 @@ await build({
 	sourcemap: true,
 	tsconfig: "tsconfig.json",
 });
-const { copyFile } = await import("node:fs/promises");
 await copyFile("src/renderer/index.html", "dist/renderer/index.html");

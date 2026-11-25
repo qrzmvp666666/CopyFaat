@@ -29,6 +29,10 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 					log.status = "uncertain";
 					log.finishedAt = stamp();
 					log.error = "上次执行中断，未取得完整结果";
+					for (const channel of log.channelResults ?? []) {
+						channel.status = "uncertain";
+						channel.error = log.error;
+					}
 				}
 		});
 	}
@@ -45,6 +49,7 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 				Object.assign(existing, parsed, {
 					cursor: changedScope ? undefined : existing.cursor,
 					nextRunAt: stamp(),
+					retryAttempt: 0,
 				});
 			else
 				state.tasks.push({
@@ -85,6 +90,7 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 			if (!task) throw new Error("任务不存在");
 			task.status = action === "pause" ? "paused" : "running";
 			task.error = undefined;
+			task.retryAttempt = 0;
 			task.nextRunAt = stamp();
 		});
 		if (action !== "pause") void run(id);
@@ -99,6 +105,20 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 			const task = store.read().tasks.find((t) => t.id === id);
 			if (!task || task.status !== "running") return;
 			const log: TaskLog = {
+				channelIds: task.source.channels.map((channel) => channel.id),
+				taskName: task.name,
+				sourceName: task.source.server.name,
+				platform: task.source.platform,
+				attempt: task.retryAttempt ?? 0,
+				channelResults: task.source.channels.map((channel) => ({
+					channelId: channel.id,
+					channelName: channel.name,
+					status: "processing",
+					collected: 0,
+					saved: 0,
+					ignored: 0,
+					failed: 0,
+				})),
 				id: batchId,
 				taskId: id,
 				phase: "collect",
@@ -120,14 +140,20 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 				throw new Error("脚本返回了当前采集范围以外的频道，已拒绝此批次");
 			await store.update((state) => {
 				const current = state.tasks.find((t) => t.id === id);
-				if (!current || current.status !== "running" || controller.signal.aborted) return;
+				if (!current || current.status !== "running" || controller.signal.aborted)
+					throw new Error("采集已取消");
 				const seen = new Set(state.messages.map((m) => m.key));
 				const currentLog = state.logs.find((l) => l.id === batchId)!;
 				currentLog.collected = result.messages.length;
 				for (const item of result.messages) {
+					const channelResult = currentLog.channelResults!.find(
+						(channel) => channel.channelId === item.channelId,
+					)!;
+					channelResult.collected++;
 					const key = `${id}:${item.channelId}:${item.id}`;
 					if (seen.has(key)) {
 						currentLog.ignored++;
+						channelResult.ignored++;
 						continue;
 					}
 					seen.add(key);
@@ -167,25 +193,26 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 					};
 					state.messages.push(message);
 					currentLog.messageKeys.push(key);
-					if (filtered) currentLog.ignored++;
-					else currentLog.saved++;
+					if (filtered) {
+						currentLog.ignored++;
+						channelResult.ignored++;
+					} else {
+						currentLog.saved++;
+						channelResult.saved++;
+					}
 				}
+				for (const channel of currentLog.channelResults ?? [])
+					channel.status = channel.saved > 0 ? "success" : "skipped";
+				current.retryAttempt = 0;
+				current.error = undefined;
 				current.cursor = result.cursor ?? current.cursor;
-			});
-			await store.update((state) => {
-				const log = state.logs.find((l) => l.id === batchId);
-				const task = state.tasks.find((t) => t.id === id);
-				if (log) {
-					log.status = "success";
-					log.finishedAt = stamp();
-					log.durationMs = now() - startedAt;
-				}
-				if (task) {
-					task.lastRunAt = stamp();
-					task.nextRunAt = new Date(
-						now() + task.rules.intervalSeconds * 1000,
-					).toISOString();
-				}
+				currentLog.status = "success";
+				currentLog.finishedAt = stamp();
+				currentLog.durationMs = now() - startedAt;
+				current.lastRunAt = stamp();
+				current.nextRunAt = new Date(
+					now() + current.rules.intervalSeconds * 1000,
+				).toISOString();
 			});
 		} catch (error) {
 			await store.update((state) => {
@@ -193,11 +220,25 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 				const log = state.logs.find((l) => l.id === batchId);
 				const message = error instanceof Error ? error.message : "采集失败";
 				if (task && !controller.signal.aborted) {
-					task.status = "attention";
+					const attempt = log?.attempt ?? 0;
+					if (attempt < task.rules.maxRetries) {
+						task.retryAttempt = attempt + 1;
+						task.nextRunAt = new Date(
+							now() + task.rules.retrySeconds * 1000,
+						).toISOString();
+						if (log) log.retryAt = task.nextRunAt;
+					} else {
+						task.status = "attention";
+					}
 					task.error = message;
 				}
 				if (log) {
-					log.status = "failed";
+					log.status = controller.signal.aborted ? "uncertain" : "failed";
+					for (const channel of log.channelResults ?? []) {
+						channel.status = "uncertain";
+						channel.error = `本轮采集未完成，未取得此频道的完整结果：${message}`;
+					}
+					log.failed = controller.signal.aborted ? 0 : 1;
 					log.error = message;
 					log.finishedAt = stamp();
 					log.durationMs = now() - startedAt;

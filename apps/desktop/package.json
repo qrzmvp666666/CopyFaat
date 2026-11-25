@@ -54,7 +54,8 @@
 			"extendInfo": {
 				"NSMicrophoneUsageDescription": "CopyFast does not record audio.",
 				"NSScreenCaptureUsageDescription": "选择采集范围时展示屏幕内容。"
-			}
+			},
+			"icon": "assets/icon.icns"
 		},
 		"win": {
 			"target": [
@@ -65,7 +66,8 @@
 						"arm64"
 					]
 				}
-			]
+			],
+			"icon": "assets/icon.ico"
 		},
 		"nsis": {
 			"oneClick": false,

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdir } from "node:fs/promises";
+import { copyFile, mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
 
 import { build } from "esbuild";
@@ -7,6 +7,8 @@ import { createServer } from "vite";
 const require = createRequire(import.meta.url);
 const port = Number(process.env.COPYFAST_DEV_PORT ?? 5173);
 await mkdir("dist/main", { recursive: true });
+await mkdir("dist/assets", { recursive: true });
+await copyFile("assets/icon.png", "dist/assets/icon.png");
 await build({
 	entryPoints: ["src/main/main.ts"],
 	bundle: true,

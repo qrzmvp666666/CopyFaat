@@ -6,7 +6,6 @@ import {
 	Pause,
 	Play,
 	Plus,
-	RefreshCw,
 	Settings2,
 	Trash2,
 	UserRound,
@@ -14,30 +13,12 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import type {
-	Message,
-	PublicState,
-	PublicTask,
-	RuntimeInfo,
-	TaskInput,
-} from "../../shared/contracts";
+import type { PublicState, PublicTask, RuntimeInfo, TaskInput } from "../../shared/contracts";
+import { ChannelWorkspace } from "./ChannelWorkspace";
 import { Connections } from "./Connections";
 import { TaskDialog } from "./TaskDialog";
 
 const emptyState: PublicState = { version: 1, tasks: [], messages: [], logs: [] };
-type MessageRow = {
-	id: string;
-	taskId: string;
-	taskName: string;
-	platform: "discord" | "telegram";
-	source: string;
-	author: string;
-	time: string;
-	text: string;
-	status: string;
-	message: Message;
-};
-
 export function App() {
 	const [state, setState] = useState<PublicState>(emptyState);
 	const [page, setPage] = useState<"workspace" | "connections">("workspace");
@@ -52,9 +33,7 @@ export function App() {
 	);
 	const [tab, setTab] = useState("messages");
 	const [selected, setSelected] = useState<string>();
-	const [activeMessageId, setActiveMessageId] = useState<string>();
 	const [createOpen, setCreateOpen] = useState(false);
-	const [refreshAt, setRefreshAt] = useState(() => new Date());
 	const [accountPanel, setAccountPanel] = useState<"profile" | "membership" | null>(null);
 	useEffect(() => {
 		void window.copyfast.state().then(setState);
@@ -67,7 +46,6 @@ export function App() {
 				if (target.tab) setTab(target.tab);
 				if (target.taskId) {
 					setSelected(target.taskId);
-					setActiveMessageId(undefined);
 				}
 			}),
 		[],
@@ -135,8 +113,8 @@ export function App() {
 	const total = tasks.length;
 	const running = tasks.filter((t) => t.status === "running").length;
 	const attention = tasks.filter((t) => t.status === "attention").length;
-	const current = tasks.find((t) => t.id === selected) ?? tasks[0];
-	const selectedTask = selected ? current : undefined;
+	const current = tasks.find((t) => t.id === selected);
+	const selectedTask = current;
 	const currentTask = selectedTask;
 	const selectedMessages = selectedTask
 		? state.messages.filter((message) => message.taskId === selectedTask.id)
@@ -216,7 +194,7 @@ export function App() {
 						onClick={() => {
 							setPage("workspace");
 							setSelected(undefined);
-							setActiveMessageId(undefined);
+							setTab("messages");
 						}}
 					>
 						<List size={16} />
@@ -228,7 +206,6 @@ export function App() {
 						onClick={() => {
 							completeOnboarding();
 							setSelected(undefined);
-							setActiveMessageId(undefined);
 							setPage("connections");
 						}}
 					>
@@ -250,7 +227,6 @@ export function App() {
 									setPage("workspace");
 									completeOnboarding();
 									setSelected(task.id);
-									setActiveMessageId(undefined);
 								}}
 							>
 								<i className={`platform ${task.source.platform}`}>
@@ -323,6 +299,13 @@ export function App() {
 								</p>
 							</div>
 							<div className="content-head-actions">
+								<button
+									className="secondary"
+									onClick={() => setTab(tab === "rules" ? "messages" : "rules")}
+								>
+									<Settings2 size={15} />
+									{tab === "rules" ? "返回消息" : "采集规则"}
+								</button>
 								{selectedTask && current && (
 									<>
 										<button
@@ -370,7 +353,6 @@ export function App() {
 													.deleteTask(current.id)
 													.then(() => {
 														setSelected(undefined);
-														setActiveMessageId(undefined);
 													})
 													.catch((error: unknown) =>
 														window.alert(
@@ -447,74 +429,7 @@ export function App() {
 								}
 							/>
 						</div>
-						<div className="tabs">
-							<button
-								className={tab === "messages" ? "tab-active" : ""}
-								onClick={() => setTab("messages")}
-							>
-								消息列表{" "}
-								<b>
-									{selectedTask ? selectedMessages.length : state.messages.length}
-								</b>
-							</button>
-							<button
-								className={tab === "logs" ? "tab-active" : ""}
-								onClick={() => setTab("logs")}
-							>
-								任务日志{" "}
-								<b>
-									{
-										state.logs.filter(
-											(log) =>
-												!selectedTask || log.taskId === selectedTask.id,
-										).length
-									}
-								</b>
-							</button>
-							<button
-								className={tab === "rules" ? "tab-active" : ""}
-								onClick={() => setTab("rules")}
-							>
-								采集规则
-							</button>
-							<span className="window-status">
-								最近更新 {refreshAt.toLocaleTimeString()}
-								<button
-									className="refresh-action"
-									aria-label="刷新"
-									onClick={() =>
-										void window.copyfast.state().then((nextState) => {
-											setState(nextState);
-											setRefreshAt(new Date());
-										})
-									}
-								>
-									<RefreshCw size={12} /> 刷新
-								</button>
-							</span>
-						</div>
-						{tab === "messages" ? (
-							<MessageList
-								state={state}
-								task={selectedTask}
-								allTasks={state.tasks}
-								activeMessageId={activeMessageId}
-								onActiveMessageChange={setActiveMessageId}
-								onViewMessage={(message) => {
-									setSelected(message.taskId);
-									setActiveMessageId(message.id);
-								}}
-							/>
-						) : tab === "logs" ? (
-							<LogList
-								state={state}
-								taskId={selectedTask?.id}
-								onShowMessages={(messageKey) => {
-									setTab("messages");
-									setActiveMessageId(messageKey);
-								}}
-							/>
-						) : (
+						{tab === "rules" ? (
 							<Rules
 								task={currentTask}
 								onSaved={async (input) => {
@@ -522,6 +437,15 @@ export function App() {
 									await window.copyfast.saveTask(input, currentTask.id);
 									setState(await window.copyfast.state());
 								}}
+							/>
+						) : (
+							<ChannelWorkspace
+								key={selectedTask?.id ?? "all"}
+								state={state}
+								taskId={selectedTask?.id}
+								tab={tab}
+								onTabChange={setTab}
+								onRefresh={async () => setState(await window.copyfast.state())}
 							/>
 						)}
 					</section>
@@ -567,7 +491,6 @@ export function App() {
 						const id = await window.copyfast.saveTask(input);
 						setState(await window.copyfast.state());
 						setSelected(id);
-						setActiveMessageId(undefined);
 						setTab("rules");
 						setCreateOpen(false);
 					}}
@@ -591,344 +514,6 @@ function Metric({ label, value }: { label: string; value: string }) {
 			<span>{label}</span>
 			<strong>{value}</strong>
 		</div>
-	);
-}
-function MessageList({
-	state,
-	task,
-	allTasks,
-	activeMessageId,
-	onActiveMessageChange,
-	onViewMessage,
-}: {
-	state: PublicState;
-	task: PublicTask | undefined;
-	allTasks: PublicTask[];
-	activeMessageId: string | undefined;
-	onActiveMessageChange: (id: string | undefined) => void;
-	onViewMessage: (message: MessageRow) => void;
-}) {
-	const [platformFilter, setPlatformFilter] = useState("all");
-	const [taskFilter, setTaskFilter] = useState(task?.id ?? "all");
-	const [statusFilter, setStatusFilter] = useState("all");
-	const [dateFilter, setDateFilter] = useState("today");
-	const [query, setQuery] = useState("");
-	const allRows: MessageRow[] = state.messages
-		.map((message) => {
-			const sourceTask = allTasks.find((item) => item.id === message.taskId);
-			const sourceChannel = sourceTask?.source.channels.find(
-				(channel) => channel.id === message.channelId,
-			);
-			return {
-				id: message.key,
-				message,
-				taskId: message.taskId,
-				taskName: message.taskName ?? sourceTask?.name ?? "已删除的任务",
-				platform: message.platform ?? sourceTask?.source.platform ?? "discord",
-				source: `${message.sourceName ?? sourceTask?.source.server.name ?? "来源未知"} / #${message.channelName ?? sourceChannel?.name ?? message.channelId}`,
-				author: message.author || "未知作者",
-				time: new Date(message.sentAt).toLocaleString(),
-				text: message.text || (message.attachments.length ? "附件消息" : "无文本内容"),
-				status: message.status,
-			};
-		})
-		.reverse();
-	const dayStart = new Date();
-	dayStart.setHours(0, 0, 0, 0);
-	const rows = allRows.filter((row) => {
-		if (task && row.taskId !== task.id) return false;
-		if (!task && taskFilter !== "all" && row.taskId !== taskFilter) return false;
-		if (platformFilter !== "all" && row.platform !== platformFilter) return false;
-		if (statusFilter !== "all" && row.status !== statusFilter) return false;
-		if (dateFilter === "today" && Date.parse(row.message.collectedAt) < dayStart.getTime())
-			return false;
-		const needle = query.trim().toLocaleLowerCase();
-		return (
-			!needle ||
-			`${row.taskName} ${row.source} ${row.author} ${row.text}`
-				.toLocaleLowerCase()
-				.includes(needle)
-		);
-	});
-	const activeMessage = rows.find((message) => message.id === activeMessageId) ?? rows[0];
-	const statusText: Record<string, string> = {
-		collected: "已采集",
-		pending: "待处理",
-		sending: "处理中",
-		synced: "已采集",
-		failed: "采集失败",
-		uncertain: "需检查",
-		filtered: "已过滤",
-	};
-	return (
-		<Panel>
-			<div className="filters">
-				<select
-					aria-label="平台筛选"
-					value={platformFilter}
-					onChange={(event) => setPlatformFilter(event.target.value)}
-				>
-					<option value="all">全部平台</option>
-					<option value="telegram">Telegram</option>
-					<option value="discord">Discord</option>
-				</select>
-				<select
-					aria-label="任务筛选"
-					value={task ? task.id : taskFilter}
-					disabled={Boolean(task)}
-					onChange={(event) => setTaskFilter(event.target.value)}
-				>
-					<option value="all">全部任务</option>
-					{allTasks.map((item) => (
-						<option key={item.id} value={item.id}>
-							{item.name}
-						</option>
-					))}
-				</select>
-				<select
-					aria-label="状态筛选"
-					value={statusFilter}
-					onChange={(event) => setStatusFilter(event.target.value)}
-				>
-					<option value="all">全部状态</option>
-					<option value="collected">已采集</option>
-					<option value="filtered">已过滤</option>
-					<option value="failed">采集失败</option>
-				</select>
-				<select
-					aria-label="日期筛选"
-					value={dateFilter}
-					onChange={(event) => setDateFilter(event.target.value)}
-				>
-					<option value="today">今天</option>
-					<option value="all">全部日期</option>
-				</select>
-				<input
-					aria-label="搜索消息"
-					type="search"
-					placeholder="搜索消息、作者或频道"
-					value={query}
-					onChange={(event) => setQuery(event.target.value)}
-				/>
-			</div>
-			{!task && (
-				<div className="table-head">
-					<span>消息 / 来源</span>
-					<span>消息内容</span>
-					<span>采集状态</span>
-					<span>详情</span>
-				</div>
-			)}
-			{rows.length ? (
-				task ? (
-					<div className="task-message-layout">
-						<section className="task-message-list">
-							<header>
-								<strong>
-									{task.name} · {task.source.channels.length} 个频道
-								</strong>
-								<small>{rows.length} 条采集记录 / 当前任务</small>
-							</header>
-							<div className="task-message-items">
-								{rows.map((message) => (
-									<button
-										className={
-											activeMessage?.id === message.id
-												? "message-selected"
-												: ""
-										}
-										key={message.id}
-										onClick={() => onActiveMessageChange(message.id)}
-									>
-										<strong>
-											{message.author} ·{" "}
-											{message.source.split("/").at(-1)?.trim()}
-										</strong>
-										<span>{message.text}</span>
-										<small>
-											{message.time} ·{" "}
-											{statusText[message.status] ?? message.status}
-										</small>
-									</button>
-								))}
-							</div>
-						</section>
-						<aside className="message-detail">
-							<div className="message-detail-heading">
-								<strong>消息详情</strong>
-								<span className={`state ${activeMessage?.status ?? ""}`}>
-									{activeMessage
-										? (statusText[activeMessage.status] ?? activeMessage.status)
-										: ""}
-								</span>
-							</div>
-							{activeMessage ? (
-								<>
-									<small>来源　{activeMessage.source}</small>
-									<b>
-										{activeMessage.author}　·　{activeMessage.time}
-									</b>
-									<p>{activeMessage.text}</p>
-									<div className="detail-target">
-										<small>本机采集时间</small>
-										<b>
-											{new Date(
-												activeMessage.message.collectedAt,
-											).toLocaleString()}
-										</b>
-									</div>
-									{activeMessage.message.attachments.length > 0 && (
-										<div className="detail-target">
-											<small>附件</small>
-											<b>
-												{activeMessage.message.attachments
-													.map((attachment) => attachment.name)
-													.join("、")}
-											</b>
-										</div>
-									)}
-									<small>消息 ID　{activeMessage.id}</small>
-								</>
-							) : (
-								<p>选择一条消息查看详情。</p>
-							)}
-						</aside>
-					</div>
-				) : (
-					<>
-						{rows.map((message) => (
-							<div className="data-row" key={message.id}>
-								<div className="row-source">
-									<i className={`platform ${message.platform}`}>
-										{message.platform === "telegram" ? "TG" : "DC"}
-									</i>
-									<div>
-										<b>{message.taskName}</b>
-										<small>
-											{message.source} · {message.author} · {message.time}
-										</small>
-									</div>
-								</div>
-								<div className="message-copy">
-									<span>{message.text}</span>
-								</div>
-								<strong className={`state ${message.status}`}>
-									<span>{statusText[message.status] ?? message.status}</span>
-									<small>
-										{new Date(message.message.collectedAt).toLocaleTimeString()}
-									</small>
-								</strong>
-								<button
-									className="row-action"
-									onClick={() => onViewMessage(message)}
-								>
-									查看
-								</button>
-							</div>
-						))}
-						<div className="pagination">
-							<span>共 {rows.length} 条消息</span>
-						</div>
-					</>
-				)
-			) : (
-				<Empty
-					title={state.messages.length ? "没有符合条件的消息" : "等待采集消息"}
-					detail={
-						state.messages.length
-							? "调整筛选条件，查看其他本地采集记录。"
-							: "运行一个任务后，采集结果会保存在这里。"
-					}
-				/>
-			)}
-		</Panel>
-	);
-}
-function LogList({
-	state,
-	taskId,
-	onShowMessages,
-}: {
-	state: PublicState;
-	taskId?: string;
-	onShowMessages: (messageId?: string) => void;
-}) {
-	const [statusFilter, setStatusFilter] = useState("all");
-	const [phaseFilter, setPhaseFilter] = useState("all");
-	const logs = state.logs.filter(
-		(log) =>
-			(!taskId || log.taskId === taskId) &&
-			(statusFilter === "all" || log.status === statusFilter) &&
-			(phaseFilter === "all" || log.phase === phaseFilter),
-	);
-	return (
-		<Panel>
-			<div className="filters">
-				<select
-					aria-label="日志类型筛选"
-					value={phaseFilter}
-					onChange={(event) => setPhaseFilter(event.target.value)}
-				>
-					<option value="all">全部记录</option>
-					<option value="collect">采集</option>
-					<option value="settings">规则保存</option>
-				</select>
-				<select
-					aria-label="日志状态筛选"
-					value={statusFilter}
-					onChange={(event) => setStatusFilter(event.target.value)}
-				>
-					<option value="all">全部状态</option>
-					<option value="success">成功</option>
-					<option value="partial">部分完成</option>
-					<option value="failed">失败</option>
-					<option value="processing">进行中</option>
-				</select>
-			</div>
-			{logs.length ? (
-				logs.reverse().map((log) => (
-					<div className="log-row" key={log.id}>
-						<div>
-							<b>{new Date(log.startedAt).toLocaleTimeString()}</b>
-							<small>
-								{state.tasks.find((task) => task.id === log.taskId)?.name ??
-									"已删除的任务"}{" "}
-								·{" "}
-								{log.phase === "collect"
-									? "采集"
-									: log.phase === "settings"
-										? "规则保存"
-										: "历史记录"}
-							</small>
-						</div>
-						<b>
-							{log.status === "success"
-								? "成功"
-								: log.status === "processing"
-									? "进行中"
-									: log.status === "partial"
-										? "部分完成"
-										: "失败"}
-						</b>
-						<span>
-							采集 {log.collected} · 保存 {log.saved} · 忽略 {log.ignored} · 失败{" "}
-							{log.failed}
-						</span>
-						<span>
-							{log.durationMs ? `${(log.durationMs / 1000).toFixed(1)} s` : "处理中"}
-						</span>
-						<button onClick={() => onShowMessages(log.messageKeys[0])}>
-							查看关联消息
-						</button>
-					</div>
-				))
-			) : (
-				<Empty
-					title="暂无执行日志"
-					detail="每次任务运行和规则变更都会在这里留下本地记录。"
-				/>
-			)}
-		</Panel>
 	);
 }
 function Rules({

@@ -105,6 +105,8 @@ async function runtimeInfo() {
 	};
 }
 
+const appIconPath = join(__dirname, "../assets/icon.png");
+
 function createWindows() {
 	workspace = new BrowserWindow({
 		width: 1480,
@@ -113,6 +115,7 @@ function createWindows() {
 		minHeight: 700,
 		show: false,
 		title: "CopyFast",
+		icon: appIconPath,
 		transparent: true,
 		backgroundColor: "#141415",
 		titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
@@ -190,6 +193,7 @@ function registerIpc() {
 }
 
 void app.whenReady().then(async () => {
+	app.dock?.setIcon(appIconPath);
 	store = await createStore(join(app.getPath("userData"), "copyfast-state.json"), sendState);
 	engine = createEngine(store, {
 		collect: runCollector,

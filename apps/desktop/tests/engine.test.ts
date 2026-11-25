@@ -125,7 +125,10 @@ describe("CopyFast task engine", () => {
 				throw new Error("collector unavailable");
 			},
 		});
-		const taskId = await engine.saveTask(input);
+		const taskId = await engine.saveTask({
+			...input,
+			rules: { ...input.rules, maxRetries: 0 },
+		});
 		await engine.action(taskId, "resume");
 		await new Promise((resolve) => setTimeout(resolve, 20));
 		const state = store.read();
@@ -146,5 +149,59 @@ describe("CopyFast task engine", () => {
 		expect(state.tasks).toHaveLength(0);
 		expect(state.messages).toHaveLength(1);
 		expect(state.logs.some((log) => log.taskId === taskId)).toBe(true);
+	});
+	it("keeps per-channel counts for saved, duplicate, filtered and empty results", async () => {
+		const { store, engine } = await setup([
+			message,
+			message,
+			{ ...message, id: "other", channelId: "second", text: "ignore" },
+		]);
+		const id = await engine.saveTask({
+			...input,
+			source: {
+				...input.source,
+				channels: [
+					...input.source.channels,
+					{ id: "second", name: "第二频道" },
+					{ id: "empty", name: "空频道" },
+				],
+			},
+			rules: { ...input.rules, exclude: "ignore" },
+		});
+		await engine.action(id, "resume");
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		const log = store.read().logs.find((log) => log.phase === "collect")!;
+		expect(log.channelResults).toMatchObject([
+			{ channelId: "source-channel", status: "success", collected: 2, saved: 1, ignored: 1 },
+			{ channelId: "second", status: "skipped", collected: 1, saved: 0, ignored: 1 },
+			{ channelId: "empty", status: "skipped", collected: 0, saved: 0, ignored: 0 },
+		]);
+	});
+	it("schedules retries and stops when the configured allowance is exhausted", async () => {
+		const root = await mkdtemp(join(tmpdir(), "copyfast-retry-"));
+		roots.push(root);
+		const store = await createStore(join(root, "state.json"));
+		let time = 100000;
+		const engine = createEngine(store, {
+			now: () => time,
+			collect: async () => {
+				throw new Error("暂时不可用");
+			},
+		});
+		const id = await engine.saveTask({ ...input, rules: { ...input.rules, maxRetries: 1 } });
+		await engine.action(id, "resume");
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(store.read().tasks[0]).toMatchObject({
+			status: "running",
+			retryAttempt: 1,
+			nextRunAt: new Date(110000).toISOString(),
+		});
+		expect(
+			store.read().logs.find((log) => log.phase === "collect")?.channelResults?.[0].status,
+		).toBe("uncertain");
+		time = 110000;
+		await engine.tick();
+		expect(store.read().tasks[0].status).toBe("attention");
+		expect(store.read().logs.filter((log) => log.phase === "collect")).toHaveLength(2);
 	});
 });

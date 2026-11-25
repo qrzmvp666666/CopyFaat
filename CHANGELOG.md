@@ -2,6 +2,10 @@
 
 ## 2026-11-25
 
+- feat: Browse desktop messages and collection logs by channel, with channel counts, search, pagination and task-level rules. Save per-channel collection results and retry failed rounds using the configured retry policy.
+
+- fix: Replace the default desktop app icon with the CopyFast CF mark in the Dock and macOS/Windows packages.
+
 - fix: Align sitemap URLs with locale-prefixed marketing routes, exclude unpublished posts, and rename the local marketing host to copyfast.localhost.
 
 - feat: Add soft overhead light beams and pointer-driven digit ripples to the marketing hero, with reduced-motion support.

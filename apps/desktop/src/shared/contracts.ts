@@ -40,6 +40,7 @@ export interface Task extends TaskInput {
 	id: string;
 	status: "running" | "paused" | "attention";
 	cursor?: string;
+	retryAttempt?: number;
 	lastRunAt?: string;
 	nextRunAt: string;
 	error?: string;
@@ -82,7 +83,24 @@ export interface Message extends CollectedMessage {
 	error?: string;
 	remoteLogId?: string;
 }
+export interface ChannelResult {
+	channelId: string;
+	channelName: string;
+	status: "processing" | "success" | "skipped" | "failed" | "uncertain";
+	collected: number;
+	saved: number;
+	ignored: number;
+	failed: number;
+	error?: string;
+}
 export interface TaskLog {
+	channelResults?: ChannelResult[];
+	taskName?: string;
+	sourceName?: string;
+	platform?: Platform;
+	attempt?: number;
+	retryAt?: string;
+	channelIds?: string[];
 	id: string;
 	taskId: string;
 	phase: "collect" | "sync" | "settings";
