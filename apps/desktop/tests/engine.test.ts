@@ -20,17 +20,7 @@ const input: TaskInput = {
 		server: { id: "source-server", name: "产品社区" },
 		channels: [{ id: "source-channel", name: "产品更新" }],
 	},
-	target: {
-		platform: "telegram",
-		server: { id: "target-server", name: "我的资讯" },
-		channels: [{ id: "target-channel", name: "产品快讯" }],
-	},
 	collector: { executable: "collector", args: [] },
-	delivery: {
-		kind: "signal-webhook",
-		endpoint: "https://copyfast.example.test/api/signals/webhook",
-		secretId: "signal-secret",
-	},
 	rules: {
 		intervalSeconds: 30,
 		startAt: new Date(0).toISOString(),
@@ -54,21 +44,40 @@ const message: CollectedMessage = {
 	signal: { kind: "release" },
 };
 
-async function setup() {
+async function setup(messages: CollectedMessage[] = [message]) {
 	const root = await mkdtemp(join(tmpdir(), "copyfast-engine-"));
 	roots.push(root);
 	const store = await createStore(join(root, "state.json"));
 	return {
 		store,
 		engine: createEngine(store, {
-			collect: async () => ({ version: 1 as const, messages: [message] }),
-			deliver: async () => ({ state: "confirmed" as const, remoteLogId: "log-1" }),
+			collect: async () => ({ version: 1 as const, messages }),
 		}),
 	};
 }
 
 describe("CopyFast task engine", () => {
-	it("deduplicates collected messages and records confirmed delivery", async () => {
+	it("deduplicates repeated messages in one collection batch", async () => {
+		const { store, engine } = await setup([message, message]);
+		const taskId = await engine.saveTask(input);
+		await engine.action(taskId, "resume");
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		const state = store.read();
+		expect(state.messages).toHaveLength(1);
+		expect(state.logs.find((log) => log.phase === "collect")).toMatchObject({
+			collected: 2,
+			saved: 1,
+			ignored: 1,
+		});
+		expect(state.messages[0]).toMatchObject({
+			taskName: input.name,
+			platform: "discord",
+			sourceName: "产品社区",
+			channelName: "产品更新",
+		});
+	});
+
+	it("saves collected messages locally and ignores duplicate results", async () => {
 		const { store, engine } = await setup();
 		const taskId = await engine.saveTask(input);
 		await engine.action(taskId, "resume");
@@ -76,27 +85,66 @@ describe("CopyFast task engine", () => {
 		await engine.run(taskId);
 		const state = store.read();
 		expect(state.messages).toHaveLength(1);
-		expect(state.messages[0].status).toBe("synced");
-		expect(state.messages[0].remoteLogId).toBe("log-1");
-		expect(state.logs.some((log) => log.phase === "sync" && log.status === "success")).toBe(
-			true,
-		);
+		expect(state.messages[0].status).toBe("collected");
+		const collectionLogs = state.logs.filter((log) => log.phase === "collect");
+		expect(collectionLogs).toHaveLength(2);
+		expect(collectionLogs[0]).toMatchObject({ status: "success", collected: 1, saved: 1 });
+		expect(collectionLogs[1]).toMatchObject({
+			status: "success",
+			collected: 1,
+			saved: 0,
+			ignored: 1,
+		});
 	});
 
-	it("stops automatic retries when delivery is uncertain", async () => {
-		const root = await mkdtemp(join(tmpdir(), "copyfast-uncertain-"));
+	it("applies keyword rules and records filtered items", async () => {
+		const { store, engine } = await setup();
+		const taskId = await engine.saveTask({
+			...input,
+			rules: { ...input.rules, include: "launch" },
+		});
+		await engine.action(taskId, "resume");
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		const state = store.read();
+		expect(state.messages).toHaveLength(1);
+		expect(state.messages[0].status).toBe("filtered");
+		expect(state.logs.find((log) => log.phase === "collect")).toMatchObject({
+			status: "success",
+			collected: 1,
+			saved: 0,
+			ignored: 1,
+		});
+	});
+
+	it("marks collection failures in the task and execution log", async () => {
+		const root = await mkdtemp(join(tmpdir(), "copyfast-collector-failure-"));
 		roots.push(root);
 		const store = await createStore(join(root, "state.json"));
 		const engine = createEngine(store, {
-			collect: async () => ({ version: 1 as const, messages: [message] }),
-			deliver: async () => ({ state: "uncertain" as const, error: "no receipt" }),
+			collect: async () => {
+				throw new Error("collector unavailable");
+			},
 		});
 		const taskId = await engine.saveTask(input);
 		await engine.action(taskId, "resume");
 		await new Promise((resolve) => setTimeout(resolve, 20));
 		const state = store.read();
 		expect(state.tasks.find((task) => task.id === taskId)?.status).toBe("attention");
-		expect(state.messages[0].status).toBe("uncertain");
-		await expect(engine.action(taskId, "resume")).rejects.toThrow("未确认");
+		expect(state.logs.find((log) => log.phase === "collect")).toMatchObject({
+			status: "failed",
+			error: "collector unavailable",
+		});
+	});
+
+	it("deletes a task without removing its collection history", async () => {
+		const { store, engine } = await setup();
+		const taskId = await engine.saveTask(input);
+		await engine.action(taskId, "resume");
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		await engine.deleteTask(taskId);
+		const state = store.read();
+		expect(state.tasks).toHaveLength(0);
+		expect(state.messages).toHaveLength(1);
+		expect(state.logs.some((log) => log.taskId === taskId)).toBe(true);
 	});
 });

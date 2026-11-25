@@ -21,6 +21,14 @@ export async function createStore(
 			!Array.isArray(state.logs)
 		)
 			throw new Error("不支持的桌面数据格式");
+		for (const message of state.messages) {
+			if (message.status !== "filtered" && message.status !== "collected")
+				message.status = "collected";
+			delete message.nextAttemptAt;
+			delete message.syncedAt;
+			delete message.remoteLogId;
+			delete message.error;
+		}
 	} catch (error) {
 		if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
 		state = initialState();

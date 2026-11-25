@@ -17,16 +17,9 @@ export const scopeSchema = z.object({
 export const taskInputSchema = z.object({
 	name: z.string().trim().min(1).max(80),
 	source: scopeSchema,
-	target: scopeSchema,
 	collector: z.object({
 		executable: z.string().min(1),
 		args: z.array(z.string()).max(30).default([]),
-	}),
-	delivery: z.object({
-		kind: z.enum(["discord-webhook", "telegram-bot", "signal-webhook"]),
-		endpoint: z.url(),
-		secretId: z.string().min(1),
-		chatId: z.string().optional(),
 	}),
 	rules: z.object({
 		intervalSeconds: z.number().int().min(10).max(86400),
@@ -76,9 +69,13 @@ export type CollectorResponse = z.infer<typeof collectorResponseSchema>;
 export interface Message extends CollectedMessage {
 	key: string;
 	taskId: string;
+	taskName?: string;
+	platform?: Platform;
+	sourceName?: string;
+	channelName?: string;
 	batchId: string;
 	collectedAt: string;
-	status: "pending" | "sending" | "synced" | "failed" | "uncertain" | "filtered";
+	status: "collected" | "pending" | "sending" | "synced" | "failed" | "uncertain" | "filtered";
 	attempts: number;
 	nextAttemptAt?: string;
 	syncedAt?: string;
@@ -108,22 +105,11 @@ export interface AppState {
 	messages: Message[];
 	logs: TaskLog[];
 }
-export type PublicTask = Omit<Task, "delivery"> & {
-	delivery: Omit<Task["delivery"], "endpoint" | "secretId"> & {
-		endpointConfigured: boolean;
-		secretConfigured: boolean;
-	};
-};
+export type PublicTask = Task;
 export interface PublicState extends Omit<AppState, "tasks"> {
 	tasks: PublicTask[];
 }
 export const initialState = (): AppState => ({ version: 1, tasks: [], messages: [], logs: [] });
-export interface DeliveryResult {
-	state: "confirmed" | "failed" | "uncertain";
-	error?: string;
-	httpStatus?: number;
-	remoteLogId?: string;
-}
 export interface RuntimeInfo {
 	platform: string;
 	version: string;
@@ -136,8 +122,8 @@ export interface DesktopApi {
 	runtime(): Promise<RuntimeInfo>;
 	saveTask(input: TaskInput, id?: string): Promise<string>;
 	taskAction(id: string, action: "pause" | "resume" | "run"): Promise<void>;
-	saveSecret(id: string, value: string): Promise<void>;
 	chooseCollector(): Promise<string | null>;
+	deleteTask(id: string): Promise<void>;
 	launchDesktopApp(target: "telegram" | "discord"): Promise<boolean>;
 	requestAccessibilityPermission(): Promise<boolean>;
 	openExternal(target: "telegram" | "discord" | "support" | "permissions"): Promise<void>;

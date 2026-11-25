@@ -2,19 +2,16 @@ import { access, readdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { delimiter, join } from "node:path";
 
-import { app, BrowserWindow, ipcMain, shell, systemPreferences } from "electron";
+import { app, BrowserWindow, dialog, ipcMain, shell, systemPreferences } from "electron";
 
 import type { AppState, TaskInput } from "../shared/contracts";
 import { runCollector } from "./collector";
-import { deliverMessage } from "./delivery";
 import { createEngine } from "./engine";
-import { createSecretStore } from "./secret-store";
 import { createStore } from "./store";
 
 let workspace: BrowserWindow | undefined;
 let engine: ReturnType<typeof createEngine> | undefined;
 let store: Awaited<ReturnType<typeof createStore>> | undefined;
-let secrets: Awaited<ReturnType<typeof createSecretStore>> | undefined;
 
 function isDev() {
 	return process.env.COPYFAST_DEV === "1";
@@ -27,15 +24,11 @@ function rendererUrl(route = "") {
 function publicState(state: AppState) {
 	return {
 		...state,
-		tasks: state.tasks.map((task) => ({
-			...task,
-			delivery: {
-				kind: task.delivery.kind,
-				chatId: task.delivery.chatId,
-				endpointConfigured: Boolean(task.delivery.endpoint),
-				secretConfigured: Boolean(task.delivery.secretId),
-			},
-		})),
+		tasks: state.tasks.map((task) => {
+			const legacy = task as typeof task & { delivery?: unknown; target?: unknown };
+			const { delivery: _delivery, target: _target, ...safeTask } = legacy;
+			return safeTask;
+		}),
 	};
 }
 function sendState(state: AppState) {
@@ -140,7 +133,7 @@ function createWindows() {
 }
 
 function registerIpc() {
-	ipcMain.handle("state", () => store?.read());
+	ipcMain.handle("state", () => (store ? publicState(store.read()) : undefined));
 	ipcMain.handle("runtime", runtimeInfo);
 	ipcMain.handle("launch-desktop-app", async (_event, target: "telegram" | "discord") => {
 		const path = await desktopAppPath(target);
@@ -159,9 +152,14 @@ function registerIpc() {
 	ipcMain.handle("save-task", async (_event, input: TaskInput, id?: string) =>
 		engine!.saveTask(input, id),
 	);
-	ipcMain.handle("save-secret", async (_event, id: string, value: string) =>
-		secrets!.set(id, value),
-	);
+	ipcMain.handle("choose-collector", async () => {
+		const result = await dialog.showOpenDialog(workspace!, {
+			properties: ["openFile"],
+			title: "选择本机采集程序",
+		});
+		return result.canceled ? null : (result.filePaths[0] ?? null);
+	});
+	ipcMain.handle("delete-task", async (_event, id: string) => engine!.deleteTask(id));
 	ipcMain.handle("task-action", async (_event, id: string, action: "pause" | "resume" | "run") =>
 		engine!.action(id, action),
 	);
@@ -193,14 +191,8 @@ function registerIpc() {
 
 void app.whenReady().then(async () => {
 	store = await createStore(join(app.getPath("userData"), "copyfast-state.json"), sendState);
-	secrets = await createSecretStore(join(app.getPath("userData"), "copyfast-secrets.json"));
 	engine = createEngine(store, {
 		collect: runCollector,
-		deliver: (task, message, signal) => {
-			const secret = secrets?.get(task.delivery.secretId);
-			if (!secret) return Promise.resolve({ state: "failed", error: "同步密钥尚未配置" });
-			return deliverMessage(task, message, secret, signal);
-		},
 	});
 	await engine.recover();
 	engine.start();

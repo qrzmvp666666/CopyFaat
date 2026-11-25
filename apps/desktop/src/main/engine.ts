@@ -3,7 +3,6 @@ import { randomUUID } from "node:crypto";
 import {
 	taskInputSchema,
 	type CollectorResponse,
-	type DeliveryResult,
 	type Message,
 	type Task,
 	type TaskInput,
@@ -13,7 +12,6 @@ import type { StateStore } from "./store";
 
 export interface EngineDependencies {
 	collect(task: Task, signal: AbortSignal): Promise<CollectorResponse>;
-	deliver(task: Task, message: Message, signal: AbortSignal): Promise<DeliveryResult>;
 	now?: () => number;
 }
 export function createEngine(store: StateStore, deps: EngineDependencies) {
@@ -25,15 +23,7 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 	async function recover() {
 		await store.update((state) => {
 			for (const message of state.messages)
-				if (message.status === "sending") {
-					message.status = "uncertain";
-					message.error = "上次发送中断，需核对目标回执后处理";
-					const task = state.tasks.find((t) => t.id === message.taskId);
-					if (task) {
-						task.status = "attention";
-						task.error = message.error;
-					}
-				}
+				if (message.status === "sending") message.status = "collected";
 			for (const log of state.logs)
 				if (log.status === "processing") {
 					log.status = "uncertain";
@@ -80,16 +70,19 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 		});
 		return taskId;
 	}
+	async function deleteTask(id: string) {
+		active.get(id)?.abort();
+		await store.update((state) => {
+			const index = state.tasks.findIndex((task) => task.id === id);
+			if (index < 0) throw new Error("任务不存在");
+			state.tasks.splice(index, 1);
+		});
+	}
 	async function action(id: string, action: "pause" | "resume" | "run") {
 		if (action === "pause") active.get(id)?.abort();
 		await store.update((state) => {
 			const task = state.tasks.find((t) => t.id === id);
 			if (!task) throw new Error("任务不存在");
-			if (
-				action !== "pause" &&
-				state.messages.some((m) => m.taskId === id && m.status === "uncertain")
-			)
-				throw new Error("有送达状态未确认的消息，请先核对并处理");
 			task.status = action === "pause" ? "paused" : "running";
 			task.error = undefined;
 			task.nextRunAt = stamp();
@@ -161,88 +154,24 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 						attachments,
 						key,
 						taskId: id,
+						taskName: task.name,
+						platform: task.source.platform,
+						sourceName: task.source.server.name,
+						channelName: task.source.channels.find(
+							(channel) => channel.id === item.channelId,
+						)?.name,
 						batchId,
 						collectedAt: stamp(),
-						status: filtered ? "filtered" : "pending",
+						status: filtered ? "filtered" : "collected",
 						attempts: 0,
 					};
 					state.messages.push(message);
 					currentLog.messageKeys.push(key);
 					if (filtered) currentLog.ignored++;
+					else currentLog.saved++;
 				}
 				current.cursor = result.cursor ?? current.cursor;
 			});
-			for (const message of store
-				.read()
-				.messages.filter(
-					(m) =>
-						m.taskId === id &&
-						["pending", "failed"].includes(m.status) &&
-						(!m.nextAttemptAt || Date.parse(m.nextAttemptAt) <= now()) &&
-						m.attempts <= task.rules.maxRetries,
-				)) {
-				if (
-					controller.signal.aborted ||
-					store.read().tasks.find((t) => t.id === id)?.status !== "running"
-				)
-					break;
-				const logId = randomUUID();
-				await store.update((state) => {
-					const current = state.messages.find((m) => m.key === message.key)!;
-					current.status = "sending";
-					current.attempts++;
-					state.logs.push({
-						id: logId,
-						taskId: id,
-						phase: "sync",
-						status: "processing",
-						startedAt: stamp(),
-						collected: 0,
-						saved: 0,
-						ignored: 0,
-						failed: 0,
-						messageKeys: [message.key],
-					});
-				});
-				let receipt: DeliveryResult;
-				try {
-					receipt = await deps.deliver(task, message, controller.signal);
-				} catch (error) {
-					receipt = {
-						state: "failed",
-						error: error instanceof Error ? error.message : "同步配置无效",
-					};
-				}
-				await store.update((state) => {
-					const current = state.messages.find((m) => m.key === message.key)!;
-					const currentLog = state.logs.find((l) => l.id === logId)!;
-					current.status = receipt.state === "confirmed" ? "synced" : receipt.state;
-					current.error = receipt.error;
-					current.remoteLogId = receipt.remoteLogId;
-					if (receipt.state === "confirmed") current.syncedAt = stamp();
-					else
-						current.nextAttemptAt = new Date(
-							now() + task.rules.retrySeconds * 1000,
-						).toISOString();
-					Object.assign(currentLog, {
-						status: receipt.state === "confirmed" ? "success" : receipt.state,
-						finishedAt: stamp(),
-						saved: receipt.state === "confirmed" ? 1 : 0,
-						failed: receipt.state === "confirmed" ? 0 : 1,
-						httpStatus: receipt.httpStatus,
-						error: receipt.error,
-						remoteLogId: receipt.remoteLogId,
-					});
-					if (
-						receipt.state === "uncertain" ||
-						(receipt.state === "failed" && current.attempts > task.rules.maxRetries)
-					) {
-						const currentTask = state.tasks.find((t) => t.id === id)!;
-						currentTask.status = "attention";
-						currentTask.error = receipt.error;
-					}
-				});
-			}
 			await store.update((state) => {
 				const log = state.logs.find((l) => l.id === batchId);
 				const task = state.tasks.find((t) => t.id === id);
@@ -286,6 +215,7 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 	}
 	return {
 		saveTask,
+		deleteTask,
 		action,
 		run,
 		tick,

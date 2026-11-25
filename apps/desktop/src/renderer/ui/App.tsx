@@ -1,9 +1,7 @@
 import {
-	ChevronDown,
 	CircleAlert,
 	Crown,
 	ExternalLink,
-	Filter,
 	List,
 	Pause,
 	Play,
@@ -16,78 +14,17 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import type { PublicState, PublicTask, RuntimeInfo } from "../../shared/contracts";
-import type { TaskInput } from "../../shared/contracts";
+import type {
+	Message,
+	PublicState,
+	PublicTask,
+	RuntimeInfo,
+	TaskInput,
+} from "../../shared/contracts";
 import { Connections } from "./Connections";
 import { TaskDialog } from "./TaskDialog";
 
 const emptyState: PublicState = { version: 1, tasks: [], messages: [], logs: [] };
-type DisplayTask = {
-	id: string;
-	name: string;
-	platform: "discord" | "telegram";
-	status: "running" | "paused" | "attention";
-	source: string;
-	target: string;
-	lastRunAt: string;
-};
-const sampleTasks: DisplayTask[] = [
-	{
-		id: "sample-dc",
-		name: "产品更新汇总",
-		platform: "discord",
-		status: "running",
-		source: "产品社区 · 3 个频道",
-		target: "DC / 我的工作室 / #产品资讯",
-		lastRunAt: "刚刚",
-	},
-	{
-		id: "sample-tg",
-		name: "行业快讯",
-		platform: "telegram",
-		status: "running",
-		source: "行业观察 · 2 个频道",
-		target: "TG / 我的资讯 / #行业快讯",
-		lastRunAt: "12 秒前",
-	},
-	{
-		id: "sample-error",
-		name: "团队公告",
-		platform: "discord",
-		status: "attention",
-		source: "团队空间 · 1 个频道",
-		target: "TG / 我的资讯 / #团队公告",
-		lastRunAt: "3 分钟前",
-	},
-	{
-		id: "sample-community",
-		name: "社区公告同步",
-		platform: "discord",
-		status: "running",
-		source: "开发者社区 · 2 个频道",
-		target: "DC / 我的工作室 / #社区公告",
-		lastRunAt: "14:30:12",
-	},
-	{
-		id: "sample-overseas",
-		name: "海外资讯",
-		platform: "telegram",
-		status: "running",
-		source: "海外资讯 · 1 个频道",
-		target: "DC / 我的工作室 / #海外资讯",
-		lastRunAt: "14:31:22",
-	},
-	{
-		id: "sample-events",
-		name: "活动通知",
-		platform: "telegram",
-		status: "paused",
-		source: "活动频道 · 1 个频道",
-		target: "DC / 我的工作室 / #活动",
-		lastRunAt: "昨天",
-	},
-];
-
 type MessageRow = {
 	id: string;
 	taskId: string;
@@ -97,107 +34,9 @@ type MessageRow = {
 	author: string;
 	time: string;
 	text: string;
-	target: string;
 	status: string;
+	message: Message;
 };
-
-const previewMessages: MessageRow[] = [
-	{
-		id: "preview-1",
-		taskId: "sample-tg",
-		taskName: "行业快讯",
-		platform: "telegram",
-		source: "行业观察 / #行业快讯",
-		author: "Atlas",
-		time: "14:32:08",
-		text: "本周产品更新已发布，完整更新说明见频道置顶。",
-		target: "my-tg / #行业快讯",
-		status: "synced",
-	},
-	{
-		id: "preview-6",
-		taskId: "sample-tg",
-		taskName: "行业快讯",
-		platform: "telegram",
-		source: "行业观察 / #行业快讯",
-		author: "Nova",
-		time: "14:31:08",
-		text: "社区文档更新完成，请使用最新链接。",
-		target: "my-tg / #行业快讯",
-		status: "synced",
-	},
-	{
-		id: "preview-7",
-		taskId: "sample-tg",
-		taskName: "行业快讯",
-		platform: "telegram",
-		source: "行业观察 / #行业快讯",
-		author: "Nova",
-		time: "14:30:08",
-		text: "开发者活动报名入口已更新。",
-		target: "my-tg / #行业快讯",
-		status: "synced",
-	},
-	{
-		id: "preview-2",
-		taskId: "sample-dc",
-		taskName: "产品更新汇总",
-		platform: "discord",
-		source: "产品社区 / #产品更新",
-		author: "Mia",
-		time: "14:31:45",
-		text: "桌面端新增多频道选择，现已开放测试。",
-		target: "my-dc / #产品资讯",
-		status: "synced",
-	},
-	{
-		id: "preview-3",
-		taskId: "sample-overseas",
-		taskName: "海外资讯",
-		platform: "telegram",
-		source: "海外资讯 / #news",
-		author: "Nova",
-		time: "14:31:22",
-		text: "开发者活动将于周五开始，报名入口已更新。",
-		target: "my-dc / #海外资讯",
-		status: "pending",
-	},
-	{
-		id: "preview-4",
-		taskId: "sample-error",
-		taskName: "团队公告",
-		platform: "discord",
-		source: "团队空间 / #公告",
-		author: "Alex",
-		time: "14:30:52",
-		text: "团队周会记录已整理，请在本周内确认。",
-		target: "my-tg / #团队公告",
-		status: "failed",
-	},
-	{
-		id: "preview-5",
-		taskId: "sample-community",
-		taskName: "社区公告同步",
-		platform: "discord",
-		source: "开发者社区 / #公告",
-		author: "Ryan",
-		time: "14:30:12",
-		text: "社区文档更新完成，请使用最新链接。",
-		target: "my-dc / #社区公告",
-		status: "synced",
-	},
-];
-function toDisplayTask(task: PublicTask): DisplayTask {
-	return {
-		id: task.id,
-		name: task.name,
-		platform: task.source.platform,
-		status: task.status,
-		source: `${task.source.server.name} · ${task.source.channels.length} 个频道`,
-		target: `${task.target.server.name} · ${task.target.channels.length} 个频道`,
-		lastRunAt: task.lastRunAt ? new Date(task.lastRunAt).toLocaleTimeString() : "未运行",
-	};
-}
 
 export function App() {
 	const [state, setState] = useState<PublicState>(emptyState);
@@ -215,12 +54,8 @@ export function App() {
 	const [selected, setSelected] = useState<string>();
 	const [activeMessageId, setActiveMessageId] = useState<string>();
 	const [createOpen, setCreateOpen] = useState(false);
+	const [refreshAt, setRefreshAt] = useState(() => new Date());
 	const [accountPanel, setAccountPanel] = useState<"profile" | "membership" | null>(null);
-	const [prototypeTasks, setPrototypeTasks] = useState<PublicTask[]>([]);
-	const [taskStatusOverrides, setTaskStatusOverrides] = useState<
-		Record<string, DisplayTask["status"]>
-	>({});
-	const [deletedTaskIds, setDeletedTaskIds] = useState<string[]>([]);
 	useEffect(() => {
 		void window.copyfast.state().then(setState);
 		return window.copyfast.onState(setState);
@@ -296,43 +131,22 @@ export function App() {
 		setSetupDismissed(true);
 		localStorage.setItem("copyfast-setup-dismissed", "true");
 	}
-	const baseTasks = state.tasks.length
-		? state.tasks.map(toDisplayTask)
-		: [...prototypeTasks.map(toDisplayTask), ...sampleTasks];
-	const tasks = baseTasks
-		.filter((task) => !deletedTaskIds.includes(task.id))
-		.map((task) => ({ ...task, status: taskStatusOverrides[task.id] ?? task.status }));
+	const tasks = state.tasks;
 	const total = tasks.length;
 	const running = tasks.filter((t) => t.status === "running").length;
 	const attention = tasks.filter((t) => t.status === "attention").length;
 	const current = tasks.find((t) => t.id === selected) ?? tasks[0];
-	const currentTask =
-		state.tasks.find((t) => t.id === current?.id) ??
-		prototypeTasks.find((t) => t.id === current?.id) ??
-		state.tasks[0];
-	const selectedTask =
-		selected && current
-			? {
-					id: current.id,
-					name: current.name,
-					platform: current.platform,
-					channelCount:
-						currentTask?.source.channels.length ??
-						Number(current.source.match(/(\d+) 个频道/)?.[1] ?? 0),
-				}
-			: undefined;
-	const isPreview =
-		state.tasks.length === 0 &&
-		state.messages.length === 0 &&
-		state.logs.length === 0 &&
-		prototypeTasks.length === 0;
+	const selectedTask = selected ? current : undefined;
+	const currentTask = selectedTask;
 	const selectedMessages = selectedTask
-		? isPreview
-			? previewMessages.filter((message) => message.taskId === selectedTask.id)
-			: state.messages.filter((message) => message.taskId === selectedTask.id)
-		: [];
-	const selectedAttention = selectedMessages.filter((message) =>
-		["failed", "uncertain", "pending"].includes(message.status),
+		? state.messages.filter((message) => message.taskId === selectedTask.id)
+		: state.messages;
+	const today = new Date().toDateString();
+	const todayMessages = selectedMessages.filter(
+		(message) => new Date(message.collectedAt).toDateString() === today,
+	);
+	const selectedAttention = selectedMessages.filter(
+		(message) => message.status === "failed",
 	).length;
 	return (
 		<main className={`app-shell${onboardingOpen ? " onboarding-open" : ""}`}>
@@ -439,8 +253,8 @@ export function App() {
 									setActiveMessageId(undefined);
 								}}
 							>
-								<i className={`platform ${task.platform}`}>
-									{task.platform === "telegram" ? "TG" : "DC"}
+								<i className={`platform ${task.source.platform}`}>
+									{task.source.platform === "telegram" ? "TG" : "DC"}
 								</i>
 								{task.name}
 							</button>
@@ -498,14 +312,14 @@ export function App() {
 							<div>
 								<div className="eyebrow">
 									{selectedTask
-										? `任务 / ${selectedTask.platform === "telegram" ? "Telegram" : "Discord"}`
-										: "工作区 / 采集与同步"}
+										? `任务 / ${selectedTask.source.platform === "telegram" ? "Telegram" : "Discord"}`
+										: "工作区 / 本机采集"}
 								</div>
 								<h1>{selectedTask?.name ?? "采集工作台"}</h1>
 								<p>
 									{selectedTask
-										? `${current?.source ?? "任务来源未配置"} · ${current?.target ?? "同步目标未配置"}`
-										: "统一查看多平台采集结果，追踪每一次采集与同步。"}
+										? `${current?.source.server.name ?? "来源未配置"} · ${current?.source.channels.length ?? 0} 个频道`
+										: "统一查看本机采集结果与执行记录。"}
 								</p>
 							</div>
 							<div className="content-head-actions">
@@ -519,13 +333,20 @@ export function App() {
 													: "运行任务"
 											}
 											onClick={() =>
-												setTaskStatusOverrides((statuses) => ({
-													...statuses,
-													[current.id]:
+												void window.copyfast
+													.taskAction(
+														current.id,
 														current.status === "running"
-															? "paused"
-															: "running",
-												}))
+															? "pause"
+															: "resume",
+													)
+													.catch((error: unknown) =>
+														window.alert(
+															error instanceof Error
+																? error.message
+																: "任务操作失败",
+														),
+													)
 											}
 										>
 											{current.status === "running" ? (
@@ -541,21 +362,23 @@ export function App() {
 											onClick={() => {
 												if (
 													!window.confirm(
-														`删除“${current.name}”？此操作仅影响当前前端数据。`,
+														`删除“${current.name}”？已采集的消息和历史日志会保留。`,
 													)
 												)
 													return;
-												setDeletedTaskIds((ids) => [...ids, current.id]);
-												setPrototypeTasks((items) =>
-													items.filter((item) => item.id !== current.id),
-												);
-												setSelected(undefined);
-												setActiveMessageId(undefined);
-												setTaskStatusOverrides((statuses) => {
-													const nextStatuses = { ...statuses };
-													delete nextStatuses[current.id];
-													return nextStatuses;
-												});
+												void window.copyfast
+													.deleteTask(current.id)
+													.then(() => {
+														setSelected(undefined);
+														setActiveMessageId(undefined);
+													})
+													.catch((error: unknown) =>
+														window.alert(
+															error instanceof Error
+																? error.message
+																: "删除任务失败",
+														),
+													);
 											}}
 										>
 											<Trash2 size={15} /> 删除
@@ -577,44 +400,50 @@ export function App() {
 											: current?.status === "attention"
 												? "需处理"
 												: "已暂停"
-										: isPreview
-											? "4 / 6"
-											: `${running} / ${total}`
+										: `${running} / ${total}`
 								}
 							/>
 							<Metric
 								label="今日采集"
 								value={
 									selectedTask
-										? String(selectedMessages.length)
-										: isPreview
-											? "128"
-											: String(state.messages.length)
+										? String(todayMessages.length)
+										: String(
+												state.messages.filter(
+													(message) =>
+														new Date(
+															message.collectedAt,
+														).toDateString() === today,
+												).length,
+											)
 								}
 							/>
 							<Metric
-								label="已同步"
+								label="累计采集"
 								value={String(
 									selectedTask
 										? String(
 												selectedMessages.filter(
-													(message) => message.status === "synced",
+													(message) => message.status === "collected",
 												).length,
 											)
-										: isPreview
-											? 124
-											: state.messages.filter((m) => m.status === "synced")
-													.length,
+										: String(
+												state.messages.filter(
+													(message) => message.status === "collected",
+												).length,
+											),
 								)}
 							/>
 							<Metric
 								label="待处理"
 								value={
 									selectedTask
-										? String(selectedAttention)
-										: isPreview
-											? "4"
-											: String(attention)
+										? String(
+												current?.status === "attention"
+													? Math.max(selectedAttention, 1)
+													: selectedAttention,
+											)
+										: String(attention)
 								}
 							/>
 						</div>
@@ -623,13 +452,24 @@ export function App() {
 								className={tab === "messages" ? "tab-active" : ""}
 								onClick={() => setTab("messages")}
 							>
-								消息列表 <b>{isPreview ? "128" : state.messages.length}</b>
+								消息列表{" "}
+								<b>
+									{selectedTask ? selectedMessages.length : state.messages.length}
+								</b>
 							</button>
 							<button
 								className={tab === "logs" ? "tab-active" : ""}
 								onClick={() => setTab("logs")}
 							>
-								任务日志 <b>{isPreview ? "24" : state.logs.length}</b>
+								任务日志{" "}
+								<b>
+									{
+										state.logs.filter(
+											(log) =>
+												!selectedTask || log.taskId === selectedTask.id,
+										).length
+									}
+								</b>
 							</button>
 							<button
 								className={tab === "rules" ? "tab-active" : ""}
@@ -638,11 +478,16 @@ export function App() {
 								采集规则
 							</button>
 							<span className="window-status">
-								最近更新 14:32:08
+								最近更新 {refreshAt.toLocaleTimeString()}
 								<button
 									className="refresh-action"
 									aria-label="刷新"
-									onClick={() => void window.copyfast.state().then(setState)}
+									onClick={() =>
+										void window.copyfast.state().then((nextState) => {
+											setState(nextState);
+											setRefreshAt(new Date());
+										})
+									}
 								>
 									<RefreshCw size={12} /> 刷新
 								</button>
@@ -652,7 +497,7 @@ export function App() {
 							<MessageList
 								state={state}
 								task={selectedTask}
-								preview={isPreview}
+								allTasks={state.tasks}
 								activeMessageId={activeMessageId}
 								onActiveMessageChange={setActiveMessageId}
 								onViewMessage={(message) => {
@@ -661,9 +506,23 @@ export function App() {
 								}}
 							/>
 						) : tab === "logs" ? (
-							<LogList state={state} />
+							<LogList
+								state={state}
+								taskId={selectedTask?.id}
+								onShowMessages={(messageKey) => {
+									setTab("messages");
+									setActiveMessageId(messageKey);
+								}}
+							/>
 						) : (
-							<Rules task={currentTask} />
+							<Rules
+								task={currentTask}
+								onSaved={async (input) => {
+									if (!currentTask) return;
+									await window.copyfast.saveTask(input, currentTask.id);
+									setState(await window.copyfast.state());
+								}}
+							/>
 						)}
 					</section>
 				)}
@@ -704,36 +563,18 @@ export function App() {
 			{createOpen && (
 				<TaskDialog
 					onClose={() => setCreateOpen(false)}
-					onSaved={(input) => {
-						addPrototypeTask(input);
+					onSaved={async (input) => {
+						const id = await window.copyfast.saveTask(input);
+						setState(await window.copyfast.state());
+						setSelected(id);
+						setActiveMessageId(undefined);
+						setTab("rules");
 						setCreateOpen(false);
 					}}
 				/>
 			)}
 		</main>
 	);
-
-	function addPrototypeTask(input: TaskInput) {
-		const now = new Date().toISOString();
-		const task: PublicTask = {
-			id: `prototype-${Date.now()}`,
-			...input,
-			name: input.name,
-			status: "paused",
-			createdAt: now,
-			nextRunAt: now,
-			delivery: {
-				kind: input.delivery.kind,
-				chatId: input.delivery.chatId,
-				endpointConfigured: Boolean(input.delivery.endpoint),
-				secretConfigured: Boolean(input.delivery.secretId),
-			},
-		};
-		setPrototypeTasks((currentTasks) => [task, ...currentTasks]);
-		setSelected(task.id);
-		setActiveMessageId(undefined);
-		setTab("rules");
-	}
 }
 
 function normalizeRuntimeInfo(info: RuntimeInfo): RuntimeInfo {
@@ -755,88 +596,126 @@ function Metric({ label, value }: { label: string; value: string }) {
 function MessageList({
 	state,
 	task,
-	preview,
+	allTasks,
 	activeMessageId,
 	onActiveMessageChange,
 	onViewMessage,
 }: {
 	state: PublicState;
-	task:
-		| {
-				id: string;
-				name: string;
-				platform: "discord" | "telegram";
-				channelCount: number;
-		  }
-		| undefined;
-	preview: boolean;
+	task: PublicTask | undefined;
+	allTasks: PublicTask[];
 	activeMessageId: string | undefined;
 	onActiveMessageChange: (id: string | undefined) => void;
 	onViewMessage: (message: MessageRow) => void;
 }) {
-	const allRows: MessageRow[] = preview
-		? previewMessages
-		: state.messages
-				.filter((message) => !task || message.taskId === task.id)
-				.slice(-8)
-				.reverse()
-				.map((message) => {
-					const sourceTask = state.tasks.find((item) => item.id === message.taskId);
-					const sourceChannel = sourceTask?.source.channels.find(
-						(channel) => channel.id === message.channelId,
-					);
-					const targetChannel = sourceTask?.target.channels[0];
-					return {
-						id: message.key,
-						taskId: message.taskId,
-						taskName: sourceTask?.name ?? task?.name ?? "采集任务",
-						platform: sourceTask?.source.platform ?? task?.platform ?? "discord",
-						source: `${sourceTask?.source.server.name ?? "来源服务器"} / #${sourceChannel?.name ?? message.channelId}`,
-						author: message.author || "未知作者",
-						time: new Date(message.sentAt).toLocaleTimeString(),
-						text:
-							message.text ||
-							(message.attachments.length ? "附件消息" : "无文本内容"),
-						target: `${sourceTask?.target.server.name ?? "我的服务器"} / #${targetChannel?.name ?? "目标频道"}`,
-						status: message.status,
-					};
-				});
-	const rows = task ? allRows.filter((message) => message.taskId === task.id) : allRows;
+	const [platformFilter, setPlatformFilter] = useState("all");
+	const [taskFilter, setTaskFilter] = useState(task?.id ?? "all");
+	const [statusFilter, setStatusFilter] = useState("all");
+	const [dateFilter, setDateFilter] = useState("today");
+	const [query, setQuery] = useState("");
+	const allRows: MessageRow[] = state.messages
+		.map((message) => {
+			const sourceTask = allTasks.find((item) => item.id === message.taskId);
+			const sourceChannel = sourceTask?.source.channels.find(
+				(channel) => channel.id === message.channelId,
+			);
+			return {
+				id: message.key,
+				message,
+				taskId: message.taskId,
+				taskName: message.taskName ?? sourceTask?.name ?? "已删除的任务",
+				platform: message.platform ?? sourceTask?.source.platform ?? "discord",
+				source: `${message.sourceName ?? sourceTask?.source.server.name ?? "来源未知"} / #${message.channelName ?? sourceChannel?.name ?? message.channelId}`,
+				author: message.author || "未知作者",
+				time: new Date(message.sentAt).toLocaleString(),
+				text: message.text || (message.attachments.length ? "附件消息" : "无文本内容"),
+				status: message.status,
+			};
+		})
+		.reverse();
+	const dayStart = new Date();
+	dayStart.setHours(0, 0, 0, 0);
+	const rows = allRows.filter((row) => {
+		if (task && row.taskId !== task.id) return false;
+		if (!task && taskFilter !== "all" && row.taskId !== taskFilter) return false;
+		if (platformFilter !== "all" && row.platform !== platformFilter) return false;
+		if (statusFilter !== "all" && row.status !== statusFilter) return false;
+		if (dateFilter === "today" && Date.parse(row.message.collectedAt) < dayStart.getTime())
+			return false;
+		const needle = query.trim().toLocaleLowerCase();
+		return (
+			!needle ||
+			`${row.taskName} ${row.source} ${row.author} ${row.text}`
+				.toLocaleLowerCase()
+				.includes(needle)
+		);
+	});
 	const activeMessage = rows.find((message) => message.id === activeMessageId) ?? rows[0];
 	const statusText: Record<string, string> = {
-		synced: "已同步",
-		pending: "待同步",
-		sending: "同步中",
-		failed: "同步失败",
-		uncertain: "需核对",
+		collected: "已采集",
+		pending: "待处理",
+		sending: "处理中",
+		synced: "已采集",
+		failed: "采集失败",
+		uncertain: "需检查",
 		filtered: "已过滤",
 	};
 	return (
 		<Panel>
 			<div className="filters">
-				<button>
-					{task ? (task.platform === "telegram" ? "Telegram" : "Discord") : "全部平台"}{" "}
-					<ChevronDown size={13} />
-				</button>
-				<button>
-					{task?.name ?? "全部任务"} <ChevronDown size={13} />
-				</button>
-				<button>
-					全部状态 <ChevronDown size={13} />
-				</button>
-				<button>
-					今天 <ChevronDown size={13} />
-				</button>
-				<span>
-					<Filter size={14} />
-					搜索消息、作者或频道
-				</span>
+				<select
+					aria-label="平台筛选"
+					value={platformFilter}
+					onChange={(event) => setPlatformFilter(event.target.value)}
+				>
+					<option value="all">全部平台</option>
+					<option value="telegram">Telegram</option>
+					<option value="discord">Discord</option>
+				</select>
+				<select
+					aria-label="任务筛选"
+					value={task ? task.id : taskFilter}
+					disabled={Boolean(task)}
+					onChange={(event) => setTaskFilter(event.target.value)}
+				>
+					<option value="all">全部任务</option>
+					{allTasks.map((item) => (
+						<option key={item.id} value={item.id}>
+							{item.name}
+						</option>
+					))}
+				</select>
+				<select
+					aria-label="状态筛选"
+					value={statusFilter}
+					onChange={(event) => setStatusFilter(event.target.value)}
+				>
+					<option value="all">全部状态</option>
+					<option value="collected">已采集</option>
+					<option value="filtered">已过滤</option>
+					<option value="failed">采集失败</option>
+				</select>
+				<select
+					aria-label="日期筛选"
+					value={dateFilter}
+					onChange={(event) => setDateFilter(event.target.value)}
+				>
+					<option value="today">今天</option>
+					<option value="all">全部日期</option>
+				</select>
+				<input
+					aria-label="搜索消息"
+					type="search"
+					placeholder="搜索消息、作者或频道"
+					value={query}
+					onChange={(event) => setQuery(event.target.value)}
+				/>
 			</div>
 			{!task && (
 				<div className="table-head">
 					<span>消息 / 来源</span>
 					<span>消息内容</span>
-					<span>同步状态</span>
+					<span>采集状态</span>
 					<span>详情</span>
 				</div>
 			)}
@@ -846,9 +725,9 @@ function MessageList({
 						<section className="task-message-list">
 							<header>
 								<strong>
-									{task.name} · {task.channelCount} 个频道
+									{task.name} · {task.source.channels.length} 个频道
 								</strong>
-								<small>{preview ? "128" : rows.length} 条采集记录 / 当前任务</small>
+								<small>{rows.length} 条采集记录 / 当前任务</small>
 							</header>
 							<div className="task-message-items">
 								{rows.map((message) => (
@@ -891,9 +770,23 @@ function MessageList({
 									</b>
 									<p>{activeMessage.text}</p>
 									<div className="detail-target">
-										<small>同步到</small>
-										<b>{activeMessage.target}</b>
+										<small>本机采集时间</small>
+										<b>
+											{new Date(
+												activeMessage.message.collectedAt,
+											).toLocaleString()}
+										</b>
 									</div>
+									{activeMessage.message.attachments.length > 0 && (
+										<div className="detail-target">
+											<small>附件</small>
+											<b>
+												{activeMessage.message.attachments
+													.map((attachment) => attachment.name)
+													.join("、")}
+											</b>
+										</div>
+									)}
 									<small>消息 ID　{activeMessage.id}</small>
 								</>
 							) : (
@@ -921,7 +814,9 @@ function MessageList({
 								</div>
 								<strong className={`state ${message.status}`}>
 									<span>{statusText[message.status] ?? message.status}</span>
-									<small>{message.target}</small>
+									<small>
+										{new Date(message.message.collectedAt).toLocaleTimeString()}
+									</small>
 								</strong>
 								<button
 									className="row-action"
@@ -932,114 +827,244 @@ function MessageList({
 							</div>
 						))}
 						<div className="pagination">
-							<span>显示 1–5 条，共 {preview ? 128 : rows.length} 条消息</span>
-							<span>‹　1　2　3　…　{preview ? 26 : 1}　›</span>
+							<span>共 {rows.length} 条消息</span>
 						</div>
-						{preview && (
-							<div className="preview-note">
-								示例数据 · 任务状态、采集记录与消息同步结果在此统一查看
-							</div>
-						)}
 					</>
 				)
 			) : (
 				<Empty
-					title="等待采集消息"
-					detail="启动任务后，采集内容会按来源、规则和同步结果出现在这里。"
+					title={state.messages.length ? "没有符合条件的消息" : "等待采集消息"}
+					detail={
+						state.messages.length
+							? "调整筛选条件，查看其他本地采集记录。"
+							: "运行一个任务后，采集结果会保存在这里。"
+					}
 				/>
 			)}
 		</Panel>
 	);
 }
-function LogList({ state }: { state: PublicState }) {
+function LogList({
+	state,
+	taskId,
+	onShowMessages,
+}: {
+	state: PublicState;
+	taskId?: string;
+	onShowMessages: (messageId?: string) => void;
+}) {
+	const [statusFilter, setStatusFilter] = useState("all");
+	const [phaseFilter, setPhaseFilter] = useState("all");
+	const logs = state.logs.filter(
+		(log) =>
+			(!taskId || log.taskId === taskId) &&
+			(statusFilter === "all" || log.status === statusFilter) &&
+			(phaseFilter === "all" || log.phase === phaseFilter),
+	);
 	return (
 		<Panel>
 			<div className="filters">
-				<button>
-					全部平台 <ChevronDown size={14} />
-				</button>
-				<button>
-					全部任务 <ChevronDown size={14} />
-				</button>
-				<button>
-					全部状态 <ChevronDown size={14} />
-				</button>
-				<span>
-					<RefreshCw size={14} />
-					自动刷新
-				</span>
+				<select
+					aria-label="日志类型筛选"
+					value={phaseFilter}
+					onChange={(event) => setPhaseFilter(event.target.value)}
+				>
+					<option value="all">全部记录</option>
+					<option value="collect">采集</option>
+					<option value="settings">规则保存</option>
+				</select>
+				<select
+					aria-label="日志状态筛选"
+					value={statusFilter}
+					onChange={(event) => setStatusFilter(event.target.value)}
+				>
+					<option value="all">全部状态</option>
+					<option value="success">成功</option>
+					<option value="partial">部分完成</option>
+					<option value="failed">失败</option>
+					<option value="processing">进行中</option>
+				</select>
 			</div>
-			{state.logs.length ? (
-				state.logs
-					.slice(-10)
-					.reverse()
-					.map((log) => (
-						<div className="log-row" key={log.id}>
-							<div>
-								<b>{new Date(log.startedAt).toLocaleTimeString()}</b>
-								<small>
-									{log.id.slice(0, 8)} · {log.phase}
-								</small>
-							</div>
-							<b>{log.status}</b>
-							<span>
-								{log.collected} / {log.saved} / {log.failed}
-							</span>
-							<span>
-								{log.durationMs
-									? `${(log.durationMs / 1000).toFixed(1)} s`
-									: "处理中"}
-							</span>
-							<button>详情</button>
+			{logs.length ? (
+				logs.reverse().map((log) => (
+					<div className="log-row" key={log.id}>
+						<div>
+							<b>{new Date(log.startedAt).toLocaleTimeString()}</b>
+							<small>
+								{state.tasks.find((task) => task.id === log.taskId)?.name ??
+									"已删除的任务"}{" "}
+								·{" "}
+								{log.phase === "collect"
+									? "采集"
+									: log.phase === "settings"
+										? "规则保存"
+										: "历史记录"}
+							</small>
 						</div>
-					))
+						<b>
+							{log.status === "success"
+								? "成功"
+								: log.status === "processing"
+									? "进行中"
+									: log.status === "partial"
+										? "部分完成"
+										: "失败"}
+						</b>
+						<span>
+							采集 {log.collected} · 保存 {log.saved} · 忽略 {log.ignored} · 失败{" "}
+							{log.failed}
+						</span>
+						<span>
+							{log.durationMs ? `${(log.durationMs / 1000).toFixed(1)} s` : "处理中"}
+						</span>
+						<button onClick={() => onShowMessages(log.messageKeys[0])}>
+							查看关联消息
+						</button>
+					</div>
+				))
 			) : (
 				<Empty
 					title="暂无执行日志"
-					detail="每次采集、同步和规则保存都会在这里留下可追踪记录。"
+					detail="每次任务运行和规则变更都会在这里留下本地记录。"
 				/>
 			)}
 		</Panel>
 	);
 }
-function Rules({ task }: { task: PublicTask | undefined }) {
+function Rules({
+	task,
+	onSaved,
+}: {
+	task: PublicTask | undefined;
+	onSaved: (input: TaskInput) => Promise<void>;
+}) {
+	const [interval, setInterval] = useState(task?.rules.intervalSeconds ?? 60);
+	const [include, setInclude] = useState(task?.rules.include ?? "");
+	const [exclude, setExclude] = useState(task?.rules.exclude ?? "");
+	const [text, setText] = useState(task?.rules.text ?? true);
+	const [images, setImages] = useState(task?.rules.images ?? true);
+	const [attachments, setAttachments] = useState(task?.rules.attachments ?? true);
+	const [saving, setSaving] = useState(false);
+	const [message, setMessage] = useState("");
+	useEffect(() => {
+		setInterval(task?.rules.intervalSeconds ?? 60);
+		setInclude(task?.rules.include ?? "");
+		setExclude(task?.rules.exclude ?? "");
+		setText(task?.rules.text ?? true);
+		setImages(task?.rules.images ?? true);
+		setAttachments(task?.rules.attachments ?? true);
+	}, [task]);
+	async function saveRules(event: React.FormEvent) {
+		event.preventDefault();
+		if (!task) return;
+		setSaving(true);
+		setMessage("");
+		try {
+			await onSaved({
+				name: task.name,
+				source: task.source,
+				collector: task.collector,
+				rules: {
+					...task.rules,
+					intervalSeconds: interval,
+					include,
+					exclude,
+					text,
+					images,
+					attachments,
+				},
+			});
+			setMessage("规则已保存");
+		} catch (error) {
+			setMessage(error instanceof Error ? error.message : "保存失败，请重试");
+		} finally {
+			setSaving(false);
+		}
+	}
 	return (
 		<Panel>
-			<div className="rule-grid">
-				<section>
-					<h3>01 采集来源</h3>
-					<b>{task?.source.server.name ?? "未选择来源"}</b>
-					<span>{task?.source.channels.length ?? 0} 个频道</span>
-					{task?.source.channels.map((channel) => (
-						<label key={channel.id}># {channel.name}</label>
-					))}
-				</section>
-				<section>
-					<h3>02 同步到自己的频道</h3>
-					<b>{task?.target.server.name ?? "未设置目标"}</b>
-					<span>{task?.target.channels.length ?? 0} 个目标频道</span>
-					{task?.target.channels.map((channel) => (
-						<label key={channel.id}>→ {channel.name}</label>
-					))}
-				</section>
-				<section className="rules-full">
-					<h3>03 采集与同步规则</h3>
-					<div className="rule-fields">
-						<label>
-							采集频率 <b>{task ? `${task.rules.intervalSeconds} 秒` : "每 30 秒"}</b>
-						</label>
-						<div>
-							消息去重 <b>已开启</b>
-						</div>
-						<label>
-							失败处理 <b>最多重试 {task?.rules.maxRetries ?? 3} 次</b>
-						</label>
-						<div>
-							消息类型 <b>文字 · 图片 · 附件</b>
-						</div>
+			{!task ? (
+				<Empty
+					title="选择一个任务查看采集规则"
+					detail="从左侧选择任务，或新建任务开始配置。"
+				/>
+			) : (
+				<form onSubmit={saveRules}>
+					<div className="rule-grid">
+						<section>
+							<h3>01 采集来源</h3>
+							<b>{task?.source.server.name ?? "未选择来源"}</b>
+							<span>{task?.source.channels.length ?? 0} 个频道</span>
+							{task?.source.channels.map((channel) => (
+								<label key={channel.id}># {channel.name}</label>
+							))}
+						</section>
+						<section className="rules-full">
+							<h3>02 采集规则</h3>
+							<div className="rule-fields">
+								<label className="field">
+									采集间隔（秒）
+									<input
+										type="number"
+										min={10}
+										max={86400}
+										value={interval}
+										onChange={(event) =>
+											setInterval(Number(event.target.value))
+										}
+									/>
+								</label>
+								<label className="field">
+									仅包含关键词
+									<input
+										value={include}
+										onChange={(event) => setInclude(event.target.value)}
+										placeholder="逗号分隔，可留空"
+									/>
+								</label>
+								<label className="field">
+									排除关键词
+									<input
+										value={exclude}
+										onChange={(event) => setExclude(event.target.value)}
+										placeholder="逗号分隔，可留空"
+									/>
+								</label>
+								<label>
+									<input
+										type="checkbox"
+										checked={text}
+										onChange={(event) => setText(event.target.checked)}
+									/>
+									文字
+								</label>
+								<label>
+									<input
+										type="checkbox"
+										checked={images}
+										onChange={(event) => setImages(event.target.checked)}
+									/>
+									图片
+								</label>
+								<label>
+									<input
+										type="checkbox"
+										checked={attachments}
+										onChange={(event) => setAttachments(event.target.checked)}
+									/>
+									文件
+								</label>
+							</div>
+						</section>
 					</div>
-				</section>
-			</div>
+					<div className="rule-actions">
+						<span role="status">{message}</span>
+						<button className="primary" disabled={saving}>
+							{saving ? "保存中…" : "保存规则"}
+						</button>
+					</div>
+				</form>
+			)}
 		</Panel>
 	);
 }
