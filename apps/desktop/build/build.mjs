@@ -1,4 +1,4 @@
-import { copyFile, mkdir } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 
 import { build } from "esbuild";
 await mkdir("dist/main", { recursive: true });
@@ -35,4 +35,10 @@ await build({
 	sourcemap: true,
 	tsconfig: "tsconfig.json",
 });
-await copyFile("src/renderer/index.html", "dist/renderer/index.html");
+const rendererHtml = await readFile("src/renderer/index.html", "utf8");
+await writeFile(
+	"dist/renderer/index.html",
+	rendererHtml
+		.replace('src="/main.tsx"', 'src="./main.js"')
+		.replace("</head>", '<link rel="stylesheet" href="./main.css" />\n\t</head>'),
+);

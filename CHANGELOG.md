@@ -2,6 +2,14 @@
 
 ## 2026-11-26
 
+- fix: Reduce desktop task creation to four steps, moving channel/receiver settings and collection rules to steps three and four; keep manual source setup in the receiver screen’s expandable configuration.
+
+- fix: Point the packaged desktop renderer at its compiled JavaScript and CSS so the built application loads its UI and task dialogs.
+
+- feat: Restore the desktop channel/receiver and collection-rule dialogs from Figma, including channel selection and target mappings, persisted receiver settings, a test-message preview, frequency and content controls, live task summaries and an explicit start-or-pause choice. Webhook delivery remains unconnected.
+
+- feat: Match the desktop new-task platform and operation-guide dialogs to Figma, with four-step navigation, live application status, launch/download actions and permission checks; retain manual channel and collector setup until automatic selection is available.
+
 - fix: Replace the desktop Telegram support link with Discord/Telegram icons and a contact button opening the marketing contact page.
 
 - feat: Expand the desktop channel panel with a temporary collapsed sidebar and hidden page heading and metrics; restore the original layout with one click.

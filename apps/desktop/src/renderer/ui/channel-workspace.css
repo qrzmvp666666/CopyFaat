@@ -480,6 +480,10 @@
 }
 .channel-nav {
 	overflow-y: auto;
+	scrollbar-width: none;
+}
+.channel-nav::-webkit-scrollbar {
+	display: none;
 }
 .channel-content {
 	display: flex;

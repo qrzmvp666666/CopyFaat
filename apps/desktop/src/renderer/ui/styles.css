@@ -1559,11 +1559,13 @@ button:disabled {
 	gap: 6px;
 	flex-shrink: 0;
 }
+.connection b img,
 .support-icons img {
 	display: block;
 	filter: invert(1);
 	opacity: 0.75;
 }
-.support:hover .support-icons img {
+.support:hover .connection b img,
+.support-icons img {
 	opacity: 1;
 }

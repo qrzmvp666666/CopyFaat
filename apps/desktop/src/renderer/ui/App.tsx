@@ -303,7 +303,9 @@ export function App() {
 					<div className="sidebar-bottom">
 						<div className="eyebrow sidebar-label">桌面应用</div>
 						<div className="connection" title="Telegram">
-							<b>TG</b>
+							<b aria-hidden="true">
+								<img src={telegramIcon} alt="" width={16} height={16} />
+							</b>
 							<span className="sidebar-label">Telegram</span>
 							<small
 								className={
@@ -318,7 +320,9 @@ export function App() {
 							</small>
 						</div>
 						<div className="connection" title="Discord">
-							<b>DC</b>
+							<b aria-hidden="true">
+								<img src={discordIcon} alt="" width={16} height={16} />
+							</b>
 							<span className="sidebar-label">Discord</span>
 							<small
 								className={

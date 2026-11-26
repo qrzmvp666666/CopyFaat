@@ -752,3 +752,9 @@ Avoid `"use client"` for:
 - Discord webhook sources must provide `platform`, `serverName`, and `channelName`; resolve these through `signal_source_binding` to an existing Trader. Never create a Discord KOL automatically or overwrite the bound Trader identity from submitted source labels.
 - Bindings are managed through admin-only `/admin/source-bindings`. Normalize names consistently with `getSignalSourceKeys`; category disambiguates duplicate channels. Unknown, disabled, incomplete, or ambiguous sources must return actionable item errors and remain visible in webhook logs.
 - Reject an explicit `eventId` that belongs to another Trader. Keep real collected candidates pending user confirmation; use isolated synthetic events for ingestion verification.
+
+### Desktop task setup workflow
+
+- Desktop task creation lives in `apps/desktop/src/renderer/ui/TaskDialog.tsx`; receiver and rule screens use `TaskReceiverStep`, `TaskRulesStep`, and the shared `task-configuration` helpers. The wizard has four steps: platform, source guidance, channels/receiver, and rules. Manual source/channel entry and collector selection live in the third screen’s expandable source configuration until native region selection exists.
+- Validate persisted receiver settings through `receiverSchema` and `taskInputSchema` in `apps/desktop/src/shared/contracts.ts`. Channel mappings must cover exactly the selected source IDs; unchecked channels must not enter the saved collection scope. Receiver settings are stored locally; they do not imply Webhook delivery. Keep preview-only tests explicitly labeled as unsent until a delivery service is implemented.
+- New tasks start collecting only when `startPaused` is explicitly `false`; callers omitting it retain the paused default. Keep collection rules and receiver changes backward compatible with existing local task records.

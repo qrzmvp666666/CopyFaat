@@ -14,25 +14,66 @@ export const scopeSchema = z.object({
 		.max(100)
 		.refine((value) => new Set(value.map((c) => c.id)).size === value.length, "频道不能重复"),
 });
-export const taskInputSchema = z.object({
-	name: z.string().trim().min(1).max(80),
-	source: scopeSchema,
-	collector: z.object({
-		executable: z.string().min(1),
-		args: z.array(z.string()).max(30).default([]),
-	}),
-	rules: z.object({
-		intervalSeconds: z.number().int().min(10).max(86400),
-		startAt: z.iso.datetime(),
-		include: z.string().max(500).default(""),
-		exclude: z.string().max(500).default(""),
-		maxRetries: z.number().int().min(0).max(5).default(3),
-		retrySeconds: z.number().int().min(5).max(3600).default(10),
-		text: z.boolean().default(true),
-		images: z.boolean().default(true),
-		attachments: z.boolean().default(true),
-	}),
+export const receiverSchema = z.object({
+	webhookUrl: z
+		.url()
+		.max(2048)
+		.refine((value) => /^https?:\/\//i.test(value)),
+	platform: platformSchema,
+	server: z.object({ id: z.string().trim().max(200), name: z.string().trim().min(1).max(160) }),
+	channels: z
+		.array(
+			z.object({
+				sourceChannelId: z.string().min(1).max(200),
+				target: z.object({
+					id: z.string().trim().max(200),
+					name: z.string().trim().min(1).max(160),
+				}),
+			}),
+		)
+		.min(1)
+		.max(100),
 });
+export type Receiver = z.infer<typeof receiverSchema>;
+
+export const taskInputSchema = z
+	.object({
+		name: z.string().trim().min(1).max(80),
+		startPaused: z.boolean().optional(),
+		receiver: receiverSchema.optional(),
+		source: scopeSchema,
+		collector: z.object({
+			executable: z.string().min(1),
+			args: z.array(z.string()).max(30).default([]),
+		}),
+		rules: z.object({
+			intervalSeconds: z.number().int().min(10).max(86400),
+			startAt: z.iso.datetime(),
+			include: z.string().max(500).default(""),
+			exclude: z.string().max(500).default(""),
+			maxRetries: z.number().int().min(0).max(5).default(3),
+			retrySeconds: z.number().int().min(5).max(3600).default(10),
+			text: z.boolean().default(true),
+			images: z.boolean().default(true),
+			attachments: z.boolean().default(true),
+		}),
+	})
+	.superRefine((task, context) => {
+		if (!task.receiver) return;
+		const sourceIds = new Set(task.source.channels.map((channel) => channel.id));
+		const mappedIds = new Set(task.receiver.channels.map((channel) => channel.sourceChannelId));
+		if (
+			mappedIds.size !== task.receiver.channels.length ||
+			mappedIds.size !== sourceIds.size ||
+			[...mappedIds].some((id) => !sourceIds.has(id))
+		) {
+			context.addIssue({
+				code: "custom",
+				path: ["receiver", "channels"],
+				message: "接收对应关系必须与所选来源频道一一对应",
+			});
+		}
+	});
 export type Platform = z.infer<typeof platformSchema>;
 export type Scope = z.infer<typeof scopeSchema>;
 export type TaskInput = z.infer<typeof taskInputSchema>;

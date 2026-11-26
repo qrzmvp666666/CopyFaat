@@ -55,7 +55,7 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 				state.tasks.push({
 					...parsed,
 					id: taskId,
-					status: "paused",
+					status: parsed.startPaused === false ? "running" : "paused",
 					createdAt: stamp(),
 					nextRunAt: stamp(),
 				});
@@ -73,6 +73,7 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 				messageKeys: [],
 			});
 		});
+		if (!id && parsed.startPaused === false) void run(taskId);
 		return taskId;
 	}
 	async function deleteTask(id: string) {

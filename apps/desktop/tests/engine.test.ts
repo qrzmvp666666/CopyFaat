@@ -49,6 +49,7 @@ async function setup(messages: CollectedMessage[] = [message]) {
 	roots.push(root);
 	const store = await createStore(join(root, "state.json"));
 	return {
+		path: join(root, "state.json"),
 		store,
 		engine: createEngine(store, {
 			collect: async () => ({ version: 1 as const, messages }),
@@ -57,6 +58,48 @@ async function setup(messages: CollectedMessage[] = [message]) {
 }
 
 describe("CopyFast task engine", () => {
+	it("persists receiver mappings and paused tasks across a restart without collecting", async () => {
+		const { store, engine, path } = await setup();
+		const id = await engine.saveTask({
+			...input,
+			startPaused: true,
+			receiver: {
+				webhookUrl: "https://example.com/messages",
+				platform: "telegram",
+				server: { id: "", name: "我的工作室" },
+				channels: [
+					{ sourceChannelId: "source-channel", target: { id: "", name: "产品资讯" } },
+				],
+			},
+		});
+		expect(store.read().tasks[0]).toMatchObject({
+			id,
+			status: "paused",
+			receiver: {
+				server: { name: "我的工作室" },
+				channels: [{ target: { name: "产品资讯" } }],
+			},
+		});
+		expect(store.read().logs.filter((log) => log.phase === "collect")).toHaveLength(0);
+		const reopened = await createStore(path);
+		expect(reopened.read().tasks).toEqual(store.read().tasks);
+	});
+
+	it("starts a new task only when immediate collection was explicitly selected", async () => {
+		const { store, engine } = await setup();
+		await engine.saveTask({
+			...input,
+			startPaused: false,
+			rules: { ...input.rules, text: false, images: true, attachments: true },
+		});
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(store.read().tasks[0].status).toBe("running");
+		expect(store.read().logs.some((log) => log.phase === "collect")).toBe(true);
+		expect(store.read().messages[0]).toMatchObject({ text: "", status: "filtered" });
+		const pausedId = await engine.saveTask(input);
+		expect(store.read().tasks.find((task) => task.id === pausedId)?.status).toBe("paused");
+	});
+
 	it("deduplicates repeated messages in one collection batch", async () => {
 		const { store, engine } = await setup([message, message]);
 		const taskId = await engine.saveTask(input);
