@@ -23,7 +23,7 @@ export function ChannelNav({ channels, selectedKey, onSelect }: ChannelNavProps)
 				<Search size={13} />
 				<input
 					aria-label="搜索频道"
-					placeholder="查找频道或任务"
+					placeholder="查找来源、频道或任务"
 					value={query}
 					onChange={(event) => setQuery(event.target.value)}
 				/>
@@ -40,7 +40,9 @@ export function ChannelNav({ channels, selectedKey, onSelect }: ChannelNavProps)
 			<div className="channel-groups">
 				{groups.map((taskId) => (
 					<section key={taskId}>
-						<h3>{visible.find((channel) => channel.taskId === taskId)?.taskName}</h3>
+						<h3 title={visible.find((channel) => channel.taskId === taskId)?.taskName}>
+							{visible.find((channel) => channel.taskId === taskId)?.serverName}
+						</h3>
 						{visible
 							.filter((channel) => channel.taskId === taskId)
 							.map((channel) => (

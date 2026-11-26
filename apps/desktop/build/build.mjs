@@ -29,6 +29,7 @@ await build({
 	entryPoints: ["src/renderer/main.tsx"],
 	bundle: true,
 	platform: "browser",
+	loader: { ".png": "dataurl", ".svg": "dataurl" },
 	format: "esm",
 	outfile: "dist/renderer/main.js",
 	sourcemap: true,

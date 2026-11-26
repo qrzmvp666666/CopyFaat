@@ -1,4 +1,13 @@
-import { ChevronLeft, ChevronRight, FileText, RefreshCw, Search, X } from "lucide-react";
+import {
+	ChevronLeft,
+	ChevronRight,
+	FileText,
+	Maximize2,
+	Minimize2,
+	RefreshCw,
+	Search,
+	X,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import type { Message, PublicState } from "../../shared/contracts";
@@ -10,6 +19,8 @@ import "./channel-workspace.css";
 interface ChannelWorkspaceProps {
 	state: PublicState;
 	taskId?: string;
+	isExpanded: boolean;
+	onToggleExpanded: () => void;
 	tab: string;
 	onTabChange: (tab: string) => void;
 	onRefresh: () => Promise<void>;
@@ -26,6 +37,8 @@ const PAGE_SIZE = 20;
 export function ChannelWorkspace({
 	state,
 	taskId,
+	isExpanded,
+	onToggleExpanded,
 	tab,
 	onTabChange,
 	onRefresh,
@@ -92,6 +105,16 @@ export function ChannelWorkspace({
 			<ChannelNav channels={channels} selectedKey={channel?.key} onSelect={changeChannel} />
 			<section className="channel-content" aria-label="频道内容">
 				<header className="channel-heading">
+					<button
+						type="button"
+						className="channel-expand"
+						aria-label={isExpanded ? "还原频道面板" : "放大频道面板"}
+						title={isExpanded ? "还原频道面板" : "放大频道面板"}
+						aria-pressed={isExpanded}
+						onClick={onToggleExpanded}
+					>
+						{isExpanded ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+					</button>
 					<h2>{channel ? `# ${channel.name}` : "全部频道"}</h2>
 					<div className="channel-summary">
 						{channel && latest && (

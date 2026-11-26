@@ -2,6 +2,16 @@
 
 ## 2026-11-26
 
+- fix: Replace the desktop Telegram support link with Discord/Telegram icons and a contact button opening the marketing contact page.
+
+- feat: Expand the desktop channel panel with a temporary collapsed sidebar and hidden page heading and metrics; restore the original layout with one click.
+
+- fix: Label desktop channel groups with their server/source name while preserving task scoping and single-source task configuration.
+
+- feat: Add an isolated desktop demo preview with sample tasks, channels, messages and collection logs, plus a one-click return to live data.
+
+- fix: Reuse the desktop application icon in the sidebar so its CF mark matches the Dock and installed app icon.
+
 - feat: Add a persistent icon-only desktop sidebar mode and simplify the connection settings by removing the unused screen recording item and bottom setup guide.
 
 - fix: Use the CopyFast application identity for local macOS development and set the desktop version to 1.0.0. Preserve existing development task records when switching application identities.

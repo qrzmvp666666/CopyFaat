@@ -172,7 +172,10 @@ function registerIpc() {
 		const urls: Record<string, string> = {
 			telegram: "https://desktop.telegram.org/",
 			discord: "https://discord.com/download",
-			support: "https://t.me/Michael_Qin",
+			support: new URL(
+				"/zh/contact",
+				process.env.NEXT_PUBLIC_MARKETING_URL ?? "http://copyfast.localhost:4101",
+			).href,
 		};
 		if (target === "permissions" && process.platform === "darwin")
 			return shell.openExternal(

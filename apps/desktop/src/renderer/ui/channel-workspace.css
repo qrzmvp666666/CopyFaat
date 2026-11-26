@@ -504,3 +504,37 @@
 .channel-log:last-child {
 	border-bottom: 0;
 }
+
+.channel-heading {
+	position: relative;
+	padding-right: 42px;
+}
+.channel-expand {
+	position: absolute;
+	top: 0;
+	right: 0;
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 1px solid #ffffff12;
+	border-radius: 7px;
+	background: transparent;
+	color: #a1a1a8;
+}
+.channel-expand:hover {
+	background: #ffffff0a;
+	color: #f3f3f4;
+}
+.content.content-expanded {
+	padding: 16px 20px 20px;
+}
+.content-expanded > .content-head,
+.content-expanded > .demo-preview-banner,
+.content-expanded > .metrics {
+	display: none;
+}
+.content-expanded > .channel-workspace {
+	margin-top: 0;
+}

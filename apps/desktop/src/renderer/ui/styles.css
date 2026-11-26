@@ -176,21 +176,10 @@ button:focus-visible {
 }
 .brand-mark {
 	flex-shrink: 0;
-	display: grid;
-	place-items: center;
+	display: block;
 	width: 36px;
 	height: 36px;
-	border: 1px solid #ffffff16;
-	border-radius: 10px;
-	color: #f7f7f8;
-	background: #0b0c0d;
-	font-family: Arial, sans-serif;
-	font-size: 17px;
-	font-style: italic;
-	font-weight: 900;
-	letter-spacing: -1.5px;
-	transform: skewX(-8deg);
-	box-shadow: 0 3px 14px #0004;
+	object-fit: contain;
 }
 .eyebrow {
 	color: #85858d;
@@ -1545,4 +1534,36 @@ button:disabled {
 .sidebar-collapsed .support {
 	justify-content: center;
 	padding: 0;
+}
+
+.demo-preview-banner {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 20px;
+	padding: 12px 16px;
+	border: 1px solid #ffffff12;
+	border-radius: 10px;
+	background: #ffffff04;
+	color: #a2a2aa;
+	font-size: 12px;
+}
+.demo-preview-banner .secondary {
+	flex-shrink: 0;
+}
+
+.support-icons {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	flex-shrink: 0;
+}
+.support-icons img {
+	display: block;
+	filter: invert(1);
+	opacity: 0.75;
+}
+.support:hover .support-icons img {
+	opacity: 1;
 }

@@ -14,17 +14,27 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import discordIcon from "../../../assets/discord-monochrome.svg";
+import appIcon from "../../../assets/icon.png";
+import telegramIcon from "../../../assets/telegram-monochrome.svg";
 import type { PublicState, PublicTask, RuntimeInfo, TaskInput } from "../../shared/contracts";
 import { ChannelWorkspace } from "./ChannelWorkspace";
 import { Connections } from "./Connections";
+import { createDemoState } from "./demo-state";
 import { TaskDialog } from "./TaskDialog";
 
 const emptyState: PublicState = { version: 1, tasks: [], messages: [], logs: [] };
 export function App() {
-	const [state, setState] = useState<PublicState>(emptyState);
+	const [liveState, setState] = useState<PublicState>(emptyState);
+	const [demoState] = useState(createDemoState);
+	const [isDemo, setIsDemo] = useState(
+		() => localStorage.getItem("copyfast-demo-preview") === "true",
+	);
+	const state = isDemo ? demoState : liveState;
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(
 		() => localStorage.getItem("copyfast-sidebar-collapsed") === "true",
 	);
+	const [isPanelExpanded, setIsPanelExpanded] = useState(false);
 	const [page, setPage] = useState<"workspace" | "connections">("workspace");
 	const [runtimeInfo, setRuntimeInfo] = useState<RuntimeInfo>();
 	const [isCheckingRuntime, setIsCheckingRuntime] = useState(false);
@@ -73,6 +83,14 @@ export function App() {
 			cancelled = true;
 		};
 	}, [page]);
+	function toggleDemo() {
+		localStorage.setItem("copyfast-demo-preview", String(!isDemo));
+		setIsDemo(!isDemo);
+		setSelected(undefined);
+		setTab("messages");
+		setCreateOpen(false);
+		completeOnboarding();
+	}
 	function completeOnboarding() {
 		setOnboardingOpen(false);
 		localStorage.setItem("copyfast-onboarding-complete", "true");
@@ -113,6 +131,8 @@ export function App() {
 		setSetupDismissed(true);
 		localStorage.setItem("copyfast-setup-dismissed", "true");
 	}
+	const isWorkspaceExpanded = isPanelExpanded && page === "workspace" && tab !== "rules";
+	const isSidebarCollapsed = sidebarCollapsed || isWorkspaceExpanded;
 	const tasks = state.tasks;
 	const total = tasks.length;
 	const running = tasks.filter((t) => t.status === "running").length;
@@ -183,21 +203,22 @@ export function App() {
 				</div>
 			</header>
 			<div className="workspace">
-				<aside className={`sidebar${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
+				<aside className={`sidebar${isSidebarCollapsed ? " sidebar-collapsed" : ""}`}>
 					<div className="brand">
-						<span className="brand-mark">CF</span>
+						<img className="brand-mark" src={appIcon} alt="" aria-hidden="true" />
 						<span className="sidebar-label brand-text">CopyFast</span>
 						<button
 							type="button"
 							className="sidebar-toggle"
-							aria-label={sidebarCollapsed ? "展开侧边栏" : "折叠侧边栏"}
-							title={sidebarCollapsed ? "展开侧边栏" : "折叠侧边栏"}
-							aria-expanded={!sidebarCollapsed}
+							aria-label={isSidebarCollapsed ? "展开侧边栏" : "折叠侧边栏"}
+							title={isSidebarCollapsed ? "展开侧边栏" : "折叠侧边栏"}
+							aria-expanded={!isSidebarCollapsed}
 							onClick={() => {
-								setSidebarCollapsed(!sidebarCollapsed);
+								setIsPanelExpanded(false);
+								setSidebarCollapsed(!isSidebarCollapsed);
 								localStorage.setItem(
 									"copyfast-sidebar-collapsed",
-									String(!sidebarCollapsed),
+									String(!isSidebarCollapsed),
 								);
 							}}
 						>
@@ -208,7 +229,7 @@ export function App() {
 					<button
 						type="button"
 						aria-label="采集工作台"
-						title={sidebarCollapsed ? "采集工作台" : undefined}
+						title={isSidebarCollapsed ? "采集工作台" : undefined}
 						aria-current={page === "workspace" && !selectedTask ? "page" : undefined}
 						className={
 							page === "workspace" && !selectedTask ? "nav-active" : "nav-muted"
@@ -225,7 +246,7 @@ export function App() {
 					<button
 						type="button"
 						aria-label="连接与权限"
-						title={sidebarCollapsed ? "连接与权限" : undefined}
+						title={isSidebarCollapsed ? "连接与权限" : undefined}
 						aria-current={page === "connections" ? "page" : undefined}
 						className={page === "connections" ? "nav-active" : "nav-muted"}
 						onClick={() => {
@@ -242,6 +263,7 @@ export function App() {
 							全部任务 <span>{total}</span>
 						</span>
 						<button
+							disabled={isDemo}
 							title="新建采集任务"
 							aria-label="新建采集任务"
 							onClick={() => setCreateOpen(true)}
@@ -253,7 +275,7 @@ export function App() {
 						{tasks.map((task) => (
 							<button
 								aria-label={task.name}
-								title={sidebarCollapsed ? task.name : undefined}
+								title={isSidebarCollapsed ? task.name : undefined}
 								aria-current={
 									page === "workspace" && selected === task.id
 										? "page"
@@ -312,12 +334,15 @@ export function App() {
 						</div>
 						<button
 							className="support"
-							aria-label="Telegram 客服"
-							title="Telegram 客服"
+							aria-label="联系客服"
+							title="联系客服"
 							onClick={() => window.copyfast.openExternal("support")}
 						>
-							<ExternalLink size={14} />
-							<span className="sidebar-label">Telegram 客服</span>
+							<span className="support-icons" aria-hidden="true">
+								<img src={discordIcon} alt="" width={16} height={16} />
+								<img src={telegramIcon} alt="" width={16} height={16} />
+							</span>
+							<span className="sidebar-label">联系客服</span>
 						</button>
 					</div>
 				</aside>
@@ -337,7 +362,7 @@ export function App() {
 						}}
 					/>
 				) : (
-					<section className="content">
+					<section className={`content${isWorkspaceExpanded ? " content-expanded" : ""}`}>
 						<div className="content-head">
 							<div>
 								<div className="eyebrow">
@@ -355,6 +380,7 @@ export function App() {
 							<div className="content-head-actions">
 								<button
 									className="secondary"
+									disabled={isDemo}
 									onClick={() => setTab(tab === "rules" ? "messages" : "rules")}
 								>
 									<Settings2 size={15} />
@@ -364,6 +390,7 @@ export function App() {
 									<>
 										<button
 											className="secondary"
+											disabled={isDemo}
 											title={
 												current.status === "running"
 													? "暂停任务"
@@ -395,6 +422,7 @@ export function App() {
 										</button>
 										<button
 											className="secondary danger-action"
+											disabled={isDemo}
 											title="删除任务"
 											onClick={() => {
 												if (
@@ -421,10 +449,24 @@ export function App() {
 										</button>
 									</>
 								)}
-								<button className="primary" onClick={() => setCreateOpen(true)}>
+								<button
+									className="primary"
+									disabled={isDemo}
+									onClick={() => setCreateOpen(true)}
+								>
 									<Plus size={16} /> 新建任务
 								</button>
 							</div>
+						</div>
+						<div className="demo-preview-banner" role="status">
+							<span>
+								{isDemo
+									? "演示预览 · 所有任务、消息与日志均为模拟数据，不会执行采集。"
+									: "想先看看有数据时的效果？可以预览演示任务与消息。"}
+							</span>
+							<button className="secondary" onClick={toggleDemo}>
+								{isDemo ? "退出演示" : "查看演示数据"}
+							</button>
 						</div>
 						<div className="metrics">
 							<Metric
@@ -497,9 +539,13 @@ export function App() {
 								key={selectedTask?.id ?? "all"}
 								state={state}
 								taskId={selectedTask?.id}
+								isExpanded={isWorkspaceExpanded}
+								onToggleExpanded={() => setIsPanelExpanded(!isPanelExpanded)}
 								tab={tab}
 								onTabChange={setTab}
-								onRefresh={async () => setState(await window.copyfast.state())}
+								onRefresh={async () => {
+									if (!isDemo) setState(await window.copyfast.state());
+								}}
 							/>
 						)}
 					</section>
