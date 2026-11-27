@@ -26,6 +26,7 @@ export interface DiscoveryAdapter {
 
 export interface DiscoveryScanControl {
 	checkpoint?: () => Promise<void>;
+	maxChannels?: number;
 	onSnapshot?: (result: DiscoveryResult) => void;
 }
 
@@ -46,6 +47,10 @@ export async function scanDiscordChannels(
 	let interrupted = false;
 	const processed = new Set<string>();
 	const channels = new Map<string, Scope["channels"][number]>();
+	const maxChannels =
+		Number.isInteger(control.maxChannels) && control.maxChannels! > 0
+			? control.maxChannels
+			: undefined;
 	let deadline = Date.now() + 12 * 60_000;
 	async function checkpoint() {
 		const startedAt = Date.now();
@@ -93,6 +98,7 @@ export async function scanDiscordChannels(
 			serverId ??= entry.serverId;
 			const key = entryKey(entry);
 			if (channels.has(key)) continue;
+			if (maxChannels && channels.size >= maxChannels) break;
 			if (channels.size >= 500) throw new Error("当前服务器超过单次识别上限（500 个频道）。");
 			channels.set(key, {
 				id: entry.platformId ?? localId(serverName, entry.category, entry.name),
@@ -105,7 +111,7 @@ export async function scanDiscordChannels(
 	}
 
 	try {
-		retain(data);
+		if (!maxChannels) retain(data);
 		await checkpoint();
 		data = read();
 		// Rewind first. Stable repeats are a boundary heuristic, never proof of full coverage.
@@ -120,12 +126,13 @@ export async function scanDiscordChannels(
 			await delay(250);
 			await checkpoint();
 			data = read();
-			retain(data);
+			if (!maxChannels) retain(data);
 			if (page === 59)
 				throw new Error("无法定位频道列表顶部，请确认 Discord 频道侧栏可滚动后重试。");
 		}
 		previous = "";
 		repeats = 0;
+		if (maxChannels) retain(data);
 		for (let page = 0; page < 300; page++) {
 			// Expand only positively identified collapsed category buttons, one fresh ref per observation.
 			for (let expansion = 0; expansion < 50; expansion++) {
@@ -147,6 +154,7 @@ export async function scanDiscordChannels(
 			const pageEntries = entries(data);
 			retain(data);
 			for (const initial of pageEntries) {
+				if (maxChannels && processed.size >= maxChannels) break;
 				await checkpoint();
 				const key = entryKey(initial);
 				if (processed.has(key)) continue;
@@ -210,6 +218,7 @@ export async function scanDiscordChannels(
 				});
 				publish();
 			}
+			if (maxChannels && processed.size >= maxChannels) break;
 			await checkpoint();
 			data = read();
 			const value = signature(data);
@@ -250,6 +259,6 @@ export async function scanDiscordChannels(
 		},
 		// Virtualized/permission-hidden channels cannot be proven absent from an AX tree.
 		complete: false,
-		message: `已发现 ${values.length} 个频道，${values.length - localCount} 个已获取真实 ID${localCount ? `，${localCount} 个保留本地定位信息` : ""}。${interrupted ? "你已切换窗口，已保留本次识别结果；可核对频道或重新识别。" : !complete || !stoppedAtBottom ? "部分区域未完成扫描，请核对或重新选择。" : "已扫描可访问的频道列表；隐藏频道或未加载区域请人工核对。"}`,
+		message: `已发现 ${values.length} 个频道，${values.length - localCount} 个已获取真实 ID${localCount ? `，${localCount} 个保留本地定位信息` : ""}。${maxChannels ? `测试模式：最多识别 ${maxChannels} 个频道。` : ""}${interrupted ? "你已切换窗口，已保留本次识别结果；可核对频道或重新识别。" : !complete || !stoppedAtBottom || maxChannels ? "部分区域未完成扫描，请核对或重新选择。" : "已扫描可访问的频道列表；隐藏频道或未加载区域请人工核对。"}`,
 	};
 }

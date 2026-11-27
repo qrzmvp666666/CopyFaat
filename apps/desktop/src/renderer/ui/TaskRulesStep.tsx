@@ -144,10 +144,10 @@ export function TaskRulesStep({ rules, source, receiver, onChange }: TaskRulesSt
 								onChange({ ...rules, markRead: event.target.checked })
 							}
 						/>
-						采集并发送成功后，尝试滚动到最新消息
+						采集并发送成功后，滚动到最新消息并标记为已读
 					</label>
 					<p className="rules-mark-read-note">
-						滚动可能会让 Discord 将频道标记为已读；默认关闭。
+						滚动会让 Discord 将已成功发送的频道标记为已读；新任务默认开启。
 					</p>
 					<p className="rules-preview-note" role="status">
 						保存后任务默认暂停；启动后按频率检查未读频道，并将符合规则的新消息发送到对应

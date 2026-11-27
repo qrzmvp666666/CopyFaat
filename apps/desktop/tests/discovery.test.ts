@@ -109,6 +109,33 @@ describe("Discord discovery identity", () => {
 		expect(result.complete).toBe(false);
 		expect(JSON.stringify(result)).not.toContain("@snapshot");
 	});
+	it("limits a test scan to three channels without scrolling to another page", async () => {
+		vi.useFakeTimers();
+		const scroll = vi.fn();
+		const entries = ["one", "two", "three", "four"].map((name, index) =>
+			link(name, { url: `https://discord.com/channels/123/${index + 1}` }),
+		);
+		const adapter: DiscoveryAdapter = {
+			observe: () => snapshot(entries),
+			act: vi.fn(),
+			scroll,
+		};
+		const pending = scanDiscordChannels(
+			adapter,
+			{ x: 0, y: 0, width: 200, height: 600 },
+			vi.fn(),
+			{ maxChannels: 3 },
+		);
+		await vi.runAllTimersAsync();
+		const result = await pending;
+		expect(result.scope.channels.map((channel) => channel.name)).toEqual([
+			"one",
+			"two",
+			"three",
+		]);
+		expect(scroll).not.toHaveBeenCalledWith(expect.anything(), "down");
+		expect(result.message).toContain("测试模式：最多识别 3 个频道");
+	});
 	it("does not mistake a stale message pane for a newly selected same-name channel", async () => {
 		vi.useFakeTimers();
 		const adapter: DiscoveryAdapter = {

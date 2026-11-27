@@ -42,7 +42,7 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 		firstRange: "new",
 		text: true,
 		media: true,
-		markRead: false,
+		markRead: true,
 	});
 	const [receiver, setReceiver] = useState(() => createReceiverDraft("discord"));
 	const [excludedChannelIds, setExcludedChannelIds] = useState<string[]>([]);

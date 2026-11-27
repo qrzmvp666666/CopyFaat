@@ -254,6 +254,49 @@ describe("CopyFast task engine", () => {
 		expect(store.read().logs.find((log) => log.phase === "collect")?.httpStatus).toBe(204);
 	});
 
+	it("scrolls only after this round's new messages were delivered successfully", async () => {
+		const root = await mkdtemp(join(tmpdir(), "copyfast-mark-read-"));
+		roots.push(root);
+		const store = await createStore(join(root, "state.json"));
+		const finishedChannels: string[][] = [];
+		const activityPhases: string[] = [];
+		await store.update((state) => {
+			state.messages.push({
+				...message,
+				key: "historical-failure",
+				taskId: "task-to-be-created",
+				batchId: "previous-batch",
+				collectedAt: new Date(2000).toISOString(),
+				status: "failed",
+				attempts: 1,
+			});
+		});
+		const engine = createEngine(store, {
+			collect: async () => ({
+				version: 1,
+				messages: [message],
+				channels: [{ channelId: "source-channel", status: "unread", collected: 1 }],
+			}),
+			deliver: async () => ({ status: "sent", httpStatus: 204 }),
+			finishUnreadChannels: async (_task, channelIds) => {
+				finishedChannels.push(channelIds);
+			},
+			activity: (_task, phase) => activityPhases.push(phase),
+		});
+		const taskId = await engine.saveTask({
+			...input,
+			rules: { ...input.rules, markRead: true },
+		});
+		await store.update((state) => {
+			const historical = state.messages.find((item) => item.key === "historical-failure");
+			if (historical) historical.taskId = taskId;
+		});
+		await engine.action(taskId, "resume");
+		await new Promise((resolve) => setTimeout(resolve, 30));
+		expect(finishedChannels).toEqual([["source-channel"]]);
+		expect(activityPhases).toEqual(["collect", "send", "mark-read", "idle"]);
+	});
+
 	it("marks collection failures in the task and execution log", async () => {
 		const root = await mkdtemp(join(tmpdir(), "copyfast-collector-failure-"));
 		roots.push(root);
@@ -277,16 +320,31 @@ describe("CopyFast task engine", () => {
 		});
 	});
 
-	it("deletes a task without removing its collection history", async () => {
+	it("deletes a task and only its associated messages and logs", async () => {
 		const { store, engine } = await setup();
 		const taskId = await engine.saveTask(input);
 		await engine.action(taskId, "resume");
 		await new Promise((resolve) => setTimeout(resolve, 20));
+		const otherTaskId = await engine.saveTask({ ...input, name: "保留任务" });
+		await store.update((state) => {
+			const taskMessage = state.messages.find((item) => item.taskId === taskId)!;
+			state.messages.push({
+				...taskMessage,
+				id: "other-task-message",
+				key: `${otherTaskId}:source-channel:other-task-message`,
+				taskId: otherTaskId,
+			});
+			const taskLog = state.logs.find((item) => item.taskId === taskId)!;
+			state.logs.push({ ...taskLog, id: "other-task-log", taskId: otherTaskId });
+		});
+
 		await engine.deleteTask(taskId);
+
 		const state = store.read();
-		expect(state.tasks).toHaveLength(0);
-		expect(state.messages).toHaveLength(1);
-		expect(state.logs.some((log) => log.taskId === taskId)).toBe(true);
+		expect(state.tasks.map((task) => task.id)).toEqual([otherTaskId]);
+		expect(state.messages.map((item) => item.taskId)).toEqual([otherTaskId]);
+		expect(state.logs.every((log) => log.taskId !== taskId)).toBe(true);
+		expect(state.logs.some((log) => log.taskId === otherTaskId)).toBe(true);
 	});
 	it("keeps per-channel counts for saved, duplicate, filtered and empty results", async () => {
 		const { store, engine } = await setup([

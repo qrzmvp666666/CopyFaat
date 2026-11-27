@@ -77,7 +77,7 @@ export const taskInputSchema = z
 		rules: z.object({
 			intervalSeconds: z.number().int().min(10).max(86400),
 			startAt: z.iso.datetime(),
-			markRead: z.boolean().default(false),
+			markRead: z.boolean().default(true),
 			include: z.string().max(500).default(""),
 			exclude: z.string().max(500).default(""),
 			maxRetries: z.number().int().min(0).max(5).default(3),
@@ -249,12 +249,19 @@ export interface DiscoveryOverlayState {
 	bounds: DiscoveryRect;
 	progress: DiscoveryProgress;
 }
+export interface TaskActivityState {
+	taskName: string;
+	phase: "collect" | "send" | "mark-read";
+	windowBounds?: DiscoveryRect;
+}
 export interface DesktopApi {
 	discoverDiscordChannels(): Promise<DiscoveryResult | null>;
 	cancelDiscovery(): Promise<void>;
 	resolveDiscoveryExit(continueScanning: boolean): Promise<void>;
 	discoveryOverlayState(): Promise<DiscoveryOverlayState | null>;
 	onDiscoveryProgress(callback: (progress: DiscoveryProgress) => void): () => void;
+	onTaskActivity(callback: (activity: TaskActivityState | null) => void): () => void;
+	taskActivityState(): Promise<TaskActivityState | null>;
 	state(): Promise<PublicState>;
 	runtime(): Promise<RuntimeInfo>;
 	saveTask(input: TaskInput, id?: string): Promise<string>;

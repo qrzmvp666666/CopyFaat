@@ -154,105 +154,100 @@ export function registerDiscovery(
 					platform: process.platform,
 					arch: process.arch,
 				});
-				worker = utilityProcess.fork(join(__dirname, "discovery-worker.cjs"), [directory], {
-					serviceName: "CopyFast Engine",
-					stdio: "ignore",
-				});
-				const activeWorker = worker;
-				worker.on("error", () => {
+				const activeWorker = (worker = utilityProcess.fork(
+					join(__dirname, "discovery-worker.cjs"),
+					[directory],
+					{ serviceName: "CopyFast Engine", stdio: "ignore" },
+				));
+				let startScan = () => activeWorker.postMessage({ type: "scan" });
+				const handleMessage = (message: {
+					type: string;
+					bounds?: DiscoveryRect;
+					progress?: DiscoveryProgress;
+					result?: DiscoveryResult;
+					message?: string;
+				}) => {
+					if (!finish || worker !== activeWorker) return;
+					if (message.type === "error")
+						finish(null, message.message ?? "识别失败，请重试。");
+					else if (message.type === "snapshot" && message.result)
+						latestResult = message.result;
+					else if (message.type === "paused") showExitConfirmation();
+					else if (message.type === "result" && message.result) {
+						if (exitRequested) {
+							completedResult = message.result;
+							showExitConfirmation();
+						} else finish(message.result);
+					} else if (message.type === "progress" && message.progress && !confirmingExit)
+						progress(message.progress);
+					else if (message.type === "ready" && message.bounds) {
+						const overlayBounds =
+							process.platform === "win32"
+								? screen.screenToDipRect(null, message.bounds)
+								: message.bounds;
+						const bounds = Object.fromEntries(
+							Object.entries(overlayBounds).map(([key, value]) => [
+								key,
+								Math.round(value),
+							]),
+						) as unknown as DiscoveryRect;
+						state = {
+							bounds,
+							progress: {
+								phase: "preparing",
+								found: 0,
+								message: "正在自动定位 Discord 频道侧栏…",
+							},
+						};
+						const { workArea } = screen.getDisplayMatching(bounds);
+						overlay = new BrowserWindow({
+							x: workArea.x + Math.max(0, workArea.width - 440),
+							y: workArea.y + Math.max(0, workArea.height - 106),
+							width: 430,
+							height: 96,
+							focusable: false,
+							frame: false,
+							transparent: true,
+							resizable: false,
+							movable: false,
+							alwaysOnTop: true,
+							skipTaskbar: true,
+							hasShadow: false,
+							show: false,
+							webPreferences: {
+								preload: join(__dirname, "preload.cjs"),
+								contextIsolation: true,
+								nodeIntegration: false,
+								sandbox: true,
+							},
+						});
+						const activeOverlay = overlay;
+						overlay.on("closed", () => {
+							if (overlay === activeOverlay) requestExit();
+						});
+						overlay.setAlwaysOnTop(true, "screen-saver");
+						overlay.setIgnoreMouseEvents(false);
+						overlay.once("ready-to-show", () => {
+							if (!finish || overlay !== activeOverlay || worker !== activeWorker)
+								return;
+							overlay.showInactive();
+							startScan();
+						});
+						void overlay
+							.loadURL(rendererUrl("discovery-overlay"))
+							.catch(() => finish?.(null, "无法打开选择页面，请重试。"));
+					}
+				};
+				activeWorker.on("error", () => {
 					if (worker === activeWorker)
 						finish?.(null, "桌面引擎无法启动，请重新安装 CopyFast。");
 				});
-				worker.on("exit", () => {
+				activeWorker.on("exit", () => {
 					if (finish && worker === activeWorker)
 						finish(null, "桌面引擎已停止，请重新开始选择。");
 				});
-				worker.on(
-					"message",
-					(message: {
-						type: string;
-						bounds?: DiscoveryRect;
-						progress?: DiscoveryProgress;
-						result?: DiscoveryResult;
-						message?: string;
-					}) => {
-						if (!finish || worker !== activeWorker) return;
-						if (message.type === "error")
-							finish(null, message.message ?? "识别失败，请重试。");
-						else if (message.type === "snapshot" && message.result)
-							latestResult = message.result;
-						else if (message.type === "paused") showExitConfirmation();
-						else if (message.type === "result" && message.result) {
-							if (exitRequested) {
-								completedResult = message.result;
-								showExitConfirmation();
-							} else finish(message.result);
-						} else if (
-							message.type === "progress" &&
-							message.progress &&
-							!confirmingExit
-						)
-							progress(message.progress);
-						else if (message.type === "ready" && message.bounds) {
-							const overlayBounds =
-								process.platform === "win32"
-									? screen.screenToDipRect(null, message.bounds)
-									: message.bounds;
-							const bounds = Object.fromEntries(
-								Object.entries(overlayBounds).map(([key, value]) => [
-									key,
-									Math.round(value),
-								]),
-							) as unknown as DiscoveryRect;
-							state = {
-								bounds,
-								progress: {
-									phase: "preparing",
-									found: 0,
-									message: "正在自动定位 Discord 频道侧栏…",
-								},
-							};
-							const { workArea } = screen.getDisplayMatching(bounds);
-							overlay = new BrowserWindow({
-								x: workArea.x + Math.max(0, workArea.width - 440),
-								y: workArea.y + Math.max(0, workArea.height - 106),
-								width: 430,
-								height: 96,
-								focusable: false,
-								frame: false,
-								transparent: true,
-								resizable: false,
-								movable: false,
-								alwaysOnTop: true,
-								skipTaskbar: true,
-								hasShadow: false,
-								show: false,
-								webPreferences: {
-									preload: join(__dirname, "preload.cjs"),
-									contextIsolation: true,
-									nodeIntegration: false,
-									sandbox: true,
-								},
-							});
-							const activeOverlay = overlay;
-							overlay.on("closed", () => {
-								if (overlay === activeOverlay) requestExit();
-							});
-							overlay.setAlwaysOnTop(true, "screen-saver");
-							overlay.setIgnoreMouseEvents(false);
-							overlay.once("ready-to-show", () => {
-								if (!finish || overlay !== activeOverlay || worker !== activeWorker)
-									return;
-								overlay.showInactive();
-								worker.postMessage({ type: "scan" });
-							});
-							void overlay
-								.loadURL(rendererUrl("discovery-overlay"))
-								.catch(() => finish?.(null, "无法打开选择页面，请重试。"));
-						}
-					},
-				);
-				worker.postMessage({ type: "prepare" });
+				activeWorker.on("message", handleMessage);
+				activeWorker.postMessage({ type: "prepare" });
 			} catch (error) {
 				finish?.(null, error instanceof Error ? error.message : "无法启动频道识别。");
 			}

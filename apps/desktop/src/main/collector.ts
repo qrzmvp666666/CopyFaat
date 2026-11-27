@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { utilityProcess } from "electron";
 
 import { collectorResponseSchema, type CollectorResponse, type Task } from "../shared/contracts";
+import type { DiscoveryRect } from "../shared/contracts";
 import { resolveEngineDirectory } from "./discovery/runtime";
 import { parseDesktopWorkerResponse } from "./worker-protocol";
 
@@ -14,6 +15,7 @@ function runDesktopWorker(
 	operation: DesktopWorkerOperation,
 	signal: AbortSignal,
 	channelIds: string[] = [],
+	onWindowBounds?: (bounds: DiscoveryRect) => void,
 ): Promise<unknown> {
 	const directory = resolveEngineDirectory({
 		resourcesPath: process.resourcesPath,
@@ -52,6 +54,7 @@ function runDesktopWorker(
 				return;
 			}
 			if (message.type === "result") finish(undefined, message.result);
+			else if (message.type === "ready" && message.bounds) onWindowBounds?.(message.bounds);
 			else finish(new Error(message.message ?? "Discord 操作失败。"));
 		});
 		worker.on("error", (error) => finish(new Error(error)));
@@ -62,9 +65,13 @@ function runDesktopWorker(
 	});
 }
 
-export async function runCollector(task: Task, signal: AbortSignal): Promise<CollectorResponse> {
+export async function runCollector(
+	task: Task,
+	signal: AbortSignal,
+	onWindowBounds?: (bounds: DiscoveryRect) => void,
+): Promise<CollectorResponse> {
 	if (task.collector) return runLegacyCollector(task, signal);
-	const result = await runDesktopWorker(task, "collect", signal);
+	const result = await runDesktopWorker(task, "collect", signal, [], onWindowBounds);
 	return collectorResponseSchema.parse(result);
 }
 
@@ -132,6 +139,7 @@ export async function finishUnreadChannels(
 	task: Task,
 	channelIds: string[],
 	signal: AbortSignal,
+	onWindowBounds?: (bounds: DiscoveryRect) => void,
 ): Promise<void> {
-	await runDesktopWorker(task, "finish", signal, channelIds);
+	await runDesktopWorker(task, "finish", signal, channelIds, onWindowBounds);
 }

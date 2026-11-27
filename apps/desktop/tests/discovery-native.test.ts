@@ -11,11 +11,22 @@ const ffi = vi.hoisted(() => ({
 	},
 	wheel: vi.fn(() => 0),
 	windowList: [] as unknown[],
+	emptyWindowReads: 0,
+	pendingAccessibilityReads: 0,
 	operationOrder: [] as string[],
+	accessibilityCalls: 0,
 	snapshots: [] as { complete: boolean; window: { id: string }; tree: { role: string } }[],
 	reads: 0,
 }));
-vi.mock("../src/main/discovery/accessibility", () => ({ activateMacAccessibility: vi.fn() }));
+vi.mock("../src/main/discovery/accessibility", () => ({
+	activateMacAccessibility: vi.fn(() => {
+		ffi.operationOrder.push("enable-ax");
+		ffi.accessibilityCalls++;
+		if (ffi.pendingAccessibilityReads === 0)
+			for (const window of ffi.windowList as { accessible: boolean }[])
+				window.accessible = true;
+	}),
+}));
 vi.mock("node:child_process", () => ({
 	spawnSync: () => {
 		ffi.operationOrder.push("activate");
@@ -47,14 +58,28 @@ vi.mock("koffi", () => ({
 							return 0;
 						};
 					case "ad_exact_window_list_count":
-						return () => ffi.windowList.length || 1;
+						return () => {
+							if (ffi.emptyWindowReads > 0) {
+								ffi.emptyWindowReads--;
+								return 0;
+							}
+							return ffi.windowList.length || 1;
+						};
 					case "ad_exact_window_list_get":
-						return (_list: unknown, index: number) =>
-							ffi.windowList[index] ?? {
+						return (_list: unknown, index: number) => {
+							const window = ffi.windowList[index] ?? {
 								window: ffi.window,
 								process_instance: "instance",
 								accessible: true,
 							};
+							if (ffi.pendingAccessibilityReads > 0) {
+								ffi.pendingAccessibilityReads--;
+								if (ffi.pendingAccessibilityReads === 0)
+									for (const item of ffi.windowList as { accessible: boolean }[])
+										item.accessible = true;
+							}
+							return window;
+						};
 					case "ad_get_tree_exact":
 						return (
 							_adapter: unknown,
@@ -109,7 +134,10 @@ beforeEach(() => {
 	ffi.window.id = "discord-window";
 	ffi.window.bounds = { x: 15, y: 481, width: 1000, height: 700 };
 	ffi.windowList = [];
+	ffi.emptyWindowReads = 0;
+	ffi.pendingAccessibilityReads = 0;
 	ffi.operationOrder = [];
+	ffi.accessibilityCalls = 0;
 	ffi.wheel.mockClear();
 	ffi.snapshots = [];
 	ffi.reads = 0;
@@ -135,7 +163,45 @@ describe("native discovery window geometry", () => {
 		];
 		const desktop = createNativeDesktop("/engine");
 		expect(desktop.prepare()).toEqual(ffi.window.bounds);
-		expect(ffi.operationOrder.slice(0, 2)).toEqual(["activate", "list"]);
+		expect(ffi.operationOrder.slice(0, 4)).toEqual(["activate", "list", "enable-ax", "list"]);
+		desktop.close();
+	});
+
+	it("enables Discord accessibility and refreshes a stale inaccessible window", () => {
+		ffi.windowList = [
+			{
+				window: ffi.window,
+				process_instance: "instance",
+				accessible: false,
+			},
+		];
+		const desktop = createNativeDesktop("/engine");
+		expect(desktop.prepare()).toEqual(ffi.window.bounds);
+		expect(ffi.accessibilityCalls).toBe(1);
+		expect(ffi.operationOrder.slice(-2)).toEqual(["enable-ax", "list"]);
+		desktop.close();
+	});
+
+	it("waits for Discord to initialize its accessibility tree after activation", () => {
+		ffi.windowList = [
+			{
+				window: ffi.window,
+				process_instance: "instance",
+				accessible: false,
+			},
+		];
+		ffi.pendingAccessibilityReads = 3;
+		const desktop = createNativeDesktop("/engine");
+		expect(desktop.prepare()).toEqual(ffi.window.bounds);
+		expect(ffi.accessibilityCalls).toBe(1);
+		desktop.close();
+	});
+
+	it("retries briefly while Discord is registering its main window", () => {
+		ffi.emptyWindowReads = 3;
+		const desktop = createNativeDesktop("/engine");
+		expect(desktop.prepare()).toEqual(ffi.window.bounds);
+		expect(ffi.emptyWindowReads).toBe(0);
 		desktop.close();
 	});
 

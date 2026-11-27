@@ -17,6 +17,13 @@ port.on(
 		let adapter: DiscordCollectionAdapter | undefined;
 		try {
 			adapter = createNativeDesktop(process.argv[2]) as DiscordCollectionAdapter;
+			const bounds = adapter.prepare() as {
+				x: number;
+				y: number;
+				width: number;
+				height: number;
+			};
+			port.postMessage({ type: "ready", bounds });
 			if (data.operation === "finish") {
 				await scrollUnreadChannelsToBottom(adapter, data.task, data.channelIds ?? []);
 				port.postMessage({ type: "result" });

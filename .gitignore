@@ -46,3 +46,6 @@ dist/
 # Desktop build scripts are source files.
 !apps/desktop/build/
 !apps/desktop/build/*.mjs
+
+# Desktop packaging output
+/apps/desktop/release/

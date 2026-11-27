@@ -26,6 +26,15 @@ export interface DiscordCollectionAdapter {
 	close(): void;
 }
 
+function checkpoint(signal?: AbortSignal) {
+	if (signal?.aborted) throw new Error("采集已暂停；未确认的发送结果会保留为待核对状态。");
+}
+
+async function wait(milliseconds: number, signal?: AbortSignal) {
+	await delay(milliseconds);
+	checkpoint(signal);
+}
+
 export interface CollectionChannelResult {
 	channelId: string;
 	status: "unread" | "skipped_read" | "failed";
@@ -146,47 +155,58 @@ async function findChannel(
 	task: Task,
 	channel: Channel,
 	region: { x: number; y: number; width: number; height: number },
+	signal?: AbortSignal,
 ): Promise<{ snapshot: DesktopSnapshot; entry: ChannelEntry }> {
 	let snapshot = adapter.observe();
+	const findCurrent = async () => {
+		const matches = visibleEntries(snapshot, task.source.server.name).filter((entry) =>
+			matchesChannel(entry, channel),
+		);
+		if (matches.length > 1) throw new Error(`频道“${channel.name}”在当前服务器中不唯一。`);
+		if (matches.length !== 1) return undefined;
+		let entry = matches[0];
+		if (entry.canScrollTo) {
+			adapter.act(entry.ref, 13);
+			await wait(100, signal);
+			snapshot = adapter.observe();
+			const visible = visibleEntries(snapshot, task.source.server.name).filter((item) =>
+				matchesChannel(item, channel),
+			);
+			if (visible.length !== 1) throw new Error(`频道“${channel.name}”定位后发生变化。`);
+			entry = visible[0];
+		}
+		return { snapshot, entry };
+	};
+	const initiallyVisible = await findCurrent();
+	if (initiallyVisible) return initiallyVisible;
+
 	let previous = "";
 	let repeats = 0;
 	for (let page = 0; page < 60; page++) {
+		checkpoint(signal);
 		const entries = visibleEntries(snapshot, task.source.server.name);
 		const current = signature(entries);
 		repeats = current === previous ? repeats + 1 : 0;
 		if (repeats >= 3) break;
 		previous = current;
 		adapter.scroll(region, "up");
-		await delay(200);
+		await wait(200, signal);
 		snapshot = adapter.observe();
 	}
 
 	previous = "";
 	repeats = 0;
 	for (let page = 0; page < 300; page++) {
+		checkpoint(signal);
 		const entries = visibleEntries(snapshot, task.source.server.name);
-		const matches = entries.filter((entry) => matchesChannel(entry, channel));
-		if (matches.length > 1) throw new Error(`频道“${channel.name}”在当前服务器中不唯一。`);
-		if (matches.length === 1) {
-			let entry = matches[0];
-			if (entry.canScrollTo) {
-				adapter.act(entry.ref, 13);
-				await delay(100);
-				snapshot = adapter.observe();
-				const visible = visibleEntries(snapshot, task.source.server.name).filter((item) =>
-					matchesChannel(item, channel),
-				);
-				if (visible.length !== 1) throw new Error(`频道“${channel.name}”定位后发生变化。`);
-				entry = visible[0];
-			}
-			return { snapshot, entry };
-		}
+		const located = await findCurrent();
+		if (located) return located;
 		const current = signature(entries);
 		repeats = current === previous ? repeats + 1 : 0;
 		if (repeats >= 3) break;
 		previous = current;
 		adapter.scroll(region, "down");
-		await delay(200);
+		await wait(200, signal);
 		snapshot = adapter.observe();
 	}
 	throw new Error(`未能在 Discord 当前服务器的可访问频道列表中定位“${channel.name}”。`);
@@ -197,6 +217,7 @@ async function openAndRead(
 	task: Task,
 	channel: Channel,
 	entry: ChannelEntry,
+	signal?: AbortSignal,
 ): Promise<DiscordCollectionResult["messages"]> {
 	adapter.act(entry.ref, 0);
 	const listName = `${channel.name}中的消息`;
@@ -205,7 +226,7 @@ async function openAndRead(
 	let list: DesktopNode | undefined;
 	let emptyListObservations = 0;
 	while (Date.now() < deadline) {
-		await delay(250);
+		await wait(250, signal);
 		snapshot = adapter.observe();
 		serverNavigation(snapshot, task.source.server.name);
 		const lists = nodes(snapshot.tree).filter(
@@ -243,6 +264,7 @@ async function openAndRead(
 export async function collectUnreadDiscordChannels(
 	adapter: DiscordCollectionAdapter,
 	task: Task,
+	signal?: AbortSignal,
 ): Promise<DiscordCollectionResult> {
 	if (task.source.platform !== "discord") throw new Error("当前版本仅支持 Discord 采集。");
 	adapter.prepare();
@@ -260,7 +282,8 @@ export async function collectUnreadDiscordChannels(
 	};
 	for (const channel of task.source.channels) {
 		try {
-			const { entry } = await findChannel(adapter, task, channel, region);
+			checkpoint(signal);
+			const { entry } = await findChannel(adapter, task, channel, region, signal);
 			if (!isUnread(entry)) {
 				response.channels.push({
 					channelId: channel.id,
@@ -269,7 +292,7 @@ export async function collectUnreadDiscordChannels(
 				});
 				continue;
 			}
-			const messages = await openAndRead(adapter, task, channel, entry);
+			const messages = await openAndRead(adapter, task, channel, entry, signal);
 			response.messages.push(...messages);
 			response.channels.push({
 				channelId: channel.id,
@@ -277,6 +300,7 @@ export async function collectUnreadDiscordChannels(
 				collected: messages.length,
 			});
 		} catch (error) {
+			if (signal?.aborted) throw error;
 			response.channels.push({
 				channelId: channel.id,
 				status: "failed",
@@ -293,15 +317,17 @@ export async function scrollUnreadChannelsToBottom(
 	adapter: DiscordCollectionAdapter,
 	task: Task,
 	channelIds: string[],
+	signal?: AbortSignal,
 ): Promise<void> {
 	if (!channelIds.length) return;
 	adapter.prepare();
 	const region = adapter.resolveRegion();
 	for (const channelId of channelIds) {
+		checkpoint(signal);
 		const channel = task.source.channels.find((item) => item.id === channelId);
 		if (!channel) continue;
-		const { entry } = await findChannel(adapter, task, channel, region);
-		await openAndRead(adapter, task, channel, entry);
+		const { entry } = await findChannel(adapter, task, channel, region, signal);
+		await openAndRead(adapter, task, channel, entry, signal);
 		const snapshot = adapter.observe();
 		const lists = nodes(snapshot.tree).filter(
 			(node) =>

@@ -49,6 +49,11 @@ port.on("message", async ({ data }: { data: { type: string } }) => {
 				(progress) => port.postMessage({ type: "progress", progress }),
 				{
 					checkpoint: () => control.checkpoint(),
+					...(process.env.COPYFAST_DISCOVERY_TEST_LIMIT === "1" ||
+					process.env.COPYFAST_DISCOVERY_TEST_LIMIT === "2" ||
+					process.env.COPYFAST_DISCOVERY_TEST_LIMIT === "3"
+						? { maxChannels: Number(process.env.COPYFAST_DISCOVERY_TEST_LIMIT) }
+						: {}),
 					onSnapshot: (result) => port.postMessage({ type: "snapshot", result }),
 				},
 			);

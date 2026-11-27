@@ -16,6 +16,15 @@ const api: DesktopApi = {
 		ipcRenderer.on("discovery-progress", listener);
 		return () => ipcRenderer.removeListener("discovery-progress", listener);
 	},
+	onTaskActivity: (callback) => {
+		const listener = (
+			_event: Electron.IpcRendererEvent,
+			activity: Parameters<typeof callback>[0],
+		) => callback(activity);
+		ipcRenderer.on("task-activity", listener);
+		return () => ipcRenderer.removeListener("task-activity", listener);
+	},
+	taskActivityState: () => ipcRenderer.invoke("task-activity-state"),
 	state: () => ipcRenderer.invoke("state"),
 	runtime: () => ipcRenderer.invoke("runtime"),
 	saveTask: (input, id) => ipcRenderer.invoke("save-task", input, id),

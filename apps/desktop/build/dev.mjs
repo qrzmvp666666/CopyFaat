@@ -30,7 +30,7 @@ await build({
 	platform: "node",
 	format: "cjs",
 	outfile: "dist/main/index.cjs",
-	external: ["electron"],
+	external: ["electron", "koffi"],
 	sourcemap: true,
 	tsconfig: "tsconfig.json",
 });

@@ -92,6 +92,7 @@ export function createNativeDesktop(directory: string) {
 	const initialize = library.func("int ad_init(uint32 major)");
 	const create = library.func("void *ad_adapter_create()");
 	const destroy = library.func("void ad_adapter_destroy(void *adapter)");
+	const checkPermissions = library.func("int ad_check_permissions(void *adapter)");
 	const snapshot = library.func(
 		"int ad_snapshot(void *adapter, str app, int surface, uint8 depth, bool interactive, bool compact, _Out_ void **out)",
 	);
@@ -129,34 +130,45 @@ export function createNativeDesktop(directory: string) {
 		throw new Error("桌面引擎版本不兼容，请重新安装 CopyFast。");
 	const adapter = create();
 	if (!adapter) throw new Error("桌面引擎初始化失败。");
+	if (process.platform === "darwin" && checkPermissions(adapter) !== 0) {
+		destroy(adapter);
+		throw new Error(
+			"CopyFast 当前运行进程没有 macOS 辅助功能权限。请在系统设置 > 隐私与安全性 > 辅助功能中启用 CopyFast，然后完全退出并重新打开应用。",
+		);
+	}
 	let identity = "";
 	let windowId = "";
+	type ExactWindowValue = {
+		window: {
+			id: string;
+			title: string;
+			pid: number;
+			bounds: DiscoveryRect;
+			has_bounds: boolean;
+			is_focused: boolean;
+		};
+		process_instance: string;
+		accessible: boolean;
+	};
 
-	function pinnedWindow(activate = false) {
+	function pinnedWindow(
+		activate = false,
+		refreshAfterAccessibility = true,
+		allowInaccessible = false,
+	): ExactWindowValue {
 		const output: unknown[] = [null];
 		const result = listWindows(adapter, "Discord", false, output);
 		try {
 			if (result !== 0 || !output[0])
-				throw new Error("无法读取 Discord 窗口，请检查辅助功能权限。");
+				throw new Error("无法读取 Discord 窗口列表，请确认 Discord 桌面端正在运行后重试。");
 			const count = windowCount(output[0]);
 			if (count === 0)
 				throw new Error("未找到可访问的 Discord 窗口，请打开桌面端及目标服务器后重试。");
 			const windows = Array.from(
 				{ length: count },
 				(_, index) =>
-					koffi.decode(windowAt(output[0], index), exactWindow) as {
-						window: {
-							id: string;
-							title: string;
-							pid: number;
-							bounds: DiscoveryRect;
-							has_bounds: boolean;
-							is_focused: boolean;
-						};
-						process_instance: string;
-						accessible: boolean;
-					},
-			);
+					koffi.decode(windowAt(output[0], index), exactWindow) as ExactWindowValue,
+			) as ExactWindowValue[];
 			const primaryWindows = windows.filter(
 				(value) =>
 					value.window.has_bounds &&
@@ -170,8 +182,29 @@ export function createNativeDesktop(directory: string) {
 			const current = `${value.window.id}:${value.window.pid}:${value.process_instance}`;
 			if (identity && identity !== current)
 				throw new Error("Discord 窗口已变化，请重新选择采集范围。");
-			if (!value.accessible || !value.window.has_bounds)
-				throw new Error("无法读取 Discord 窗口，请检查辅助功能权限并打开目标服务器。");
+			if (activate && process.platform === "darwin") {
+				activateMacAccessibility(value.window.pid);
+				if (refreshAfterAccessibility) {
+					let refreshed: ExactWindowValue | undefined;
+					for (let attempt = 0; attempt < 12; attempt++) {
+						refreshed = pinnedWindow(false, false, true);
+						if (refreshed.accessible) break;
+						if (attempt < 11)
+							Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 150);
+					}
+					if (!refreshed?.accessible)
+						throw new Error(
+							"Discord 窗口已找到，但其无障碍界面在等待后仍未就绪。请确认 CopyFast 的辅助功能权限已开启，并完全退出后重新打开 Discord 再试。",
+						);
+					if (!refreshed.window.is_focused && focus(adapter, refreshed) !== 0)
+						throw new Error("无法切换到 Discord 窗口。");
+					return refreshed;
+				}
+			}
+			if ((!value.accessible && !allowInaccessible) || !value.window.has_bounds)
+				throw new Error(
+					"已找到 Discord 窗口，但暂时无法读取其无障碍界面。请确认 CopyFast 的辅助功能权限；若刚开启权限，请完全退出并重新打开 CopyFast 和 Discord。",
+				);
 			identity = current;
 			windowId = value.window.id;
 			if (activate && !value.window.is_focused && focus(adapter, value) !== 0)
@@ -196,6 +229,25 @@ export function createNativeDesktop(directory: string) {
 		} finally {
 			if (output[0]) freeString(output[0]);
 		}
+	}
+	function waitForDiscordWindow(): ExactWindowValue {
+		let lastError: Error | undefined;
+		for (let attempt = 0; attempt < 20; attempt++) {
+			try {
+				return pinnedWindow(true);
+			} catch (error) {
+				if (
+					!(error instanceof Error) ||
+					!error.message.includes("未找到可访问的 Discord 窗口")
+				)
+					throw error;
+				lastError = error;
+				if (attempt < 19) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
+			}
+		}
+		throw (
+			lastError ?? new Error("未找到可访问的 Discord 窗口，请打开桌面端及目标服务器后重试。")
+		);
 	}
 	function locateChannelRegion() {
 		const window = pinnedWindow();
@@ -238,9 +290,7 @@ export function createNativeDesktop(directory: string) {
 				if (activation.error || activation.status !== 0)
 					throw new Error("无法切换到 Discord，请确认应用仍在运行并允许桌面控制。");
 			}
-			const window = pinnedWindow(true).window;
-			activateMacAccessibility(window.pid);
-			return window.bounds;
+			return waitForDiscordWindow().window.bounds;
 		},
 		resolveRegion: locateChannelRegion,
 		observe() {

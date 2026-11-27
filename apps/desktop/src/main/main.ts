@@ -11,10 +11,12 @@ import { deliverMessage } from "./delivery";
 import { registerDiscovery } from "./discovery/controller";
 import { createEngine } from "./engine";
 import { createStore } from "./store";
+import { createTaskActivityOverlay } from "./task-activity-overlay";
 
 app.setName("CopyFast");
 
 let discovery: ReturnType<typeof registerDiscovery> | undefined;
+let taskActivity: ReturnType<typeof createTaskActivityOverlay> | undefined;
 let workspace: BrowserWindow | undefined;
 let engine: ReturnType<typeof createEngine> | undefined;
 let store: Awaited<ReturnType<typeof createStore>> | undefined;
@@ -150,6 +152,9 @@ function registerIpc() {
 			return Boolean(path && !(await shell.openPath(path)));
 		},
 	);
+	ipcMain.handle("task-activity-state", (event) =>
+		event.sender === taskActivity?.webContents() ? (taskActivity?.state() ?? null) : null,
+	);
 	ipcMain.handle("state", () => (store ? publicState(store.read()) : undefined));
 	ipcMain.handle("runtime", runtimeInfo);
 	ipcMain.handle("launch-desktop-app", async (_event, target: "telegram" | "discord") => {
@@ -159,7 +164,8 @@ function registerIpc() {
 	});
 	ipcMain.handle("request-accessibility-permission", async () => {
 		if (process.platform !== "darwin") return true;
-		const isTrusted = systemPreferences.isTrustedAccessibilityClient(true);
+		// Permission checks must not trigger a new macOS consent prompt on every click.
+		const isTrusted = systemPreferences.isTrustedAccessibilityClient(false);
 		if (!isTrusted)
 			await shell.openExternal(
 				"x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility",
@@ -204,11 +210,13 @@ function registerIpc() {
 
 void app.whenReady().then(async () => {
 	app.dock?.setIcon(appIconPath);
+	taskActivity = createTaskActivityOverlay(rendererUrl);
 	store = await createStore(join(app.getPath("userData"), "copyfast-state.json"), sendState);
 	engine = createEngine(store, {
 		collect: runCollector,
 		deliver: deliverMessage,
 		finishUnreadChannels,
+		activity: (task, phase, bounds) => taskActivity?.update(task, phase, bounds),
 	});
 	await engine.recover();
 	engine.start();
@@ -218,5 +226,6 @@ void app.whenReady().then(async () => {
 });
 app.on("before-quit", () => {
 	discovery?.cancel();
+	taskActivity?.close();
 	void engine?.stop();
 });

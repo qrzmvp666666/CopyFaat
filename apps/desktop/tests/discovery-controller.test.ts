@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 
-import { afterEach, expect, it, vi } from "vitest";
+import { afterAll, afterEach, expect, it, vi } from "vitest";
 
 import type { DiscoveryResult } from "../src/shared/contracts";
 
@@ -23,6 +23,8 @@ const mocks = vi.hoisted(() => ({
 	overlays: [] as TestSurface[],
 	workers: [] as TestWorker[],
 }));
+const platformDescriptor = Object.getOwnPropertyDescriptor(process, "platform");
+Object.defineProperty(process, "platform", { configurable: true, value: "linux" });
 vi.mock("electron", async () => {
 	const { EventEmitter } = await import("node:events");
 	class Window extends EventEmitter {
@@ -104,6 +106,10 @@ afterEach(() => {
 	mocks.workers.length = 0;
 	mocks.overlays.length = 0;
 	vi.useRealTimers();
+});
+
+afterAll(() => {
+	if (platformDescriptor) Object.defineProperty(process, "platform", platformDescriptor);
 });
 
 it("pauses on Exit/Esc, lists observed channels, resumes without resolving, then returns partial scope on confirmed exit", async () => {

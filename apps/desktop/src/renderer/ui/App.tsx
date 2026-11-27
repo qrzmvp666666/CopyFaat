@@ -62,20 +62,33 @@ export function App() {
 	useEffect(() => {
 		if (page !== "connections") return;
 		let cancelled = false;
+		const refreshRuntime = async (showFailure = false) => {
+			try {
+				const info = normalizeRuntimeInfo(await window.copyfast.runtime());
+				if (cancelled) return;
+				setRuntimeInfo(info);
+				if (info.permissions.accessibility) setConnectionMessage(undefined);
+			} catch {
+				if (!cancelled && showFailure)
+					setConnectionMessage("暂时无法读取本机状态，请稍后重试。");
+			}
+		};
 		setIsCheckingRuntime(true);
-		void window.copyfast
-			.runtime()
-			.then((info) => {
-				if (!cancelled) setRuntimeInfo(normalizeRuntimeInfo(info));
-			})
-			.catch(() => {
-				if (!cancelled) setConnectionMessage("暂时无法读取本机状态，请稍后重试。");
-			})
-			.finally(() => {
-				if (!cancelled) setIsCheckingRuntime(false);
-			});
+		void refreshRuntime(true).finally(() => {
+			if (!cancelled) setIsCheckingRuntime(false);
+		});
+		const onFocus = () => void refreshRuntime();
+		const onVisibilityChange = () => {
+			if (document.visibilityState === "visible") void refreshRuntime();
+		};
+		window.addEventListener("focus", onFocus);
+		document.addEventListener("visibilitychange", onVisibilityChange);
+		const timer = window.setInterval(() => void refreshRuntime(), 2000);
 		return () => {
 			cancelled = true;
+			window.removeEventListener("focus", onFocus);
+			document.removeEventListener("visibilitychange", onVisibilityChange);
+			window.clearInterval(timer);
 		};
 	}, [page]);
 	function completeOnboarding() {
@@ -414,7 +427,7 @@ export function App() {
 											onClick={() => {
 												if (
 													!window.confirm(
-														`删除“${current.name}”？已采集的消息和历史日志会保留。`,
+														`删除“${current.name}”？该任务关联的频道消息和任务日志也会永久删除，此操作无法撤销。`,
 													)
 												)
 													return;
@@ -602,6 +615,7 @@ function Rules({
 	const [text, setText] = useState(task?.rules.text ?? true);
 	const [images, setImages] = useState(task?.rules.images ?? true);
 	const [attachments, setAttachments] = useState(task?.rules.attachments ?? true);
+	const [markRead, setMarkRead] = useState(task?.rules.markRead ?? true);
 	const [saving, setSaving] = useState(false);
 	const [message, setMessage] = useState("");
 	useEffect(() => {
@@ -611,6 +625,7 @@ function Rules({
 		setText(task?.rules.text ?? true);
 		setImages(task?.rules.images ?? true);
 		setAttachments(task?.rules.attachments ?? true);
+		setMarkRead(task?.rules.markRead ?? true);
 	}, [task]);
 	async function saveRules(event: React.FormEvent) {
 		event.preventDefault();
@@ -630,6 +645,7 @@ function Rules({
 					text,
 					images,
 					attachments,
+					markRead,
 				},
 			});
 			setMessage("规则已保存");
@@ -711,6 +727,14 @@ function Rules({
 										onChange={(event) => setAttachments(event.target.checked)}
 									/>
 									文件
+								</label>
+								<label>
+									<input
+										type="checkbox"
+										checked={markRead}
+										onChange={(event) => setMarkRead(event.target.checked)}
+									/>
+									发送成功后滚动至最新消息并标记已读
 								</label>
 							</div>
 						</section>

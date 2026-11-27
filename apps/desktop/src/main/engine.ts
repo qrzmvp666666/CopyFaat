@@ -7,14 +7,29 @@ import {
 	type Task,
 	type TaskInput,
 	type TaskLog,
+	type DiscoveryRect,
 } from "../shared/contracts";
 import type { WebhookDeliveryResult } from "./delivery";
 import type { StateStore } from "./store";
 
 export interface EngineDependencies {
-	collect(task: Task, signal: AbortSignal): Promise<CollectorResponse>;
+	collect(
+		task: Task,
+		signal: AbortSignal,
+		onWindowBounds?: (bounds: DiscoveryRect) => void,
+	): Promise<CollectorResponse>;
 	deliver?(task: Task, message: Message, signal: AbortSignal): Promise<WebhookDeliveryResult>;
-	finishUnreadChannels?(task: Task, channelIds: string[], signal: AbortSignal): Promise<void>;
+	finishUnreadChannels?(
+		task: Task,
+		channelIds: string[],
+		signal: AbortSignal,
+		onWindowBounds?: (bounds: DiscoveryRect) => void,
+	): Promise<void>;
+	activity?(
+		task: Task,
+		phase: "collect" | "send" | "mark-read" | "idle",
+		bounds?: DiscoveryRect,
+	): void;
 	now?: () => number;
 }
 
@@ -122,6 +137,8 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 			const index = state.tasks.findIndex((task) => task.id === id);
 			if (index < 0) throw new Error("任务不存在");
 			state.tasks.splice(index, 1);
+			state.messages = state.messages.filter((message) => message.taskId !== id);
+			state.logs = state.logs.filter((log) => log.taskId !== id);
 		});
 	}
 
@@ -239,7 +256,11 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 			};
 			await store.update((state) => state.logs.push(log!));
 
-			const result = await deps.collect(task, controller.signal);
+			deps.activity?.(task, "collect");
+			let activityPhase: "collect" | "send" | "mark-read" = "collect";
+			const reportWindowBounds = (bounds: DiscoveryRect) =>
+				deps.activity?.(task, activityPhase, bounds);
+			const result = await deps.collect(task, controller.signal, reportWindowBounds);
 			if (controller.signal.aborted) throw new Error("采集已取消");
 			const selectedIds = new Set(task.source.channels.map((channel) => channel.id));
 			if (result.messages.some((message) => !selectedIds.has(message.channelId)))
@@ -346,6 +367,8 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 				).toISOString();
 			});
 
+			activityPhase = "send";
+			deps.activity?.(task, "send");
 			await deliverPending(id, batchId, controller.signal);
 			await store.update((state) => {
 				const currentLog = state.logs.find((item) => item.id === batchId);
@@ -372,18 +395,31 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 			});
 
 			if (task.rules.markRead && deps.finishUnreadChannels && !controller.signal.aborted) {
+				const currentState = store.read();
+				const currentLog = currentState.logs.find((item) => item.id === batchId);
 				const persistedChannels = finishChannelIds.filter((channelId) => {
-					const channelMessages = store
-						.read()
-						.messages.filter(
-							(message) => message.taskId === id && message.channelId === channelId,
-						);
-					return channelMessages.every(
-						(message) => message.status === "synced" || message.status === "filtered",
+					const currentMessages = (currentLog?.messageKeys ?? [])
+						.map((key) => currentState.messages.find((message) => message.key === key))
+						.filter((message) => message?.channelId === channelId);
+					return (
+						currentMessages.some((message) => message?.status === "synced") &&
+						currentMessages.every(
+							(message) =>
+								message?.status === "synced" || message?.status === "filtered",
+						)
 					);
 				});
 				try {
-					await deps.finishUnreadChannels(task, persistedChannels, controller.signal);
+					if (persistedChannels.length) {
+						activityPhase = "mark-read";
+						deps.activity?.(task, "mark-read");
+						await deps.finishUnreadChannels(
+							task,
+							persistedChannels,
+							controller.signal,
+							reportWindowBounds,
+						);
+					}
 				} catch (error) {
 					await store.update((state) => {
 						const currentLog = state.logs.find((item) => item.id === batchId);
@@ -430,6 +466,8 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 				}
 			});
 		} finally {
+			const task = store.read().tasks.find((item) => item.id === id);
+			if (task) deps.activity?.(task, "idle");
 			active.delete(id);
 		}
 	}
