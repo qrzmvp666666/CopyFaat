@@ -755,6 +755,12 @@ Avoid `"use client"` for:
 
 ### Desktop task setup workflow
 
-- Desktop task creation lives in `apps/desktop/src/renderer/ui/TaskDialog.tsx`; receiver and rule screens use `TaskReceiverStep`, `TaskRulesStep`, and the shared `task-configuration` helpers. The wizard has four steps: platform, source guidance, channels/receiver, and rules. Manual source/channel entry and collector selection live in the third screen’s expandable source configuration until native region selection exists.
+- Desktop task creation lives in `apps/desktop/src/renderer/ui/TaskDialog.tsx`; receiver and rule screens use `TaskReceiverStep`, `TaskRulesStep`, and the shared `task-configuration` helpers. The wizard has four steps: platform, source guidance, channels/receiver, and rules. Manual source/channel entry and collector selection live in the third screen’s expandable source configuration. Discord discovery automatically resolves the current window and channel sidebar from accessibility information; no manual selection is required.
 - Validate persisted receiver settings through `receiverSchema` and `taskInputSchema` in `apps/desktop/src/shared/contracts.ts`. Channel mappings must cover exactly the selected source IDs; unchecked channels must not enter the saved collection scope. Receiver settings are stored locally; they do not imply Webhook delivery. Keep preview-only tests explicitly labeled as unsent until a delivery service is implemented.
 - New tasks start collecting only when `startPaused` is explicitly `false`; callers omitting it retain the paused default. Keep collection rules and receiver changes backward compatible with existing local task records.
+
+### Desktop discovery boundary
+
+- Discord discovery lives under `apps/desktop/src/main/discovery`: the controller owns the overlay/session lifecycle, the utility process owns native calls, and the scanner persists only source/channel identity and optional category locators. Keep arbitrary native actions out of renderer IPC.
+- Prefer verified Discord IDs; label local fallback keys explicitly, preserve their server/category/channel locator metadata, and never persist snapshot refs as channel IDs. Custom collectors must return the configured source keys and honor fallback locators. Discovery does not collect or save message history.
+- Native runtime downloads are version/checksum pinned in `apps/desktop/build/native-runtime.mjs`; preserve required helpers and license notices when packaging. Test macOS and Windows separately. A successful build or ABI check is not a successful live Discord scan.

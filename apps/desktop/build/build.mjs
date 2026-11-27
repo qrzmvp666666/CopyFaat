@@ -1,10 +1,26 @@
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 
 import { build } from "esbuild";
+
+import { prepareNativeRuntime } from "./native-runtime.mjs";
+await prepareNativeRuntime();
 await mkdir("dist/main", { recursive: true });
 await mkdir("dist/assets", { recursive: true });
 await copyFile("assets/icon.png", "dist/assets/icon.png");
 await mkdir("dist/renderer", { recursive: true });
+await build({
+	entryPoints: {
+		"discovery-worker": "src/main/discovery/worker.ts",
+		"collection-worker": "src/main/collection/worker.ts",
+	},
+	bundle: true,
+	platform: "node",
+	format: "cjs",
+	outdir: "dist/main",
+	outExtension: { ".js": ".cjs" },
+	external: ["electron", "koffi"],
+	tsconfig: "tsconfig.json",
+});
 await build({
 	entryPoints: ["src/main/main.ts"],
 	bundle: true,

@@ -21,13 +21,34 @@ export async function createStore(
 			!Array.isArray(state.logs)
 		)
 			throw new Error("不支持的桌面数据格式");
+
+		for (const task of state.tasks) {
+			if (!task.receiver) continue;
+			const legacy = task.receiver as typeof task.receiver & {
+				webhookUrl?: string;
+				server?: unknown;
+			};
+			for (const channel of legacy.channels) {
+				if (!channel.webhookUrl && legacy.webhookUrl)
+					channel.webhookUrl = legacy.webhookUrl;
+			}
+			delete legacy.webhookUrl;
+			delete legacy.server;
+		}
 		for (const message of state.messages) {
-			if (message.status !== "filtered" && message.status !== "collected")
+			message.mediaLabels ??= [];
+			if (
+				![
+					"filtered",
+					"collected",
+					"pending",
+					"sending",
+					"synced",
+					"failed",
+					"uncertain",
+				].includes(message.status)
+			)
 				message.status = "collected";
-			delete message.nextAttemptAt;
-			delete message.syncedAt;
-			delete message.remoteLogId;
-			delete message.error;
 		}
 	} catch (error) {
 		if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;

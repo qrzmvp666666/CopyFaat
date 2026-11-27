@@ -1,0 +1,115 @@
+html.discovery-document,
+.discovery-document body,
+.discovery-document #root {
+	background: transparent !important;
+	margin: 0;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+.discovery-overlay {
+	position: fixed;
+	inset: 0;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 12px 16px;
+	background: #202024;
+	border: 1px solid #45454d;
+	border-radius: 14px;
+	color: #ededf1;
+	font-family: system-ui, sans-serif;
+	user-select: none;
+}
+.discovery-overlay strong {
+	font-size: 15px;
+}
+.discovery-overlay span {
+	color: #b9b9c3;
+	font-size: 12px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+.discovery-overlay {
+	gap: 8px;
+}
+.discovery-summary {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+.discovery-overlay:not(.discovery-overlay--confirm) {
+	padding-right: 96px;
+	justify-content: center;
+}
+.discovery-overlay button {
+	padding: 8px 11px;
+	border: 1px solid #4a4a55;
+	border-radius: 7px;
+	background: #2c2c33;
+	color: #ededf1;
+	font: inherit;
+	font-size: 12px;
+	cursor: pointer;
+}
+.discovery-overlay button:focus-visible {
+	outline: 2px solid #a6c8ff;
+	outline-offset: 2px;
+}
+.discovery-overlay button:disabled {
+	opacity: 0.6;
+	cursor: wait;
+}
+.discovery-exit {
+	position: absolute;
+	right: 12px;
+	top: 28px;
+}
+.discovery-overlay--confirm {
+	padding: 20px;
+	gap: 14px;
+}
+.discovery-confirm-hint {
+	margin: 0;
+	font-size: 12px;
+	line-height: 1.6;
+	color: #b9b9c3;
+}
+.discovery-found-channels {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
+	margin: 0;
+	padding: 10px 12px;
+	border: 1px solid #3c3c45;
+	border-radius: 8px;
+	background: #18181c;
+	list-style: none;
+}
+.discovery-found-channels li {
+	padding: 5px 0;
+	font-size: 13px;
+	overflow-wrap: anywhere;
+}
+.discovery-empty {
+	color: #a0a0ab;
+}
+.discovery-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	flex-shrink: 0;
+}
+.discovery-actions .discovery-primary {
+	color: #18181b;
+	background: #e7e7ec;
+	border-color: #e7e7ec;
+}
+.discovery-error {
+	margin: 0;
+	font-size: 12px;
+	color: #f5b1b1;
+}

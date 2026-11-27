@@ -3,11 +3,23 @@ import { contextBridge, ipcRenderer } from "electron";
 import type { DesktopApi } from "../shared/contracts";
 
 const api: DesktopApi = {
+	discoverDiscordChannels: () => ipcRenderer.invoke("discover-discord-channels"),
+	cancelDiscovery: () => ipcRenderer.invoke("cancel-discovery"),
+	resolveDiscoveryExit: (continueScanning) =>
+		ipcRenderer.invoke("resolve-discovery-exit", continueScanning),
+	discoveryOverlayState: () => ipcRenderer.invoke("discovery-overlay-state"),
+	onDiscoveryProgress: (callback) => {
+		const listener = (
+			_event: Electron.IpcRendererEvent,
+			progress: Parameters<typeof callback>[0],
+		) => callback(progress);
+		ipcRenderer.on("discovery-progress", listener);
+		return () => ipcRenderer.removeListener("discovery-progress", listener);
+	},
 	state: () => ipcRenderer.invoke("state"),
 	runtime: () => ipcRenderer.invoke("runtime"),
 	saveTask: (input, id) => ipcRenderer.invoke("save-task", input, id),
 	taskAction: (id, action) => ipcRenderer.invoke("task-action", id, action),
-	chooseCollector: () => ipcRenderer.invoke("choose-collector"),
 	deleteTask: (id) => ipcRenderer.invoke("delete-task", id),
 	launchDesktopApp: (target) => ipcRenderer.invoke("launch-desktop-app", target),
 	requestAccessibilityPermission: () => ipcRenderer.invoke("request-accessibility-permission"),

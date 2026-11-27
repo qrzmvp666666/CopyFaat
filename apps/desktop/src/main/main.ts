@@ -2,15 +2,19 @@ import { access, readdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { delimiter, join } from "node:path";
 
-import { app, BrowserWindow, dialog, ipcMain, shell, systemPreferences } from "electron";
+import { app, BrowserWindow, ipcMain, shell, systemPreferences } from "electron";
 
 import type { AppState, TaskInput } from "../shared/contracts";
 import { runCollector } from "./collector";
+import { finishUnreadChannels } from "./collector";
+import { deliverMessage } from "./delivery";
+import { registerDiscovery } from "./discovery/controller";
 import { createEngine } from "./engine";
 import { createStore } from "./store";
 
 app.setName("CopyFast");
 
+let discovery: ReturnType<typeof registerDiscovery> | undefined;
 let workspace: BrowserWindow | undefined;
 let engine: ReturnType<typeof createEngine> | undefined;
 let store: Awaited<ReturnType<typeof createStore>> | undefined;
@@ -138,6 +142,14 @@ function createWindows() {
 }
 
 function registerIpc() {
+	discovery = registerDiscovery(
+		() => workspace,
+		rendererUrl,
+		async () => {
+			const path = await desktopAppPath("discord");
+			return Boolean(path && !(await shell.openPath(path)));
+		},
+	);
 	ipcMain.handle("state", () => (store ? publicState(store.read()) : undefined));
 	ipcMain.handle("runtime", runtimeInfo);
 	ipcMain.handle("launch-desktop-app", async (_event, target: "telegram" | "discord") => {
@@ -157,13 +169,6 @@ function registerIpc() {
 	ipcMain.handle("save-task", async (_event, input: TaskInput, id?: string) =>
 		engine!.saveTask(input, id),
 	);
-	ipcMain.handle("choose-collector", async () => {
-		const result = await dialog.showOpenDialog(workspace!, {
-			properties: ["openFile"],
-			title: "选择本机采集程序",
-		});
-		return result.canceled ? null : (result.filePaths[0] ?? null);
-	});
 	ipcMain.handle("delete-task", async (_event, id: string) => engine!.deleteTask(id));
 	ipcMain.handle("task-action", async (_event, id: string, action: "pause" | "resume" | "run") =>
 		engine!.action(id, action),
@@ -202,6 +207,8 @@ void app.whenReady().then(async () => {
 	store = await createStore(join(app.getPath("userData"), "copyfast-state.json"), sendState);
 	engine = createEngine(store, {
 		collect: runCollector,
+		deliver: deliverMessage,
+		finishUnreadChannels,
 	});
 	await engine.recover();
 	engine.start();
@@ -210,5 +217,6 @@ void app.whenReady().then(async () => {
 	app.on("activate", () => workspace?.show());
 });
 app.on("before-quit", () => {
+	discovery?.cancel();
 	void engine?.stop();
 });

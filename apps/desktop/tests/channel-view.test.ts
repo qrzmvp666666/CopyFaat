@@ -14,6 +14,7 @@ const message: Message = {
 	sentAt: "2026-11-25T00:00:00Z",
 	collectedAt: "2026-11-25T00:00:00Z",
 	attachments: [],
+	mediaLabels: [],
 	batchId: "batch",
 	status: "collected",
 	attempts: 0,

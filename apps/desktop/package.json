@@ -14,6 +14,7 @@
 		"dist:win": "pnpm build && electron-builder --win"
 	},
 	"dependencies": {
+		"koffi": "3.3.8",
 		"lucide-react": "catalog:",
 		"react": "catalog:",
 		"react-dom": "catalog:",
@@ -37,7 +38,9 @@
 			"output": "release"
 		},
 		"files": [
-			"dist/**/*",
+			"dist/main/**/*",
+			"dist/renderer/**/*",
+			"dist/assets/**/*",
 			"package.json"
 		],
 		"mac": {
@@ -73,6 +76,17 @@
 			"oneClick": false,
 			"allowToChangeInstallationDirectory": true,
 			"perMachine": false
-		}
+		},
+		"beforePack": "build/native-runtime.mjs",
+		"extraResources": [
+			{
+				"from": "dist/native/${platform}-${arch}",
+				"to": "copyfast-engine"
+			}
+		],
+		"asarUnpack": [
+			"node_modules/koffi/**/*",
+			"node_modules/@koromix/**/*"
+		]
 	}
 }

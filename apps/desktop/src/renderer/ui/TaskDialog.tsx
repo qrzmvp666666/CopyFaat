@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import discordIcon from "../../../assets/discord-monochrome.svg";
 import telegramIcon from "../../../assets/telegram-monochrome.svg";
 import {
+	discordWebhookUrlSchema,
 	scopeSchema,
 	taskInputSchema,
 	type Platform,
@@ -11,46 +12,28 @@ import {
 	type Scope,
 	type TaskInput,
 } from "../../shared/contracts";
-import { buildReceiver, createReceiverDraft, validateReceiver } from "./task-configuration";
+import {
+	buildReceiver,
+	createReceiverDraft,
+	getReceiverChannel,
+	validateReceiver,
+} from "./task-configuration";
 import { TaskReceiverStep } from "./TaskReceiverStep";
 import { TaskRulesStep, type TaskRuleDraft } from "./TaskRulesStep";
 
 import "./task-dialog.css";
 import "./task-configuration.css";
+import "./task-receiver.css";
 
 interface Props {
 	onClose: () => void;
 	onSaved: (input: TaskInput) => Promise<void>;
 }
-interface ScopeDraft {
-	platform: Platform;
-	serverId: string;
-	serverName: string;
-	channels: string;
-}
-const STEPS = ["选择平台", "定位来源", "频道与接收", "采集规则"];
+const STEPS = ["选择平台", "定位来源", "频道对应", "采集规则"];
 const PLATFORMS = [
 	{ id: "discord", name: "Discord", icon: discordIcon, description: "服务器与频道" },
 	{ id: "telegram", name: "Telegram", icon: telegramIcon, description: "群组与频道" },
 ] as const;
-const emptyScope = (platform: Platform): ScopeDraft => ({
-	platform,
-	serverId: "",
-	serverName: "",
-	channels: "",
-});
-
-function parseChannels(value: string): Scope["channels"] {
-	return value
-		.split("\n")
-		.map((line) => line.trim())
-		.filter(Boolean)
-		.map((line) => {
-			const [id, ...name] = line.split("|");
-			return { id: id.trim(), name: name.join("|").trim() || id.trim() };
-		});
-}
-
 export function TaskDialog({ onClose, onSaved }: Props) {
 	const [rules, setRules] = useState<TaskRuleDraft>({
 		name: "",
@@ -59,23 +42,27 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 		firstRange: "new",
 		text: true,
 		media: true,
-		startPaused: false,
+		markRead: false,
 	});
 	const [receiver, setReceiver] = useState(() => createReceiverDraft("discord"));
 	const [excludedChannelIds, setExcludedChannelIds] = useState<string[]>([]);
-	const [source, setSource] = useState<ScopeDraft>(emptyScope("discord"));
-	const [collector, setCollector] = useState("");
-	const [sourceSettingsOpen, setSourceSettingsOpen] = useState(false);
+	const [source, setSource] = useState<Platform>("discord");
+	const [discoveredScope, setDiscoveredScope] = useState<Scope | null>(null);
 	const [error, setError] = useState("");
 	const [saving, setSaving] = useState(false);
 	const [step, setStep] = useState(0);
 	const [runtime, setRuntime] = useState<RuntimeInfo | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [permissionMessage, setPermissionMessage] = useState("");
+	const [discoveryNotice, setDiscoveryNotice] = useState("");
 	const dialogRef = useRef<HTMLFormElement>(null);
-	const platform = PLATFORMS.find((item) => item.id === source.platform)!;
-	const installed = runtime?.apps[source.platform];
-	const sourceScope = toScope(source);
+	const platform = PLATFORMS.find((item) => item.id === source)!;
+	const installed = runtime?.apps[source];
+	const sourceScope = discoveredScope ?? {
+		platform: source,
+		server: { id: "", name: "" },
+		channels: [],
+	};
 	const selectedChannels = sourceScope.channels.filter(
 		(channel) => !excludedChannelIds.includes(channel.id),
 	);
@@ -103,13 +90,28 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 		setBusy(true);
 		setError("");
 		try {
-			const opened = await window.copyfast.launchDesktopApp(source.platform);
+			if (startSelection && source === "discord") {
+				const result = await window.copyfast.discoverDiscordChannels();
+				if (!result) return;
+				setDiscoveredScope(result.scope);
+				setDiscoveryNotice(result.message);
+				setSource("discord");
+				setExcludedChannelIds([]);
+				setPermissionMessage("");
+				setStep(2);
+				return;
+			}
+			if (startSelection) {
+				setError("Telegram 自动识别尚未接入，请先使用 Discord。");
+				return;
+			}
+			const opened = await window.copyfast.launchDesktopApp(source);
 			if (!opened) {
 				setRuntime((current) =>
 					current
 						? {
 								...current,
-								apps: { ...current.apps, [source.platform]: false },
+								apps: { ...current.apps, [source]: false },
 							}
 						: current,
 				);
@@ -118,8 +120,15 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 			}
 			setStep(startSelection ? 2 : 1);
 			if (startSelection) setPermissionMessage("");
-		} catch {
-			setError(`无法打开 ${platform.name}，请稍后重试。`);
+		} catch (discoveryError) {
+			setError(
+				discoveryError instanceof Error
+					? discoveryError.message.replace(
+							/^Error invoking remote method '[^']+': Error: /,
+							"",
+						)
+					: `无法打开 ${platform.name}，请稍后重试。`,
+			);
 		} finally {
 			setBusy(false);
 		}
@@ -151,18 +160,15 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 	}
 
 	function validateSource() {
-		if (!source.serverName.trim() || !source.serverId.trim())
-			return "请填写采集来源的服务器名称和 ID";
+		if (!discoveredScope) return "请返回上一步识别来源服务器与频道";
 		if (!scopeSchema.safeParse(sourceScope).success)
-			return "请填写有效的来源信息与频道，频道 ID 不可重复，最多可配置 100 个频道";
-		if (!collector.trim()) return "请选择本机采集程序";
+			return "来源识别结果无效，请返回上一步重新识别（最多 500 个频道）";
 		return "";
 	}
 
 	function validateStep(index: number) {
 		if (index === 2) {
 			const sourceError = validateSource();
-			if (sourceError) setSourceSettingsOpen(true);
 			return sourceError || validateReceiver(receiver, selectedChannels);
 		}
 		if (index === 3) {
@@ -188,7 +194,7 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 		}
 		setError("");
 		if (step === 2 && nextStep === 3 && !rules.name.trim())
-			setRules({ ...rules, name: `${source.serverName.trim()}更新`.slice(0, 80) });
+			setRules({ ...rules, name: `${sourceScope.server.name.trim()}更新`.slice(0, 80) });
 		setStep(nextStep);
 	}
 
@@ -206,20 +212,20 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 				rules.firstRange === "day" ? 86400 : rules.firstRange === "hour" ? 3600 : 0;
 			const input = taskInputSchema.parse({
 				name: rules.name.trim(),
-				startPaused: rules.startPaused,
+				startPaused: true,
 				source: selectedSource,
 				receiver: buildReceiver(receiver, selectedChannels),
-				collector: { executable: collector.trim(), args: [] },
 				rules: {
 					intervalSeconds: rules.intervalSeconds,
 					startAt: new Date(Date.now() - lookbackSeconds * 1000).toISOString(),
 					include: "",
 					exclude: "",
-					maxRetries: 0,
-					retrySeconds: 10,
+					maxRetries: 3,
+					retrySeconds: 30,
 					text: rules.text,
 					images: rules.media,
 					attachments: rules.media,
+					markRead: rules.markRead,
 				},
 			});
 			await onSaved(input);
@@ -282,7 +288,7 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 						<h2 id="task-dialog-title">新建采集任务</h2>
 						<p>
 							{step === 2
-								? "选择采集频道，并设置消息发送到哪里。"
+								? "选择来源频道，把消息发送到你的 Discord。"
 								: step === 1
 									? "选择采集来源，连接你关心的消息。"
 									: "连接你的频道，把消息送到需要的地方。"}
@@ -334,10 +340,11 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 										key={item.id}
 										type="button"
 										className="platform-option"
-										aria-pressed={source.platform === item.id}
+										aria-pressed={source === item.id}
 										onClick={() => {
-											if (source.platform !== item.id) {
-												setSource(emptyScope(item.id));
+											if (source !== item.id) {
+												setSource(item.id);
+												setDiscoveredScope(null);
 												setExcludedChannelIds([]);
 												setReceiver(createReceiverDraft(item.id));
 											}
@@ -366,13 +373,13 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 												? "已安装"
 												: "未安装"}
 									</p>
-									<p>下一步会唤起 {platform.name}。请确认已登录，再开始框选。</p>
+									<p>下一步会唤起 {platform.name}。请确认已登录，再开始识别。</p>
 								</div>
 								<button
 									type="button"
 									onClick={() => {
 										void window.copyfast
-											.openExternal(source.platform)
+											.openExternal(source)
 											.catch(() =>
 												setError("无法打开下载页面，请稍后重试。"),
 											);
@@ -399,23 +406,18 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 											<h4>确认窗口</h4>
 											<p>
 												打开已登录的 {platform.name}，切换到需要采集的
-												{source.platform === "discord" ? "服务器" : "群组"}
-												。
+												{source === "discord" ? "服务器" : "群组"}。
 											</p>
 										</div>
 									</li>
 									<li>
 										<span>2</span>
 										<div>
-											<h4>
-												框选
-												{source.platform === "discord" ? "服务器" : "群组"}
-												与频道
-											</h4>
+											<h4>自动定位频道侧栏</h4>
 											<p>
-												跟随底部提示，依次框选
-												{source.platform === "discord" ? "服务器" : "群组"}
-												名称和频道列表区域。
+												开始后，将自动读取当前
+												{source === "discord" ? "服务器" : "群组"}
+												的窗口布局与频道侧栏，通过无障碍信息识别服务器与频道，无需框选。
 											</p>
 										</div>
 									</li>
@@ -447,7 +449,10 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 										</div>
 									</div>
 									<h5>主窗口会暂时收起</h5>
-									<p>操作期间按 Esc 可取消，随后返回当前设置。</p>
+									<p>
+										操作期间按 Esc
+										或点击退出识别，可保留已识别频道进入下一步，也可继续识别。
+									</p>
 								</aside>
 							</div>
 							<div className="permission-check">
@@ -455,7 +460,7 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 									<h4>开始前检查</h4>
 									<p role="status">
 										{permissionMessage ||
-											"桌面操作与屏幕读取权限；若未开启，将先引导你完成授权。"}
+											"需要辅助功能权限以读取与操作频道侧栏；无需截屏或上传屏幕。"}
 									</p>
 								</div>
 								<button
@@ -471,6 +476,7 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 					)}
 					{step === 2 && (
 						<TaskReceiverStep
+							notice={discoveryNotice}
 							source={sourceScope}
 							receiver={receiver}
 							selectedChannels={selectedChannels}
@@ -482,72 +488,10 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 										.map((channel) => channel.id),
 								)
 							}
-							onChangeSource={() => setSourceSettingsOpen((open) => !open)}
-							sourceSettings={
-								sourceSettingsOpen ? (
-									<section
-										className="receiver-source-settings"
-										aria-label="配置采集来源"
-									>
-										<div className="form-notice" role="status">
-											当前版本暂不支持自动框选，请手动填写来源与频道信息。
-										</div>
-										<div className="scope-columns">
-											<ScopeFields
-												title="采集来源"
-												value={source}
-												onChange={setSource}
-											/>
-										</div>
-										<section className="form-section">
-											<div className="section-heading">
-												<b>本机采集程序</b>
-												<span>选择本机已准备好的采集脚本</span>
-											</div>
-											<div className="file-picker">
-												<input
-													aria-label="本机采集程序"
-													value={collector}
-													readOnly
-													placeholder="尚未选择"
-												/>
-												<button
-													type="button"
-													className="secondary"
-													onClick={async () => {
-														try {
-															const path =
-																await window.copyfast.chooseCollector();
-															if (path) setCollector(path);
-														} catch {
-															setError(
-																"无法打开文件选择器，请重试。",
-															);
-														}
-													}}
-												>
-													选择文件
-												</button>
-											</div>
-											<small>
-												任务会通过所选程序读取消息，并将结果保存在本机。
-											</small>
-										</section>
-
-										<button
-											type="button"
-											className="secondary"
-											onClick={() => {
-												const sourceError = validateSource();
-												setError(sourceError);
-												if (!sourceError) setSourceSettingsOpen(false);
-											}}
-										>
-											保存来源配置
-										</button>
-									</section>
-								) : null
-							}
+							onChangeSource={() => {
+								setError("");
+								setStep(1);
+							}}
 						/>
 					)}
 					{step === 3 && (
@@ -567,9 +511,9 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 				<footer className="dialog-footer">
 					<span>
 						{step === 3
-							? "创建后可随时暂停或调整规则"
+							? "保存频道对应与采集规则，暂不自动运行"
 							: step === 2
-								? `已选择 ${selectedChannels.length} 个频道 · 配置会保留，可返回修改`
+								? `已选择 ${selectedChannels.length} 个频道 · 已配置 Webhook ${selectedChannels.filter((channel) => discordWebhookUrlSchema.safeParse(getReceiverChannel(receiver, channel.id)?.webhookUrl.trim()).success).length} 个`
 								: step === 1
 									? "配置会保留，可返回修改"
 									: "设置会保留，可返回上一步修改"}
@@ -584,6 +528,16 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 							上一步
 						</button>
 					)}
+					{step === 1 && discoveredScope?.channels.length ? (
+						<button
+							type="button"
+							className="secondary"
+							disabled={saving || busy}
+							onClick={() => goToStep(2)}
+						>
+							查看已识别频道
+						</button>
+					) : null}
 					{step < 2 ? (
 						<button
 							type="button"
@@ -611,68 +565,11 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 						</button>
 					) : (
 						<button key="save" type="submit" className="primary" disabled={saving}>
-							{saving ? "创建中…" : rules.startPaused ? "创建任务" : "创建并开始采集"}
+							{saving ? "保存中…" : "保存任务配置"}
 						</button>
 					)}
 				</footer>
 			</form>
 		</div>
-	);
-}
-
-function toScope(draft: ScopeDraft): Scope {
-	return {
-		platform: draft.platform,
-		server: { id: draft.serverId.trim(), name: draft.serverName.trim() },
-		channels: parseChannels(draft.channels),
-	};
-}
-
-function ScopeFields({
-	title,
-	value,
-	onChange,
-}: {
-	title: string;
-	value: ScopeDraft;
-	onChange: (value: ScopeDraft) => void;
-}) {
-	return (
-		<section className="scope-form">
-			<div className="section-heading">
-				<b>{title}</b>
-			</div>
-			<div className="form-grid">
-				<label className="field">
-					服务器 / 群组名称
-					<input
-						required
-						value={value.serverName}
-						onChange={(event) => onChange({ ...value, serverName: event.target.value })}
-						placeholder="名称"
-					/>
-				</label>
-				<label className="field">
-					服务器 / 群组 ID
-					<input
-						required
-						value={value.serverId}
-						onChange={(event) => onChange({ ...value, serverId: event.target.value })}
-						placeholder="平台中的稳定 ID"
-					/>
-				</label>
-			</div>
-			<label className="field">
-				频道范围
-				<textarea
-					required
-					rows={3}
-					value={value.channels}
-					onChange={(event) => onChange({ ...value, channels: event.target.value })}
-					placeholder={"每行一个：频道 ID | 显示名称\n例如：12345 | 产品公告"}
-				/>
-			</label>
-			<small>服务器只选一个；可添加多个频道。ID 需与采集程序返回值一致。</small>
-		</section>
 	);
 }

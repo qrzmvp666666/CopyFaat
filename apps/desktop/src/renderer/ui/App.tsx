@@ -20,17 +20,12 @@ import telegramIcon from "../../../assets/telegram-monochrome.svg";
 import type { PublicState, PublicTask, RuntimeInfo, TaskInput } from "../../shared/contracts";
 import { ChannelWorkspace } from "./ChannelWorkspace";
 import { Connections } from "./Connections";
-import { createDemoState } from "./demo-state";
 import { TaskDialog } from "./TaskDialog";
 
 const emptyState: PublicState = { version: 1, tasks: [], messages: [], logs: [] };
 export function App() {
 	const [liveState, setState] = useState<PublicState>(emptyState);
-	const [demoState] = useState(createDemoState);
-	const [isDemo, setIsDemo] = useState(
-		() => localStorage.getItem("copyfast-demo-preview") === "true",
-	);
-	const state = isDemo ? demoState : liveState;
+	const state = liveState;
 	const [sidebarCollapsed, setSidebarCollapsed] = useState(
 		() => localStorage.getItem("copyfast-sidebar-collapsed") === "true",
 	);
@@ -83,14 +78,6 @@ export function App() {
 			cancelled = true;
 		};
 	}, [page]);
-	function toggleDemo() {
-		localStorage.setItem("copyfast-demo-preview", String(!isDemo));
-		setIsDemo(!isDemo);
-		setSelected(undefined);
-		setTab("messages");
-		setCreateOpen(false);
-		completeOnboarding();
-	}
 	function completeOnboarding() {
 		setOnboardingOpen(false);
 		localStorage.setItem("copyfast-onboarding-complete", "true");
@@ -263,7 +250,6 @@ export function App() {
 							全部任务 <span>{total}</span>
 						</span>
 						<button
-							disabled={isDemo}
 							title="新建采集任务"
 							aria-label="新建采集任务"
 							onClick={() => setCreateOpen(true)}
@@ -384,7 +370,6 @@ export function App() {
 							<div className="content-head-actions">
 								<button
 									className="secondary"
-									disabled={isDemo}
 									onClick={() => setTab(tab === "rules" ? "messages" : "rules")}
 								>
 									<Settings2 size={15} />
@@ -394,7 +379,6 @@ export function App() {
 									<>
 										<button
 											className="secondary"
-											disabled={isDemo}
 											title={
 												current.status === "running"
 													? "暂停任务"
@@ -426,7 +410,6 @@ export function App() {
 										</button>
 										<button
 											className="secondary danger-action"
-											disabled={isDemo}
 											title="删除任务"
 											onClick={() => {
 												if (
@@ -453,24 +436,10 @@ export function App() {
 										</button>
 									</>
 								)}
-								<button
-									className="primary"
-									disabled={isDemo}
-									onClick={() => setCreateOpen(true)}
-								>
+								<button className="primary" onClick={() => setCreateOpen(true)}>
 									<Plus size={16} /> 新建任务
 								</button>
 							</div>
-						</div>
-						<div className="demo-preview-banner" role="status">
-							<span>
-								{isDemo
-									? "演示预览 · 所有任务、消息与日志均为模拟数据，不会执行采集。"
-									: "想先看看有数据时的效果？可以预览演示任务与消息。"}
-							</span>
-							<button className="secondary" onClick={toggleDemo}>
-								{isDemo ? "退出演示" : "查看演示数据"}
-							</button>
 						</div>
 						<div className="metrics">
 							<Metric
@@ -506,12 +475,12 @@ export function App() {
 									selectedTask
 										? String(
 												selectedMessages.filter(
-													(message) => message.status === "collected",
+													(message) => message.status !== "filtered",
 												).length,
 											)
 										: String(
 												state.messages.filter(
-													(message) => message.status === "collected",
+													(message) => message.status !== "filtered",
 												).length,
 											),
 								)}
@@ -548,7 +517,7 @@ export function App() {
 								tab={tab}
 								onTabChange={setTab}
 								onRefresh={async () => {
-									if (!isDemo) setState(await window.copyfast.state());
+									setState(await window.copyfast.state());
 								}}
 							/>
 						)}

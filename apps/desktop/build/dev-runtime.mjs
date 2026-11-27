@@ -31,6 +31,10 @@ export async function prepareDevRuntime() {
 		.update(metadata.version)
 		.update(bootstrap)
 		.update(icon)
+		.update(await readFile(join(projectRoot, "dist/main/index.cjs")))
+		.update(await readFile(join(projectRoot, "dist/main/preload.cjs")))
+		.update(await readFile(join(projectRoot, "dist/main/discovery-worker.cjs")))
+		.update(await readFile(join(projectRoot, "dist/main/collection-worker.cjs")))
 		.digest("hex");
 	const stamp = join(runtimeRoot, "runtime-fingerprint");
 	try {

@@ -29,6 +29,7 @@ const labels: Record<ChannelLogRow["status"], string> = {
 	processing: "采集中",
 	success: "成功",
 	skipped: "无新增",
+	skipped_read: "已读跳过",
 	failed: "失败",
 	uncertain: "未完成",
 	retrying: "等待重试",

@@ -1,6 +1,27 @@
 # Changelog
 
+## 2026-11-28
+
+- refactor: Remove the desktop demo-data preview and its renderer-only fixtures.
+
+## 2026-11-27
+
+- feat: Add paused-by-default Discord collection tasks with unread-channel polling, loaded-message ID deduplication, local rule filtering, persistent per-channel Webhook outbox, bounded 429 retries, and uncertain delivery handling.
+- docs: Document that accessibility collection covers only Discord messages currently exposed to the desktop accessibility tree and does not guarantee full history or attachment downloads.
+- refactor: Remove receiver-channel creation, management and selection from desktop task step three. Enter a Discord Webhook directly per source row, masking URLs and preserving legacy configurations without linking edits across rows.
+
 ## 2026-11-26
+
+- feat: Allow stopping Discord channel discovery midway with a server/channel summary, continue or confirmed exit, and partial-result backfill into channel mapping. Cache observed names before slow ID verification so exit preserves usable results.
+
+- refactor: Remove the new-task wizard’s manual source/collector-file flow and global receiver Webhook. Each destination channel owns a required Discord Webhook and an optional display label; preserve old addresses through local migration.
+- fix: Save new script-free task configurations paused and explicitly report pending collection/delivery support instead of opening a legacy form or suggesting messages were sent.
+
+- refactor: Simplify desktop task step three into source-to-destination channel mappings matching Figma, with a receiver-channel side panel, shared or per-channel Webhook configuration, bulk assignment, and editable destinations. Persist destination URLs per mapping while retaining legacy receiver compatibility.
+
+- fix: Resolve the desktop engine from existing runtime files when the development app is opened directly, refresh sidebar coordinates after activation and before scrolling, and retry transient incomplete accessibility reads while Discord loads channels. Preserve observed channels on foreground loss and allow returning to previously discovered channels after cancelling.
+
+- feat: Add local Discord channel discovery through a CopyFast Engine process and native desktop adapter, with automatic window-layout and accessibility sidebar positioning without manual selection, countdown, category expansion, scrolling, cancellation/window restoration and step-three backfill. Prefer verified real channel IDs and label fallback locators; retain the external message collector requirement and surface incomplete coverage.
 
 - fix: Reduce desktop task creation to four steps, moving channel/receiver settings and collection rules to steps three and four; keep manual source setup in the receiver screen’s expandable configuration.
 

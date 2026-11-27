@@ -4,27 +4,52 @@ export const platformSchema = z.enum(["discord", "telegram"]);
 export const channelSchema = z.object({
 	id: z.string().min(1).max(200),
 	name: z.string().min(1).max(160),
+	identity: z.enum(["discord", "local"]).optional(),
+	locator: z
+		.object({
+			serverName: z.string().max(160),
+			category: z.string().max(160),
+			channelName: z.string().max(160),
+		})
+		.optional(),
 });
+export type Channel = z.infer<typeof channelSchema>;
 export const scopeSchema = z.object({
 	platform: platformSchema,
 	server: channelSchema,
 	channels: z
 		.array(channelSchema)
 		.min(1)
-		.max(100)
+		.max(500)
 		.refine((value) => new Set(value.map((c) => c.id)).size === value.length, "频道不能重复"),
 });
+export const discordWebhookUrlSchema = z
+	.string()
+	.trim()
+	.max(2048)
+	.refine((value) => {
+		try {
+			const url = new URL(value);
+			return (
+				url.protocol === "https:" &&
+				url.host === "discord.com" &&
+				!url.username &&
+				!url.password &&
+				!url.search &&
+				!url.hash &&
+				/^\/api(?:\/v\d+)?\/webhooks\/\d+\/[A-Za-z0-9_-]+\/?$/.test(url.pathname)
+			);
+		} catch {
+			return false;
+		}
+	}, "请填写有效的 Discord Webhook 地址");
 export const receiverSchema = z.object({
-	webhookUrl: z
-		.url()
-		.max(2048)
-		.refine((value) => /^https?:\/\//i.test(value)),
-	platform: platformSchema,
-	server: z.object({ id: z.string().trim().max(200), name: z.string().trim().min(1).max(160) }),
+	platform: z.literal("discord"),
 	channels: z
 		.array(
 			z.object({
 				sourceChannelId: z.string().min(1).max(200),
+				webhookUrl: discordWebhookUrlSchema,
 				target: z.object({
 					id: z.string().trim().max(200),
 					name: z.string().trim().min(1).max(160),
@@ -32,7 +57,7 @@ export const receiverSchema = z.object({
 			}),
 		)
 		.min(1)
-		.max(100),
+		.max(500),
 });
 export type Receiver = z.infer<typeof receiverSchema>;
 
@@ -42,13 +67,17 @@ export const taskInputSchema = z
 		startPaused: z.boolean().optional(),
 		receiver: receiverSchema.optional(),
 		source: scopeSchema,
-		collector: z.object({
-			executable: z.string().min(1),
-			args: z.array(z.string()).max(30).default([]),
-		}),
+		// Only retained for previously saved script-backed tasks, never requested by the wizard.
+		collector: z
+			.object({
+				executable: z.string().min(1),
+				args: z.array(z.string()).max(30).default([]),
+			})
+			.optional(),
 		rules: z.object({
 			intervalSeconds: z.number().int().min(10).max(86400),
 			startAt: z.iso.datetime(),
+			markRead: z.boolean().default(false),
 			include: z.string().max(500).default(""),
 			exclude: z.string().max(500).default(""),
 			maxRetries: z.number().int().min(0).max(5).default(3),
@@ -99,12 +128,27 @@ export const collectedMessageSchema = z.object({
 		)
 		.max(20)
 		.default([]),
+	mediaLabels: z
+		.array(z.object({ kind: z.enum(["image", "file"]), label: z.string().max(300) }))
+		.max(30)
+		.default([]),
 	signal: z.record(z.string(), z.unknown()).optional(),
 });
 export const collectorResponseSchema = z.object({
 	version: z.literal(1),
 	messages: z.array(collectedMessageSchema).max(500),
 	cursor: z.string().max(4000).optional(),
+	channels: z
+		.array(
+			z.object({
+				channelId: z.string().min(1).max(200),
+				status: z.enum(["unread", "skipped_read", "failed"]),
+				collected: z.number().int().nonnegative(),
+				error: z.string().max(1000).optional(),
+			}),
+		)
+		.max(500)
+		.default([]),
 });
 export type CollectedMessage = z.infer<typeof collectedMessageSchema>;
 export type CollectorResponse = z.infer<typeof collectorResponseSchema>;
@@ -127,7 +171,14 @@ export interface Message extends CollectedMessage {
 export interface ChannelResult {
 	channelId: string;
 	channelName: string;
-	status: "processing" | "success" | "skipped" | "failed" | "uncertain";
+	status:
+		| "processing"
+		| "success"
+		| "skipped"
+		| "skipped_read"
+		| "retrying"
+		| "failed"
+		| "uncertain";
 	collected: number;
 	saved: number;
 	ignored: number;
@@ -176,12 +227,38 @@ export interface RuntimeInfo {
 	systemSupported: boolean;
 	apps: { telegram: boolean; discord: boolean };
 }
+export interface DiscoveryRect {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}
+export interface DiscoveryProgress {
+	phase: "preparing" | "selecting" | "countdown" | "scanning" | "paused";
+	found: number;
+	message: string;
+	serverName?: string;
+	channelNames?: string[];
+}
+export interface DiscoveryResult {
+	scope: Scope;
+	complete: boolean;
+	message: string;
+}
+export interface DiscoveryOverlayState {
+	bounds: DiscoveryRect;
+	progress: DiscoveryProgress;
+}
 export interface DesktopApi {
+	discoverDiscordChannels(): Promise<DiscoveryResult | null>;
+	cancelDiscovery(): Promise<void>;
+	resolveDiscoveryExit(continueScanning: boolean): Promise<void>;
+	discoveryOverlayState(): Promise<DiscoveryOverlayState | null>;
+	onDiscoveryProgress(callback: (progress: DiscoveryProgress) => void): () => void;
 	state(): Promise<PublicState>;
 	runtime(): Promise<RuntimeInfo>;
 	saveTask(input: TaskInput, id?: string): Promise<string>;
 	taskAction(id: string, action: "pause" | "resume" | "run"): Promise<void>;
-	chooseCollector(): Promise<string | null>;
 	deleteTask(id: string): Promise<void>;
 	launchDesktopApp(target: "telegram" | "discord"): Promise<boolean>;
 	requestAccessibilityPermission(): Promise<boolean>;

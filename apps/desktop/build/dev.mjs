@@ -6,9 +6,24 @@ import { createServer } from "vite";
 
 import { prepareDevRuntime } from "./dev-runtime.mjs";
 const port = Number(process.env.COPYFAST_DEV_PORT ?? 5173);
+import { prepareNativeRuntime } from "./native-runtime.mjs";
+await prepareNativeRuntime();
 await mkdir("dist/main", { recursive: true });
 await mkdir("dist/assets", { recursive: true });
 await copyFile("assets/icon.png", "dist/assets/icon.png");
+await build({
+	entryPoints: {
+		"discovery-worker": "src/main/discovery/worker.ts",
+		"collection-worker": "src/main/collection/worker.ts",
+	},
+	bundle: true,
+	platform: "node",
+	format: "cjs",
+	outdir: "dist/main",
+	outExtension: { ".js": ".cjs" },
+	external: ["electron", "koffi"],
+	tsconfig: "tsconfig.json",
+});
 await build({
 	entryPoints: ["src/main/main.ts"],
 	bundle: true,

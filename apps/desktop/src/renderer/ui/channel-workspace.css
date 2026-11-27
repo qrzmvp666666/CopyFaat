@@ -15,6 +15,21 @@
 	border-right: 1px solid #29292c;
 	min-width: 0;
 }
+.channel-nav .channel-search {
+	width: 100%;
+	min-width: 0;
+	gap: 7px;
+	padding: 8px;
+}
+.channel-nav .channel-search > svg {
+	flex: 0 0 13px;
+}
+.channel-nav .channel-search input {
+	flex: 1 1 auto;
+	width: 0;
+	min-width: 0;
+	font-size: 11px;
+}
 .channel-nav small {
 	color: #828288;
 	font-size: 11px;
@@ -535,7 +550,6 @@
 	padding: 16px 20px 20px;
 }
 .content-expanded > .content-head,
-.content-expanded > .demo-preview-banner,
 .content-expanded > .metrics {
 	display: none;
 }

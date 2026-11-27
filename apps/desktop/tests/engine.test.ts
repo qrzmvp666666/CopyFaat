@@ -20,10 +20,20 @@ const input: TaskInput = {
 		server: { id: "source-server", name: "产品社区" },
 		channels: [{ id: "source-channel", name: "产品更新" }],
 	},
-	collector: { executable: "collector", args: [] },
+	receiver: {
+		platform: "discord",
+		channels: [
+			{
+				sourceChannelId: "source-channel",
+				target: { id: "", name: "产品资讯" },
+				webhookUrl: "https://discord.com/api/webhooks/123/synthetic-token",
+			},
+		],
+	},
 	rules: {
 		intervalSeconds: 30,
 		startAt: new Date(0).toISOString(),
+		markRead: false,
 		include: "",
 		exclude: "",
 		maxRetries: 2,
@@ -41,6 +51,7 @@ const message: CollectedMessage = {
 	text: "New release",
 	sentAt: new Date(1000).toISOString(),
 	attachments: [],
+	mediaLabels: [],
 	signal: { kind: "release" },
 };
 
@@ -52,23 +63,43 @@ async function setup(messages: CollectedMessage[] = [message]) {
 		path: join(root, "state.json"),
 		store,
 		engine: createEngine(store, {
-			collect: async () => ({ version: 1 as const, messages }),
+			collect: async (task) => ({
+				version: 1 as const,
+				messages,
+				channels: task.source.channels.map((channel) => ({
+					channelId: channel.id,
+					status: "unread" as const,
+					collected: messages.filter((message) => message.channelId === channel.id)
+						.length,
+				})),
+			}),
 		}),
 	};
 }
 
 describe("CopyFast task engine", () => {
+	it("requires per-channel Webhooks before starting a task", async () => {
+		const { engine, store } = await setup();
+		const { receiver: _receiver, ...configuration } = input;
+		await expect(engine.saveTask({ ...configuration, startPaused: false })).rejects.toThrow(
+			"请先为每个来源频道配置 Discord Webhook 地址",
+		);
+		expect(store.read().tasks).toHaveLength(0);
+	});
+
 	it("persists receiver mappings and paused tasks across a restart without collecting", async () => {
 		const { store, engine, path } = await setup();
 		const id = await engine.saveTask({
 			...input,
 			startPaused: true,
 			receiver: {
-				webhookUrl: "https://example.com/messages",
-				platform: "telegram",
-				server: { id: "", name: "我的工作室" },
+				platform: "discord",
 				channels: [
-					{ sourceChannelId: "source-channel", target: { id: "", name: "产品资讯" } },
+					{
+						sourceChannelId: "source-channel",
+						target: { id: "", name: "产品资讯" },
+						webhookUrl: "https://discord.com/api/webhooks/123/synthetic-token",
+					},
 				],
 			},
 		});
@@ -76,7 +107,7 @@ describe("CopyFast task engine", () => {
 			id,
 			status: "paused",
 			receiver: {
-				server: { name: "我的工作室" },
+				platform: "discord",
 				channels: [{ target: { name: "产品资讯" } }],
 			},
 		});
@@ -159,6 +190,70 @@ describe("CopyFast task engine", () => {
 		});
 	});
 
+	it("keeps image-only messages when media collection is enabled", async () => {
+		const mediaMessage: CollectedMessage = {
+			...message,
+			id: "image-only",
+			text: "",
+			mediaLabels: [{ kind: "image", label: "图片" }],
+		};
+		const { store, engine } = await setup([mediaMessage]);
+		const taskId = await engine.saveTask(input);
+		await engine.action(taskId, "resume");
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(store.read().messages[0]).toMatchObject({
+			text: "",
+			mediaLabels: [{ kind: "image", label: "图片" }],
+			status: "collected",
+		});
+	});
+
+	it("skips channels reported as already read", async () => {
+		const root = await mkdtemp(join(tmpdir(), "copyfast-read-channel-"));
+		roots.push(root);
+		const store = await createStore(join(root, "state.json"));
+		const engine = createEngine(store, {
+			collect: async (task) => ({
+				version: 1,
+				messages: [],
+				channels: task.source.channels.map((channel) => ({
+					channelId: channel.id,
+					status: "skipped_read" as const,
+					collected: 0,
+				})),
+			}),
+		});
+		const taskId = await engine.saveTask(input);
+		await engine.action(taskId, "resume");
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(store.read().messages).toHaveLength(0);
+		expect(
+			store.read().logs.find((log) => log.phase === "collect")?.channelResults?.[0].status,
+		).toBe("skipped_read");
+	});
+
+	it("persists the message before posting and records the confirmed delivery", async () => {
+		const root = await mkdtemp(join(tmpdir(), "copyfast-outbox-"));
+		roots.push(root);
+		const store = await createStore(join(root, "state.json"));
+		const engine = createEngine(store, {
+			collect: async () => ({
+				version: 1,
+				messages: [message],
+				channels: [{ channelId: "source-channel", status: "unread", collected: 1 }],
+			}),
+			deliver: async () => {
+				expect(store.read().messages[0]).toMatchObject({ status: "sending", attempts: 1 });
+				return { status: "sent", httpStatus: 204 };
+			},
+		});
+		const taskId = await engine.saveTask(input);
+		await engine.action(taskId, "resume");
+		await new Promise((resolve) => setTimeout(resolve, 20));
+		expect(store.read().messages[0]).toMatchObject({ status: "synced", attempts: 1 });
+		expect(store.read().logs.find((log) => log.phase === "collect")?.httpStatus).toBe(204);
+	});
+
 	it("marks collection failures in the task and execution log", async () => {
 		const root = await mkdtemp(join(tmpdir(), "copyfast-collector-failure-"));
 		roots.push(root);
@@ -209,6 +304,22 @@ describe("CopyFast task engine", () => {
 					{ id: "empty", name: "空频道" },
 				],
 			},
+			receiver: {
+				platform: "discord",
+				channels: [
+					...input.receiver!.channels,
+					{
+						sourceChannelId: "second",
+						target: { id: "", name: "第二频道" },
+						webhookUrl: "https://discord.com/api/webhooks/456/second-token",
+					},
+					{
+						sourceChannelId: "empty",
+						target: { id: "", name: "空频道" },
+						webhookUrl: "https://discord.com/api/webhooks/789/empty-token",
+					},
+				],
+			},
 			rules: { ...input.rules, exclude: "ignore" },
 		});
 		await engine.action(id, "resume");
@@ -241,7 +352,7 @@ describe("CopyFast task engine", () => {
 		});
 		expect(
 			store.read().logs.find((log) => log.phase === "collect")?.channelResults?.[0].status,
-		).toBe("uncertain");
+		).toBe("failed");
 		time = 110000;
 		await engine.tick();
 		expect(store.read().tasks[0].status).toBe("attention");

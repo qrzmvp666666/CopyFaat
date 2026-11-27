@@ -1,12 +1,14 @@
-import { Search } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { ArrowRight, Hash, Search } from "lucide-react";
+import { useState } from "react";
 
-import type { Platform, Scope } from "../../shared/contracts";
-import { buildReceiver, validateReceiver, type ReceiverDraft } from "./task-configuration";
+import discordIcon from "../../../assets/discord-monochrome.svg";
+import telegramIcon from "../../../assets/telegram-monochrome.svg";
+import { discordWebhookUrlSchema, type Scope } from "../../shared/contracts";
+import { getReceiverChannel, setChannelWebhook, type ReceiverDraft } from "./task-configuration";
 
 interface TaskReceiverStepProps {
+	notice?: string;
 	source: Scope;
-	sourceSettings?: ReactNode;
 	receiver: ReceiverDraft;
 	selectedChannels: Scope["channels"];
 	onChange: (receiver: ReceiverDraft) => void;
@@ -15,8 +17,8 @@ interface TaskReceiverStepProps {
 }
 
 export function TaskReceiverStep({
+	notice,
 	source,
-	sourceSettings,
 	receiver,
 	selectedChannels,
 	onChange,
@@ -24,289 +26,254 @@ export function TaskReceiverStep({
 	onChangeSource,
 }: TaskReceiverStepProps) {
 	const [search, setSearch] = useState("");
-	const [previewOpen, setPreviewOpen] = useState(false);
-	const [previewError, setPreviewError] = useState("");
+	const [showUrls, setShowUrls] = useState(false);
+	const [touchedIds, setTouchedIds] = useState<Set<string>>(new Set());
 	const channels = source.channels.filter((channel) =>
 		channel.name.toLowerCase().includes(search.trim().toLowerCase()),
 	);
 	const selectedIds = new Set(selectedChannels.map((channel) => channel.id));
 	const allSelected =
 		channels.length > 0 && channels.every((channel) => selectedIds.has(channel.id));
-	const platformName = source.platform === "discord" ? "Discord" : "Telegram";
+	const mappedCount = selectedChannels.filter(
+		(channel) =>
+			discordWebhookUrlSchema.safeParse(
+				getReceiverChannel(receiver, channel.id)?.webhookUrl.trim(),
+			).success,
+	).length;
+	const sourcePlatform = source.platform === "discord" ? "Discord" : "Telegram";
 
-	function updateTarget(id: string, field: "id" | "name", value: string) {
-		const channel = source.channels.find((item) => item.id === id)!;
-		onChange({
-			...receiver,
-			targets: {
-				...receiver.targets,
-				[id]: {
-					...(receiver.targets[id] ?? { id: "", name: channel.name }),
-					[field]: value,
-				},
-			},
-		});
+	function selectVisible() {
+		const ids = new Set(selectedIds);
+		for (const channel of channels) {
+			if (allSelected) ids.delete(channel.id);
+			else ids.add(channel.id);
+		}
+		onSelectionChange([...ids]);
 	}
 
 	return (
-		<>
+		<div className="channel-receiver">
 			<div className="dialog-intro receiver-intro">
-				<h3>选择频道与接收位置</h3>
-				<p>先勾选来源频道，再为它们配置接收位置。</p>
-			</div>
-			{sourceSettings}
-			<div className="receiver-columns">
-				<section className="receiver-source-card" aria-label="来源服务器与频道">
-					<div className="receiver-source-label">
-						<span>来源服务器</span>
-						<button type="button" onClick={onChangeSource}>
-							{source.server.name ? "更换服务器 ↗" : "配置来源 ↗"}
-						</button>
-					</div>
-					<div className="receiver-source-identity">
-						<span>{source.platform === "discord" ? "DC" : "TG"}</span>
-						<div>
-							<h4>{source.server.name || "尚未配置来源"}</h4>
-							<p>
-								{platformName} · 已配置 {source.channels.length} 个频道
-							</p>
-						</div>
-					</div>
-					<label className="receiver-search">
-						<Search size={14} aria-hidden="true" />
-						<input
-							aria-label="搜索频道名称"
-							placeholder="搜索频道名称"
-							value={search}
-							onChange={(event) => setSearch(event.target.value)}
-						/>
-					</label>
-					<div className="receiver-select-all">
-						<label>
-							<input
-								type="checkbox"
-								checked={allSelected}
-								disabled={channels.length === 0}
-								ref={(element) => {
-									if (element)
-										element.indeterminate =
-											!allSelected &&
-											channels.some((channel) => selectedIds.has(channel.id));
-								}}
-								onChange={() => {
-									const next = new Set(selectedIds);
-									for (const channel of channels) {
-										if (allSelected) next.delete(channel.id);
-										else next.add(channel.id);
-									}
-									onSelectionChange([...next]);
-								}}
-							/>
-							全选
-						</label>
-						<span>已选择 {selectedChannels.length} 个</span>
-					</div>
-					<p className="receiver-channel-category">信息发布</p>
-					<div className="receiver-channel-list">
-						{channels.map((channel) => (
-							<label
-								key={channel.id}
-								className={`receiver-channel${selectedIds.has(channel.id) ? " is-selected" : ""}`}
-							>
-								<input
-									type="checkbox"
-									checked={selectedIds.has(channel.id)}
-									onChange={() =>
-										onSelectionChange(
-											selectedIds.has(channel.id)
-												? [...selectedIds].filter((id) => id !== channel.id)
-												: [...selectedIds, channel.id],
-										)
-									}
-								/>
-								<span>#&nbsp; {channel.name}</span>
-							</label>
-						))}
-						{channels.length === 0 && <p className="receiver-empty">没有匹配的频道</p>}
-					</div>
-					<p className="receiver-channel-count">
-						显示 {channels.length} / {source.channels.length} 个频道 · 列表可滚动
+				{notice && (
+					<p className="receiver-discovery-notice" role="status">
+						{notice}
 					</p>
-				</section>
-				<section className="receiver-settings-card" aria-label="接收设置与频道对应关系">
-					<div className="receiver-card-heading">
-						<h4>接收设置</h4>
-						<span>为所选频道设置统一接收地址</span>
-					</div>
-					<label className="receiver-field receiver-webhook">
-						Webhook 地址
+				)}
+				<h3>选择来源，填写接收 Webhook</h3>
+				<p>
+					勾选要采集的频道，在每行填写目标频道的 Webhook
+					地址。发到同一个位置时，可填写相同地址。
+				</p>
+			</div>
+			<div className="channel-server-flow">
+				<ServerCard
+					label="来源服务器"
+					name={source.server.name || "尚未配置来源"}
+					detail={`${sourcePlatform} · 已识别 ${source.channels.length} 个频道`}
+					icon={source.platform === "discord" ? discordIcon : telegramIcon}
+					action="更换"
+					onAction={onChangeSource}
+				/>
+				<ArrowRight
+					className="channel-server-arrow"
+					size={28}
+					strokeWidth={1.4}
+					aria-hidden="true"
+				/>
+				<ServerCard
+					label="接收位置"
+					name="Discord 目标频道"
+					detail="每个来源单独填写 Webhook，无需添加接收频道"
+					icon={discordIcon}
+				/>
+			</div>
+			<div className="channel-toolbar">
+				<label className="channel-search">
+					<Search size={15} aria-hidden="true" />
+					<input
+						aria-label="搜索来源频道"
+						placeholder="搜索来源频道"
+						value={search}
+						onChange={(event) => setSearch(event.target.value)}
+					/>
+				</label>
+				<span>
+					已选择 {selectedChannels.length} / {source.channels.length} 个频道
+				</span>
+				<label className="channel-reveal-urls">
+					<input
+						type="checkbox"
+						checked={showUrls}
+						onChange={(event) => setShowUrls(event.target.checked)}
+					/>
+					显示 Webhook 地址
+				</label>
+			</div>
+			<div
+				className="channel-mapping-table"
+				role="table"
+				aria-label="来源频道与接收 Webhook 对应关系"
+			>
+				<div className="channel-table-header" role="row">
+					<div role="columnheader" className="channel-source-cell">
 						<input
-							type="url"
-							value={receiver.webhookUrl}
-							maxLength={2048}
-							placeholder="https://your-domain.com/webhooks/messages"
-							onChange={(event) =>
-								onChange({ ...receiver, webhookUrl: event.target.value })
-							}
+							type="checkbox"
+							aria-label="全选当前搜索结果"
+							checked={allSelected}
+							ref={(node) => {
+								if (node)
+									node.indeterminate =
+										!allSelected &&
+										channels.some((channel) => selectedIds.has(channel.id));
+							}}
+							disabled={!channels.length}
+							onChange={selectVisible}
 						/>
-					</label>
-					<div className="receiver-destination-fields">
-						<label className="receiver-field">
-							目标平台
-							<select
-								value={receiver.platform}
-								onChange={(event) =>
-									onChange({
-										...receiver,
-										platform: event.target.value as Platform,
-									})
-								}
+						<span>来源频道</span>
+					</div>
+					<span aria-hidden="true" />
+					<div role="columnheader">目标频道的 Webhook 地址</div>
+				</div>
+				<div className="channel-table-scroll">
+					{channels.map((channel, index) => {
+						const checked = selectedIds.has(channel.id);
+						const value = getReceiverChannel(receiver, channel.id)?.webhookUrl ?? "";
+						const invalid =
+							checked &&
+							touchedIds.has(channel.id) &&
+							!discordWebhookUrlSchema.safeParse(value.trim()).success;
+						const errorId = `channel-webhook-error-${index}`;
+						return (
+							<div
+								role="row"
+								key={channel.id}
+								className={`channel-table-row${checked ? " is-selected" : ""}`}
 							>
-								<option value="discord">Discord</option>
-								<option value="telegram">Telegram</option>
-							</select>
-						</label>
-						<label className="receiver-field">
-							目标服务器名称
-							<input
-								value={receiver.serverName}
-								maxLength={160}
-								placeholder="我的工作室"
-								onChange={(event) =>
-									onChange({ ...receiver, serverName: event.target.value })
-								}
-							/>
-						</label>
-						<label className="receiver-field">
-							服务器 ID（选填）
-							<input
-								value={receiver.serverId}
-								maxLength={200}
-								placeholder="输入服务器标识"
-								onChange={(event) =>
-									onChange({ ...receiver, serverId: event.target.value })
-								}
-							/>
-						</label>
-					</div>
-					<div className="receiver-mapping-heading">
-						<h4>频道对应关系</h4>
-						<span>已选 {selectedChannels.length} 个频道</span>
-						<p>目标频道默认沿用来源名称，可逐项修改</p>
-					</div>
-					<div className="receiver-mapping-labels">
-						<span>来源频道 · {source.server.name}</span>
-						<span>目标频道 · {receiver.serverName || "待设置"}</span>
-						<span>频道 ID（选填）</span>
-					</div>
-					<div className="receiver-mapping-list">
-						{selectedChannels.map((channel) => (
-							<div className="receiver-mapping-row" key={channel.id}>
-								<span className="receiver-mapping-source">
-									#&nbsp; {channel.name}
-									<span aria-hidden="true">→</span>
-								</span>
-								<div className="receiver-target-name">
-									<span aria-hidden="true">#</span>
+								<label
+									role="cell"
+									className="channel-source-cell"
+									title={channel.name}
+								>
 									<input
-										aria-label={`${channel.name}的目标频道名称`}
-										value={receiver.targets[channel.id]?.name ?? channel.name}
-										maxLength={160}
+										type="checkbox"
+										checked={checked}
+										aria-label={`采集 ${channel.name}`}
 										onChange={(event) =>
-											updateTarget(channel.id, "name", event.target.value)
+											onSelectionChange(
+												event.target.checked
+													? [...selectedIds, channel.id]
+													: [...selectedIds].filter(
+															(id) => id !== channel.id,
+														),
+											)
 										}
 									/>
-								</div>
-								<input
-									aria-label={`${channel.name}的目标频道 ID`}
-									value={receiver.targets[channel.id]?.id ?? ""}
-									maxLength={200}
-									placeholder="输入频道标识"
-									onChange={(event) =>
-										updateTarget(channel.id, "id", event.target.value)
-									}
+									<Hash size={13} aria-hidden="true" />
+									<span>{channel.name}</span>
+								</label>
+								<ArrowRight
+									className="channel-row-arrow"
+									size={21}
+									strokeWidth={1.3}
+									aria-hidden="true"
 								/>
+								<div role="cell" className="channel-webhook-cell">
+									<input
+										className="channel-webhook-input"
+										aria-label={`${channel.name}的接收 Webhook 地址`}
+										type={showUrls ? "text" : "password"}
+										autoComplete="off"
+										spellCheck={false}
+										maxLength={2048}
+										placeholder="粘贴目标频道的 Discord Webhook 地址"
+										disabled={!checked}
+										value={value}
+										aria-invalid={invalid}
+										aria-describedby={invalid ? errorId : undefined}
+										onChange={(event) =>
+											onChange(
+												setChannelWebhook(
+													receiver,
+													channel,
+													event.target.value,
+												),
+											)
+										}
+										onBlur={() =>
+											setTouchedIds((ids) => new Set([...ids, channel.id]))
+										}
+									/>
+									{invalid && (
+										<small className="channel-webhook-error" id={errorId}>
+											请填写有效的 Discord Webhook 地址
+										</small>
+									)}
+								</div>
 							</div>
-						))}
-						{selectedChannels.length === 0 && (
-							<p className="receiver-empty">请从左侧勾选需要采集的频道</p>
-						)}
-					</div>
-					<div className="receiver-test-row">
-						<span>○ 尚未测试</span>
-						<p>测试前可预览消息内容并确认发送</p>
-						<button
-							type="button"
-							className="secondary"
-							onClick={() => {
-								const error = validateReceiver(receiver, selectedChannels);
-								setPreviewError(error);
-								if (!error) setPreviewOpen(true);
-							}}
-						>
-							测试接收
-						</button>
-					</div>
-					{previewError && (
-						<p className="receiver-preview-error" role="alert">
-							{previewError}
+						);
+					})}
+					{!channels.length && (
+						<p className="channel-empty">
+							{source.channels.length
+								? "没有匹配的来源频道，试试其他关键词"
+								: "尚未识别到频道，请更换来源或重新识别"}
 						</p>
 					)}
-				</section>
+				</div>
 			</div>
-			<div className="receiver-summary">
-				<span>采集范围</span>
-				<strong>
-					{source.server.name} / {selectedChannels.length} 个频道
-				</strong>
-				<span aria-hidden="true">→</span>
-				<strong>
-					{receiver.serverName || "待设置接收位置"} / {selectedChannels.length} 组对应关系
-				</strong>
-				<span>仅发送已勾选频道的消息</span>
+			<div className="channel-table-meta">
+				<span>
+					显示 {channels.length} / {source.channels.length} 个频道 · 向下滚动查看更多
+				</span>
+				<span
+					className={
+						mappedCount > 0 && mappedCount === selectedChannels.length
+							? "channel-mapped"
+							: ""
+					}
+				>
+					已配置 {mappedCount} / {selectedChannels.length} 个频道 ·
+					仅检查地址格式，尚未联网验证
+				</span>
 			</div>
-			{previewOpen && (
-				<section className="receiver-test-preview" aria-label="测试消息预览">
-					<div className="receiver-card-heading">
-						<h4>测试消息预览</h4>
-						<button
-							type="button"
-							className="secondary"
-							onClick={() => setPreviewOpen(false)}
-						>
-							关闭预览
-						</button>
-					</div>
-					<p role="status">
-						当前版本尚未接入 Webhook 发送服务。以下为配置预览，未发送测试消息。
-					</p>
-					<dl className="receiver-test-details">
-						<dt>接收地址</dt>
-						<dd>{receiver.webhookUrl.trim()}</dd>
-						<dt>接收位置</dt>
-						<dd>
-							{receiver.serverName} · {selectedChannels.length} 个频道
-						</dd>
-						<dt>频道对应关系</dt>
-						<dd>
-							{buildReceiver(receiver, selectedChannels).channels.map((mapping) => (
-								<div key={mapping.sourceChannelId}>
-									{
-										selectedChannels.find(
-											(channel) => channel.id === mapping.sourceChannelId,
-										)?.name
-									}{" "}
-									→ {mapping.target.name}
-								</div>
-							))}
-						</dd>
-						<dt>消息内容</dt>
-						<dd className="receiver-test-message">
-							这是一条 CopyFast 测试消息，用于确认接收位置配置。
-						</dd>
-					</dl>
-				</section>
+			<p className="channel-webhook-help">
+				获取地址：Discord 目标频道设置 → 整合 → Webhook → 复制 Webhook
+				URL。当前仅保存配置，不会发送消息。
+			</p>
+		</div>
+	);
+}
+
+function ServerCard({
+	label,
+	name,
+	detail,
+	icon,
+	action,
+	onAction,
+}: {
+	label: string;
+	name: string;
+	detail: string;
+	icon: string;
+	action?: string;
+	onAction?: () => void;
+}) {
+	return (
+		<section className="channel-server-card" aria-label={label}>
+			<span className="channel-platform-icon">
+				<img src={icon} alt="" width={24} height={24} />
+			</span>
+			<div className="channel-server-identity">
+				<span>{label}</span>
+				<h4 title={name}>{name}</h4>
+				<p>{detail}</p>
+			</div>
+			{action && onAction && (
+				<button type="button" className="channel-button" onClick={onAction}>
+					{action}
+				</button>
 			)}
-		</>
+		</section>
 	);
 }

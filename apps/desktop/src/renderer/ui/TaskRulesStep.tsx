@@ -1,5 +1,5 @@
 import type { Scope } from "../../shared/contracts";
-import { formatFrequency, getWebhookHost, type ReceiverDraft } from "./task-configuration";
+import { formatFrequency, getReceiverChannel, type ReceiverDraft } from "./task-configuration";
 
 export interface TaskRuleDraft {
 	name: string;
@@ -8,7 +8,7 @@ export interface TaskRuleDraft {
 	firstRange: "new" | "hour" | "day";
 	text: boolean;
 	media: boolean;
-	startPaused: boolean;
+	markRead: boolean;
 }
 
 interface TaskRulesStepProps {
@@ -136,16 +136,23 @@ export function TaskRulesStep({ rules, source, receiver, onChange }: TaskRulesSt
 							</label>
 						</div>
 					</fieldset>
-					<label className="rules-start-paused">
+					<label className="rules-mark-read">
 						<input
 							type="checkbox"
-							checked={rules.startPaused}
+							checked={rules.markRead}
 							onChange={(event) =>
-								onChange({ ...rules, startPaused: event.target.checked })
+								onChange({ ...rules, markRead: event.target.checked })
 							}
 						/>
-						创建后先暂停，稍后手动运行
+						采集并发送成功后，尝试滚动到最新消息
 					</label>
+					<p className="rules-mark-read-note">
+						滚动可能会让 Discord 将频道标记为已读；默认关闭。
+					</p>
+					<p className="rules-preview-note" role="status">
+						保存后任务默认暂停；启动后按频率检查未读频道，并将符合规则的新消息发送到对应
+						Webhook。
+					</p>
 				</section>
 				<aside className="rules-preview" aria-label="任务预览">
 					<h4>任务预览</h4>
@@ -159,11 +166,15 @@ export function TaskRulesStep({ rules, source, receiver, onChange }: TaskRulesSt
 					</div>
 					<div className="rules-preview-receiver">
 						<h5>消息接收</h5>
-						<p>{getWebhookHost(receiver.webhookUrl)}</p>
 						<p>
-							{receiver.serverName || "待设置接收位置"} · {source.channels.length}{" "}
-							组频道关联
+							{
+								source.channels.filter((channel) =>
+									getReceiverChannel(receiver, channel.id)?.webhookUrl.trim(),
+								).length
+							}{" "}
+							个来源频道已配置 Webhook
 						</p>
+						<p>每个来源单独保存接收地址</p>
 					</div>
 					<p className="rules-preview-frequency">
 						每{" "}

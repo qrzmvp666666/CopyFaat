@@ -43,7 +43,8 @@
 			"esbuild",
 			"prisma",
 			"prisma-zod-generator",
-			"sharp"
+			"sharp",
+			"koffi"
 		]
 	}
 }

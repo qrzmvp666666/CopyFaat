@@ -15,7 +15,14 @@ export interface ChannelLogRow {
 	log: TaskLog;
 	result?: ChannelResult;
 	channel?: ChannelEntry;
-	status: "processing" | "success" | "skipped" | "failed" | "uncertain" | "retrying";
+	status:
+		| "processing"
+		| "success"
+		| "skipped"
+		| "skipped_read"
+		| "retrying"
+		| "failed"
+		| "uncertain";
 	legacy: boolean;
 }
 export function channelKey(taskId: string, channelId: string): string {

@@ -1,57 +1,67 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	assignReceiverChannel,
+	setChannelWebhook,
+	getReceiverChannel,
+	validateReceiverChannel,
 	buildReceiver,
 	createReceiverDraft,
 	formatFrequency,
 	getWebhookHost,
 	validateReceiver,
 } from "../src/renderer/ui/task-configuration";
-import { taskInputSchema } from "../src/shared/contracts";
+import { receiverSchema, taskInputSchema } from "../src/shared/contracts";
 
 const channels = [
 	{ id: "announcements", name: "产品公告" },
 	{ id: "releases", name: "版本更新" },
 ];
-const receiver = {
-	...createReceiverDraft("discord"),
-	webhookUrl: "https://example.com/webhook",
-	serverName: "我的工作室",
-	targets: { announcements: { id: "news", name: "产品资讯" } },
+const destination = {
+	key: "news",
+	id: "",
+	name: "产品资讯",
+	webhookUrl: "https://discord.com/api/webhooks/123/synthetic-token-a",
 };
+const receiver = assignReceiverChannel(
+	{ ...createReceiverDraft("discord"), destinations: [destination] },
+	channels.map((channel) => channel.id),
+	destination.key,
+);
 
 describe("new task configuration", () => {
-	it("keeps mappings for selected channels and defaults target names to their source", () => {
-		expect(buildReceiver(receiver, channels).channels).toEqual([
-			{ sourceChannelId: "announcements", target: { id: "news", name: "产品资讯" } },
-			{ sourceChannelId: "releases", target: { id: "", name: "版本更新" } },
-		]);
-		expect(buildReceiver(receiver, channels.slice(1)).channels).toEqual([
-			{ sourceChannelId: "releases", target: { id: "", name: "版本更新" } },
-		]);
+	it("stores addresses on each mapped channel, never globally", () => {
+		const result = buildReceiver(receiver, channels);
+		expect(result.channels).toHaveLength(2);
+		expect(
+			result.channels.every((channel) => channel.webhookUrl === destination.webhookUrl),
+		).toBe(true);
+		expect(result).not.toHaveProperty("webhookUrl");
+		expect(result).not.toHaveProperty("server");
+		expect(buildReceiver(receiver, channels.slice(1)).channels).toHaveLength(1);
 	});
 
-	it("requires a selected channel, a valid HTTP address, server and target names", () => {
+	it("requires selected channels and an independent valid Discord webhook", () => {
 		expect(validateReceiver(receiver, channels)).toBe("");
 		expect(validateReceiver(receiver, [])).toContain("至少勾选");
 		for (const webhookUrl of [
 			"",
 			"invalid",
-			"javascript:alert(1)",
-			"file:///tmp/test",
-			"ftp://example.com",
+			"https://example.com/webhook",
+			"http://discord.com/api/webhooks/123/token",
+			"https://discord.com.evil.test/api/webhooks/123/token",
+			"https://discord.com/api/webhooks/123/token?secret=x",
 		]) {
-			expect(validateReceiver({ ...receiver, webhookUrl }, channels)).toContain("HTTP");
+			expect(
+				validateReceiver(
+					{ ...receiver, destinations: [{ ...destination, webhookUrl }] },
+					channels,
+				),
+			).toContain("Discord Webhook");
 		}
-		expect(validateReceiver({ ...receiver, serverName: " " }, channels)).toContain(
-			"服务器名称",
+		expect(validateReceiver({ ...receiver, destinations: [] }, channels)).toContain(
+			"填写 Discord Webhook 地址",
 		);
-		expect(
-			validateReceiver(
-				{ ...receiver, targets: { announcements: { id: "", name: " " } } },
-				channels,
-			),
-		).toContain("目标频道名称");
 	});
 
 	it("rejects duplicate, missing and unrelated mappings at the save boundary", () => {
@@ -62,7 +72,6 @@ describe("new task configuration", () => {
 				server: { id: "community", name: "产品社区" },
 				channels,
 			},
-			collector: { executable: "collector", args: [] },
 			rules: { intervalSeconds: 60, startAt: new Date(0).toISOString() },
 			receiver: buildReceiver(receiver, channels),
 		};
@@ -90,5 +99,121 @@ describe("new task configuration", () => {
 		expect(formatFrequency(300)).toBe("5 分钟");
 		expect(getWebhookHost("https://example.com/secret?token=private")).toBe("example.com");
 		expect(getWebhookHost("")).toBe("尚未设置接收地址");
+	});
+});
+
+describe("receiver channel routing", () => {
+	const destinations = [
+		{
+			key: "signals",
+			id: "",
+			name: "交易信号",
+			webhookUrl: "https://discord.com/api/webhooks/123/synthetic-token-a",
+		},
+		{
+			key: "news",
+			id: "",
+			name: "行情观察",
+			webhookUrl: "https://discord.com/api/webhooks/456/synthetic-token-b",
+		},
+	];
+	const draft = { ...createReceiverDraft("discord"), destinations };
+
+	it("persists distinct per-channel addresses and supports sharing a receiver", () => {
+		const shared = assignReceiverChannel(
+			draft,
+			channels.map((channel) => channel.id),
+			"signals",
+		);
+		expect(validateReceiver(shared, channels)).toBe("");
+		expect(
+			buildReceiver(shared, channels).channels.map((channel) => channel.webhookUrl),
+		).toEqual([destinations[0].webhookUrl, destinations[0].webhookUrl]);
+		const split = assignReceiverChannel(shared, [channels[1].id], "news");
+		expect(buildReceiver(split, channels).channels[1]).toEqual({
+			sourceChannelId: channels[1].id,
+			target: { id: "", name: "行情观察" },
+			webhookUrl: destinations[1].webhookUrl,
+		});
+		expect(buildReceiver(split, channels.slice(1)).channels[0].webhookUrl).toBe(
+			destinations[1].webhookUrl,
+		);
+		expect(receiverSchema.safeParse(buildReceiver(split, channels)).success).toBe(true);
+	});
+
+	it("requires mappings and follows receiver edits without losing temporarily unchecked mappings", () => {
+		expect(validateReceiver(draft, channels)).toContain("填写 Discord Webhook 地址");
+		const assigned = assignReceiverChannel(
+			draft,
+			channels.map((channel) => channel.id),
+			"signals",
+		);
+		const edited = {
+			...assigned,
+			destinations: [
+				{ ...destinations[0], name: "新名称", webhookUrl: destinations[1].webhookUrl },
+			],
+		};
+		expect(getReceiverChannel(edited, channels[0].id)?.name).toBe("新名称");
+		expect(buildReceiver(edited, channels.slice(0, 1)).channels).toHaveLength(1);
+		expect(buildReceiver(edited, channels).channels[1].webhookUrl).toBe(
+			destinations[1].webhookUrl,
+		);
+		expect(assignReceiverChannel(draft, [channels[0].id], "missing")).toBe(draft);
+	});
+
+	it("rejects invalid Discord endpoints and empty receiver names", () => {
+		for (const webhookUrl of [
+			"https://example.com/webhook",
+			"https://discord.com.evil.test/api/webhooks/123/token",
+			"http://discord.com/api/webhooks/123/token",
+			"https://discord.com/api/webhooks/123/token?x=y",
+			"https://discord.com:444/api/webhooks/123/token",
+			"https://discord.com/api/webhooks/123",
+		])
+			expect(validateReceiverChannel({ ...destinations[0], webhookUrl })).toContain(
+				"Discord Webhook",
+			);
+		expect(validateReceiverChannel({ ...destinations[0], name: " " })).toContain(
+			"接收频道名称",
+		);
+		expect(validateReceiverChannel(destinations[0])).toBe("");
+	});
+});
+
+describe("inline per-source Webhooks", () => {
+	it("stores each row independently, including identical URLs and clearing", () => {
+		const first = setChannelWebhook(
+			createReceiverDraft("discord"),
+			channels[0],
+			destination.webhookUrl,
+		);
+		const both = setChannelWebhook(first, channels[1], destination.webhookUrl);
+		expect(getReceiverChannel(both, channels[0].id)?.key).not.toBe(
+			getReceiverChannel(both, channels[1].id)?.key,
+		);
+		expect(validateReceiver(both, channels)).toBe("");
+		const cleared = setChannelWebhook(both, channels[0], "");
+		expect(getReceiverChannel(cleared, channels[1].id)?.webhookUrl).toBe(
+			destination.webhookUrl,
+		);
+		expect(validateReceiver(cleared, channels)).toContain("Discord Webhook");
+		expect(buildReceiver(both, channels.slice(1)).channels).toHaveLength(1);
+	});
+	it("preserves existing shared configs but isolates a row when edited", () => {
+		const changed = setChannelWebhook(
+			receiver,
+			channels[0],
+			"https://discord.com/api/webhooks/456/synthetic-token-b",
+		);
+		expect(getReceiverChannel(changed, channels[1].id)?.webhookUrl).toBe(
+			destination.webhookUrl,
+		);
+		expect(getReceiverChannel(changed, channels[0].id)?.webhookUrl).toContain("/456/");
+		expect(getReceiverChannel(receiver, channels[0].id)?.webhookUrl).toBe(
+			destination.webhookUrl,
+		);
+		const again = setChannelWebhook(changed, channels[0], destination.webhookUrl);
+		expect(again.destinations).toHaveLength(changed.destinations.length);
 	});
 });
