@@ -60,6 +60,8 @@ function validateRunnableInput(input: TaskInput): void {
 
 export function createEngine(store: StateStore, deps: EngineDependencies) {
 	const active = new Map<string, AbortController>();
+	const completion = new Map<string, Promise<void>>();
+	const configuring = new Set<string>();
 	const now = deps.now ?? Date.now;
 	const stamp = () => new Date(now()).toISOString();
 	let timer: ReturnType<typeof setInterval> | undefined;
@@ -88,42 +90,55 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 	async function saveTask(input: TaskInput, id?: string) {
 		const parsed = taskInputSchema.parse(input);
 		if (parsed.startPaused === false) validateRunnableInput(parsed);
-		active.get(id ?? "")?.abort();
 		const taskId = id ?? randomUUID();
-		await store.update((state) => {
-			const existing = state.tasks.find((task) => task.id === taskId);
-			if (id && !existing) throw new Error("任务不存在");
-			const changedScope =
-				existing && JSON.stringify(existing.source) !== JSON.stringify(parsed.source);
-			if (existing)
-				Object.assign(existing, parsed, {
-					cursor: changedScope ? undefined : existing.cursor,
-					nextRunAt: stamp(),
-					retryAttempt: 0,
+		if (configuring.has(taskId)) throw new Error("任务配置正在保存，请稍后重试。");
+		configuring.add(taskId);
+		try {
+			active.get(taskId)?.abort();
+			await completion.get(taskId);
+			await store.update((state) => {
+				const existing = state.tasks.find((task) => task.id === taskId);
+				if (id && !existing) throw new Error("任务不存在");
+				const changedScope =
+					existing && JSON.stringify(existing.source) !== JSON.stringify(parsed.source);
+				if (existing)
+					Object.assign(existing, parsed, {
+						cursor: changedScope ? undefined : existing.cursor,
+						nextRunAt: stamp(),
+						retryAttempt: 0,
+						...(parsed.startPaused === undefined
+							? {}
+							: {
+									status: parsed.startPaused ? "paused" : "running",
+									error: undefined,
+								}),
+					});
+				else
+					state.tasks.push({
+						...parsed,
+						id: taskId,
+						status: parsed.startPaused === false ? "running" : "paused",
+						createdAt: stamp(),
+						nextRunAt: stamp(),
+					});
+				state.logs.push({
+					id: randomUUID(),
+					taskId,
+					phase: "settings",
+					status: "success",
+					startedAt: stamp(),
+					finishedAt: stamp(),
+					collected: 0,
+					saved: 0,
+					ignored: 0,
+					failed: 0,
+					messageKeys: [],
 				});
-			else
-				state.tasks.push({
-					...parsed,
-					id: taskId,
-					status: parsed.startPaused === false ? "running" : "paused",
-					createdAt: stamp(),
-					nextRunAt: stamp(),
-				});
-			state.logs.push({
-				id: randomUUID(),
-				taskId,
-				phase: "settings",
-				status: "success",
-				startedAt: stamp(),
-				finishedAt: stamp(),
-				collected: 0,
-				saved: 0,
-				ignored: 0,
-				failed: 0,
-				messageKeys: [],
 			});
-		});
-		if (!id && parsed.startPaused === false) {
+		} finally {
+			configuring.delete(taskId);
+		}
+		if (parsed.startPaused === false) {
 			const task = store.read().tasks.find((item) => item.id === taskId);
 			if (task) validateRunnable(task);
 			void run(taskId);
@@ -143,7 +158,11 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 	}
 
 	async function action(id: string, action: "pause" | "resume" | "run") {
-		if (action === "pause") active.get(id)?.abort();
+		if (configuring.has(id)) throw new Error("任务配置正在保存，请稍后重试。");
+		if (action === "pause") {
+			active.get(id)?.abort();
+			await completion.get(id);
+		}
 		await store.update((state) => {
 			const task = state.tasks.find((item) => item.id === id);
 			if (!task) throw new Error("任务不存在");
@@ -218,7 +237,14 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 	}
 
 	async function run(id: string) {
-		if (active.has(id)) return;
+		if (active.has(id) || configuring.has(id)) return;
+		let finish = () => {};
+		completion.set(
+			id,
+			new Promise<void>((resolve) => {
+				finish = resolve;
+			}),
+		);
 		const controller = new AbortController();
 		active.set(id, controller);
 		const startedAt = now();
@@ -466,9 +492,14 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 				}
 			});
 		} finally {
-			const task = store.read().tasks.find((item) => item.id === id);
-			if (task) deps.activity?.(task, "idle");
-			active.delete(id);
+			try {
+				const task = store.read().tasks.find((item) => item.id === id);
+				if (task) deps.activity?.(task, "idle");
+			} finally {
+				active.delete(id);
+				completion.delete(id);
+				finish();
+			}
 		}
 	}
 

@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createEngine } from "../src/main/engine";
 import { createStore } from "../src/main/store";
@@ -129,6 +129,94 @@ describe("CopyFast task engine", () => {
 		expect(store.read().messages[0]).toMatchObject({ text: "", status: "filtered" });
 		const pausedId = await engine.saveTask(input);
 		expect(store.read().tasks.find((task) => task.id === pausedId)?.status).toBe("paused");
+	});
+
+	it("saving rules only pauses an existing running task and preserves its receiver", async () => {
+		const { store, engine } = await setup();
+		const id = await engine.saveTask(input);
+		await store.update((state) => {
+			state.tasks[0].status = "running";
+		});
+		await engine.saveTask(
+			{ ...input, startPaused: true, rules: { ...input.rules, intervalSeconds: 300 } },
+			id,
+		);
+		await engine.tick();
+		expect(store.read().tasks[0]).toMatchObject({
+			status: "paused",
+			receiver: input.receiver,
+			rules: { intervalSeconds: 300 },
+		});
+		expect(store.read().logs.filter((log) => log.phase === "collect")).toHaveLength(0);
+	});
+
+	it("waits for an interrupted collection to finish before restarting with new rules", async () => {
+		const { store } = await setup();
+		const intervals: number[] = [];
+		let finishOldRun: (() => void) | undefined;
+		const engine = createEngine(store, {
+			collect: async (task, signal) => {
+				intervals.push(task.rules.intervalSeconds);
+				if (intervals.length === 1) {
+					await new Promise<void>((resolve) => {
+						finishOldRun = resolve;
+					});
+					expect(signal.aborted).toBe(true);
+				}
+				return { version: 1, messages: [], channels: [] };
+			},
+		});
+		const id = await engine.saveTask(input);
+		await engine.action(id, "resume");
+		await vi.waitFor(() => expect(finishOldRun).toBeDefined());
+		let saved = false;
+		const save = engine
+			.saveTask(
+				{ ...input, startPaused: true, rules: { ...input.rules, intervalSeconds: 300 } },
+				id,
+			)
+			.then(() => {
+				saved = true;
+			});
+		await engine.tick();
+		expect(saved).toBe(false);
+		expect(intervals).toEqual([30]);
+		finishOldRun!();
+		await save;
+		expect(store.read().tasks[0].status).toBe("paused");
+		await engine.action(id, "resume");
+		await vi.waitFor(() => expect(intervals).toEqual([30, 300]));
+		await engine.action(id, "pause");
+		expect(store.read().tasks[0].status).toBe("paused");
+	});
+
+	it("keeps the saved configuration paused if starting it is rejected", async () => {
+		const { engine, store } = await setup();
+		const { receiver: _receiver, ...withoutReceiver } = input;
+		const id = await engine.saveTask({ ...withoutReceiver, startPaused: true });
+		await expect(engine.action(id, "resume")).rejects.toThrow(
+			"请先为每个来源频道配置 Discord Webhook 地址",
+		);
+		expect(store.read().tasks[0]).toMatchObject({ status: "paused", rules: input.rules });
+	});
+
+	it("rejects invalid edits without changing the running task", async () => {
+		const { engine, store } = await setup();
+		const id = await engine.saveTask(input);
+		await store.update((state) => {
+			state.tasks[0].status = "running";
+		});
+		await expect(
+			engine.saveTask(
+				{ ...input, startPaused: true, rules: { ...input.rules, intervalSeconds: 1 } },
+				id,
+			),
+		).rejects.toThrow();
+		expect(store.read().tasks[0]).toMatchObject({
+			status: "running",
+			rules: { intervalSeconds: 30 },
+			receiver: input.receiver,
+		});
 	});
 
 	it("deduplicates repeated messages in one collection batch", async () => {

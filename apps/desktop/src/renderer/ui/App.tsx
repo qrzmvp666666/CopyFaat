@@ -3,6 +3,7 @@ import {
 	Crown,
 	ExternalLink,
 	List,
+	MoreHorizontal,
 	PanelLeft,
 	Pause,
 	Play,
@@ -17,9 +18,10 @@ import { useEffect, useState } from "react";
 import discordIcon from "../../../assets/discord-monochrome.svg";
 import appIcon from "../../../assets/icon.png";
 import telegramIcon from "../../../assets/telegram-monochrome.svg";
-import type { PublicState, PublicTask, RuntimeInfo, TaskInput } from "../../shared/contracts";
+import type { PublicState, RuntimeInfo } from "../../shared/contracts";
 import { ChannelWorkspace } from "./ChannelWorkspace";
 import { Connections } from "./Connections";
+import { TaskDetails } from "./TaskDetails";
 import { TaskDialog } from "./TaskDialog";
 
 const emptyState: PublicState = { version: 1, tasks: [], messages: [], logs: [] };
@@ -43,6 +45,14 @@ export function App() {
 	const [tab, setTab] = useState("messages");
 	const [selected, setSelected] = useState<string>();
 	const [createOpen, setCreateOpen] = useState(false);
+	const [rulesDirty, setRulesDirty] = useState(false);
+	const [rulesBusy, setRulesBusy] = useState(false);
+	const [rulesEditing, setRulesEditing] = useState(false);
+	function canLeaveRules() {
+		return (
+			!rulesBusy && (!rulesDirty || window.confirm("规则尚未保存，确定放弃修改并离开吗？"))
+		);
+	}
 	const [accountPanel, setAccountPanel] = useState<"profile" | "membership" | null>(null);
 	useEffect(() => {
 		void window.copyfast.state().then(setState);
@@ -51,13 +61,18 @@ export function App() {
 	useEffect(
 		() =>
 			window.copyfast.onNavigate((target) => {
+				if (
+					rulesBusy ||
+					(rulesDirty && !window.confirm("规则尚未保存，确定放弃修改并离开吗？"))
+				)
+					return;
 				setPage("workspace");
 				if (target.tab) setTab(target.tab);
 				if (target.taskId) {
 					setSelected(target.taskId);
 				}
 			}),
-		[],
+		[rulesBusy, rulesDirty],
 	);
 	useEffect(() => {
 		if (page !== "connections") return;
@@ -151,7 +166,9 @@ export function App() {
 		(message) => message.status === "failed",
 	).length;
 	return (
-		<main className={`app-shell${onboardingOpen ? " onboarding-open" : ""}`}>
+		<main
+			className={`app-shell${onboardingOpen ? " onboarding-open" : ""}${tab === "rules" ? " task-details-shell" : ""}`}
+		>
 			<header className="titlebar">
 				<span className="traffic" aria-hidden="true" />
 				<div className="header-actions">
@@ -235,6 +252,7 @@ export function App() {
 							page === "workspace" && !selectedTask ? "nav-active" : "nav-muted"
 						}
 						onClick={() => {
+							if (!canLeaveRules()) return;
 							setPage("workspace");
 							setSelected(undefined);
 							setTab("messages");
@@ -250,6 +268,7 @@ export function App() {
 						aria-current={page === "connections" ? "page" : undefined}
 						className={page === "connections" ? "nav-active" : "nav-muted"}
 						onClick={() => {
+							if (!canLeaveRules()) return;
 							completeOnboarding();
 							setSelected(undefined);
 							setPage("connections");
@@ -265,7 +284,9 @@ export function App() {
 						<button
 							title="新建采集任务"
 							aria-label="新建采集任务"
-							onClick={() => setCreateOpen(true)}
+							onClick={() => {
+								if (canLeaveRules()) setCreateOpen(true);
+							}}
 						>
 							<Plus size={16} />
 						</button>
@@ -287,6 +308,8 @@ export function App() {
 								}
 								key={task.id}
 								onClick={() => {
+									if (selected === task.id && page === "workspace") return;
+									if (!canLeaveRules()) return;
 									setPage("workspace");
 									completeOnboarding();
 									setSelected(task.id);
@@ -365,7 +388,9 @@ export function App() {
 						}}
 					/>
 				) : (
-					<section className={`content${isWorkspaceExpanded ? " content-expanded" : ""}`}>
+					<section
+						className={`content${isWorkspaceExpanded ? " content-expanded" : ""}${tab === "rules" ? " task-detail-content" : ""}`}
+					>
 						<div className="content-head">
 							<div>
 								<div className="eyebrow">
@@ -373,7 +398,18 @@ export function App() {
 										? `任务 / ${selectedTask.source.platform === "telegram" ? "Telegram" : "Discord"}`
 										: "工作区 / 本机采集"}
 								</div>
-								<h1>{selectedTask?.name ?? "采集工作台"}</h1>
+								<div className="task-detail-title">
+									<h1>{selectedTask?.name ?? "采集工作台"}</h1>
+									{tab === "rules" && current && (
+										<span className={`detail-task-status ${current.status}`}>
+											{current.status === "running"
+												? "运行中"
+												: current.status === "attention"
+													? "需处理"
+													: "已暂停"}
+										</span>
+									)}
+								</div>
 								<p>
 									{selectedTask
 										? `${current?.source.server.name ?? "来源未配置"} · ${current?.source.channels.length ?? 0} 个频道`
@@ -383,7 +419,10 @@ export function App() {
 							<div className="content-head-actions">
 								<button
 									className="secondary"
-									onClick={() => setTab(tab === "rules" ? "messages" : "rules")}
+									onClick={() => {
+										if (canLeaveRules())
+											setTab(tab === "rules" ? "messages" : "rules");
+									}}
 								>
 									<Settings2 size={15} />
 									{tab === "rules" ? "返回消息" : "采集规则"}
@@ -392,6 +431,7 @@ export function App() {
 									<>
 										<button
 											className="secondary"
+											disabled={rulesBusy || rulesEditing}
 											title={
 												current.status === "running"
 													? "暂停任务"
@@ -421,52 +461,78 @@ export function App() {
 											)}
 											{current.status === "running" ? "暂停任务" : "运行任务"}
 										</button>
-										<button
-											className="secondary danger-action"
-											title="删除任务"
-											onClick={() => {
-												if (
-													!window.confirm(
-														`删除“${current.name}”？该任务关联的频道消息和任务日志也会永久删除，此操作无法撤销。`,
-													)
-												)
-													return;
-												void window.copyfast
-													.deleteTask(current.id)
-													.then(() => {
-														setSelected(undefined);
-													})
-													.catch((error: unknown) =>
-														window.alert(
-															error instanceof Error
-																? error.message
-																: "删除任务失败",
-														),
-													);
-											}}
-										>
-											<Trash2 size={15} /> 删除
-										</button>
+										<details className="task-actions-menu">
+											<summary aria-label="更多任务操作">
+												<MoreHorizontal size={18} />
+											</summary>
+											<div>
+												<button
+													className="secondary danger-action"
+													title="删除任务"
+													disabled={rulesBusy}
+													onClick={() => {
+														if (!canLeaveRules()) return;
+														if (
+															!window.confirm(
+																`删除“${current.name}”？该任务关联的频道消息和任务日志也会永久删除，此操作无法撤销。`,
+															)
+														)
+															return;
+														void window.copyfast
+															.deleteTask(current.id)
+															.then(() => {
+																setSelected(undefined);
+															})
+															.catch((error: unknown) =>
+																window.alert(
+																	error instanceof Error
+																		? error.message
+																		: "删除任务失败",
+																),
+															);
+													}}
+												>
+													<Trash2 size={15} /> 删除
+												</button>
+												<button
+													type="button"
+													disabled={rulesBusy}
+													onClick={() => {
+														if (canLeaveRules()) setCreateOpen(true);
+													}}
+												>
+													<Plus size={15} />
+													新建任务
+												</button>
+											</div>
+										</details>
 									</>
 								)}
-								<button className="primary" onClick={() => setCreateOpen(true)}>
+								<button
+									className={`primary${tab === "rules" ? " detail-hide-create" : ""}`}
+									onClick={() => {
+										if (canLeaveRules()) setCreateOpen(true);
+									}}
+								>
 									<Plus size={16} /> 新建任务
 								</button>
 							</div>
 						</div>
 						<div className="metrics">
-							<Metric
-								label={selectedTask ? "任务状态" : "运行任务"}
-								value={
-									selectedTask
-										? current?.status === "running"
-											? "运行中"
-											: current?.status === "attention"
-												? "需处理"
-												: "已暂停"
-										: `${running} / ${total}`
-								}
-							/>
+							{tab !== "rules" && (
+								<Metric
+									label={selectedTask ? "任务状态" : "运行任务"}
+									value={
+										selectedTask
+											? current?.status === "running"
+												? "运行中"
+												: current?.status === "attention"
+													? "需处理"
+													: "已暂停"
+											: `${running} / ${total}`
+									}
+								/>
+							)}
 							<Metric
 								label="今日采集"
 								value={
@@ -510,16 +576,42 @@ export function App() {
 										: String(attention)
 								}
 							/>
+							{tab === "rules" && (
+								<Metric
+									label="最近采集"
+									value={
+										current?.lastRunAt
+											? new Date(current.lastRunAt).toLocaleString("zh-CN", {
+													month: "numeric",
+													day: "numeric",
+													hour: "2-digit",
+													minute: "2-digit",
+												})
+											: "尚未开始"
+									}
+								/>
+							)}
 						</div>
 						{tab === "rules" ? (
-							<Rules
-								task={currentTask}
-								onSaved={async (input) => {
-									if (!currentTask) return;
-									await window.copyfast.saveTask(input, currentTask.id);
-									setState(await window.copyfast.state());
-								}}
-							/>
+							currentTask ? (
+								<TaskDetails
+									key={currentTask.id}
+									task={currentTask}
+									onDirtyChange={setRulesDirty}
+									onBusyChange={setRulesBusy}
+									onEditingChange={setRulesEditing}
+									onRefresh={async () => {
+										setState(await window.copyfast.state());
+									}}
+								/>
+							) : (
+								<Panel>
+									<Empty
+										title="选择一个任务查看采集规则"
+										detail="从左侧选择任务，或新建任务开始配置。"
+									/>
+								</Panel>
+							)
 						) : (
 							<ChannelWorkspace
 								key={selectedTask?.id ?? "all"}
@@ -600,154 +692,6 @@ function Metric({ label, value }: { label: string; value: string }) {
 			<span>{label}</span>
 			<strong>{value}</strong>
 		</div>
-	);
-}
-function Rules({
-	task,
-	onSaved,
-}: {
-	task: PublicTask | undefined;
-	onSaved: (input: TaskInput) => Promise<void>;
-}) {
-	const [interval, setInterval] = useState(task?.rules.intervalSeconds ?? 60);
-	const [include, setInclude] = useState(task?.rules.include ?? "");
-	const [exclude, setExclude] = useState(task?.rules.exclude ?? "");
-	const [text, setText] = useState(task?.rules.text ?? true);
-	const [images, setImages] = useState(task?.rules.images ?? true);
-	const [attachments, setAttachments] = useState(task?.rules.attachments ?? true);
-	const [markRead, setMarkRead] = useState(task?.rules.markRead ?? true);
-	const [saving, setSaving] = useState(false);
-	const [message, setMessage] = useState("");
-	useEffect(() => {
-		setInterval(task?.rules.intervalSeconds ?? 60);
-		setInclude(task?.rules.include ?? "");
-		setExclude(task?.rules.exclude ?? "");
-		setText(task?.rules.text ?? true);
-		setImages(task?.rules.images ?? true);
-		setAttachments(task?.rules.attachments ?? true);
-		setMarkRead(task?.rules.markRead ?? true);
-	}, [task]);
-	async function saveRules(event: React.FormEvent) {
-		event.preventDefault();
-		if (!task) return;
-		setSaving(true);
-		setMessage("");
-		try {
-			await onSaved({
-				name: task.name,
-				source: task.source,
-				collector: task.collector,
-				rules: {
-					...task.rules,
-					intervalSeconds: interval,
-					include,
-					exclude,
-					text,
-					images,
-					attachments,
-					markRead,
-				},
-			});
-			setMessage("规则已保存");
-		} catch (error) {
-			setMessage(error instanceof Error ? error.message : "保存失败，请重试");
-		} finally {
-			setSaving(false);
-		}
-	}
-	return (
-		<Panel>
-			{!task ? (
-				<Empty
-					title="选择一个任务查看采集规则"
-					detail="从左侧选择任务，或新建任务开始配置。"
-				/>
-			) : (
-				<form onSubmit={saveRules}>
-					<div className="rule-grid">
-						<section>
-							<h3>01 采集来源</h3>
-							<b>{task?.source.server.name ?? "未选择来源"}</b>
-							<span>{task?.source.channels.length ?? 0} 个频道</span>
-							{task?.source.channels.map((channel) => (
-								<label key={channel.id}># {channel.name}</label>
-							))}
-						</section>
-						<section className="rules-full">
-							<h3>02 采集规则</h3>
-							<div className="rule-fields">
-								<label className="field">
-									采集间隔（秒）
-									<input
-										type="number"
-										min={10}
-										max={86400}
-										value={interval}
-										onChange={(event) =>
-											setInterval(Number(event.target.value))
-										}
-									/>
-								</label>
-								<label className="field">
-									仅包含关键词
-									<input
-										value={include}
-										onChange={(event) => setInclude(event.target.value)}
-										placeholder="逗号分隔，可留空"
-									/>
-								</label>
-								<label className="field">
-									排除关键词
-									<input
-										value={exclude}
-										onChange={(event) => setExclude(event.target.value)}
-										placeholder="逗号分隔，可留空"
-									/>
-								</label>
-								<label>
-									<input
-										type="checkbox"
-										checked={text}
-										onChange={(event) => setText(event.target.checked)}
-									/>
-									文字
-								</label>
-								<label>
-									<input
-										type="checkbox"
-										checked={images}
-										onChange={(event) => setImages(event.target.checked)}
-									/>
-									图片
-								</label>
-								<label>
-									<input
-										type="checkbox"
-										checked={attachments}
-										onChange={(event) => setAttachments(event.target.checked)}
-									/>
-									文件
-								</label>
-								<label>
-									<input
-										type="checkbox"
-										checked={markRead}
-										onChange={(event) => setMarkRead(event.target.checked)}
-									/>
-									发送成功后滚动至最新消息并标记已读
-								</label>
-							</div>
-						</section>
-					</div>
-					<div className="rule-actions">
-						<span role="status">{message}</span>
-						<button className="primary" disabled={saving}>
-							{saving ? "保存中…" : "保存规则"}
-						</button>
-					</div>
-				</form>
-			)}
-		</Panel>
 	);
 }
 function Panel({ children }: { children: React.ReactNode }) {
