@@ -8,6 +8,7 @@ import {
 	buildReceiver,
 	createReceiverDraft,
 	formatFrequency,
+	getCollectionStartAt,
 	getWebhookHost,
 	validateReceiver,
 } from "../src/renderer/ui/task-configuration";
@@ -215,5 +216,14 @@ describe("inline per-source Webhooks", () => {
 		);
 		const again = setChannelWebhook(changed, channels[0], destination.webhookUrl);
 		expect(again.destinations).toHaveLength(changed.destinations.length);
+	});
+});
+
+describe("collection start time", () => {
+	it("calculates now, one-hour and one-day ranges from the save time", () => {
+		const now = Date.parse("2026-11-28T08:00:00.000Z");
+		expect(getCollectionStartAt("new", now)).toBe("2026-11-28T08:00:00.000Z");
+		expect(getCollectionStartAt("hour", now)).toBe("2026-11-28T07:00:00.000Z");
+		expect(getCollectionStartAt("day", now)).toBe("2026-11-27T08:00:00.000Z");
 	});
 });

@@ -12,11 +12,19 @@ const ffi = vi.hoisted(() => ({
 	wheel: vi.fn(() => 0),
 	windowList: [] as unknown[],
 	emptyWindowReads: 0,
+	helperOnlyReads: 0,
 	pendingAccessibilityReads: 0,
 	operationOrder: [] as string[],
 	accessibilityCalls: 0,
 	snapshots: [] as { complete: boolean; window: { id: string }; tree: { role: string } }[],
 	reads: 0,
+	messageLists: [] as {
+		content: { role: string; name: string };
+		presentation: {
+			has_bounds: boolean;
+			bounds: { x: number; y: number; width: number; height: number };
+		};
+	}[],
 }));
 vi.mock("../src/main/discovery/accessibility", () => ({
 	activateMacAccessibility: vi.fn(() => {
@@ -67,6 +75,18 @@ vi.mock("koffi", () => ({
 						};
 					case "ad_exact_window_list_get":
 						return (_list: unknown, index: number) => {
+							if (ffi.helperOnlyReads > 0) {
+								ffi.helperOnlyReads--;
+								return {
+									window: {
+										...ffi.window,
+										id: "helper",
+										bounds: { x: 0, y: 0, width: 66, height: 20 },
+									},
+									process_instance: "instance",
+									accessible: true,
+								};
+							}
 							const window = ffi.windowList[index] ?? {
 								window: ffi.window,
 								process_instance: "instance",
@@ -101,7 +121,8 @@ vi.mock("koffi", () => ({
 									},
 								},
 							];
-							out.count = 1;
+							out.nodes = [...(out.nodes as unknown[]), ...ffi.messageLists];
+							out.count = (out.nodes as unknown[]).length;
 							return 0;
 						};
 					case "ad_snapshot":
@@ -135,12 +156,14 @@ beforeEach(() => {
 	ffi.window.bounds = { x: 15, y: 481, width: 1000, height: 700 };
 	ffi.windowList = [];
 	ffi.emptyWindowReads = 0;
+	ffi.helperOnlyReads = 0;
 	ffi.pendingAccessibilityReads = 0;
 	ffi.operationOrder = [];
 	ffi.accessibilityCalls = 0;
 	ffi.wheel.mockClear();
 	ffi.snapshots = [];
 	ffi.reads = 0;
+	ffi.messageLists = [];
 });
 
 describe("native discovery window geometry", () => {
@@ -205,6 +228,14 @@ describe("native discovery window geometry", () => {
 		desktop.close();
 	});
 
+	it("waits for the main window when only a helper window is initially listed", () => {
+		ffi.helperOnlyReads = 3;
+		const desktop = createNativeDesktop("/engine");
+		expect(desktop.prepare()).toEqual(ffi.window.bounds);
+		expect(ffi.helperOnlyReads).toBe(0);
+		desktop.close();
+	});
+
 	it("resolves the settled window and refreshes sidebar coordinates before scrolling", () => {
 		const desktop = createNativeDesktop("/engine");
 		desktop.prepare();
@@ -251,4 +282,26 @@ describe("native discovery window geometry", () => {
 		expect(ffi.reads).toBe(4);
 		desktop.close();
 	});
+});
+
+it("reads message bounds through the exact-window FFI independently of snapshots", () => {
+	const desktop = createNativeDesktop("/engine");
+	desktop.prepare();
+	ffi.messageLists = [
+		{
+			content: { role: "list", name: "Messages in updates" },
+			presentation: { has_bounds: true, bounds: { x: 400, y: 500, width: 500, height: 500 } },
+		},
+	];
+	expect(desktop.resolveMessageRegion("updates")).toEqual({
+		x: 400,
+		y: 500,
+		width: 500,
+		height: 500,
+	});
+	expect(ffi.reads).toBe(0);
+	ffi.window.id = "replacement-window";
+	expect(() => desktop.resolveMessageRegion("updates")).toThrow("窗口已变化");
+	expect(ffi.wheel).not.toHaveBeenCalled();
+	desktop.close();
 });

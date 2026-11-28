@@ -259,6 +259,27 @@ describe("CopyFast task engine", () => {
 		});
 	});
 
+	it.each([
+		["before-start", { startAt: new Date(2000).toISOString() }, message],
+		["missing-keyword", { include: "launch" }, message],
+		["excluded-keyword", { exclude: "release" }, message],
+		["empty-content", { text: false }, message],
+	] as const)("records %s as the concrete filtering reason", async (reason, rules, item) => {
+		const { store, engine } = await setup([item]);
+		const id = await engine.saveTask({ ...input, rules: { ...input.rules, ...rules } });
+		await engine.action(id, "resume");
+		await vi.waitFor(() =>
+			expect(
+				store.read().logs.find((log) => log.phase === "collect")?.finishedAt,
+			).toBeDefined(),
+		);
+		const state = store.read();
+		expect(state.messages[0]).toMatchObject({ status: "filtered", ignoredReason: reason });
+		expect(
+			state.logs.find((log) => log.phase === "collect")?.channelResults?.[0],
+		).toMatchObject({ ignored: 1, ignoredReasons: { [reason]: 1 } });
+	});
+
 	it("applies keyword rules and records filtered items", async () => {
 		const { store, engine } = await setup();
 		const taskId = await engine.saveTask({
@@ -401,10 +422,24 @@ describe("CopyFast task engine", () => {
 		await engine.action(taskId, "resume");
 		await new Promise((resolve) => setTimeout(resolve, 20));
 		const state = store.read();
-		expect(state.tasks.find((task) => task.id === taskId)?.status).toBe("attention");
+		expect(state.tasks.find((task) => task.id === taskId)?.status).toBe("running");
 		expect(state.logs.find((log) => log.phase === "collect")).toMatchObject({
 			status: "failed",
 			error: "collector unavailable",
+		});
+	});
+
+	it("requires attention for invalid configuration instead of polling forever", async () => {
+		const { store, engine } = await setup();
+		const taskId = await engine.saveTask(input);
+		await store.update((state) => {
+			state.tasks[0].status = "running";
+			state.tasks[0].receiver = undefined;
+		});
+		await engine.run(taskId);
+		expect(store.read().tasks[0]).toMatchObject({
+			status: "attention",
+			error: "请先为每个来源频道配置 Discord Webhook 地址。",
 		});
 	});
 
@@ -472,12 +507,26 @@ describe("CopyFast task engine", () => {
 		await new Promise((resolve) => setTimeout(resolve, 20));
 		const log = store.read().logs.find((log) => log.phase === "collect")!;
 		expect(log.channelResults).toMatchObject([
-			{ channelId: "source-channel", status: "success", collected: 2, saved: 1, ignored: 1 },
-			{ channelId: "second", status: "skipped", collected: 1, saved: 0, ignored: 1 },
+			{
+				channelId: "source-channel",
+				status: "success",
+				collected: 2,
+				saved: 1,
+				ignored: 1,
+				ignoredReasons: { duplicate: 1 },
+			},
+			{
+				channelId: "second",
+				status: "skipped",
+				collected: 1,
+				saved: 0,
+				ignored: 1,
+				ignoredReasons: { "excluded-keyword": 1 },
+			},
 			{ channelId: "empty", status: "skipped", collected: 0, saved: 0, ignored: 0 },
 		]);
 	});
-	it("schedules retries and stops when the configured allowance is exhausted", async () => {
+	it("returns to regular polling after the retry allowance is exhausted, then recovers", async () => {
 		const root = await mkdtemp(join(tmpdir(), "copyfast-retry-"));
 		roots.push(root);
 		const store = await createStore(join(root, "state.json"));
@@ -485,7 +534,8 @@ describe("CopyFast task engine", () => {
 		const engine = createEngine(store, {
 			now: () => time,
 			collect: async () => {
-				throw new Error("暂时不可用");
+				if (time < 140000) throw new Error("暂时不可用");
+				return { version: 1, messages: [], channels: [] };
 			},
 		});
 		const id = await engine.saveTask({ ...input, rules: { ...input.rules, maxRetries: 1 } });
@@ -501,7 +551,19 @@ describe("CopyFast task engine", () => {
 		).toBe("failed");
 		time = 110000;
 		await engine.tick();
-		expect(store.read().tasks[0].status).toBe("attention");
+		expect(store.read().tasks[0]).toMatchObject({
+			status: "running",
+			retryAttempt: 0,
+			nextRunAt: new Date(140000).toISOString(),
+		});
 		expect(store.read().logs.filter((log) => log.phase === "collect")).toHaveLength(2);
+		time = 139999;
+		await engine.tick();
+		expect(store.read().logs.filter((log) => log.phase === "collect")).toHaveLength(2);
+		time = 140000;
+		await engine.tick();
+		expect(store.read().logs.filter((log) => log.phase === "collect")).toHaveLength(3);
+		expect(store.read().tasks[0]).toMatchObject({ status: "running", retryAttempt: 0 });
+		expect(store.read().tasks[0].error).toBeUndefined();
 	});
 });

@@ -2,28 +2,33 @@ import { join } from "node:path";
 
 import { BrowserWindow, screen } from "electron";
 
-import type { DiscoveryRect, TaskActivityState, Task } from "../shared/contracts";
+import type {
+	DiscoveryRect,
+	TaskActivityState,
+	Task,
+	TaskChannelProgress,
+} from "../shared/contracts";
+import { relativeChannelHighlight } from "./task-activity-layout";
 
 export function createTaskActivityOverlay(rendererUrl: (route: string) => string) {
 	let overlay: BrowserWindow | undefined;
 	let state: TaskActivityState | null = null;
 	const activeTasks = new Map<string, TaskActivityState>();
 
-	function position(bounds?: DiscoveryRect) {
+	function position(activity: TaskActivityState) {
 		if (!overlay) return;
-		const dipBounds =
-			bounds && process.platform === "win32" ? screen.screenToDipRect(null, bounds) : bounds;
-		const { workArea } = dipBounds
-			? screen.getDisplayMatching(dipBounds)
+		const toDip = (bounds: DiscoveryRect) =>
+			process.platform === "win32" ? screen.screenToDipRect(null, bounds) : bounds;
+		const windowBounds = activity.windowBounds ? toDip(activity.windowBounds) : undefined;
+		const { workArea } = windowBounds
+			? screen.getDisplayMatching(windowBounds)
 			: screen.getPrimaryDisplay();
-		const width = Math.min(380, workArea.width);
-		const height = Math.min(82, workArea.height);
-		overlay.setBounds({
-			x: workArea.x + workArea.width - width - 20,
-			y: workArea.y + workArea.height - height - 20,
-			width,
-			height,
-		});
+		overlay.setBounds(workArea);
+		activity.highlightBounds = relativeChannelHighlight(
+			activity.channel?.bounds ? toDip(activity.channel.bounds) : undefined,
+			workArea,
+			windowBounds,
+		);
 	}
 
 	function ensureWindow() {
@@ -59,6 +64,7 @@ export function createTaskActivityOverlay(rendererUrl: (route: string) => string
 		task: Task,
 		phase: TaskActivityState["phase"] | "idle",
 		bounds?: DiscoveryRect,
+		channel?: TaskChannelProgress,
 	) {
 		if (phase === "idle") {
 			activeTasks.delete(task.id);
@@ -66,6 +72,7 @@ export function createTaskActivityOverlay(rendererUrl: (route: string) => string
 			activeTasks.set(task.id, {
 				taskName: task.name,
 				phase,
+				channel,
 				windowBounds: bounds ?? activeTasks.get(task.id)?.windowBounds,
 			});
 		}
@@ -76,7 +83,7 @@ export function createTaskActivityOverlay(rendererUrl: (route: string) => string
 			return;
 		}
 		ensureWindow();
-		position(state.windowBounds);
+		position(state);
 		overlay?.webContents.send("task-activity", state);
 		if (overlay && !overlay.isVisible()) overlay.showInactive();
 	}

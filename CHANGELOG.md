@@ -2,7 +2,27 @@
 
 ## 2026-11-28
 
+- feat: Preview collected images as thumbnails in desktop message lists and details, with a full-size image dialog and clear unavailable-image states.
+
+- feat: Obtain original Discord attachment links without a source Bot, cache files by source message, upload real files through multipart Webhooks, and preserve failed uploads. Verify live macOS image extraction; keep video and Windows live verification explicitly pending.
+
+- fix: Restore collection start-time selection in desktop task rule editing, with now, one-hour and 24-hour ranges, preserving the original start time unless explicitly changed.
+
+- fix: Keep desktop collection polling after bounded retries, clean up finished utility processes, retry transient missing main windows, and keep development main/worker builds and native dependencies together.
+
+- feat: Show a live countdown and the scheduled next poll time in the desktop task status card, with distinct collecting, paused, and retry states.
+
+- fix: Align marketing navigation, footer, and browser icon with the desktop CopyFast logo.
+
+- feat: Highlight the current Discord channel during collection and show per-channel progress in the activity overlay. Record and display concrete reasons for skipped messages in new collection logs.
+
+- docs: Update desktop usage docs with Discord setup, per-channel Webhooks, paused-by-default tasks, collection limits, and troubleshooting.
+
+- fix: Resolve Discord post-delivery scroll coordinates from the pinned window’s native accessibility tree, support Chinese and English message lists, and reject ambiguous or off-window targets.
+
 - fix: Temporarily hide Telegram platform setup, connection status, and marketing references; keep Discord message cloning available.
+
+- feat: Allow searching and selecting discovered Discord channels in the exit overlay. Only checked channel IDs enter the next setup step; preserve channel identities and category locators.
 
 - feat: Redesign desktop task details with aligned source-to-receiver mappings, explicit rule editing, masked receiver editing, and separate save-paused / save-and-run actions. Preserve receiver settings and wait for interrupted collection before applying new rules.
 

@@ -12,6 +12,30 @@ describe("desktop worker message protocol", () => {
 		});
 	});
 
+	it("validates channel progress and optional screen coordinates", () => {
+		const channel = {
+			channelId: "123",
+			channelName: "news",
+			index: 1,
+			total: 3,
+			status: "scanning",
+			bounds: { x: -100, y: 50, width: 200, height: 40 },
+		};
+		expect(parseDesktopWorkerResponse({ type: "progress", channel })).toEqual({
+			type: "progress",
+			channel,
+		});
+		expect(
+			parseDesktopWorkerResponse({ type: "progress", channel: { ...channel, index: 4 } }),
+		).toBeUndefined();
+		expect(
+			parseDesktopWorkerResponse({
+				type: "progress",
+				channel: { ...channel, bounds: { ...channel.bounds, width: -1 } },
+			}),
+		).toBeUndefined();
+	});
+
 	it("preserves worker errors", () => {
 		expect(parseDesktopWorkerResponse({ type: "error", message: "Discord 不可用" })).toEqual({
 			type: "error",

@@ -15,6 +15,7 @@ import {
 	buildReceiver,
 	createReceiverDraft,
 	getReceiverChannel,
+	getCollectionStartAt,
 	validateReceiver,
 } from "./task-configuration";
 import { TaskReceiverStep } from "./TaskReceiverStep";
@@ -206,8 +207,6 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 		setSaving(true);
 		setError("");
 		try {
-			const lookbackSeconds =
-				rules.firstRange === "day" ? 86400 : rules.firstRange === "hour" ? 3600 : 0;
 			const input = taskInputSchema.parse({
 				name: rules.name.trim(),
 				startPaused: true,
@@ -215,7 +214,7 @@ export function TaskDialog({ onClose, onSaved }: Props) {
 				receiver: buildReceiver(receiver, selectedChannels),
 				rules: {
 					intervalSeconds: rules.intervalSeconds,
-					startAt: new Date(Date.now() - lookbackSeconds * 1000).toISOString(),
+					startAt: getCollectionStartAt(rules.firstRange),
 					include: "",
 					exclude: "",
 					maxRetries: 3,

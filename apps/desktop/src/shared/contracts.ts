@@ -132,6 +132,7 @@ export const collectedMessageSchema = z.object({
 		.array(z.object({ kind: z.enum(["image", "file"]), label: z.string().max(300) }))
 		.max(30)
 		.default([]),
+	mediaError: z.string().max(1000).optional(),
 	signal: z.record(z.string(), z.unknown()).optional(),
 });
 export const collectorResponseSchema = z.object({
@@ -152,7 +153,14 @@ export const collectorResponseSchema = z.object({
 });
 export type CollectedMessage = z.infer<typeof collectedMessageSchema>;
 export type CollectorResponse = z.infer<typeof collectorResponseSchema>;
+export type MessageIgnoreReason =
+	| "duplicate"
+	| "before-start"
+	| "missing-keyword"
+	| "excluded-keyword"
+	| "empty-content";
 export interface Message extends CollectedMessage {
+	ignoredReason?: MessageIgnoreReason;
 	key: string;
 	taskId: string;
 	taskName?: string;
@@ -169,6 +177,7 @@ export interface Message extends CollectedMessage {
 	remoteLogId?: string;
 }
 export interface ChannelResult {
+	ignoredReasons?: Partial<Record<MessageIgnoreReason, number>>;
 	channelId: string;
 	channelName: string;
 	status:
@@ -239,6 +248,7 @@ export interface DiscoveryProgress {
 	message: string;
 	serverName?: string;
 	channelNames?: string[];
+	channels?: Pick<Channel, "id" | "name" | "locator">[];
 }
 export interface DiscoveryResult {
 	scope: Scope;
@@ -249,15 +259,25 @@ export interface DiscoveryOverlayState {
 	bounds: DiscoveryRect;
 	progress: DiscoveryProgress;
 }
+export interface TaskChannelProgress {
+	channelId: string;
+	channelName: string;
+	index: number;
+	total: number;
+	status: "locating" | "scanning" | "skipped-read";
+	bounds?: DiscoveryRect;
+}
 export interface TaskActivityState {
 	taskName: string;
 	phase: "collect" | "send" | "mark-read";
 	windowBounds?: DiscoveryRect;
+	channel?: TaskChannelProgress;
+	highlightBounds?: DiscoveryRect;
 }
 export interface DesktopApi {
 	discoverDiscordChannels(): Promise<DiscoveryResult | null>;
 	cancelDiscovery(): Promise<void>;
-	resolveDiscoveryExit(continueScanning: boolean): Promise<void>;
+	resolveDiscoveryExit(continueScanning: boolean, selectedChannelIds?: string[]): Promise<void>;
 	discoveryOverlayState(): Promise<DiscoveryOverlayState | null>;
 	onDiscoveryProgress(callback: (progress: DiscoveryProgress) => void): () => void;
 	onTaskActivity(callback: (activity: TaskActivityState | null) => void): () => void;

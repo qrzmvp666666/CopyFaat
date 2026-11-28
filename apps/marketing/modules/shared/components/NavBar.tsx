@@ -3,9 +3,9 @@
 import { config } from "@config";
 import { LocaleLink } from "@i18n/routing";
 import { LocaleSwitch } from "@shared/components/LocaleSwitch";
+import { Logo } from "@shared/components/Logo";
 import { getSaasUrl } from "@shared/lib/saas-url";
 import { useLocale, useTranslations } from "next-intl";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 
@@ -18,8 +18,7 @@ export function NavBar() {
 		<nav className="island-nav" aria-label={t("navigation")} data-test="navigation">
 			<div className="island-nav-inner">
 				<LocaleLink href="/" className="island-brand">
-					<Image src="/images/brand/copyfast-logo.svg" alt="" width={27} height={27} />
-					<span>COPYFAST</span>
+					<Logo />
 				</LocaleLink>
 				<div className="island-nav-links">
 					<a className="island-nav-text" href={`/${locale}#pricing`}>

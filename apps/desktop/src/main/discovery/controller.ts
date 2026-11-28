@@ -23,8 +23,10 @@ export function registerDiscovery(
 	let exitRequested = false;
 	let latestResult: DiscoveryResult | undefined;
 	let completedResult: DiscoveryResult | undefined;
+	let confirmationResult: DiscoveryResult | undefined;
 	let scanningProgress: DiscoveryProgress | undefined;
 	let confirmingExit = false;
+	let excludedChannelIds = new Set<string>();
 	let timeout: ReturnType<typeof setTimeout> | undefined;
 	function armTimeout() {
 		clearTimeout(timeout);
@@ -38,7 +40,7 @@ export function registerDiscovery(
 		if (!overlay || !state) return;
 		const { workArea } = screen.getDisplayMatching(state.bounds);
 		const width = Math.min(confirming ? 460 : 430, workArea.width);
-		const height = Math.min(confirming ? 410 : 96, workArea.height);
+		const height = Math.min(confirming ? 480 : 96, workArea.height);
 		overlay.setBounds({
 			x: workArea.x + workArea.width - width,
 			y: workArea.y + workArea.height - height,
@@ -56,14 +58,15 @@ export function registerDiscovery(
 		confirmingExit = true;
 		clearTimeout(timeout);
 		scanningProgress = state?.progress;
-		const result = completedResult ?? latestResult;
+		const result = (confirmationResult = completedResult ?? latestResult);
 		progress({
 			phase: "paused",
 			found: result?.scope.channels.length ?? 0,
 			serverName: result?.scope.server.name,
 			channelNames: result?.scope.channels.map((channel) => channel.name) ?? [],
+			channels: result?.scope.channels ?? [],
 			message: result?.scope.channels.length
-				? "退出后将保留以下频道并进入下一步。未识别的频道不会包含在内。"
+				? "勾选需要保留的频道，取消勾选可排除误识别或不需要的频道。"
 				: "尚未识别到频道。退出将返回来源设置，或继续等待识别。",
 		});
 		resizeOverlay(true);
@@ -73,11 +76,42 @@ export function registerDiscovery(
 		exitRequested = true;
 		worker?.postMessage({ type: "pause" });
 	}
-	function resolveExit(continueScanning: boolean) {
+	function selectedResult(result?: DiscoveryResult): DiscoveryResult | null {
+		if (!result) return null;
+		const channels = result.scope.channels.filter(
+			(channel) => !excludedChannelIds.has(channel.id),
+		);
+		if (!channels.length) return null;
+		if (channels.length === result.scope.channels.length) return result;
+		return {
+			...result,
+			scope: { ...result.scope, channels },
+			message: `${result.message} 已保留 ${channels.length} 个所选频道。`,
+		};
+	}
+	function resolveExit(continueScanning: boolean, selectedChannelIds?: unknown) {
 		if (!finish || !confirmingExit) return;
+		const result = confirmationResult;
+		if (selectedChannelIds !== undefined) {
+			if (
+				!Array.isArray(selectedChannelIds) ||
+				selectedChannelIds.length > 500 ||
+				selectedChannelIds.some(
+					(id) =>
+						typeof id !== "string" ||
+						!result?.scope.channels.some((channel) => channel.id === id),
+				)
+			)
+				throw new Error("频道选择无效，请重试。");
+			const selected = new Set(selectedChannelIds);
+			excludedChannelIds = new Set(
+				result?.scope.channels
+					.filter((channel) => !selected.has(channel.id))
+					.map((channel) => channel.id),
+			);
+		}
 		if (!continueScanning) {
-			const result = completedResult ?? latestResult;
-			finish(result?.scope.channels.length ? result : null);
+			finish(selectedResult(result));
 			return;
 		}
 		exitRequested = false;
@@ -85,7 +119,7 @@ export function registerDiscovery(
 		resizeOverlay(false);
 		armTimeout();
 		if (completedResult) {
-			finish(completedResult);
+			finish(selectedResult(completedResult));
 			return;
 		}
 		progress(
@@ -116,6 +150,8 @@ export function registerDiscovery(
 		confirmingExit = false;
 		latestResult = undefined;
 		completedResult = undefined;
+		confirmationResult = undefined;
+		excludedChannelIds = new Set();
 		scanningProgress = undefined;
 		launching = true;
 		let launched = false;
@@ -177,7 +213,7 @@ export function registerDiscovery(
 						if (exitRequested) {
 							completedResult = message.result;
 							showExitConfirmation();
-						} else finish(message.result);
+						} else finish(selectedResult(message.result));
 					} else if (message.type === "progress" && message.progress && !confirmingExit)
 						progress(message.progress);
 					else if (message.type === "ready" && message.bounds) {
@@ -257,10 +293,13 @@ export function registerDiscovery(
 		if (event.sender === overlay?.webContents || event.sender === workspace()?.webContents)
 			requestExit();
 	});
-	ipcMain.handle("resolve-discovery-exit", (event, continueScanning: boolean) => {
-		if (event.sender === overlay?.webContents && typeof continueScanning === "boolean")
-			resolveExit(continueScanning);
-	});
+	ipcMain.handle(
+		"resolve-discovery-exit",
+		(event, continueScanning: boolean, selectedChannelIds?: unknown) => {
+			if (event.sender === overlay?.webContents && typeof continueScanning === "boolean")
+				resolveExit(continueScanning, selectedChannelIds);
+		},
+	);
 	ipcMain.handle("discovery-overlay-state", (event) =>
 		event.sender === overlay?.webContents ? state : null,
 	);

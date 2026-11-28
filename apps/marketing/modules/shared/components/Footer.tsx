@@ -1,4 +1,5 @@
 import { LocaleLink } from "@i18n/routing";
+import { Logo } from "@shared/components/Logo";
 import { useTranslations } from "next-intl";
 
 export function Footer() {
@@ -7,8 +8,8 @@ export function Footer() {
 		<footer className="island-footer island-width">
 			<div className="island-footer-grid">
 				<div>
-					<LocaleLink href="/" className="island-footer-brand">
-						CopyFast
+					<LocaleLink href="/" className="island-brand island-footer-brand">
+						<Logo />
 					</LocaleLink>
 					<p>{t("footerDescription")}</p>
 				</div>
@@ -27,6 +28,12 @@ export function Footer() {
 					<h3>{t("legal")}</h3>
 					<LocaleLink href="/legal/privacy-policy">{t("privacy")}</LocaleLink>
 					<LocaleLink href="/legal/terms">{t("terms")}</LocaleLink>
+				</div>
+				<div>
+					<h3>{t("friendLinks")}</h3>
+					<a href="https://www.signalfast.cn/" target="_blank" rel="noopener noreferrer">
+						signalfast
+					</a>
 				</div>
 			</div>
 			<div className="island-footer-bottom">

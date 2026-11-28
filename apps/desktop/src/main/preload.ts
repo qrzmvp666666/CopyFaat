@@ -5,8 +5,8 @@ import type { DesktopApi } from "../shared/contracts";
 const api: DesktopApi = {
 	discoverDiscordChannels: () => ipcRenderer.invoke("discover-discord-channels"),
 	cancelDiscovery: () => ipcRenderer.invoke("cancel-discovery"),
-	resolveDiscoveryExit: (continueScanning) =>
-		ipcRenderer.invoke("resolve-discovery-exit", continueScanning),
+	resolveDiscoveryExit: (continueScanning, selectedChannelIds) =>
+		ipcRenderer.invoke("resolve-discovery-exit", continueScanning, selectedChannelIds),
 	discoveryOverlayState: () => ipcRenderer.invoke("discovery-overlay-state"),
 	onDiscoveryProgress: (callback) => {
 		const listener = (

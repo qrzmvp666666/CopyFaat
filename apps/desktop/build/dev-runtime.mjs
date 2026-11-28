@@ -22,7 +22,7 @@ export async function prepareDevRuntime() {
 	const runtimeRoot = join(projectRoot, "dist", "dev");
 	const bundle = join(runtimeRoot, "CopyFast.app");
 	const executable = join(bundle, "Contents", "MacOS", "CopyFast");
-	const bootstrap = `require(${JSON.stringify(join(projectRoot, "dist/main/index.cjs"))});\n`;
+	const bootstrap = 'require("./main/index.cjs");\n';
 	const icon = await readFile(join(projectRoot, "assets/icon.icns"));
 	const fingerprint = createHash("sha256")
 		.update(await readFile(new URL(import.meta.url)))
@@ -61,6 +61,28 @@ export async function prepareDevRuntime() {
 		JSON.stringify({ name: "CopyFast", version: metadata.version, main: "index.cjs" }),
 	);
 	await writeFile(join(resources, "app/index.cjs"), bootstrap);
+	const modules = join(resources, "app/node_modules");
+	await cp(dirname(require.resolve("koffi")), join(modules, "koffi"), { recursive: true });
+	const ffiBinding = `@koromix/koffi-${process.platform}-${process.arch}`;
+	await cp(
+		dirname(createRequire(require.resolve("koffi")).resolve(ffiBinding)),
+		join(modules, ffiBinding),
+		{ recursive: true },
+	);
+	// Keep main, preload and utility workers on the same build for this process.
+	// Rebuilding dist while the app is open must not replace only its workers.
+	await cp(join(projectRoot, "dist/main"), join(resources, "app/main"), { recursive: true });
+	await cp(join(projectRoot, "dist/assets"), join(resources, "app/assets"), { recursive: true });
+	await cp(join(projectRoot, "dist/renderer"), join(resources, "app/renderer"), {
+		recursive: true,
+	}).catch((error) => {
+		if (error.code !== "ENOENT") throw error;
+	});
+	await cp(
+		join(projectRoot, `dist/native/${process.platform}-${process.arch}`),
+		join(resources, "copyfast-engine"),
+		{ recursive: true },
+	);
 	const properties = {
 		CFBundleDisplayName: "CopyFast",
 		CFBundleName: "CopyFast",

@@ -32,3 +32,11 @@ CopyFast is designed for Discord community operators and offers Mac and Windows 
 ## Adjust a desktop collection task
 
 The desktop task detail page pairs each source channel with its destination. Use “编辑规则” (Edit rules) to change the check frequency, keywords, and content types, or “编辑对应” (Edit mappings) to update a destination and its masked Webhook URL. “仅保存，不运行” (Save without running) saves the configuration and pauses the task. “保存并运行” (Save and run) saves first, then starts using the new rules. A configured address does not confirm delivery; check messages and execution records for the result.
+
+When exiting channel discovery, search by channel name or category and uncheck channels you do not need. Choose “Use selected channels and continue” to carry only checked channels into the next step. Clearing every channel returns to source settings.
+
+During collection, CopyFast highlights the current visible Discord channel and shows its name and progress in the status overlay. New task logs include skip reasons and counts, such as messages older than the start time, duplicates, or keyword filtering. Older logs may not contain these details.
+
+While a task is running, its status card updates the countdown every second and shows the scheduled next poll time. During collection it shows the active round; pausing stops the countdown, and retries show their own scheduled time.
+
+For actionable Discord media nodes, the desktop collector attempts to obtain the original attachment link, downloads the file to a local cache, and uploads it with the message through a multipart Webhook. Confirmed uploads clear the cache; failed, rate-limited, or uncertain uploads retain it. The current per-message limit is 10 files and 20 MiB total. Missing originals stop the message with an error. Automatic link extraction, download, and local multipart upload have been verified with a real macOS image; live video and Windows collection still require separate verification.

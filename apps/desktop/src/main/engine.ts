@@ -8,6 +8,9 @@ import {
 	type TaskInput,
 	type TaskLog,
 	type DiscoveryRect,
+	type TaskChannelProgress,
+	type MessageIgnoreReason,
+	type ChannelResult,
 } from "../shared/contracts";
 import type { WebhookDeliveryResult } from "./delivery";
 import type { StateStore } from "./store";
@@ -17,6 +20,7 @@ export interface EngineDependencies {
 		task: Task,
 		signal: AbortSignal,
 		onWindowBounds?: (bounds: DiscoveryRect) => void,
+		onChannelProgress?: (channel: TaskChannelProgress) => void,
 	): Promise<CollectorResponse>;
 	deliver?(task: Task, message: Message, signal: AbortSignal): Promise<WebhookDeliveryResult>;
 	finishUnreadChannels?(
@@ -24,13 +28,20 @@ export interface EngineDependencies {
 		channelIds: string[],
 		signal: AbortSignal,
 		onWindowBounds?: (bounds: DiscoveryRect) => void,
+		onChannelProgress?: (channel: TaskChannelProgress) => void,
 	): Promise<void>;
 	activity?(
 		task: Task,
 		phase: "collect" | "send" | "mark-read" | "idle",
 		bounds?: DiscoveryRect,
+		channel?: TaskChannelProgress,
 	): void;
 	now?: () => number;
+}
+
+function recordIgnoredReason(channel: ChannelResult, reason: MessageIgnoreReason) {
+	channel.ignoredReasons ??= {};
+	channel.ignoredReasons[reason] = (channel.ignoredReasons[reason] ?? 0) + 1;
 }
 
 function keywordList(value: string): string[] {
@@ -250,10 +261,12 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 		const startedAt = now();
 		const batchId = randomUUID();
 		let log: TaskLog | undefined;
+		let canPollAgain = false;
 		try {
 			const task = store.read().tasks.find((item) => item.id === id);
 			if (!task || task.status !== "running") return;
 			validateRunnable(task);
+			canPollAgain = true;
 			log = {
 				channelIds: task.source.channels.map((channel) => channel.id),
 				taskName: task.name,
@@ -286,7 +299,14 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 			let activityPhase: "collect" | "send" | "mark-read" = "collect";
 			const reportWindowBounds = (bounds: DiscoveryRect) =>
 				deps.activity?.(task, activityPhase, bounds);
-			const result = await deps.collect(task, controller.signal, reportWindowBounds);
+			const reportChannelProgress = (channel: TaskChannelProgress) =>
+				deps.activity?.(task, activityPhase, undefined, channel);
+			const result = await deps.collect(
+				task,
+				controller.signal,
+				reportWindowBounds,
+				reportChannelProgress,
+			);
 			if (controller.signal.aborted) throw new Error("采集已取消");
 			const selectedIds = new Set(task.source.channels.map((channel) => channel.id));
 			if (result.messages.some((message) => !selectedIds.has(message.channelId)))
@@ -324,6 +344,7 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 					channelResult.collected++;
 					const key = `${id}:${item.channelId}:${item.id}`;
 					if (seen.has(key)) {
+						recordIgnoredReason(channelResult, "duplicate");
 						currentLog.ignored++;
 						channelResult.ignored++;
 						continue;
@@ -344,11 +365,16 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 						media.kind === "image" ? task.rules.images : task.rules.attachments,
 					);
 					const text = task.rules.text ? item.text : "";
-					const filtered =
-						!allowedTime ||
-						!matchesInclude ||
-						matchesExclude ||
-						(!text && !attachments.length && !mediaLabels.length);
+					const ignoredReason: MessageIgnoreReason | undefined = !allowedTime
+						? "before-start"
+						: !matchesInclude
+							? "missing-keyword"
+							: matchesExclude
+								? "excluded-keyword"
+								: !text && !attachments.length && !mediaLabels.length
+									? "empty-content"
+									: undefined;
+					const filtered = ignoredReason !== undefined;
 					const message: Message = {
 						...item,
 						text,
@@ -365,11 +391,13 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 						batchId,
 						collectedAt: stamp(),
 						status: filtered ? "filtered" : "collected",
+						ignoredReason,
 						attempts: 0,
 					};
 					state.messages.push(message);
 					currentLog.messageKeys.push(key);
-					if (filtered) {
+					if (ignoredReason) {
+						recordIgnoredReason(channelResult, ignoredReason);
 						currentLog.ignored++;
 						channelResult.ignored++;
 					} else {
@@ -444,6 +472,7 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 							persistedChannels,
 							controller.signal,
 							reportWindowBounds,
+							reportChannelProgress,
 						);
 					}
 				} catch (error) {
@@ -466,14 +495,19 @@ export function createEngine(store: StateStore, deps: EngineDependencies) {
 					}
 				if (task && !controller.signal.aborted) {
 					const attempt = currentLog?.attempt ?? 0;
-					if (attempt < task.rules.maxRetries) {
+					if (!canPollAgain) {
+						task.status = "attention";
+					} else if (attempt < task.rules.maxRetries) {
 						task.retryAttempt = attempt + 1;
 						task.nextRunAt = new Date(
 							now() + task.rules.retrySeconds * 1000,
 						).toISOString();
 						if (currentLog) currentLog.retryAt = task.nextRunAt;
 					} else {
-						task.status = "attention";
+						task.retryAttempt = 0;
+						task.nextRunAt = new Date(
+							now() + task.rules.intervalSeconds * 1000,
+						).toISOString();
 					}
 					task.error = message;
 				}

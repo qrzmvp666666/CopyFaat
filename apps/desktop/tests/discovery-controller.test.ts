@@ -15,7 +15,7 @@ interface TestWorker extends EventEmitter {
 interface TestEvent {
 	sender: unknown;
 }
-type IpcHandler = (event: TestEvent, choice?: boolean) => unknown;
+type IpcHandler = (event: TestEvent, choice?: boolean, selectedChannelIds?: unknown) => unknown;
 
 const mocks = vi.hoisted(() => ({
 	handlers: new Map<string, IpcHandler>(),
@@ -207,4 +207,116 @@ it("does not expire the results while waiting for the user's exit decision", asy
 	expect(worker.kill).not.toHaveBeenCalled();
 	mocks.handlers.get("resolve-discovery-exit")!({ sender: overlay.webContents }, false);
 	expect(await pending).toEqual(result);
+});
+
+async function pauseWithResult(snapshot = result) {
+	const { workspace } = setup();
+	const pending = mocks.handlers.get("discover-discord-channels")!({
+		sender: workspace.webContents,
+	});
+	await Promise.resolve();
+	await Promise.resolve();
+	const worker = mocks.workers[0];
+	worker.emit("message", { type: "ready", bounds: { x: 0, y: 0, width: 1200, height: 800 } });
+	const overlay = mocks.overlays[0];
+	overlay.emit("ready-to-show");
+	worker.emit("message", { type: "snapshot", result: snapshot });
+	mocks.escape!();
+	worker.emit("message", { type: "paused" });
+	return { pending, worker, overlay, workspace };
+}
+
+it("returns only selected channel IDs and preserves channel identity and fallback locators", async () => {
+	const snapshot: DiscoveryResult = {
+		...result,
+		scope: {
+			...result.scope,
+			channels: [
+				{
+					id: "a",
+					name: "同名频道",
+					identity: "local",
+					locator: { serverName: "Example", category: "策略", channelName: "同名频道" },
+				},
+				{ id: "b", name: "同名频道", identity: "discord" },
+			],
+		},
+	};
+	const { pending, overlay } = await pauseWithResult(snapshot);
+	expect(overlay.webContents.send).toHaveBeenLastCalledWith(
+		"discovery-progress",
+		expect.objectContaining({ channels: snapshot.scope.channels }),
+	);
+	mocks.handlers.get("resolve-discovery-exit")!({ sender: overlay.webContents }, false, ["a"]);
+	expect(await pending).toEqual(
+		expect.objectContaining({
+			scope: { ...snapshot.scope, channels: [snapshot.scope.channels[0]] },
+		}),
+	);
+});
+
+it("returns to source settings when the user clears every channel", async () => {
+	const { pending, overlay } = await pauseWithResult();
+	mocks.handlers.get("resolve-discovery-exit")!({ sender: overlay.webContents }, false, []);
+	expect(await pending).toBeNull();
+});
+
+it("rejects invalid and unknown selections without closing the confirmation", async () => {
+	const { pending, overlay, worker, workspace } = await pauseWithResult();
+	const decide = mocks.handlers.get("resolve-discovery-exit")!;
+	for (const ids of [["unknown"], [12], "a", null]) {
+		expect(() => decide({ sender: overlay.webContents }, false, ids)).toThrow("频道选择无效");
+	}
+	decide({ sender: workspace.webContents }, false, ["a"]);
+	expect(worker.kill).not.toHaveBeenCalled();
+	decide({ sender: overlay.webContents }, false, ["b"]);
+	expect(
+		((await pending) as DiscoveryResult).scope.channels.map((channel) => channel.id),
+	).toEqual(["b"]);
+});
+
+it("does not include late results that were not shown in the selection list", async () => {
+	const { pending, overlay, worker } = await pauseWithResult();
+	worker.emit("message", {
+		type: "result",
+		result: {
+			...result,
+			scope: {
+				...result.scope,
+				channels: [...result.scope.channels, { id: "c", name: "迟到频道" }],
+			},
+		},
+	});
+	mocks.handlers.get("resolve-discovery-exit")!({ sender: overlay.webContents }, false, [
+		"a",
+		"b",
+	]);
+	expect(((await pending) as DiscoveryResult).scope.channels).toEqual(result.scope.channels);
+});
+
+it("keeps exclusions when resumed discovery completes and includes newly discovered channels", async () => {
+	const { pending, overlay, worker } = await pauseWithResult();
+	mocks.handlers.get("resolve-discovery-exit")!({ sender: overlay.webContents }, true, ["b"]);
+	worker.emit("message", {
+		type: "result",
+		result: {
+			...result,
+			scope: {
+				...result.scope,
+				channels: [...result.scope.channels, { id: "c", name: "新增频道" }],
+			},
+		},
+	});
+	expect(
+		((await pending) as DiscoveryResult).scope.channels.map((channel) => channel.id),
+	).toEqual(["b", "c"]);
+});
+
+it("applies exclusions if discovery completes while the exit confirmation is open", async () => {
+	const { pending, overlay, worker } = await pauseWithResult();
+	worker.emit("message", { type: "result", result });
+	mocks.handlers.get("resolve-discovery-exit")!({ sender: overlay.webContents }, true, ["b"]);
+	expect(
+		((await pending) as DiscoveryResult).scope.channels.map((channel) => channel.id),
+	).toEqual(["b"]);
 });

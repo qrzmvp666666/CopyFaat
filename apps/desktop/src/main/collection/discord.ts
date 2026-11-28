@@ -1,6 +1,12 @@
 import { setTimeout as delay } from "node:timers/promises";
 
-import type { Channel, CollectorResponse, Task } from "../../shared/contracts";
+import type {
+	Channel,
+	CollectorResponse,
+	Task,
+	TaskChannelProgress,
+	DiscoveryRect,
+} from "../../shared/contracts";
 import {
 	channelEntries,
 	channelList,
@@ -12,12 +18,22 @@ import {
 	type DesktopNode,
 	type DesktopSnapshot,
 } from "../discovery/tree";
+import { mediaTargets, mediaKind, resolveDiscordMedia } from "./media";
 
 export interface DiscordCollectionAdapter {
 	prepare(): unknown;
 	resolveRegion(): { x: number; y: number; width: number; height: number };
+	resolveChannelHighlight?(channel: Pick<ChannelEntry, "name" | "category">): DiscoveryRect;
+	resolveMessageRegion(channelName: string): {
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+	};
 	observe(): DesktopSnapshot;
-	act(ref: string, kind: number): void;
+	act(ref: string, kind: number, direction?: number, key?: string): void;
+	openMediaMenu?(messageId: string, mediaIndex: number): void;
+	mediaClipboard?(phase: "begin" | "read" | "restore"): Promise<string | undefined>;
 	scroll(
 		region: { x: number; y: number; width: number; height: number },
 		direction: "up" | "down",
@@ -103,28 +119,20 @@ function parseMessageList(
 		const accessory = nodes(group).find(
 			(node) => node.native_id?.value === `message-accessories-${messageId}`,
 		);
-		const text = messageText(content).trim();
+		const text =
+			messageText(content).trim() ||
+			(accessory
+				? nodes(accessory)
+						.filter((node) => node.role === "statictext" && !node.children?.length)
+						.map((node) => node.name || node.value || "")
+						.join("")
+						.trim()
+				: "");
 		const mediaLabels = accessory
-			? nodes(accessory)
-					.filter(
-						(node) =>
-							/^(?:图片|图像|image|gif|视频|video|附件|file)(?:$|\s)/i.test(
-								node.name ?? "",
-							) ||
-							(node.role === "image" && Boolean(node.name || node.value)),
-					)
-					.map((node) => ({
-						kind:
-							/^(?:图片|图像|image|gif)/i.test(node.name ?? "") ||
-							node.role === "image"
-								? ("image" as const)
-								: ("file" as const),
-						label: (node.name || node.value || "媒体附件").slice(0, 300),
-					}))
-					.filter(
-						(item, index, all) =>
-							all.findIndex((candidate) => candidate.label === item.label) === index,
-					)
+			? mediaTargets(accessory).map((node) => ({
+					kind: mediaKind(node),
+					label: (node.name || node.value || "媒体附件").slice(0, 300),
+				}))
 			: [];
 		if (!text && mediaLabels.length === 0) continue;
 		messages.push({
@@ -255,16 +263,43 @@ async function openAndRead(
 	if (!observedChannelId && hasLoadedMessages)
 		throw new Error(`Discord 未暴露“${channel.name}”的真实频道 ID，暂不能安全采集。`);
 	if (!observedChannelId) return [];
-	return parseMessageList(list, observedChannelId).map((message) => ({
-		...message,
-		channelId: channel.id,
-	}));
+	return resolveDiscordMedia(
+		adapter,
+		task,
+		parseMessageList(list, observedChannelId).map((message) => ({
+			...message,
+			channelId: channel.id,
+		})),
+		observedChannelId,
+	);
+}
+
+function reportChannel(
+	adapter: DiscordCollectionAdapter,
+	channel: Channel,
+	index: number,
+	total: number,
+	status: TaskChannelProgress["status"],
+	onProgress?: (progress: TaskChannelProgress) => void,
+	entry?: ChannelEntry,
+) {
+	if (!onProgress) return;
+	let bounds: DiscoveryRect | undefined;
+	if (entry) {
+		try {
+			bounds = adapter.resolveChannelHighlight?.(entry);
+		} catch {
+			// A missing or ambiguous row must never leave a frame on another channel.
+		}
+	}
+	onProgress({ channelId: channel.id, channelName: channel.name, index, total, status, bounds });
 }
 
 export async function collectUnreadDiscordChannels(
 	adapter: DiscordCollectionAdapter,
 	task: Task,
 	signal?: AbortSignal,
+	onProgress?: (progress: TaskChannelProgress) => void,
 ): Promise<DiscordCollectionResult> {
 	if (task.source.platform !== "discord") throw new Error("当前版本仅支持 Discord 采集。");
 	adapter.prepare();
@@ -280,11 +315,29 @@ export async function collectUnreadDiscordChannels(
 		messages: [],
 		channels: [],
 	};
-	for (const channel of task.source.channels) {
+	for (const [index, channel] of task.source.channels.entries()) {
 		try {
 			checkpoint(signal);
+			reportChannel(
+				adapter,
+				channel,
+				index + 1,
+				task.source.channels.length,
+				"locating",
+				onProgress,
+			);
 			const { entry } = await findChannel(adapter, task, channel, region, signal);
 			if (!isUnread(entry)) {
+				reportChannel(
+					adapter,
+					channel,
+					index + 1,
+					task.source.channels.length,
+					"skipped-read",
+					onProgress,
+					entry,
+				);
+				if (onProgress) await wait(180, signal);
 				response.channels.push({
 					channelId: channel.id,
 					status: "skipped_read",
@@ -292,6 +345,15 @@ export async function collectUnreadDiscordChannels(
 				});
 				continue;
 			}
+			reportChannel(
+				adapter,
+				channel,
+				index + 1,
+				task.source.channels.length,
+				"scanning",
+				onProgress,
+				entry,
+			);
 			const messages = await openAndRead(adapter, task, channel, entry, signal);
 			response.messages.push(...messages);
 			response.channels.push({
@@ -318,23 +380,31 @@ export async function scrollUnreadChannelsToBottom(
 	task: Task,
 	channelIds: string[],
 	signal?: AbortSignal,
+	onProgress?: (progress: TaskChannelProgress) => void,
 ): Promise<void> {
 	if (!channelIds.length) return;
 	adapter.prepare();
 	const region = adapter.resolveRegion();
-	for (const channelId of channelIds) {
+	for (const [index, channelId] of channelIds.entries()) {
 		checkpoint(signal);
 		const channel = task.source.channels.find((item) => item.id === channelId);
 		if (!channel) continue;
+		reportChannel(adapter, channel, index + 1, channelIds.length, "locating", onProgress);
 		const { entry } = await findChannel(adapter, task, channel, region, signal);
-		await openAndRead(adapter, task, channel, entry, signal);
-		const snapshot = adapter.observe();
-		const lists = nodes(snapshot.tree).filter(
-			(node) =>
-				node.role === "list" && node.name === `${channel.name}中的消息` && node.bounds,
+		reportChannel(
+			adapter,
+			channel,
+			index + 1,
+			channelIds.length,
+			"scanning",
+			onProgress,
+			entry,
 		);
-		if (lists.length !== 1 || !lists[0].bounds)
-			throw new Error(`无法安全定位“${channel.name}”的消息列表滚动区域。`);
-		adapter.wheel(lists[0].bounds, -1000);
+		await openAndRead(adapter, task, channel, entry, signal);
+		checkpoint(signal);
+		// ad_snapshot intentionally omits bounds. Read the pinned window's native
+		// tree again so scrolling uses current, visible message-pane coordinates.
+		const messageRegion = adapter.resolveMessageRegion(channel.name);
+		adapter.wheel(messageRegion, -1000);
 	}
 }

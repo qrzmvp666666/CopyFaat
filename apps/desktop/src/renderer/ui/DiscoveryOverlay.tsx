@@ -10,6 +10,8 @@ export function DiscoveryOverlay() {
 		found: 0,
 		message: "正在自动定位 Discord 频道侧栏…",
 	});
+	const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
+	const [query, setQuery] = useState("");
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState("");
 	useEffect(() => {
@@ -41,13 +43,34 @@ export function DiscoveryOverlay() {
 		setError("");
 		try {
 			if (continueScanning === undefined) await window.copyfast.cancelDiscovery();
-			else await window.copyfast.resolveDiscoveryExit(continueScanning);
+			else
+				await window.copyfast.resolveDiscoveryExit(
+					continueScanning,
+					progress.channels
+						?.filter((channel) => !excludedIds.has(channel.id))
+						.map((channel) => channel.id),
+				);
 		} catch {
 			setPending(false);
 			setError("操作未完成，请重试。");
 		}
 	}
 	const paused = progress.phase === "paused";
+	const channels = progress.channels ?? [];
+	const selectedCount = channels.filter((channel) => !excludedIds.has(channel.id)).length;
+	const visibleChannels = channels.filter((channel) =>
+		`${channel.name} ${channel.locator?.category ?? ""}`
+			.toLocaleLowerCase()
+			.includes(query.trim().toLocaleLowerCase()),
+	);
+	function toggleChannel(id: string) {
+		setExcludedIds((current) => {
+			const next = new Set(current);
+			if (next.has(id)) next.delete(id);
+			else next.add(id);
+			return next;
+		});
+	}
 	return (
 		<div className={`discovery-overlay${paused ? " discovery-overlay--confirm" : ""}`}>
 			<div
@@ -71,10 +94,70 @@ export function DiscoveryOverlay() {
 			{paused ? (
 				<>
 					<p className="discovery-confirm-hint">{progress.message}</p>
+					{channels.length > 0 && (
+						<>
+							<input
+								className="discovery-search"
+								type="search"
+								aria-label="搜索已识别频道"
+								placeholder="搜索频道或分类"
+								value={query}
+								disabled={pending}
+								onChange={(event) => setQuery(event.target.value)}
+							/>
+							<div className="discovery-selection">
+								<span>
+									已选择 {selectedCount} / {channels.length} 个频道
+								</span>
+								<div>
+									<button
+										type="button"
+										disabled={pending}
+										onClick={() => setExcludedIds(new Set())}
+									>
+										全选
+									</button>
+									<button
+										type="button"
+										disabled={pending}
+										onClick={() =>
+											setExcludedIds(
+												new Set(channels.map((channel) => channel.id)),
+											)
+										}
+									>
+										清空
+									</button>
+								</div>
+							</div>
+						</>
+					)}
 					<ul className="discovery-found-channels" aria-label="已识别的频道">
-						{progress.channelNames?.map((name, index) => (
-							<li key={`${index}:${name}`}># {name}</li>
+						{visibleChannels.map((channel) => (
+							<li key={channel.id}>
+								<label className="discovery-channel-option">
+									<input
+										type="checkbox"
+										checked={!excludedIds.has(channel.id)}
+										disabled={pending}
+										onChange={() => toggleChannel(channel.id)}
+									/>
+									<div>
+										<span># {channel.name}</span>
+										{channel.locator?.category && (
+											<small>{channel.locator.category}</small>
+										)}
+									</div>
+								</label>
+							</li>
 						))}
+						{channels.length > 0 && !visibleChannels.length && (
+							<li className="discovery-empty">没有匹配的频道</li>
+						)}
+						{!progress.channels &&
+							progress.channelNames?.map((name, index) => (
+								<li key={`${index}:${name}`}># {name}</li>
+							))}
 						{!progress.found && <li className="discovery-empty">尚未识别到频道</li>}
 					</ul>
 					<div className="discovery-actions">
@@ -87,7 +170,9 @@ export function DiscoveryOverlay() {
 							disabled={pending}
 							onClick={() => void decide(false)}
 						>
-							{progress.found ? "退出并使用已识别频道" : "退出，返回设置"}
+							{(progress.channels ? selectedCount : progress.found)
+								? "使用所选频道并继续"
+								: "退出，返回设置"}
 						</button>
 					</div>
 				</>

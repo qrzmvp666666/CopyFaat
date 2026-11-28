@@ -1,3 +1,7 @@
+import { mkdtemp, readdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { describe, expect, it, vi } from "vitest";
 
 import { deliverMessage, webhookPayload } from "../src/main/delivery";
@@ -104,5 +108,87 @@ describe("Discord Webhook delivery", () => {
 				mediaLabels: [{ kind: "image", label: "chart.png" }],
 			}).embeds[0].description,
 		).toBe("[图片] chart.png");
+	});
+});
+
+describe("Webhook attachment upload", () => {
+	it("uploads real image and video bytes, retains rate-limited files, and clears only confirmed uploads", async () => {
+		const root = await mkdtemp(join(tmpdir(), "copyfast-delivery-media-"));
+		try {
+			const withMedia: Message = {
+				...message,
+				attachments: [
+					{
+						url: "https://cdn.discordapp.com/attachments/123/456/chart.jpg",
+						name: "chart.jpg",
+						kind: "image",
+					},
+					{
+						url: "https://cdn.discordapp.com/attachments/123/789/clip.mp4",
+						name: "clip.mp4",
+						kind: "file",
+					},
+				],
+			};
+			let uploads = 0;
+			const downloads = vi.fn();
+			const request: typeof fetch = async (input, init) => {
+				const address = input instanceof Request ? input.url : input.toString();
+				if (address.includes("/attachments/")) {
+					downloads();
+					return new Response(new Uint8Array([1, 2, 3, 4]), {
+						headers: {
+							"content-type": address.endsWith("mp4") ? "video/mp4" : "image/jpeg",
+						},
+					});
+				}
+				expect(init?.body).toBeInstanceOf(FormData);
+				const form = init!.body as FormData;
+				const payload = JSON.parse(form.get("payload_json") as string);
+				expect(payload.attachments).toEqual([
+					{ id: 0, filename: "chart.jpg" },
+					{ id: 1, filename: "clip.mp4" },
+				]);
+				for (const index of [0, 1])
+					expect(
+						Array.from(
+							new Uint8Array(
+								await (form.get(`files[${index}]`) as Blob).arrayBuffer(),
+							),
+						),
+					).toEqual([1, 2, 3, 4]);
+				return ++uploads === 1
+					? new Response("{}", { status: 429 })
+					: new Response("{}", { status: 200 });
+			};
+			expect(
+				(await deliverMessage(task, withMedia, new AbortController().signal, request, root))
+					.status,
+			).toBe("retry");
+			expect(await readdir(root)).toHaveLength(4);
+			expect(
+				(await deliverMessage(task, withMedia, new AbortController().signal, request, root))
+					.status,
+			).toBe("sent");
+			expect(downloads).toHaveBeenCalledTimes(2);
+			expect(await readdir(root)).toEqual([]);
+		} finally {
+			await rm(root, { recursive: true, force: true });
+		}
+	});
+
+	it("never posts a partial message when attachment discovery failed", async () => {
+		const request = vi.fn();
+		expect(
+			(
+				await deliverMessage(
+					task,
+					{ ...message, mediaError: "附件采集未完成" },
+					new AbortController().signal,
+					request,
+				)
+			).status,
+		).toBe("failed");
+		expect(request).not.toHaveBeenCalled();
 	});
 });

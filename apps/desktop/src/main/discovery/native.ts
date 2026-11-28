@@ -4,10 +4,12 @@ import { join } from "node:path";
 import koffi from "koffi";
 
 import type { DiscoveryRect } from "../../shared/contracts";
+import { mediaTargets } from "../collection/media";
 import { activateMacAccessibility } from "./accessibility";
+import { resolveChannelHighlight } from "./channel-highlight";
 import { assertDiscordFocused } from "./focus";
-import { resolveChannelRegion } from "./region";
-import type { DesktopSnapshot } from "./tree";
+import { resolveChannelRegion, resolveMessageRegion } from "./region";
+import { nodes, type DesktopNode, type DesktopSnapshot } from "./tree";
 
 // Keep all pointer ownership and platform calls inside the isolated engine process.
 export function createNativeDesktop(directory: string) {
@@ -115,6 +117,13 @@ export function createNativeDesktop(directory: string) {
 		"void *",
 		koffi.pointer(exactWindow),
 	]);
+	const mouseEvent = koffi.struct("CfMediaMouseEvent", {
+		kind: "int32",
+		point,
+		button: "int32",
+		click_count: "uint32",
+	});
+	const clickMouse = library.func("ad_mouse_event", "int", ["void *", koffi.pointer(mouseEvent)]);
 	const wheel = library.func("ad_mouse_wheel", "int", [
 		"void *",
 		point,
@@ -238,7 +247,8 @@ export function createNativeDesktop(directory: string) {
 			} catch (error) {
 				if (
 					!(error instanceof Error) ||
-					!error.message.includes("未找到可访问的 Discord 窗口")
+					(!error.message.includes("未找到可访问的 Discord 窗口") &&
+						!error.message.includes("未找到 Discord 主窗口"))
 				)
 					throw error;
 				lastError = error;
@@ -249,7 +259,10 @@ export function createNativeDesktop(directory: string) {
 			lastError ?? new Error("未找到可访问的 Discord 窗口，请打开桌面端及目标服务器后重试。")
 		);
 	}
-	function locateChannelRegion() {
+	function locateRegion(
+		channelName?: string,
+		highlightChannel?: { name: string; category: string },
+	) {
 		const window = pinnedWindow();
 		const tree: { nodes: unknown; count: number } = { nodes: null, count: 0 };
 		try {
@@ -272,9 +285,14 @@ export function createNativeDesktop(directory: string) {
 				throw new Error("无法读取频道侧栏位置，请确认 Discord 已打开目标服务器。");
 			const all = koffi.decode(tree.nodes, rawNode, tree.count) as {
 				content: { role: string; name: string };
+				relation: { parent_index: number };
 				presentation: { bounds: DiscoveryRect; has_bounds: boolean };
 			}[];
-			return resolveChannelRegion(window.window.bounds, window.window.bounds, all);
+			if (highlightChannel)
+				return resolveChannelHighlight(window.window.bounds, all, highlightChannel);
+			return channelName === undefined
+				? resolveChannelRegion(window.window.bounds, window.window.bounds, all)
+				: resolveMessageRegion(window.window.bounds, all, channelName);
 		} finally {
 			freeTree(tree);
 		}
@@ -292,7 +310,10 @@ export function createNativeDesktop(directory: string) {
 			}
 			return waitForDiscordWindow().window.bounds;
 		},
-		resolveRegion: locateChannelRegion,
+		resolveRegion: () => locateRegion(),
+		resolveChannelHighlight: (channel: { name: string; category: string }) =>
+			locateRegion(undefined, channel),
+		resolveMessageRegion: (channelName: string) => locateRegion(channelName),
 		observe() {
 			// Channel navigation mutates the AX tree while Discord loads its message pane.
 			// Retry bounded reads, retaining only a complete snapshot of the pinned window.
@@ -308,7 +329,96 @@ export function createNativeDesktop(directory: string) {
 			}
 			throw new Error("Discord 界面持续读取不完整，请等待频道加载完成后重试。");
 		},
-		act(ref: string, kind: number, direction = 1) {
+		openMediaMenu(messageId: string, mediaIndex: number) {
+			const current = pinnedWindow().window;
+			assertDiscordFocused(current.is_focused);
+			const snapshotValue = readOutput<DesktopSnapshot>((out) =>
+				snapshot(adapter, "Discord", 0, 50, false, false, out),
+			);
+			if (!snapshotValue.complete || snapshotValue.window?.id !== windowId)
+				throw new Error("附件定位时 Discord 窗口发生变化。");
+			const accessory = nodes(snapshotValue.tree).find(
+				(node) => node.native_id?.value === `message-accessories-${messageId}`,
+			);
+			const target = accessory && mediaTargets(accessory)[mediaIndex];
+			if (!target) throw new Error("无法定位原消息的附件。");
+			function findPath(node: DesktopNode, indices: number[] = []): number[] | undefined {
+				if (node === target) return indices;
+				for (const [index, child] of (node.children ?? []).entries()) {
+					const found = findPath(child, [...indices, index]);
+					if (found) return found;
+				}
+			}
+			const path = findPath(snapshotValue.tree);
+			const tree: { nodes: unknown; count: number } = { nodes: null, count: 0 };
+			try {
+				if (
+					!path ||
+					getTree(
+						adapter,
+						pinnedWindow(),
+						{
+							max_depth: 50,
+							include_bounds: true,
+							interactive_only: false,
+							compact: false,
+							surface: 0,
+						},
+						tree,
+					) !== 0 ||
+					!tree.nodes ||
+					tree.count > 100000
+				)
+					throw new Error("无法读取附件位置。");
+				const all = koffi.decode(tree.nodes, rawNode, tree.count) as {
+					content: { role: string; name: string };
+					presentation: { has_bounds: boolean; bounds: DiscoveryRect };
+					relation: { child_start: number; child_count: number };
+				}[];
+				let index = 0;
+				let expected = snapshotValue.tree;
+				for (const childIndex of path) {
+					const raw = all[index];
+					if (
+						!raw ||
+						raw.content.role !== expected.role ||
+						(raw.content.name || "") !== (expected.name || "") ||
+						childIndex >= raw.relation.child_count
+					)
+						throw new Error("附件布局发生变化，请重新采集。");
+					index = raw.relation.child_start + childIndex;
+					expected = expected.children![childIndex];
+				}
+				const raw = all[index];
+				const bounds = raw?.presentation.bounds;
+				if (
+					!raw?.presentation.has_bounds ||
+					raw.content.role !== target.role ||
+					raw.content.name !== target.name ||
+					!bounds ||
+					bounds.width < 5 ||
+					bounds.height < 5
+				)
+					throw new Error("附件不在可见区域，请滚动消息后重试。");
+				const x = bounds.x + bounds.width / 2;
+				const y = bounds.y + bounds.height / 2;
+				if (
+					x <= current.bounds.x ||
+					y <= current.bounds.y ||
+					x >= current.bounds.x + current.bounds.width ||
+					y >= current.bounds.y + current.bounds.height
+				)
+					throw new Error("附件位置不在 Discord 窗口内。");
+				if (
+					clickMouse(adapter, { kind: 3, point: { x, y }, button: 1, click_count: 1 }) !==
+					0
+				)
+					throw new Error("无法打开附件菜单。");
+			} finally {
+				freeTree(tree);
+			}
+		},
+		act(ref: string, kind: number, direction = 1, key?: string) {
 			assertDiscordFocused(pinnedWindow().window.is_focused);
 			if (!/^@[^:]+:e\d+$/.test(ref)) throw new Error("频道定位已失效，请重新扫描。");
 			readOutput((out) =>
@@ -319,7 +429,7 @@ export function createNativeDesktop(directory: string) {
 						kind,
 						text: null,
 						scroll: { direction, amount: 6 },
-						key: { key: null, modifiers: null, modifier_count: 0 },
+						key: { key: key ?? null, modifiers: null, modifier_count: 0 },
 						drag: {
 							from: { x: 0, y: 0 },
 							to: { x: 0, y: 0 },
@@ -346,7 +456,7 @@ export function createNativeDesktop(directory: string) {
 			assertDiscordFocused(current.is_focused);
 			// AX can report transient bounds while Discord is being activated. Re-read
 			// the sidebar before every coordinate action instead of using cached bounds.
-			const region = locateChannelRegion();
+			const region = locateRegion();
 			if (
 				wheel(
 					adapter,

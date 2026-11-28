@@ -4,8 +4,9 @@ import { join } from "node:path";
 import { utilityProcess } from "electron";
 
 import { collectorResponseSchema, type CollectorResponse, type Task } from "../shared/contracts";
-import type { DiscoveryRect } from "../shared/contracts";
+import type { DiscoveryRect, TaskChannelProgress } from "../shared/contracts";
 import { resolveEngineDirectory } from "./discovery/runtime";
+import { createMediaClipboardLease } from "./media-clipboard";
 import { parseDesktopWorkerResponse } from "./worker-protocol";
 
 type DesktopWorkerOperation = "collect" | "finish";
@@ -16,6 +17,7 @@ function runDesktopWorker(
 	signal: AbortSignal,
 	channelIds: string[] = [],
 	onWindowBounds?: (bounds: DiscoveryRect) => void,
+	onChannelProgress?: (channel: TaskChannelProgress) => void,
 ): Promise<unknown> {
 	const directory = resolveEngineDirectory({
 		resourcesPath: process.resourcesPath,
@@ -27,15 +29,15 @@ function runDesktopWorker(
 		if (signal.aborted) return reject(new Error("采集已取消"));
 		const worker = utilityProcess.fork(join(__dirname, "collection-worker.cjs"), [directory], {
 			serviceName: "CopyFast Collection",
-			stdio: "ignore",
+			stdio: process.env.COPYFAST_DEV === "1" ? "inherit" : "ignore",
 		});
 		let settled = false;
+		const mediaClipboard = createMediaClipboardLease();
+		let clipboardTail: Promise<unknown> = Promise.resolve();
 		const timeout = setTimeout(() => {
-			worker.kill();
 			finish(new Error("本轮 Discord 采集超过 15 分钟，已停止；下轮可重试。"));
 		}, 15 * 60_000);
 		const onAbort = () => {
-			worker.kill();
 			finish(new Error("采集已暂停；未确认的发送结果会保留为待核对状态。"));
 		};
 		function finish(error?: Error, result?: unknown) {
@@ -43,18 +45,60 @@ function runDesktopWorker(
 			settled = true;
 			clearTimeout(timeout);
 			signal.removeEventListener("abort", onAbort);
-			if (error) reject(error);
-			else resolve(result);
+			worker.kill();
+			void clipboardTail
+				.catch(() => {})
+				.then(() => mediaClipboard.restore())
+				.catch(() => {})
+				.then(() => {
+					if (error) reject(error);
+					else resolve(result);
+				});
 		}
 		signal.addEventListener("abort", onAbort, { once: true });
 		worker.on("message", (value) => {
+			if (settled) return;
 			const message = parseDesktopWorkerResponse(value);
 			if (!message) {
 				finish(new Error("Discord 操作进程返回了无效响应。"));
 				return;
 			}
+			if (
+				message.type === "media-clipboard" &&
+				message.id &&
+				message.phase &&
+				operation === "collect"
+			) {
+				clipboardTail = clipboardTail
+					.catch(() => {})
+					.then(() => (settled ? undefined : mediaClipboard.request(message.phase!)))
+					.then(
+						(url) => {
+							if (!settled)
+								worker.postMessage({
+									type: "media-clipboard-result",
+									id: message.id,
+									url,
+								});
+						},
+						(error) => {
+							if (!settled)
+								worker.postMessage({
+									type: "media-clipboard-result",
+									id: message.id,
+									error:
+										error instanceof Error
+											? error.message
+											: "附件链接读取失败。",
+								});
+						},
+					);
+				return;
+			}
 			if (message.type === "result") finish(undefined, message.result);
 			else if (message.type === "ready" && message.bounds) onWindowBounds?.(message.bounds);
+			else if (message.type === "progress" && message.channel)
+				onChannelProgress?.(message.channel);
 			else finish(new Error(message.message ?? "Discord 操作失败。"));
 		});
 		worker.on("error", (error) => finish(new Error(error)));
@@ -69,9 +113,17 @@ export async function runCollector(
 	task: Task,
 	signal: AbortSignal,
 	onWindowBounds?: (bounds: DiscoveryRect) => void,
+	onChannelProgress?: (channel: TaskChannelProgress) => void,
 ): Promise<CollectorResponse> {
 	if (task.collector) return runLegacyCollector(task, signal);
-	const result = await runDesktopWorker(task, "collect", signal, [], onWindowBounds);
+	const result = await runDesktopWorker(
+		task,
+		"collect",
+		signal,
+		[],
+		onWindowBounds,
+		onChannelProgress,
+	);
 	return collectorResponseSchema.parse(result);
 }
 
@@ -140,6 +192,7 @@ export async function finishUnreadChannels(
 	channelIds: string[],
 	signal: AbortSignal,
 	onWindowBounds?: (bounds: DiscoveryRect) => void,
+	onChannelProgress?: (channel: TaskChannelProgress) => void,
 ): Promise<void> {
-	await runDesktopWorker(task, "finish", signal, channelIds, onWindowBounds);
+	await runDesktopWorker(task, "finish", signal, channelIds, onWindowBounds, onChannelProgress);
 }

@@ -214,9 +214,17 @@ void app.whenReady().then(async () => {
 	store = await createStore(join(app.getPath("userData"), "copyfast-state.json"), sendState);
 	engine = createEngine(store, {
 		collect: runCollector,
-		deliver: deliverMessage,
+		deliver: (task, message, signal) =>
+			deliverMessage(
+				task,
+				message,
+				signal,
+				fetch,
+				join(app.getPath("userData"), "media-cache"),
+			),
 		finishUnreadChannels,
-		activity: (task, phase, bounds) => taskActivity?.update(task, phase, bounds),
+		activity: (task, phase, bounds, channel) =>
+			taskActivity?.update(task, phase, bounds, channel),
 	});
 	await engine.recover();
 	engine.start();

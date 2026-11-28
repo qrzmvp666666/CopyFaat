@@ -923,6 +923,28 @@ button:disabled {
 	font-weight: 640;
 	font-variant-numeric: tabular-nums;
 }
+.metrics-with-schedule,
+.metrics-with-schedule .metric {
+	height: 94px;
+}
+.metric-task-status-value {
+	display: flex;
+	align-items: baseline;
+	flex-wrap: wrap;
+	column-gap: 10px;
+	min-width: 0;
+}
+.metric-task-status .metric-poll-countdown {
+	color: #b9d5fa;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+.metric-next-poll {
+	color: #96969e;
+	font-size: 10px;
+	line-height: 14px;
+	font-variant-numeric: tabular-nums;
+}
 .tabs {
 	display: flex;
 	align-items: flex-start;

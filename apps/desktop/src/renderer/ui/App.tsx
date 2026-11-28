@@ -3,7 +3,6 @@ import {
 	Crown,
 	ExternalLink,
 	List,
-	MoreHorizontal,
 	PanelLeft,
 	Pause,
 	Play,
@@ -22,6 +21,7 @@ import { ChannelWorkspace } from "./ChannelWorkspace";
 import { Connections } from "./Connections";
 import { TaskDetails } from "./TaskDetails";
 import { TaskDialog } from "./TaskDialog";
+import { TaskStatusMetric } from "./TaskStatusMetric";
 
 const emptyState: PublicState = { version: 1, tasks: [], messages: [], logs: [] };
 export function App() {
@@ -398,16 +398,18 @@ export function App() {
 								</p>
 							</div>
 							<div className="content-head-actions">
-								<button
-									className="secondary"
-									onClick={() => {
-										if (canLeaveRules())
-											setTab(tab === "rules" ? "messages" : "rules");
-									}}
-								>
-									<Settings2 size={15} />
-									{tab === "rules" ? "返回消息" : "采集规则"}
-								</button>
+								{selectedTask && (
+									<button
+										className="secondary"
+										onClick={() => {
+											if (canLeaveRules())
+												setTab(tab === "rules" ? "messages" : "rules");
+										}}
+									>
+										<Settings2 size={15} />
+										{tab === "rules" ? "返回消息" : "采集规则"}
+									</button>
+								)}
 								{selectedTask && current && (
 									<>
 										<button
@@ -442,51 +444,34 @@ export function App() {
 											)}
 											{current.status === "running" ? "暂停任务" : "运行任务"}
 										</button>
-										<details className="task-actions-menu">
-											<summary aria-label="更多任务操作">
-												<MoreHorizontal size={18} />
-											</summary>
-											<div>
-												<button
-													className="secondary danger-action"
-													title="删除任务"
-													disabled={rulesBusy}
-													onClick={() => {
-														if (!canLeaveRules()) return;
-														if (
-															!window.confirm(
-																`删除“${current.name}”？该任务关联的频道消息和任务日志也会永久删除，此操作无法撤销。`,
-															)
-														)
-															return;
-														void window.copyfast
-															.deleteTask(current.id)
-															.then(() => {
-																setSelected(undefined);
-															})
-															.catch((error: unknown) =>
-																window.alert(
-																	error instanceof Error
-																		? error.message
-																		: "删除任务失败",
-																),
-															);
-													}}
-												>
-													<Trash2 size={15} /> 删除
-												</button>
-												<button
-													type="button"
-													disabled={rulesBusy}
-													onClick={() => {
-														if (canLeaveRules()) setCreateOpen(true);
-													}}
-												>
-													<Plus size={15} />
-													新建任务
-												</button>
-											</div>
-										</details>
+										<button
+											className="secondary danger-action"
+											title="删除任务"
+											disabled={rulesBusy}
+											onClick={() => {
+												if (!canLeaveRules()) return;
+												if (
+													!window.confirm(
+														`删除“${current.name}”？该任务关联的频道消息和任务日志也会永久删除，此操作无法撤销。`,
+													)
+												)
+													return;
+												void window.copyfast
+													.deleteTask(current.id)
+													.then(() => {
+														setSelected(undefined);
+													})
+													.catch((error: unknown) =>
+														window.alert(
+															error instanceof Error
+																? error.message
+																: "删除任务失败",
+														),
+													);
+											}}
+										>
+											<Trash2 size={15} /> 删除
+										</button>
 									</>
 								)}
 								<button
@@ -499,21 +484,24 @@ export function App() {
 								</button>
 							</div>
 						</div>
-						<div className="metrics">
-							{tab !== "rules" && (
-								<Metric
-									label={selectedTask ? "任务状态" : "运行任务"}
-									value={
-										selectedTask
-											? current?.status === "running"
-												? "运行中"
-												: current?.status === "attention"
-													? "需处理"
-													: "已暂停"
-											: `${running} / ${total}`
-									}
-								/>
-							)}
+						<div
+							className={`metrics${selectedTask && tab !== "rules" ? " metrics-with-schedule" : ""}`}
+						>
+							{tab !== "rules" &&
+								(current ? (
+									<TaskStatusMetric
+										task={current}
+										isCollecting={state.logs.some(
+											(log) =>
+												log.taskId === current.id &&
+												log.phase === "collect" &&
+												log.status === "processing" &&
+												!log.finishedAt,
+										)}
+									/>
+								) : (
+									<Metric label="运行任务" value={`${running} / ${total}`} />
+								))}
 							<Metric
 								label="今日采集"
 								value={

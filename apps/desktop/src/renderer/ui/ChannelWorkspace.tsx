@@ -10,9 +10,10 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import type { Message, PublicState } from "../../shared/contracts";
+import type { Message, PublicState, MessageIgnoreReason } from "../../shared/contracts";
 import { getChannels, getChannelLogs, messageInChannel, type ChannelLogRow } from "./channel-view";
 import { ChannelNav } from "./ChannelNav";
+import { MessageAttachments } from "./MessageAttachments";
 
 import "./channel-workspace.css";
 
@@ -25,6 +26,14 @@ interface ChannelWorkspaceProps {
 	onTabChange: (tab: string) => void;
 	onRefresh: () => Promise<void>;
 }
+const IGNORE_REASON_LABELS: Record<MessageIgnoreReason, string> = {
+	duplicate: "消息已处理（重复）",
+	"before-start": "早于采集起始时间",
+	"missing-keyword": "未匹配包含关键词",
+	"excluded-keyword": "命中排除关键词",
+	"empty-content": "按内容开关过滤后无可保存内容",
+};
+
 const labels: Record<ChannelLogRow["status"], string> = {
 	processing: "采集中",
 	success: "成功",
@@ -265,6 +274,27 @@ export function ChannelWorkspace({
 													? "本轮未取得完整结果，频道数量尚未确认"
 													: `本频道发现 ${row.result?.collected ?? 0} 条 · 保存 ${row.result?.saved ?? 0} 条 · 跳过 ${row.result?.ignored ?? 0} 条`}
 										</p>
+										{row.result?.ignoredReasons &&
+											Object.entries(row.result.ignoredReasons).map(
+												([reason, count]) => (
+													<p key={reason}>
+														跳过原因：
+														{
+															IGNORE_REASON_LABELS[
+																reason as MessageIgnoreReason
+															]
+														}{" "}
+														· {count} 条
+													</p>
+												),
+											)}
+										{row.result?.status === "skipped_read" && (
+											<p>跳过原因：频道当前已读，本轮不读取消息。</p>
+										)}
+										{(row.result?.ignored ?? 0) > 0 &&
+											!row.result?.ignoredReasons && (
+												<p>此历史记录未保存具体跳过原因。</p>
+											)}
 										{row.legacy && <small>历史记录未单独统计频道数量</small>}
 										{(row.result?.error || row.log.error) && (
 											<p className="channel-log-error">
@@ -346,19 +376,7 @@ export function ChannelWorkspace({
 											>
 												{message.text || "附件消息"}
 											</button>
-											{message.attachments.length > 0 && (
-												<div className="message-files">
-													{message.attachments.map((file, index) => (
-														<span key={index}>
-															<FileText size={13} />
-															{file.name ||
-																(file.kind === "image"
-																	? "图片"
-																	: "附件")}
-														</span>
-													))}
-												</div>
-											)}
+											<MessageAttachments attachments={message.attachments} />
 											<small>
 												保存于 {formatDate(message.collectedAt)} · 消息{" "}
 												{message.id}
@@ -448,11 +466,7 @@ function MessageDetail({ detail, onClose }: { detail: Message; onClose: () => vo
 			<h3>{detail.author}</h3>
 			<time>{formatDate(detail.sentAt)}</time>
 			<p>{detail.text || "附件消息"}</p>
-			{detail.attachments.map((file, index) => (
-				<p key={index}>
-					<FileText size={14} /> {file.name || "附件"}
-				</p>
-			))}
+			<MessageAttachments attachments={detail.attachments} />
 			<small>
 				保存于 {formatDate(detail.collectedAt)}
 				<br />

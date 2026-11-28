@@ -7,7 +7,11 @@ import {
 	type PublicTask,
 	type TaskInput,
 } from "../../shared/contracts";
-import { formatFrequency } from "./task-configuration";
+import {
+	formatFrequency,
+	getCollectionStartAt,
+	type CollectionStartRange,
+} from "./task-configuration";
 
 import "./task-details.css";
 
@@ -20,6 +24,7 @@ interface TaskDetailsProps {
 }
 
 interface RuleDraft {
+	startRange: "keep" | CollectionStartRange;
 	intervalSeconds: number;
 	include: string;
 	exclude: string;
@@ -137,13 +142,19 @@ export function TaskDetails({
 
 	async function save(run: boolean) {
 		if (submitting.current) return;
+		const { startRange = "keep", ...rules } = draft;
 		const input: TaskInput = {
 			name: task.name,
 			source: task.source,
 			collector: task.collector,
 			receiver,
 			startPaused: true,
-			rules: { ...task.rules, ...draft },
+			rules: {
+				...task.rules,
+				...rules,
+				startAt:
+					startRange === "keep" ? task.rules.startAt : getCollectionStartAt(startRange),
+			},
 		};
 		const result = taskInputSchema.safeParse(input);
 		if (!result.success || (run && !canRun)) {
@@ -376,6 +387,31 @@ export function TaskDetails({
 					{editing ? (
 						<fieldset className="detail-rule-controls" disabled={!!saving}>
 							<legend className="sr-only">采集规则</legend>
+							<div className="detail-start-range">
+								<label htmlFor="collection-start-range">采集起点</label>
+								<select
+									id="collection-start-range"
+									aria-describedby="collection-start-help"
+									value={draft.startRange ?? "keep"}
+									onChange={(event) =>
+										setDraft({
+											...draft,
+											startRange: event.target
+												.value as RuleDraft["startRange"],
+										})
+									}
+								>
+									<option value="keep">
+										保留原采集起点（{formatStartAt(task.rules.startAt)}）
+									</option>
+									<option value="new">从现在开始</option>
+									<option value="hour">最近 1 小时的消息</option>
+									<option value="day">最近 24 小时的消息</option>
+								</select>
+								<p id="collection-start-help">
+									新起点按保存时刻计算；采集仍受频道未读状态和当前可读取消息范围限制，已记录的消息不会重复采集。
+								</p>
+							</div>
 							<div className="detail-rule-fields">
 								<div className="detail-frequency">
 									<span id="frequency-label">检查频率</span>
@@ -495,6 +531,12 @@ export function TaskDetails({
 						</fieldset>
 					) : (
 						<>
+							<div className="detail-start-range detail-start-summary">
+								<span>采集起点</span>
+								<time dateTime={task.rules.startAt}>
+									{formatStartAt(task.rules.startAt)} 之后的未读消息
+								</time>
+							</div>
 							<dl className="detail-rule-summary">
 								{[
 									[
@@ -594,5 +636,18 @@ export function TaskDetails({
 
 function getRuleDraft(task: PublicTask): RuleDraft {
 	const { intervalSeconds, include, exclude, text, images, attachments, markRead } = task.rules;
-	return { intervalSeconds, include, exclude, text, images, attachments, markRead };
+	return {
+		startRange: "keep",
+		intervalSeconds,
+		include,
+		exclude,
+		text,
+		images,
+		attachments,
+		markRead,
+	};
+}
+
+function formatStartAt(value: string): string {
+	return new Date(value).toLocaleString("zh-CN", { hour12: false });
 }

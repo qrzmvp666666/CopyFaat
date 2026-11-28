@@ -48,15 +48,19 @@ body {
 .island-brand {
 	display: flex;
 	align-items: center;
-	gap: 9px;
-	font-family: "Departure Mono", monospace;
-	font-size: 12px;
-	letter-spacing: 1px;
-	color: #c6c6c8;
+	gap: 10px;
+	font-size: 20px;
+	font-weight: 650;
+	line-height: 36px;
+	color: #e7e7e9;
 	text-decoration: none;
 }
 .island-brand img {
-	border-radius: 5px;
+	flex-shrink: 0;
+	display: block;
+	width: 36px;
+	height: 36px;
+	object-fit: contain;
 }
 .island-nav-links {
 	display: flex;
@@ -1033,15 +1037,12 @@ body {
 }
 .island-footer-grid {
 	display: grid;
-	grid-template-columns: 2fr 1fr 1fr 1fr;
+	grid-template-columns: 2fr repeat(4, minmax(0, 1fr));
 	gap: 40px;
 	padding-bottom: 55px;
 }
 .island-footer-brand {
-	font-family: Georgia, serif;
-	font-size: 28px;
-	font-style: italic;
-	color: #c9c9cd;
+	width: fit-content;
 }
 .island-footer-grid p {
 	font-size: 12px;
@@ -1126,13 +1127,13 @@ body {
 		padding: 16px 20px 24px;
 	}
 	.island-brand {
-		font-size: 10px;
-		gap: 6px;
-		letter-spacing: 0.3px;
+		font-size: 18px;
+		gap: 8px;
+		line-height: 32px;
 	}
 	.island-brand img {
-		width: 23px;
-		height: 23px;
+		width: 32px;
+		height: 32px;
 	}
 	.island-nav-links {
 		gap: 9px;
@@ -1399,7 +1400,7 @@ body {
 		padding-top: 35px;
 	}
 	.island-footer-grid {
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 25px 18px;
 		padding-bottom: 35px;
 	}

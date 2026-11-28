@@ -136,3 +136,10 @@ export function setChannelWebhook(
 		},
 	};
 }
+
+export type CollectionStartRange = "new" | "hour" | "day";
+
+export function getCollectionStartAt(range: CollectionStartRange, now = Date.now()): string {
+	const lookbackSeconds = range === "day" ? 86400 : range === "hour" ? 3600 : 0;
+	return new Date(now - lookbackSeconds * 1000).toISOString();
+}
