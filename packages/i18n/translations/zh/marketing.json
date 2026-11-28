@@ -1,6 +1,6 @@
 {
 	"blog": {
-		"description": "CopyFast 使用指南与社群运营心得，让 Telegram 与 Discord 消息同步更简单。",
+		"description": "CopyFast 使用指南与社群运营心得，让 Discord 消息同步更简单。",
 		"title": "博客",
 		"back": "返回博客"
 	},
@@ -241,9 +241,9 @@
 			}
 		},
 		"island": {
-			"line1": "TG / DC 群克隆，",
+			"line1": "DC 群消息克隆，",
 			"line2": "告别手动搬运消息。",
-			"intro": "自动监控 Telegram 与 Discord 来源频道，",
+			"intro": "自动监控 Discord 来源频道，",
 			"intro2": "将新消息持续同步到自己的社群，省去反复查看和复制转发。",
 			"start": "立即下载",
 			"download": "立即下载",
@@ -275,7 +275,7 @@
 				"yourCommunities": "自有社群",
 				"recentActivity": "最近同步内容",
 				"discordSource": "Discord · 产品更新",
-				"telegramSource": "Telegram · 社区公告",
+				"communitySource": "Discord · 社区公告",
 				"messageOne": "新版本已发布，欢迎查看本次更新内容。",
 				"messageTwo": "本周活动安排已更新，详情请查看置顶消息。",
 				"justNow": "刚刚",
@@ -284,13 +284,10 @@
 			},
 			"docs": "文档",
 			"plans": "查看价格",
-			"trusted": "适用于 Discord 与 Telegram 社群",
+			"trusted": "适用于 Discord 社群",
 			"featuresTitle": "让群组克隆更简单。",
 			"features": [
-				[
-					"支持 Discord 与 Telegram",
-					"在常用社群平台间灵活协作，减少切换工具与重复整理的时间。"
-				],
+				["支持 Discord", "集中管理 Discord 来源频道，减少切换频道与重复整理的时间。"],
 				[
 					"支持 Mac 和 Windows",
 					"无论团队使用 Mac 还是 Windows，都能在熟悉的电脑上处理社群运营。"
@@ -314,17 +311,14 @@
 			],
 			"faqTitle": "常见问题",
 			"faq": [
-				[
-					"CopyFast 适合哪些社群？",
-					"CopyFast 面向使用 Discord 与 Telegram 的社群运营者与团队。"
-				],
+				["CopyFast 适合哪些社群？", "CopyFast 面向使用 Discord 的社群运营者与团队。"],
 				[
 					"可以处理哪些社群内容？",
 					"不同平台的内容类型与访问权限有所不同，请联系我们确认适用范围。"
 				],
 				[
 					"需要代理或个人 Discord 账号吗？",
-					"网络连接取决于所在地区与平台规则；账号使用也应遵循 Discord 和 Telegram 的服务条款。请联系我们了解具体接入方式。"
+					"网络连接取决于所在地区与平台规则；账号使用也应遵循 Discord 的服务条款。请联系我们了解具体接入方式。"
 				],
 				[
 					"监控频道数量有限制吗？",
@@ -353,9 +347,8 @@
 			"estimatedSavings": "选择 CopyFast，预计每年少支出 {amount}",
 			"estimatedExtraCost": "按当前所选 CopyFast 价格估算，每年成本高于该基准 {amount}",
 			"costFootnote": "替代配置约 {annualCost}/年。实际费用因账号、用量与服务商而异。",
-			"planDescription": "适用于 Discord 与 Telegram 社群运营，持续更新迭代，未来拓展其他渠道功能优先享用。",
+			"planDescription": "适用于 Discord 社群运营，持续更新迭代，未来拓展其他渠道功能优先享用。",
 			"alternativeHighlights": [
-				"通常只支持 Telegram 或 Discord 其中一个平台",
 				"通常仅支持 Mac 或 Windows 其中一种系统",
 				"AI 模型 Token 费用另计，至少约 $20/月",
 				"可监控频道数量受方案限制，扩容可能增加成本",
@@ -364,7 +357,7 @@
 				"需自行准备账号，并处理代理与日常维护"
 			],
 			"planHighlights": [
-				"一个方案同时支持 Discord 与 Telegram",
+				"一个方案管理多个 Discord 频道",
 				"Mac 与 Windows 桌面端均可使用",
 				"7×24 小时 AI 自动监控并同步消息",
 				"可同时监控不限数量的频道",
@@ -378,7 +371,7 @@
 			"subscribe": "咨询方案",
 			"questions": "开始之前，还有疑问？",
 			"contact": "联系我们",
-			"footerDescription": "让 Discord 与 Telegram 社群迁移准备更有条理。",
+			"footerDescription": "让 Discord 社群迁移准备更有条理。",
 			"product": "产品",
 			"resources": "资源",
 			"legal": "法律信息",

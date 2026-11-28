@@ -2,7 +2,6 @@ import { Check, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import discordIcon from "../../../assets/discord-monochrome.svg";
-import telegramIcon from "../../../assets/telegram-monochrome.svg";
 import {
 	discordWebhookUrlSchema,
 	scopeSchema,
@@ -32,7 +31,6 @@ interface Props {
 const STEPS = ["选择平台", "定位来源", "频道对应", "采集规则"];
 const PLATFORMS = [
 	{ id: "discord", name: "Discord", icon: discordIcon, description: "服务器与频道" },
-	{ id: "telegram", name: "Telegram", icon: telegramIcon, description: "群组与频道" },
 ] as const;
 export function TaskDialog({ onClose, onSaved }: Props) {
 	const [rules, setRules] = useState<TaskRuleDraft>({

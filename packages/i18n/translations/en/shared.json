@@ -105,13 +105,12 @@
 		"aiCost": "AI model tokens (minimum)",
 		"alternativeTotal": "Estimated alternative total",
 		"ourPlanTitle": "Our option · CopyFast",
-		"planDescription": "For Discord and Telegram communities, with ongoing updates and priority access to future channel features.",
+		"planDescription": "For Discord communities, with ongoing updates and priority access to future channel features.",
 		"plans": "View pricing",
 		"costFootnote": "Alternative setup is about {annualCost}/year. Actual costs vary by accounts, usage, and providers.",
 		"perWeek": "/ week",
 		"periods": ["Yearly", "Weekly"],
 		"alternativeHighlights": [
-			"Usually supports either Telegram or Discord, not both",
 			"Usually supports either Mac or Windows, not both",
 			"AI model tokens are extra, from about $20/month",
 			"Channel capacity is often limited by the plan",
@@ -120,7 +119,7 @@
 			"You manage account setup, proxies, and ongoing maintenance"
 		],
 		"planHighlights": [
-			"Use Discord and Telegram together in one plan",
+			"Manage multiple Discord channels in one plan",
 			"Available on both Mac and Windows",
 			"24/7 AI monitoring with automatic message sync",
 			"Monitor unlimited channels at the same time",

@@ -2,6 +2,8 @@
 
 ## 2026-11-28
 
+- fix: Temporarily hide Telegram platform setup, connection status, and marketing references; keep Discord message cloning available.
+
 - feat: Redesign desktop task details with aligned source-to-receiver mappings, explicit rule editing, masked receiver editing, and separate save-paused / save-and-run actions. Preserve receiver settings and wait for interrupted collection before applying new rules.
 
 - refactor: Remove the desktop demo-data preview and its renderer-only fixtures.

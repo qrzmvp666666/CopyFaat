@@ -11,12 +11,6 @@ export interface ContactMethod {
 export const CONTACT_METHODS: ContactMethod[] = [
 	{
 		account: "CopyFast",
-		href: "https://t.me/Michael_Qin",
-		icon: "telegram",
-		label: "电报",
-	},
-	{
-		account: "CopyFast",
 		href: "https://discord.gg/signalfast",
 		icon: "discord",
 		label: "Discord",
@@ -30,7 +24,7 @@ interface ContactChannelsProps {
 
 export function ContactChannels({ className, compact = false }: ContactChannelsProps) {
 	return (
-		<div className={className ?? "island-contact-grid gap-4 md:grid-cols-2 grid"}>
+		<div className={className ?? "island-contact-grid gap-4 grid"}>
 			{CONTACT_METHODS.map((method) => (
 				<a
 					key={method.label}

@@ -34,16 +34,6 @@ export function HeroSection() {
 					<span>
 						<Image
 							className="island-platform-logo"
-							src="/images/contact/telegram-monochrome.svg"
-							alt=""
-							width={21}
-							height={21}
-						/>
-						Telegram
-					</span>
-					<span>
-						<Image
-							className="island-platform-logo"
 							src="/images/contact/discord-monochrome.svg"
 							alt=""
 							width={21}

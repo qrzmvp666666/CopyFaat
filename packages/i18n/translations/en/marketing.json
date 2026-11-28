@@ -1,6 +1,6 @@
 {
 	"blog": {
-		"description": "CopyFast guides and community workflows for simpler Telegram and Discord message syncing.",
+		"description": "CopyFast guides and community workflows for simpler Discord message syncing.",
 		"title": "CopyFast Blog",
 		"back": "Back to blog"
 	},
@@ -241,9 +241,9 @@
 			}
 		},
 		"island": {
-			"line1": "Clone TG / DC groups,",
+			"line1": "Clone Discord messages,",
 			"line2": "skip the manual forwarding.",
-			"intro": "Automatically monitor Telegram and Discord source channels,",
+			"intro": "Automatically monitor Discord source channels,",
 			"intro2": "and sync new messages to your own communities without repeatedly checking and copying posts.",
 			"start": "Download now",
 			"download": "Download now",
@@ -275,7 +275,7 @@
 				"yourCommunities": "Yours",
 				"recentActivity": "Recent synced messages",
 				"discordSource": "Discord · Product updates",
-				"telegramSource": "Telegram · Community news",
+				"communitySource": "Discord · Community news",
 				"messageOne": "A new version is available. See what's included in this update.",
 				"messageTwo": "This week's event schedule has been updated. See the pinned post.",
 				"justNow": "Just now",
@@ -284,11 +284,11 @@
 			},
 			"docs": "Docs",
 			"plans": "View pricing",
-			"trusted": "For Discord and Telegram communities",
+			"trusted": "For Discord communities",
 			"featuresTitle": "A simpler way to clone communities.",
 			"features": [
 				[
-					"Discord and Telegram support",
+					"Discord support",
 					"Work across the communities your audience already uses, with less tool switching and manual organization."
 				],
 				[
@@ -328,7 +328,7 @@
 			"faq": [
 				[
 					"Who is CopyFast for?",
-					"CopyFast is for teams and operators of Discord and Telegram communities."
+					"CopyFast is for teams and operators of Discord communities."
 				],
 				[
 					"What community content can it handle?",
@@ -336,7 +336,7 @@
 				],
 				[
 					"Do I need a proxy or my own Discord account?",
-					"Network access depends on your location and platform policies. Account use should comply with Discord and Telegram terms. Contact us for details about access options."
+					"Network access depends on your location and platform policies. Account use should comply with Discord terms. Contact us for details about access options."
 				],
 				[
 					"How many channels can I monitor?",
@@ -368,9 +368,8 @@
 			"estimatedSavings": "Choose CopyFast and save an estimated {amount} per year",
 			"estimatedExtraCost": "At the selected CopyFast price, the annual cost is {amount} above this baseline",
 			"costFootnote": "Alternative setup is about {annualCost}/year. Actual costs vary by accounts, usage, and providers.",
-			"planDescription": "For Discord and Telegram communities, with ongoing updates and priority access to future channel features.",
+			"planDescription": "For Discord communities, with ongoing updates and priority access to future channel features.",
 			"alternativeHighlights": [
-				"Usually supports either Telegram or Discord, not both",
 				"Usually supports either Mac or Windows, not both",
 				"AI model tokens are extra, from about $20/month",
 				"Channel capacity is often limited by the plan",
@@ -379,7 +378,7 @@
 				"You manage account setup, proxies, and ongoing maintenance"
 			],
 			"planHighlights": [
-				"Use Discord and Telegram together in one plan",
+				"Manage multiple Discord channels in one plan",
 				"Available on both Mac and Windows",
 				"24/7 AI monitoring with automatic message sync",
 				"Monitor unlimited channels at the same time",
@@ -393,7 +392,7 @@
 			"subscribe": "Ask about this plan",
 			"questions": "Questions before getting started?",
 			"contact": "Talk to us",
-			"footerDescription": "A more organized way to prepare Discord and Telegram community migrations.",
+			"footerDescription": "A more organized way to prepare Discord community migrations.",
 			"product": "Product",
 			"resources": "Resources",
 			"legal": "Legal",

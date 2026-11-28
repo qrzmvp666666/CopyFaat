@@ -4,7 +4,7 @@ title: Privacy Policy
 
 Last updated: November 24, 2026
 
-This policy explains how CopyFast handles personal information across our website, desktop clients and related services, including accounts, subscriptions, and Telegram (TG) and Discord (DC) content cloning, monitoring, synchronization and forwarding. Processing depends on the features and settings you use.
+This policy explains how CopyFast handles personal information across our website, desktop clients and related services, including accounts, subscriptions, and Discord (DC) content cloning, monitoring, synchronization and forwarding. Processing depends on the features and settings you use.
 
 ### 1. Information we process
 
@@ -35,7 +35,7 @@ Where prior consent is legally required, nonessential technologies should reflec
 
 ### 5. Recipients
 
-Necessary information may be provided to authentication, hosting, storage, payment, email and analytics providers, and platforms you connect, such as Telegram and Discord. Information shared depends on the provider’s actual role and should be limited to what that role requires.
+Necessary information may be provided to authentication, hosting, storage, payment, email and analytics providers, and platforms you connect, such as Discord. Information shared depends on the provider’s actual role and should be limited to what that role requires.
 
 We do not sell your personal information. Necessary disclosures may be made to comply with law or valid legal process, protect legitimate rights or address security incidents. Any handling of information in a business transfer must comply with applicable law and required notices.
 
@@ -65,4 +65,4 @@ The service is intended for users who meet legal eligibility requirements. Minor
 
 We date policy revisions here and provide reasonable notice of material changes to our main processing practices. Where renewed consent is required, we follow applicable law.
 
-For privacy, deletion or data processing questions, contact CopyFast through the Telegram or Discord channels on our [Contact page](/en/contact). Do not include passwords, session tokens or payment keys.
+For privacy, deletion or data processing questions, contact CopyFast through the Discord channels on our [Contact page](/en/contact). Do not include passwords, session tokens or payment keys.

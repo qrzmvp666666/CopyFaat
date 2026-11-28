@@ -35,8 +35,7 @@ export function Connections({
 }: ConnectionsProps) {
 	const isMac = runtimeInfo?.platform === "darwin";
 	const permissionGranted = runtimeInfo?.permissions.accessibility ?? false;
-	const installedCount =
-		Number(Boolean(runtimeInfo?.apps.telegram)) + Number(Boolean(runtimeInfo?.apps.discord));
+	const installedCount = Number(Boolean(runtimeInfo?.apps.discord));
 	const readiness = !runtimeInfo
 		? "尚未检测"
 		: !runtimeInfo.systemSupported
@@ -134,18 +133,6 @@ export function Connections({
 						</div>
 					</div>
 					<div className="desktop-app-list">
-						<AppRow
-							name="Telegram Desktop"
-							short="TG"
-							installed={runtimeInfo?.apps.telegram}
-							onClick={() =>
-								runtimeInfo?.apps.telegram
-									? onLaunchApp("telegram")
-									: runtimeInfo
-										? void window.copyfast.openExternal("telegram")
-										: onCheck()
-							}
-						/>
 						<AppRow
 							name="Discord Desktop"
 							short="DC"

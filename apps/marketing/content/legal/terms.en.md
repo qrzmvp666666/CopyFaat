@@ -8,9 +8,9 @@ Welcome to CopyFast. These terms cover our website, desktop clients and related 
 
 ### 1. Service and scope
 
-CopyFast helps you clone community content, monitor channels, and synchronize or forward messages on Telegram (TG) and Discord (DC). Available features let you configure sources, destinations, monitoring frequency and task status. Supported features, operating systems, subscription periods and prices are described in the product and your order.
+CopyFast helps you clone community content, monitor channels, and synchronize or forward messages on Discord (DC). Available features let you configure sources, destinations, monitoring frequency and task status. Supported features, operating systems, subscription periods and prices are described in the product and your order.
 
-“Cloning” means supported content copying and synchronization. It does not mean that all history, members, identities, channel structures or permissions can be replicated. CopyFast is an independent product and is not affiliated with, an agent of, or endorsed by Telegram or Discord.
+“Cloning” means supported content copying and synchronization. It does not mean that all history, members, identities, channel structures or permissions can be replicated. CopyFast is an independent product and is not affiliated with, an agent of, or endorsed by Discord.
 
 ### 2. Accounts and eligibility
 
@@ -26,7 +26,7 @@ You must not:
 - Steal, trade or misuse another person’s account, session, token or other credentials.
 - Send spam, commit fraud, harass others, infringe rights, or distribute unlawful content or personal information without authorization.
 - Disrupt the service, attack systems or upload malicious software.
-- Violate applicable laws or the rules of source and destination platforms, including Telegram and Discord.
+- Violate applicable laws or the rules of source and destination platforms, including Discord.
 
 Configure source and destination visibility carefully to avoid publishing private content to public communities. You are responsible for the content and forwarding instructions you submit.
 
@@ -54,7 +54,7 @@ Third-party account restrictions and platform rules continue to apply. CopyFast 
 
 You may stop tasks, revoke connections or request account deletion. If we reasonably believe use is unlawful, infringes rights, threatens security or seriously breaches these terms, we may limit features or suspend an account and explain the reason where legally and safely possible.
 
-Retention and deletion after termination follow the Privacy Policy. Content already forwarded to Telegram, Discord or another destination may remain after a task stops or your account is deleted. Manage those copies through the relevant platform.
+Retention and deletion after termination follow the Privacy Policy. Content already forwarded to Discord or another destination may remain after a task stops or your account is deleted. Manage those copies through the relevant platform.
 
 ### 8. Responsibility
 
@@ -64,4 +64,4 @@ Each party is responsible as required by applicable law. Consequences of unautho
 
 We publish updates here with a revision date. Material changes affecting your main rights or obligations will be explained in advance through reasonable product or account notices. The notice specifies the effective date, subject to applicable law.
 
-For service, order, content rights or terms questions, contact CopyFast through the Telegram or Discord channels on our [Contact page](/en/contact). Do not send passwords, session tokens or payment keys.
+For service, order, content rights or terms questions, contact CopyFast through the Discord channels on our [Contact page](/en/contact). Do not send passwords, session tokens or payment keys.

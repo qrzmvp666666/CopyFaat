@@ -33,7 +33,7 @@ export function Footer() {
 				<span>
 					© {new Date().getFullYear()} CopyFast. {t("rights")}
 				</span>
-				<span>Telegram · Discord</span>
+				<span>Discord</span>
 			</div>
 		</footer>
 	);

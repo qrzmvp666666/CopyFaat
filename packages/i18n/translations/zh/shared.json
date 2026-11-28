@@ -105,13 +105,12 @@
 		"aiCost": "AI 模型 Token（至少）",
 		"alternativeTotal": "替代配置合计",
 		"ourPlanTitle": "我们的方案 · CopyFast",
-		"planDescription": "适用于 Discord 与 Telegram 社群运营，持续更新迭代，未来拓展其他渠道功能优先享用。",
+		"planDescription": "适用于 Discord 社群运营，持续更新迭代，未来拓展其他渠道功能优先享用。",
 		"plans": "查看价格",
 		"costFootnote": "替代配置约 {annualCost}/年。实际费用因账号、用量与服务商而异。",
 		"perWeek": "/ 周",
 		"periods": ["年付", "周付"],
 		"alternativeHighlights": [
-			"通常只支持 Telegram 或 Discord 其中一个平台",
 			"通常仅支持 Mac 或 Windows 其中一种系统",
 			"AI 模型 Token 费用另计，至少约 $20/月",
 			"可监控频道数量受方案限制，扩容可能增加成本",
@@ -120,7 +119,7 @@
 			"需自行准备账号，并处理代理与日常维护"
 		],
 		"planHighlights": [
-			"一个方案同时支持 Discord 与 Telegram",
+			"一个方案管理多个 Discord 频道",
 			"Mac 与 Windows 桌面端均可使用",
 			"7×24 小时 AI 自动监控并同步消息",
 			"可同时监控不限数量的频道",

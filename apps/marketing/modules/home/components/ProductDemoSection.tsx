@@ -22,7 +22,7 @@ export function ProductDemoSection() {
 						<i />
 						<i />
 						<i />
-						<span>Telegram · {t("source")}</span>
+						<span>Discord · {t("source")}</span>
 					</div>
 					<div className="island-demo-window-content">
 						<div className="island-demo-channel">{t("channels")}</div>
@@ -92,11 +92,9 @@ export function ProductDemoSection() {
 								/>
 							</div>
 							<div className="island-demo-message">
-								<span className="island-demo-avatar island-demo-avatar-telegram">
-									TG
-								</span>
+								<span className="island-demo-avatar">DC</span>
 								<div>
-									<strong>{t("telegramSource")}</strong>
+									<strong>{t("communitySource")}</strong>
 									<p>{t("messageTwo")}</p>
 									<small>
 										{t("minutesAgo")} · {t("forwarded")}

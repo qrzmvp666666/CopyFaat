@@ -17,7 +17,6 @@ import { useEffect, useState } from "react";
 
 import discordIcon from "../../../assets/discord-monochrome.svg";
 import appIcon from "../../../assets/icon.png";
-import telegramIcon from "../../../assets/telegram-monochrome.svg";
 import type { PublicState, RuntimeInfo } from "../../shared/contracts";
 import { ChannelWorkspace } from "./ChannelWorkspace";
 import { Connections } from "./Connections";
@@ -324,23 +323,6 @@ export function App() {
 					</div>
 					<div className="sidebar-bottom">
 						<div className="eyebrow sidebar-label">桌面应用</div>
-						<div className="connection" title="Telegram">
-							<b aria-hidden="true">
-								<img src={telegramIcon} alt="" width={16} height={16} />
-							</b>
-							<span className="sidebar-label">Telegram</span>
-							<small
-								className={
-									runtimeInfo?.apps.telegram ? "connection-ready" : undefined
-								}
-							>
-								{runtimeInfo
-									? runtimeInfo.apps.telegram
-										? "已安装"
-										: "未安装"
-									: "未检测"}
-							</small>
-						</div>
 						<div className="connection" title="Discord">
 							<b aria-hidden="true">
 								<img src={discordIcon} alt="" width={16} height={16} />
@@ -366,7 +348,6 @@ export function App() {
 						>
 							<span className="support-icons" aria-hidden="true">
 								<img src={discordIcon} alt="" width={16} height={16} />
-								<img src={telegramIcon} alt="" width={16} height={16} />
 							</span>
 							<span className="sidebar-label">联系客服</span>
 						</button>
